@@ -1,0 +1,39 @@
+✔ patches reproduce array deletion and escaped text keys, preserve untouched references (3.796344ms)
+✔ add is validated, previewable, undo/redo round trip (11.63082ms)
+✔ move is validated, previewable, undo/redo round trip (1.021693ms)
+✔ trim is validated, previewable, undo/redo round trip (0.800625ms)
+✔ split is validated, previewable, undo/redo round trip (0.749629ms)
+✔ replace is validated, previewable, undo/redo round trip (0.618194ms)
+✔ duplicate is validated, previewable, undo/redo round trip (0.434882ms)
+✔ group is validated, previewable, undo/redo round trip (0.663626ms)
+✔ set-beat-lock is validated, previewable, undo/redo round trip (0.496734ms)
+✔ retime is validated, previewable, undo/redo round trip (0.580426ms)
+✔ delete is validated, previewable, undo/redo round trip (8.434868ms)
+✔ edit-style is validated, previewable, undo/redo round trip (1.163896ms)
+✔ save-version is validated, previewable, undo/redo round trip (0.798596ms)
+✔ select is an ephemeral named command with inverse; does not dirty content history (0.482601ms)
+✔ split partitions attached text and source ranges; move keeps attachments (0.445676ms)
+✔ invalid batch leaves document/history untouched; stale and unsafe proposals rejected (2.110227ms)
+✔ multi-video proposals preview and rollback without touching either source video (0.91791ms)
+✔ versions restore through history and compare exact content (0.636837ms)
+✔ object-creating commands require explicit IDs so preview and apply cannot drift (0.386389ms)
+✔ returned inverse executes through the command system (0.432844ms)
+✔ beat lock rejects ripple displacement and mutation rolls back (0.411917ms)
+✔ edit text preview shows scope and changes without mutation; inverse restores (0.398709ms)
+✔ migration CLI writes a distinct new copy and refuses overwrite (405.401637ms)
+✔ migrate studio-spec: deterministic, non-destructive, text overrides (39.330918ms)
+✔ migrate fframes: deterministic, non-destructive, text overrides (1.54026ms)
+✔ migrate fframes-clips: deterministic, non-destructive, text overrides (0.738014ms)
+✔ migrate html-film: deterministic, non-destructive, text overrides (0.583482ms)
+✔ migrate capture-manifest: deterministic, non-destructive, text overrides (1.189022ms)
+✔ migrate every actual library project on disposable copies (162.048784ms)
+ℹ Migrated 6 copied projects; originals unchanged
+✔ bridge compare-and-swap refuses external edit, preserves bytes, accepts matching base (2481.614827ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2581.463573
