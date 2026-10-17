@@ -50,3 +50,24 @@ test('ACP filesystem callbacks are confined to the selected project, including s
     assert.equal(await fs.readFile(path.join(root, 'outside'), 'utf8'), 'private');
   } finally { await fs.rm(root, { recursive: true, force: true }); }
 });
+
+test('project file access cannot escape through symlinks', async () => {
+  const { projectFiles } = await import('../acp.mjs');
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'ffs-tern-'));
+  const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'ffs-out-'));
+  try {
+    const project = path.join(root, 'projects', 'p1');
+    await fs.mkdir(project, { recursive: true });
+    await fs.writeFile(path.join(outside, 'secret.txt'), 'outside');
+    await fs.symlink(path.join(outside, 'created.txt'), path.join(project, 'dangling'));
+    await fs.symlink(path.join(outside, 'secret.txt'), path.join(project, 'readlink'));
+    await fs.symlink(outside, path.join(project, 'dirlink'));
+    const api = await projectFiles(root, 'p1');
+    await assert.rejects(api.writeTextFile({ path: 'dangling', content: 'x' }), /outside selected project/);
+    await assert.rejects(api.writeTextFile({ path: 'dirlink/new', content: 'x' }), /outside selected project/);
+    await assert.rejects(api.readTextFile({ path: 'readlink' }), /outside selected project/);
+    assert.deepEqual((await fs.readdir(outside)).sort(), ['secret.txt']);
+    await api.writeTextFile({ path: 'notes.txt', content: 'ok' });
+    assert.equal(await fs.readFile(path.join(project, 'notes.txt'), 'utf8'), 'ok');
+  } finally { await fs.rm(root, { recursive: true, force: true }); await fs.rm(outside, { recursive: true, force: true }); }
+});

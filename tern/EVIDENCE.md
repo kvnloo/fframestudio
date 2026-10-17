@@ -31,7 +31,7 @@ Tern control and post-action state checks were used directly on the isolated win
 
 ## Screenshots (local, inspected)
 
-Evidence directory: `/mnt/zer0models/fframestudio-tern-evidence/`
+Evidence directory: kept locally by the author (not committed)
 
 | File | Shows |
 | --- | --- |

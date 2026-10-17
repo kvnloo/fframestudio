@@ -8,6 +8,7 @@ import { projectID, validateBridge } from './bridge-client.mjs';
 export async function projectFiles(root, id) {
   const requestedBase = path.resolve(root, 'projects', projectID(id));
   const base = await fs.realpath(requestedBase);
+  const fsc = (await import('node:fs')).constants;
   const inside = p => { if (p !== base && !p.startsWith(base + path.sep)) throw new Error('ACP path outside selected project'); return p; };
   const resolve = async (p, write = false) => {
     let candidate = path.resolve(base, p);
@@ -16,6 +17,9 @@ export async function projectFiles(root, id) {
     try { return inside(await fs.realpath(candidate)); }
     catch (e) {
       if (!write || e.code !== 'ENOENT') throw e;
+      // ENOENT can also mean a dangling symlink; writing through it would create a file outside the project.
+      const st = await fs.lstat(candidate).catch(() => null);
+      if (st?.isSymbolicLink()) throw new Error('ACP path outside selected project');
       return inside(path.join(inside(await fs.realpath(path.dirname(candidate))), path.basename(candidate)));
     }
   };
@@ -27,7 +31,11 @@ export async function projectFiles(root, id) {
       return { content };
     },
     async writeTextFile({ path: p, content }) {
-      await fs.writeFile(await resolve(p, true), content, 'utf8'); return {};
+      const target = await resolve(p, true);
+      // O_NOFOLLOW: a symlink swapped in after the check makes the write fail instead of escaping.
+      const fh = await fs.open(target, fsc.O_WRONLY | fsc.O_CREAT | fsc.O_TRUNC | (fsc.O_NOFOLLOW || 0));
+      try { await fh.writeFile(content, 'utf8'); } finally { await fh.close(); }
+      return {};
     },
   };
 }
