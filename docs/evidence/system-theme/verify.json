@@ -1,0 +1,186 @@
+{
+  "started": "2026-10-17T18:25:41.856Z",
+  "out": "/mnt/zer0models/project-artifacts/fframestudio/ui-compare/system-theme/verify",
+  "journeys": [
+    {
+      "name": "gate: app refuses without the link",
+      "ok": true,
+      "ms": 158,
+      "agents_without_token": 401
+    },
+    {
+      "name": "library: open link, demo project listed",
+      "ok": true,
+      "ms": 132,
+      "titles": [
+        "Demo film"
+      ]
+    },
+    {
+      "name": "project: plays and seeks by shot",
+      "ok": true,
+      "ms": 898,
+      "duration_s": 12.033333,
+      "shots": 4,
+      "seek_to_shot3_s": 6
+    },
+    {
+      "name": "system theme: follows and live-updates",
+      "ok": true,
+      "ms": 1383,
+      "liveMs": 116,
+      "noReload": true,
+      "fixedThemePersists": true,
+      "applyMs": [
+        0.5,
+        0.30000001192092896,
+        0.19999998807907104,
+        0.30000001192092896,
+        0.19999998807907104,
+        0.30000001192092896,
+        0.19999998807907104,
+        0.20000004768371582,
+        0.19999998807907104,
+        0.19999998807907104,
+        0.19999998807907104,
+        0.19999998807907104,
+        0.6000000238418579,
+        0.19999998807907104,
+        0.19999998807907104,
+        0.20000004768371582,
+        0.2999999523162842,
+        0.20000004768371582,
+        0.09999996423721313,
+        0.19999998807907104,
+        0.20000004768371582,
+        0.19999998807907104,
+        0.09999996423721313,
+        0.20000004768371582,
+        0.3999999761581421,
+        0.19999998807907104,
+        0.30000001192092896,
+        0.3999999761581421,
+        0.10000002384185791,
+        0.19999998807907104
+      ],
+      "applyWorstMs": 0.6000000238418579,
+      "navigation": {
+        "interactiveMs": 220.5999999642372,
+        "themeFetches": [
+          {
+            "start": 33.19999998807907,
+            "ms": 1.699999988079071,
+            "bytes": 775
+          }
+        ]
+      },
+      "browserFallback": true,
+      "themeWithoutToken": 401
+    },
+    {
+      "name": "edit: shot title saves and survives reload",
+      "ok": true,
+      "ms": 477,
+      "before": "Hook",
+      "after": "Hook (verified)",
+      "clip_id": "s01",
+      "source_sha256": "7687abe9ed2729f1f8f208ce0af8a3fca83293f2ea996c79ffd2331f801d3930"
+    },
+    {
+      "name": "recovery: unsaved title survives page close, undo and explicit save",
+      "ok": true,
+      "ms": 1037,
+      "before": "Hook (verified)",
+      "recovered": "Hook (verified) (recovered)",
+      "version": 2,
+      "expected_hash": "1d6262358ceee1d99163df26604171eecc8d8b7b90fba5e7d536fb086a587c4b",
+      "disk_unchanged_before_save": true
+    },
+    {
+      "name": "recovery: discard keeps disk title and clears the offer",
+      "ok": true,
+      "ms": 683,
+      "saved_title": "Hook (verified) (recovered)"
+    },
+    {
+      "name": "recovery: edits during Save survive its journal checkpoint",
+      "ok": true,
+      "ms": 600,
+      "saved_snapshot": "Captured for Save",
+      "recovered_edit": "Committed while Save was pending"
+    },
+    {
+      "name": "recovery: undo across Save recovers without prior history",
+      "ok": true,
+      "ms": 833,
+      "saved_title": "Saved before undo",
+      "recovered_undo": "Committed while Save was pending"
+    },
+    {
+      "name": "recovery: Save on disk before acknowledgement preserves later edits",
+      "ok": true,
+      "ms": 733,
+      "saved_snapshot": "Saved before acknowledgement",
+      "recovered_edit": "Durable edit after captured Save"
+    },
+    {
+      "name": "recovery: external change preserves the pending recovery choice",
+      "ok": true,
+      "ms": 670,
+      "recovered_title": "Pending recovery during external change",
+      "external_title": "External change while recovery was pending"
+    },
+    {
+      "name": "assistant: agents listed, unavailable ones disabled",
+      "ok": true,
+      "ms": 3,
+      "agents": [
+        {
+          "id": "claude",
+          "disabled": false
+        },
+        {
+          "id": "codex",
+          "disabled": false
+        },
+        {
+          "id": "gemini",
+          "disabled": false
+        },
+        {
+          "id": "hermes",
+          "disabled": false
+        },
+        {
+          "id": "opencode",
+          "disabled": true
+        }
+      ]
+    },
+    {
+      "name": "mobile: 390 px has no horizontal overflow",
+      "ok": true,
+      "ms": 262,
+      "library": 390,
+      "project": 390
+    },
+    {
+      "name": "console clean",
+      "ok": true,
+      "ms": 0
+    }
+  ],
+  "console_errors": [],
+  "failed_requests": [],
+  "bridge": {
+    "port": 15513,
+    "health": {
+      "ok": true,
+      "name": "fframestudio-bridge",
+      "version": "0.1.0"
+    }
+  },
+  "home": "/home/kvn/.hermes/profiles/clean/cache/scratch/ffs-verify-vTQqW8",
+  "finished": "2026-10-17T18:25:57.723Z",
+  "ok": true
+}

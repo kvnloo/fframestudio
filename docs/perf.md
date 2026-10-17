@@ -254,3 +254,68 @@ The final open-menu screenshots were visually inspected in
 [dark](evidence/context-menu/menu-dark.png), [light](evidence/context-menu/menu-light.png)
 and [high contrast](evidence/context-menu/menu-contrast.png); labels, shortcuts, focus and
 separators are readable, and the bottom-right-clamped menu fits the viewport.
+
+## System-theme qualification
+
+Measured on the same Linux/Chromium host and 1440×1000 fixture above, with no changes to any existing
+performance gate. Baseline was `8701715`; candidate is `feat/system-theme` (adapters, live SSE,
+contrast normalization and isolated token mapping). This is a single before/after acceptance sample,
+not a speedup claim or a controlled multi-pair benchmark. An exact-code replay is also retained below.
+
+| Measure | Before | After | Budget |
+| --- | --- | --- | --- |
+| 48-clip cache-disabled navigation → interactive | 130.8 ms | 129.4 ms | <300 ms |
+| Command → DOM/layout ready, worst | 9.9 ms | 8.9 ms | <16 ms |
+| Command → next rAF, worst | 16.8 ms | 16.8 ms | existing next-frame gate |
+| Shipped editor gzip, excluding ACP | 26,811 B | 30,068 B | <150 KiB |
+| Theme GET during cold open | absent | 1.8 ms | parallel, never awaited by editor |
+| Theme application, 30 fixture samples | absent | 0.6 ms worst | <16 ms |
+| wal file rewrite → computed background, no reload | absent | 116 ms | <2 s |
+
+The cold trace shows `/theme` starting at 38.0 ms, `/agents` at 38.2 ms and the project read at
+38.9 ms. The verify run saw exactly one initial theme GET (775 transferred bytes), 1.7 ms duration.
+The module is preloaded beside the existing editor modules; no new runtime dependency was added.
+The 3,257 B gzip increase includes all shipped theme logic and settings/shot-type wiring.
+
+Application timing uses `system-theme-start` → `system-theme-apply` performance marks, including
+contrast preparation, all token writes and Workspace metadata updates. It performs no layout reads
+or forced style flush. This is synchronous application work, **not compositor presentation**.
+Real read-only palettes, 30 applications each:
+
+| Desktop palette | Median apply | Worst apply | Text / panel contrast | Accent / panel contrast |
+| --- | --- | --- | --- | --- |
+| Noctalia | 0.2 ms | 1.9 ms | 10.12:1 | 7.38:1 |
+| pywal / wallust | 0.5 ms | 1.1 ms | 9.51:1 | 4.95:1 |
+
+The actual wal palette's small accent labels were too dim at the UI-only 3:1 threshold on visual
+review. Because current `acc/warn/bad` tokens also render text, they now require 4.5:1; ANSI-only
+shot borders remain 3:1. Workspace discloses the exact color adjustments. Both real editor
+screenshots and the fixture before/live/fixed states were visually inspected: layout is unchanged,
+Noctalia retains olive/gold surfaces, and wal retains its low-saturation slate/green identity.
+No real desktop file was changed. Screenshots live in
+`/mnt/zer0models/project-artifacts/fframestudio/ui-compare/system-theme/`.
+
+### Retained failures and receipts
+
+One initial candidate run failed before measurement when the default-port bridge exited. The
+harness did not retain stderr, so the cause is unproven; a private port (`FFS_PORT=18793`) was used
+for subsequent runs without touching another process. A run made concurrently with a second
+Chromium visual-capture job failed cold-open at **422.2 ms**; all its other gates passed. Its CSS and
+module requests alone took about 108 ms. This failure is retained, not discarded or described as
+passing. The first serial acceptance run exited 0 with 129.4 ms cold open and every existing gate
+true. After adding direct dependency-injected GNOME malformed/missing-command tests, an exact-code
+replay of verify + performance also exited 0: **122.6 ms cold open**, 9.4 ms worst DOM/layout-ready,
+16.8 ms worst next-rAF, 60.003 fps scrub, all 14 journeys passing. The replay's theme application was
+2.6 ms worst across 30 samples, and its live update took 108 ms without reload. Node tests were rerun
+independently and all 53 passed. No budget, sampling phase, host process or browser scheduling setting changed.
+
+- [Final exact-code replay perf](evidence/system-theme/final-perf.json) and [verify](evidence/system-theme/final-verify.json)
+- [Baseline raw perf](evidence/system-theme/baseline-perf.json)
+- [Passing candidate raw perf](evidence/system-theme/after-perf.json)
+- [Concurrent-browser failed perf](evidence/system-theme/concurrent-browser-failed-perf.json)
+- [All 14 verification journeys](evidence/system-theme/verify.json): exit 0, no console errors or failed requests
+- [Node + ACP security test log](evidence/system-theme/tests.txt): exit 0, 53 Node tests
+- [Real-palette contrast and application samples](evidence/system-theme/real-palettes.json)
+
+Reproduce with `npm test`, `npm run verify`, and `FFS_PORT=<free-private-port> npm run test:perf`.
+See [system-theme.md](system-theme.md) for provider paths and the read-only screenshot command.
