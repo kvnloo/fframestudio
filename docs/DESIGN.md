@@ -12,6 +12,8 @@ They are views over one document, never separate "simple" and "pro" projects. (0
 
 ## 2. What the user sees
 
+The fitted desktop shell keeps the aspect-fit canvas between a collapsible Story rail and a tabbed slate, with transport and the resizable timeline always visible; Takes, Assistant/proposals and Source share the slate so no feature requires document scrolling. Below 1024 px the same mounted Story view becomes a tab, tablet panels sit below the canvas/timeline, and phones use a single-column page with internal panel scrolling and larger touch controls.
+
 - **Nouns:** Project → Media, Video, Versions. A Video holds Clips and Layers; Scenes are optional
   groups. "Take" is reserved for recorded performances; whole-film alternatives are Versions. (05 §3)
 - **Verbs learned once:** Add, Select, Move, Trim, Split, Replace, Edit, Duplicate, Group, Preview,
@@ -106,9 +108,10 @@ High contrast and Custom remain selectable in Workspace. The library and editor 
 carries the poster; Instrument Serif supplies the human voice; Instrument Sans carries body copy;
 Plex Mono is reserved for labels and time. Fonts are local, OFL, with `font-display: swap`.
 
-The hero frame and film timeline lead. Story, Takes (film versions), proposals, provenance and
-the assistant remain available below; these are the same document views and commands, not a
-second editing mode. The right slate has Shot / Narrative / Direction tabs. Direction renders
+The aspect-fit frame and film timeline lead inside a fitted workspace. Story is a collapsible
+left rail; Takes (film versions), proposals, provenance and the assistant share the right slate
+with Shot / Narrative / Direction. They are the same document views and commands, not a second
+editing mode. Tablet/phone move Story into its own slate tab. Direction renders
 source metadata, actual shared styles, format and poster-derived swatches, never pretend presets.
 Generated shots have paper poster frames; source clips retain actual media and display words.
 These are editorial previews, not a new final compositor or an export qualification.

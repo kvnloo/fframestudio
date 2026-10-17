@@ -103,7 +103,7 @@ async function showProject(id){
  const j=await api.read(`projects/${id}/project.json`);
  EDITOR=new Editor($('#view'),{api,toast,onChange:d=>{CUR={...d,__abs:j.absolute};},assistant:renderAssistant});
  await EDITOR.open(j.content,j.absolute);window.ffs=EDITOR;
- $('#crumbs').innerHTML=`<a href="#/">library</a> / <span>${esc(CUR.title)}</span>`;
+ $('#crumbs').innerHTML=`<a href="#/">library</a> / <span title="${esc(CUR.title)}">${esc(CUR.title)}</span>`;
 }
 function renderProject(){renderAssistant($('#assistant-slot'));}
 function renderAssistant(slot){if(!slot)return;

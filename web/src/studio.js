@@ -1,4 +1,6 @@
 import { fpsOf, textOf } from "./doc/project.js";
+import { FittedLayout } from "./fitted-layout.js";
+const panelTabs = ["shot", "narrative", "direction", "takes", "assistant", "source", "story"];
 export const escapeHTML = (s) =>
   String(s ?? "").replace(
     /[&<>"']/g,
@@ -88,16 +90,13 @@ export class StudioView {
     metadata.innerHTML =
       '<span class="cap">RUNTIME <b id="cut-runtime"></b></span><span class="cap">DIRECTION <b id="cut-direction"></b></span>';
     $(".ph-title").append(metadata);
-    $(".story-panel").before($(".canvas-panel"));
-    const story = $(".story-panel");
-    $(".secondary-grid").prepend(story);
-    $(".canvas-panel").append($(".timeline-panel"));
+
     $(".inspector-panel>.panel-title").firstChild.textContent = "Film slate ";
     const tabs = document.createElement("div");
     tabs.className = "slate-tabs";
     tabs.setAttribute("role", "tablist");
     tabs.setAttribute("aria-label", "Editorial panels");
-    tabs.innerHTML = ["shot", "narrative", "direction"]
+    tabs.innerHTML = panelTabs
       .map(
         (t) =>
           `<button role="tab" id="tab-${t}" aria-controls="${t === "shot" ? "inspector" : t + "-pane"}" aria-selected="${t === "shot"}" data-slate-tab="${t}">${t}</button>`,
@@ -106,7 +105,7 @@ export class StudioView {
     $("#inspector").before(tabs);
     $("#inspector").setAttribute("role", "tabpanel");
     $("#inspector").setAttribute("aria-labelledby", "tab-shot");
-    for (const t of ["narrative", "direction"]) {
+    for (const t of panelTabs.filter(t => t !== "shot")) {
       const n = document.createElement("div");
       n.id = t + "-pane";
       n.className = "slate-pane";
@@ -122,14 +121,14 @@ export class StudioView {
     tabs.onkeydown = (ev) => {
       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(ev.key)) return;
       ev.preventDefault();
-      const ts = ["shot", "narrative", "direction"];
+      const ts = panelTabs.filter(t => t !== "story" || innerWidth < 1024);
       this.showTab(
         ts[
           ev.key === "Home"
             ? 0
             : ev.key === "End"
-              ? 2
-              : (ts.indexOf(this.tab) + (ev.key === "ArrowRight" ? 1 : 2)) % 3
+              ? ts.length - 1
+              : (ts.indexOf(this.tab) + (ev.key === "ArrowRight" ? 1 : ts.length - 1)) % ts.length
         ],
       );
       $("#tab-" + this.tab).focus();
@@ -182,15 +181,20 @@ export class StudioView {
     // Media analysis is deliberately off the cold-open path.
     this.analysisState = "pending";
     this.audioTimer = setTimeout(() => this.loadAudio(), 750);
-    if (e.doc.metadata?.direction) this.showTab("direction");
+    this.layout = new FittedLayout(e);
+    this.layout.mount();
+    this.showTab(e.settings.slateTab || (e.doc.metadata?.direction ? "direction" : "shot"));
   }
   showTab(tab) {
+    if (!panelTabs.includes(tab) || (tab === "story" && innerWidth >= 1024)) tab = "shot";
     this.tab = tab;
-    for (const t of ["shot", "narrative", "direction"]) {
+    for (const t of panelTabs) {
       $("#tab-" + t).setAttribute("aria-selected", String(t === tab));
       $("#tab-" + t).tabIndex = t === tab ? 0 : -1;
       $(t === "shot" ? "#inspector" : "#" + t + "-pane").hidden = t !== tab;
     }
+    this.e.settings.slateTab = tab;
+    localStorage.setItem("ffs.settings", JSON.stringify(this.e.settings));
     this.inspector();
   }
   inspector() {
@@ -278,7 +282,7 @@ export class StudioView {
         return end < min || start > max
           ? []
           : [
-              `<span style="left:${start * e.scale}px;width:${(end - start) * e.scale}px">${String(i + 1).padStart(2, "0")} ${esc(s.name)}</span>`,
+              `<span title="${esc(s.name)}" style="left:${start * e.scale}px;width:${(end - start) * e.scale}px">${String(i + 1).padStart(2, "0")} ${esc(s.name)}</span>`,
             ];
       })
       .join("");
@@ -300,7 +304,9 @@ export class StudioView {
             e.video.beats.length +
             " MARKERS" +
             (bpm ? " · " + bpm + " BPM" : "")
-          : "SHOT MARKERS · NO AUDIO TRACK",
+          : this.peaks
+            ? (this.waveSource || "Audio").toUpperCase() + " · MEASURED WAVEFORM"
+            : "SHOT MARKERS · NO AUDIO TRACK",
     );
     put(
       "#film-stats",
@@ -555,6 +561,7 @@ export class StudioView {
     ctx.stroke();
   }
   destroy() {
+    this.layout?.destroy();
     clearTimeout(this.audioTimer);
     this.audio?.pause();
     this.audio?.removeAttribute("src");

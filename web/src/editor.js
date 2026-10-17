@@ -3,6 +3,7 @@ import { scope, COMMANDS, CommandStore, proposalCommand, recoveryCommand } from 
 import { RecoveryJournal, fileHash } from './doc/journal.js';
 import { setThemeSettings, themeInfo, onTheme, shotColorSlot } from './system-theme.js';
 import { StudioView, colourSlot, clipKind, timecode, advanceFrame } from './studio.js';
+import { PosterDecoder } from './poster-decoder.js';
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
@@ -83,11 +84,14 @@ export class Editor {
     };
     this.thumbs = new Worker('/app/src/thumb-worker.js', { type: 'module' });
     this.thumbTargets = new Map();
+    this.posterDecoder = new PosterDecoder(this);
     this.thumbs.onmessage = ({ data: m }) => {
       const canvas = this.thumbTargets.get(m.id);
+      if (m.decode && canvas?.isConnected) { this.posterDecoder.request(m.id, canvas); return; }
       this.thumbTargets.delete(m.id);
       if (canvas?.isConnected && m.bitmap) {
         canvas.getContext('bitmaprenderer').transferFromImageBitmap(m.bitmap);
+        canvas.dataset.ready = 'true';
       } else m.bitmap?.close();
     };
     this.observer = new IntersectionObserver(
@@ -97,7 +101,8 @@ export class Editor {
             this.observer.unobserve(e.target);
             const id = ++this.seq;
             this.thumbTargets.set(id, e.target);
-            this.thumbs.postMessage({ id, url: e.target.dataset.thumb });
+            if (e.target.dataset.video) this.thumbs.postMessage({ id, video:true, key:e.target.dataset.video + ':' + e.target.dataset.midpoint });
+            else this.thumbs.postMessage({ id, url: e.target.dataset.thumb });
           }
       },
       { rootMargin: '100px' },
@@ -299,15 +304,31 @@ export class Editor {
     this.panelResize = new ResizeObserver((entries) => {
       if (this.restoringLayout) return;
       for (const e of entries) {
+        if (e.target !== this.resizingPanel) continue;
         if (e.target.classList.contains('collapsed')) continue;
         const k = e.target.classList.contains('story-panel')
           ? 'storyWidth'
           : 'inspectorWidth';
-        if (innerWidth > 1000)
+        if (innerWidth >= 1024)
           this.settings[k] = Math.round(e.borderBoxSize[0].inlineSize);
       }
       localStorage.setItem('ffs.settings', JSON.stringify(this.settings));
     });
+    for (const panel of [$('.story-panel'), $('.inspector-panel')]) {
+      panel.addEventListener('pointerdown', event => {
+        const rect = panel.getBoundingClientRect();
+        if (rect.right - event.clientX < 16 && rect.bottom - event.clientY < 16) this.resizingPanel = panel;
+      });
+    }
+    this.panelResizeEnd = () => {
+      const panel = this.resizingPanel;
+      if (panel && !panel.classList.contains('collapsed') && innerWidth >= 1024) {
+        this.settings[panel.classList.contains('story-panel') ? 'storyWidth' : 'inspectorWidth'] = Math.round(panel.getBoundingClientRect().width);
+        localStorage.setItem('ffs.settings', JSON.stringify(this.settings));
+      }
+      this.resizingPanel = null;
+    };
+    addEventListener('pointerup', this.panelResizeEnd);
     this.applySettings();
     this.panelResize.observe($('.story-panel'));
     this.panelResize.observe($('.inspector-panel'));
@@ -339,11 +360,15 @@ export class Editor {
     for (const key of ['story', 'inspector']) {
       const p = $(`.${key}-panel`);
       p.classList.toggle('collapsed', !!this.settings[key + 'Collapsed']);
+      const toggle = $(`[data-action="toggle-${key}"]`);
+      toggle.textContent = this.settings[key + 'Collapsed'] ? 'Expand' : 'Collapse';
+      toggle.setAttribute('aria-expanded', String(!this.settings[key + 'Collapsed']));
       p.style.width =
-        innerWidth > 1000 && this.settings[key + 'Width']
+        innerWidth >= 1024 && this.settings[key + 'Width'] && !this.settings[key + 'Collapsed']
           ? this.settings[key + 'Width'] + 'px'
           : '';
     }
+    this.studio?.layout?.windowResize?.();
     queueMicrotask(() => (this.restoringLayout = false));
   }
   measure() {
@@ -353,7 +378,7 @@ export class Editor {
   }
   updateScale() {
     this.scale =
-      Math.max(this.video.clips.length > 100 ? 0.4 : 0.02, this.timelineWidth / Math.max(this.total, 1)) * this.zoom;
+      Math.max(innerWidth < 768 ? 80 / Math.max(1, Math.min(...this.video.clips.map(c => c.duration))) : this.video.clips.length > 100 ? 0.4 : 0.02, this.timelineWidth / Math.max(this.total, 1)) * this.zoom;
   }
   refresh(result) {
     if ($('.ph-title h1').textContent !== this.doc.title)
@@ -378,17 +403,21 @@ export class Editor {
     }
   }
   observeThumbs(root) {
-    $$('canvas[data-thumb]', root).forEach((e) => {
+    $$('canvas[data-thumb],canvas[data-video]', root).forEach((e) => {
       if (!e.dataset.observed) {
         e.dataset.observed = '1';
         this.observer.observe(e);
       }
     });
   }
-  thumb(c) {
-    return c.thumb
-      ? `<canvas width="160" height="90" data-thumb="${esc(this.url(c.thumb))}" aria-label="Clip thumbnail"></canvas>`
-      : '<span class="thumb-empty">◇</span>';
+  thumb(c, poster = false) {
+    const image = c.thumb ? `<canvas width="160" height="90" data-thumb="${esc(this.url(c.thumb))}" aria-label="Clip thumbnail"></canvas>` : '';
+    if (!poster) return image || '<span class="thumb-empty"></span>';
+    const media = this.doc.media.find(m => m.id === c.mediaId && m.kind === 'video');
+    const video = media?.file || this.doc.preview.proxy || this.doc.metadata?.renders?.[0]?.file;
+    const midpoint = (media ? c.sourceIn + c.duration * c.speed.num / c.speed.den / 2 : c.start + c.duration / 2) / fpsOf(this.doc);
+    const words = Object.values(textOf(c)).flat().join(' ') || c.name;
+    return `<div class="shot-thumbnail" title="${esc(words)}"><span class="thumb-words">${esc(words)}</span>${image || (video ? `<canvas width="160" height="90" data-video="${esc(this.url(video))}" data-midpoint="${midpoint}" aria-label="Clip midpoint poster"></canvas>` : '')}</div>`;
   }
   reconcile(map, parent, rows, render) {
     const keep = new Set();
@@ -404,7 +433,7 @@ export class Editor {
     }
     for (const [id, node] of map)
       if (!keep.has(id)) {
-        this.observer.unobserve(node);
+        for (const canvas of $$('canvas', node)) this.observer.unobserve(canvas);
         node.remove();
         map.delete(id);
       }
@@ -428,6 +457,7 @@ export class Editor {
             index,
             c.name,
             c.thumb,
+            c.mediaId, c.sourceIn, c.start, c.speed,
             textOf(c),
             c.duration,
           ]),
@@ -445,13 +475,18 @@ export class Editor {
         node.style.transform = `translateY(${index * 112}px)`;
         if (node.signature !== signature) {
           node.signature = signature;
-          if (!node.firstChild || node.thumb !== c.thumb) {
-            node.thumb = c.thumb;
-            node.innerHTML = `${this.thumb(c)}<div><div class="cap"></div><strong></strong><p></p></div>`;
+          const thumbKey = JSON.stringify([c.thumb, c.mediaId, c.sourceIn, c.start, c.duration, c.speed]);
+          if (!node.firstChild || node.thumb !== thumbKey) {
+            node.thumb = thumbKey;
+            node.innerHTML = `${this.thumb(c, true)}<div class="story-copy"><div class="cap"></div><strong></strong><p></p></div>`;
             this.observeThumbs(node);
           }
           $('.cap', node).textContent = `${index + 1} · ${c.duration} f`;
           $('strong', node).textContent = c.name;
+          $('strong', node).title = c.name;
+          const words = Object.values(textOf(c)).flat().join(' ') || c.name;
+          $('.thumb-words', node).textContent = words;
+          $('.shot-thumbnail', node).title = words;
           $('p', node).textContent =
             Object.values(textOf(c)).flat().join(' ') ||
             'Add words in the inspector';
@@ -924,6 +959,8 @@ export class Editor {
     this.proposalPath = path;
     const box = $('#proposals');
     box.innerHTML = `<b>${esc(p.title || 'Assistant edit')}</b><p>Revision ${esc(p.baseRevision)} · ${p.commands?.length || 0} commands</p>${button('inspect-proposal', 'Inspect')}${button('apply-proposal', 'Apply')}${button('reject-proposal', 'Reject')}<pre id="proposal-diff"></pre>`;
+    this.studio.showTab('assistant');
+    if (this.settings.inspectorCollapsed) { this.settings.inspectorCollapsed = false; this.saveSettings(); }
     await this.inspectProposal();
   }
   async inspectProposal() {
@@ -1294,9 +1331,11 @@ export class Editor {
     this.untheme?.();
     this.worker.terminate();
     this.thumbs.terminate();
+    this.posterDecoder.destroy();
     this.observer.disconnect();
     this.resize?.disconnect();
     this.panelResize?.disconnect();
+    removeEventListener('pointerup', this.panelResizeEnd);
     removeEventListener('keydown', this.keyHandler);
     removeEventListener('beforeunload', this.beforeUnload);
   }
