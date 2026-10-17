@@ -1,0 +1,81 @@
+{
+  "research_date": "2026-10-17",
+  "warning": "All rates/CRFs are hypotheses. Same simulator applied to naive and candidate; no upload-resolution codec bonus.",
+  "platforms": {
+    "youtube": {
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "codec": "libvpx-vp9",
+      "bitrate_kbps": 3000,
+      "crf": 31,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "shorts": {
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "codec": "libvpx-vp9",
+      "bitrate_kbps": 2500,
+      "crf": 32,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "tiktok": {
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "codec": "libx264",
+      "bitrate_kbps": 2500,
+      "crf": 26,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "reels": {
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "codec": "libx264",
+      "bitrate_kbps": 3000,
+      "crf": 25,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "x": {
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "codec": "libx264",
+      "bitrate_kbps": 2000,
+      "crf": 25,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    }
+  }
+}

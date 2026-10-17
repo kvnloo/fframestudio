@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-17T04:17:05.748823-05:00",
+  "command": [
+    "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "delivery",
+    "-v"
+  ],
+  "DELIVERY_TEST_NVENC": "1",
+  "returncode": 0,
+  "wall_seconds": 13.88321811897913,
+  "tests_run": 18,
+  "log": "/mnt/zer0models/project-artifacts/fframestudio/delivery/tests.log"
+}

@@ -1,0 +1,20 @@
+{
+  "platform": "reels",
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "conform": "decimate",
+  "scale": "lanczos",
+  "fit": "pad",
+  "prefilter": "none",
+  "encoder": "h264_nvenc",
+  "quality": 14,
+  "maxrate_kbps": 20000,
+  "bufsize_kbits": 10000,
+  "max_upload_bitrate_kbps": 25000,
+  "gop_seconds": 2,
+  "audio_lufs": -14,
+  "audio_true_peak": -1.5,
+  "audio_kbps": 128,
+  "qualification": "Measured on four 3-second SDR clips, 2026-10-17. Simulator only; see REPORT.md."
+}
