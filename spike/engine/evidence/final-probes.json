@@ -1,0 +1,205 @@
+{
+  "diffusion-final.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "opus",
+        "codec_type": "audio",
+        "r_frame_rate": "0/0",
+        "avg_frame_rate": "0/0",
+        "duration": "20.020000",
+        "nb_frames": "1001",
+        "nb_read_frames": "1001"
+      },
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "duration": "20.000000",
+        "nb_frames": "600",
+        "nb_read_frames": "600"
+      }
+    ]
+  },
+  "diffusion-portrait60.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "opus",
+        "codec_type": "audio",
+        "r_frame_rate": "0/0",
+        "avg_frame_rate": "0/0",
+        "duration": "2.020000",
+        "nb_frames": "101",
+        "nb_read_frames": "101"
+      },
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1080,
+        "height": 1920,
+        "r_frame_rate": "60/1",
+        "avg_frame_rate": "60/1",
+        "duration": "2.000000",
+        "nb_frames": "120",
+        "nb_read_frames": "120"
+      }
+    ]
+  },
+  "diffusion-4k30.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "opus",
+        "codec_type": "audio",
+        "r_frame_rate": "0/0",
+        "avg_frame_rate": "0/0",
+        "duration": "2.020000",
+        "nb_frames": "101",
+        "nb_read_frames": "101"
+      },
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 3840,
+        "height": 2160,
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "duration": "2.000000",
+        "nb_frames": "60",
+        "nb_read_frames": "60"
+      }
+    ]
+  },
+  "diffusion-1440p120.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "opus",
+        "codec_type": "audio",
+        "r_frame_rate": "0/0",
+        "avg_frame_rate": "0/0",
+        "duration": "2.020000",
+        "nb_frames": "101",
+        "nb_read_frames": "101"
+      },
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 2560,
+        "height": 1440,
+        "r_frame_rate": "120/1",
+        "avg_frame_rate": "120/1",
+        "duration": "2.000000",
+        "nb_frames": "240",
+        "nb_read_frames": "240"
+      }
+    ]
+  },
+  "tmix60.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "60/1",
+        "avg_frame_rate": "60/1",
+        "duration": "2.000000",
+        "nb_frames": "120",
+        "nb_read_frames": "120"
+      }
+    ]
+  },
+  "tmix30.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "duration": "2.000000",
+        "nb_frames": "60",
+        "nb_read_frames": "60"
+      }
+    ]
+  },
+  "fframes-2s.mkv": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "ffv1",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "60/1",
+        "avg_frame_rate": "60/1",
+        "nb_read_frames": "120"
+      },
+      {
+        "codec_name": "ac3",
+        "codec_type": "audio",
+        "r_frame_rate": "0/0",
+        "avg_frame_rate": "0/0",
+        "nb_read_frames": "58"
+      }
+    ]
+  },
+  "fframes-2s.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "60/1",
+        "avg_frame_rate": "60/1",
+        "duration": "1.950000",
+        "nb_frames": "117",
+        "nb_read_frames": "117"
+      },
+      {
+        "codec_name": "aac",
+        "codec_type": "audio",
+        "r_frame_rate": "0/0",
+        "avg_frame_rate": "0/0",
+        "duration": "2.014331",
+        "nb_frames": "88",
+        "nb_read_frames": "87"
+      }
+    ]
+  },
+  "chromium-native.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "duration": "2.000000",
+        "nb_frames": "60",
+        "nb_read_frames": "60"
+      }
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+{"name":"fframestudio-engine-qualification","private":true,"type":"module","scripts":{"dev":"vite --host 127.0.0.1 --port 5197","build":"vite build"},"dependencies":{"@diffusionstudio/core":"4.0.3","@webav/av-canvas":"1.2.8","@webav/av-cliper":"1.2.8","mediabunny":"1.61.6"},"devDependencies":{"typescript":"5.9.3","vite":"7.3.7"}}

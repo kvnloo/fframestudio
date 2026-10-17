@@ -1,0 +1,4 @@
+import {defineConfig} from 'vite';
+import {createWriteStream,mkdirSync} from 'node:fs';
+import {pipeline} from 'node:stream/promises';
+export default defineConfig({build:{copyPublicDir:false,rollupOptions:{input:{main:'index.html',alternative:'alternative.html',performance:'performance.html'}}},server:{host:'127.0.0.1',port:5197,strictPort:true,headers:{'Cross-Origin-Opener-Policy':'same-origin','Cross-Origin-Embedder-Policy':'credentialless'}},plugins:[{name:'local-receipts',configureServer(server){server.middlewares.use('/receipt',async(req,res)=>{const name=new URL(req.url,'http://localhost').searchParams.get('name');if(req.method!=='POST'||!name||!/^[-a-zA-Z0-9_.]+$/.test(name)){res.statusCode=400;res.end();return;}mkdirSync('artifacts',{recursive:true});await pipeline(req,createWriteStream('artifacts/'+name));res.end('ok');});}}]});

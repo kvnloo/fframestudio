@@ -1,0 +1,143 @@
+{
+  "fframesBinary": {
+    "sha256": "a923ff9fed8c05d94a66d13e201efbaece6c080fb5c9186215cdf1067b829c05",
+    "sourceHead": "30b48f3da60040e0fd7c811fdcd5b159e70a5b02"
+  },
+  "fframes": {
+    "seconds": 13.239669358998071,
+    "exitCode": 0,
+    "command": [
+      "/mnt/zer0models/hermes-wt/render-lab/demo/fframes-film/target/release/one-take",
+      "render",
+      "0s..2s",
+      "--json",
+      "-o",
+      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/fframes-2s.mkv"
+    ]
+  },
+  "fframes-h264": {
+    "seconds": 5.313794497982599,
+    "exitCode": 0,
+    "command": [
+      "ffmpeg",
+      "-v",
+      "error",
+      "-y",
+      "-i",
+      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/fframes-2s.mkv",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "fast",
+      "-crf",
+      "18",
+      "-threads",
+      "2",
+      "-c:a",
+      "aac",
+      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/fframes-2s.mp4"
+    ]
+  },
+  "tmix60": {
+    "seconds": 11.399880198005121,
+    "exitCode": 0,
+    "command": [
+      "ffmpeg",
+      "-v",
+      "error",
+      "-y",
+      "-i",
+      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/probe-1080p240.mp4",
+      "-vf",
+      "tmix=frames=4:weights='1 1 1 1',select='eq(mod(n,4),3)',setpts=N/(60*TB)",
+      "-r",
+      "60",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "fast",
+      "-crf",
+      "18",
+      "-threads",
+      "2",
+      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/tmix60.mp4"
+    ]
+  },
+  "tmix30": {
+    "seconds": 14.07128095504595,
+    "exitCode": 0,
+    "command": [
+      "ffmpeg",
+      "-v",
+      "error",
+      "-y",
+      "-i",
+      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/probe-1080p240.mp4",
+      "-vf",
+      "tmix=frames=8:weights='1 1 1 1 1 1 1 1',select='eq(mod(n,8),7)',setpts=N/(30*TB)",
+      "-r",
+      "30",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "fast",
+      "-crf",
+      "18",
+      "-threads",
+      "2",
+      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/tmix30.mp4"
+    ]
+  },
+  "chromium-frames-encode": {
+    "seconds": 6.7002525990246795,
+    "exitCode": 0,
+    "command": [
+      "ffmpeg",
+      "-v",
+      "error",
+      "-y",
+      "-framerate",
+      "30",
+      "-i",
+      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/capture-%03d.png",
+      "-frames:v",
+      "60",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "fast",
+      "-crf",
+      "18",
+      "-threads",
+      "2",
+      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/chromium-native.mp4"
+    ]
+  },
+  "native-mux": {
+    "seconds": 1.5512840379960835,
+    "exitCode": 0,
+    "command": [
+      "ffmpeg",
+      "-v",
+      "error",
+      "-y",
+      "-i",
+      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/webav-silent.mp4",
+      "-i",
+      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/public/media/music-sync.wav",
+      "-map",
+      "0:v",
+      "-map",
+      "1:a",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "192k",
+      "-t",
+      "20",
+      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/webav-native-audio.mp4"
+    ]
+  }
+}

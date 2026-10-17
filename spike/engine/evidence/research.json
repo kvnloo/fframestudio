@@ -1,0 +1,272 @@
+{
+  "retrievedAt": "2026-10-17T07:49:11.694640+00:00",
+  "WebAV-Tech/WebAV": {
+    "pushed_at": "2026-01-10T09:53:51Z",
+    "archived": false,
+    "default_branch": "main",
+    "open_issues_count": 5,
+    "head": {
+      "sha": "42dd6fd65ccbda39c729265c14aab56ac4d28235",
+      "date": "2026-01-10T09:53:51Z"
+    },
+    "license": {
+      "key": "mit",
+      "name": "MIT License",
+      "spdx_id": "MIT",
+      "url": "https://api.github.com/licenses/mit",
+      "node_id": "MDc6TGljZW5zZTEz"
+    }
+  },
+  "Vanilagy/mediabunny": {
+    "pushed_at": "2026-10-16T18:13:50Z",
+    "archived": false,
+    "default_branch": "main",
+    "open_issues_count": 56,
+    "head": {
+      "sha": "8dee3638fb1755e58b88d4432e344c5916027e76",
+      "date": "2026-10-16T18:04:10Z"
+    },
+    "license": {
+      "key": "mpl-2.0",
+      "name": "Mozilla Public License 2.0",
+      "spdx_id": "MPL-2.0",
+      "url": "https://api.github.com/licenses/mpl-2.0",
+      "node_id": "MDc6TGljZW5zZTE0"
+    }
+  },
+  "diffusionstudio/core": {
+    "pushed_at": "2025-11-18T19:10:12Z",
+    "archived": false,
+    "default_branch": "main",
+    "open_issues_count": 7,
+    "head": {
+      "sha": "4e784a7136b3b08e7b9b0c69504085897bf18647",
+      "date": "2025-11-18T19:10:12Z"
+    },
+    "license": {
+      "key": "mpl-2.0",
+      "name": "Mozilla Public License 2.0",
+      "spdx_id": "MPL-2.0",
+      "url": "https://api.github.com/licenses/mpl-2.0",
+      "node_id": "MDc6TGljZW5zZTE0"
+    }
+  },
+  "Augani/openreel-video": {
+    "pushed_at": "2026-10-17T07:17:20Z",
+    "archived": false,
+    "default_branch": "main",
+    "open_issues_count": 21,
+    "head": {
+      "sha": "367d7e90b61b5181f9861b852bb8b9d7a7d2954a",
+      "date": "2026-10-17T07:17:20Z"
+    },
+    "license": {
+      "key": "mit",
+      "name": "MIT License",
+      "spdx_id": "MIT",
+      "url": "https://api.github.com/licenses/mit",
+      "node_id": "MDc6TGljZW5zZTEz"
+    }
+  },
+  "webavIssues": [
+    {
+      "number": 482,
+      "title": "[Bug] \u5bfc\u5165\u7684\u89c6\u9891\u539f\u5bbd\u9ad8\u592a\u5927\u4e86\uff0c \u624b\u52a8\u7f29\u653e\u540e\u5f88\u6a21\u7cca",
+      "updated_at": "2026-01-21T12:27:28Z",
+      "html_url": "https://github.com/WebAV-Tech/WebAV/issues/482"
+    },
+    {
+      "number": 480,
+      "title": "\u8003\u8651\u5c06\u5e95\u5c42mp4box\u5207\u6362\u6210mediabunny\u5417",
+      "updated_at": "2026-01-07T03:13:14Z",
+      "html_url": "https://github.com/WebAV-Tech/WebAV/issues/480"
+    },
+    {
+      "number": 438,
+      "title": "Support more video and audio codecs",
+      "updated_at": "2025-10-10T16:33:08Z",
+      "html_url": "https://github.com/WebAV-Tech/WebAV/issues/438"
+    },
+    {
+      "number": 377,
+      "title": "[Bug] AudioClip \u64ad\u653e\u97f3\u9891\u51fa\u73b0\u201c\u7535\u6d41\u97f3\u201d",
+      "updated_at": "2025-05-23T06:41:30Z",
+      "html_url": "https://github.com/WebAV-Tech/WebAV/issues/377"
+    },
+    {
+      "number": 60,
+      "title": "\u63d0\u95ee\u7684\u6280\u5de7",
+      "updated_at": "2025-08-12T09:01:20Z",
+      "html_url": "https://github.com/WebAV-Tech/WebAV/issues/60"
+    }
+  ],
+  "forksScanned": 242,
+  "recentForks": [
+    {
+      "name": "PiedPiper911/WebAV",
+      "pushed_at": "2026-08-06T12:08:42Z",
+      "status": "identical",
+      "ahead_by": 0,
+      "behind_by": 0,
+      "commits": []
+    },
+    {
+      "name": "AssistMelody/WebAV",
+      "pushed_at": "2026-03-11T07:13:18Z",
+      "status": "ahead",
+      "ahead_by": 2,
+      "behind_by": 0,
+      "commits": [
+        {
+          "sha": "40a00947a445d1460e4ff7e7457e70e2086b8497",
+          "message": "feat: \u4fee\u6539\u955c\u50cf\u6e90"
+        },
+        {
+          "sha": "af66e26d3e2f13da90ce45ea159b37a688c7bf88",
+          "message": "fix: \u4fee\u590d\u500d\u901f\u64ad\u653e\u95ee\u9898"
+        }
+      ]
+    },
+    {
+      "name": "NorthSage/WebAV",
+      "pushed_at": "2026-02-02T20:11:14Z",
+      "status": "behind",
+      "ahead_by": 0,
+      "behind_by": 3,
+      "commits": []
+    },
+    {
+      "name": "knoxlab/WebAV",
+      "pushed_at": "2026-01-27T11:33:46Z",
+      "status": "identical",
+      "ahead_by": 0,
+      "behind_by": 0,
+      "commits": []
+    },
+    {
+      "name": "caohongz/WebAV",
+      "pushed_at": "2026-06-01T02:53:42Z",
+      "status": "identical",
+      "ahead_by": 0,
+      "behind_by": 0,
+      "commits": []
+    },
+    {
+      "name": "tetap/WebAV",
+      "pushed_at": "2026-05-18T12:47:18Z",
+      "status": "diverged",
+      "ahead_by": 1,
+      "behind_by": 259,
+      "commits": [
+        {
+          "sha": "98ccc18bbd42a56c5af20638ee701d98ee15116a",
+          "message": "ci: add build optimization step"
+        }
+      ]
+    }
+  ],
+  "VideoEncoderBrowserCompat": {
+    "support": {
+      "chrome": {
+        "version_added": "94"
+      },
+      "chrome_android": "mirror",
+      "edge": "mirror",
+      "firefox": {
+        "version_added": "130"
+      },
+      "firefox_android": {
+        "version_added": false
+      },
+      "oculus": "mirror",
+      "opera": "mirror",
+      "opera_android": "mirror",
+      "safari": {
+        "version_added": "16.4"
+      },
+      "safari_ios": "mirror",
+      "samsunginternet_android": "mirror",
+      "webview_android": "mirror",
+      "webview_ios": "mirror"
+    },
+    "source": "https://developer.mozilla.org/docs/Web/API/VideoEncoder"
+  },
+  "VideoDecoderBrowserCompat": {
+    "support": {
+      "chrome": {
+        "version_added": "94"
+      },
+      "chrome_android": "mirror",
+      "edge": "mirror",
+      "firefox": {
+        "version_added": "130"
+      },
+      "firefox_android": {
+        "version_added": false
+      },
+      "oculus": "mirror",
+      "opera": "mirror",
+      "opera_android": "mirror",
+      "safari": {
+        "version_added": "16.4"
+      },
+      "safari_ios": "mirror",
+      "samsunginternet_android": "mirror",
+      "webview_android": "mirror",
+      "webview_ios": "mirror"
+    },
+    "source": "https://developer.mozilla.org/docs/Web/API/VideoDecoder"
+  },
+  "AudioEncoderBrowserCompat": {
+    "support": {
+      "chrome": {
+        "version_added": "94"
+      },
+      "chrome_android": "mirror",
+      "edge": "mirror",
+      "firefox": {
+        "version_added": "130"
+      },
+      "firefox_android": {
+        "version_added": false
+      },
+      "oculus": "mirror",
+      "opera": "mirror",
+      "opera_android": "mirror",
+      "safari": {
+        "version_added": "26"
+      },
+      "safari_ios": "mirror",
+      "samsunginternet_android": "mirror",
+      "webview_android": "mirror",
+      "webview_ios": "mirror"
+    },
+    "source": "https://developer.mozilla.org/docs/Web/API/AudioEncoder"
+  },
+  "AudioDecoderBrowserCompat": {
+    "support": {
+      "chrome": {
+        "version_added": "94"
+      },
+      "chrome_android": "mirror",
+      "edge": "mirror",
+      "firefox": {
+        "version_added": "130"
+      },
+      "firefox_android": {
+        "version_added": false
+      },
+      "oculus": "mirror",
+      "opera": "mirror",
+      "opera_android": "mirror",
+      "safari": {
+        "version_added": "26"
+      },
+      "safari_ios": "mirror",
+      "samsunginternet_android": "mirror",
+      "webview_android": "mirror",
+      "webview_ios": "mirror"
+    },
+    "source": "https://developer.mozilla.org/docs/Web/API/AudioDecoder"
+  }
+}

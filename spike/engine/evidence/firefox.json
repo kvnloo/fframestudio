@@ -1,0 +1,67 @@
+{
+  "caps": {
+    "AudioDecoder": "function",
+    "AudioEncoder": "function",
+    "VideoDecoder": "function",
+    "VideoEncoder": "function",
+    "aacDecode": {
+      "config": {
+        "codec": "mp4a.40.2",
+        "numberOfChannels": 2,
+        "sampleRate": 48000
+      },
+      "supported": true
+    },
+    "aacEncode": {
+      "config": {
+        "bitrate": 192000,
+        "bitrateMode": "variable",
+        "codec": "mp4a.40.2",
+        "numberOfChannels": 2,
+        "sampleRate": 48000
+      },
+      "supported": false
+    },
+    "crossOriginIsolated": true,
+    "h264Decode": {
+      "config": {
+        "codec": "avc1.42E032",
+        "codedHeight": 1080,
+        "codedWidth": 1920,
+        "hardwareAcceleration": "no-preference"
+      },
+      "supported": true
+    },
+    "h264Encode": {
+      "config": {
+        "alpha": "discard",
+        "bitrate": 5000000,
+        "bitrateMode": "variable",
+        "codec": "avc1.42E032",
+        "framerate": 30,
+        "hardwareAcceleration": "no-preference",
+        "height": 1080,
+        "latencyMode": "quality",
+        "width": 1920
+      },
+      "supported": true
+    },
+    "secureContext": true,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:157.0) Gecko/20100101 Firefox/157.0",
+    "webav": false
+  },
+  "init": {
+    "clips": 3,
+    "crossfades": [
+      8,
+      11
+    ],
+    "duration": 20,
+    "music": true,
+    "text": true,
+    "trim": true
+  },
+  "export": {
+    "error": "AbortError: The operation was aborted. "
+  }
+}

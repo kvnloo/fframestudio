@@ -1,0 +1,130 @@
+{
+  "artifacts/probe-1080p240.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "1000000/4167",
+        "avg_frame_rate": "1000000/4167",
+        "duration": "2.000160",
+        "nb_read_frames": "480"
+      }
+    ]
+  },
+  "artifacts/probe-1080p30.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "1000000/33333",
+        "avg_frame_rate": "1000000/33333",
+        "duration": "2.033313",
+        "nb_read_frames": "61"
+      }
+    ]
+  },
+  "artifacts/probe-1440p120.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 2560,
+        "height": 1440,
+        "r_frame_rate": "1000000/8333",
+        "avg_frame_rate": "1000000/8333",
+        "duration": "2.008253",
+        "nb_read_frames": "241"
+      }
+    ]
+  },
+  "artifacts/probe-4k30.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 3840,
+        "height": 2160,
+        "r_frame_rate": "1000000/33333",
+        "avg_frame_rate": "1000000/33333",
+        "duration": "2.033313",
+        "nb_read_frames": "61"
+      }
+    ]
+  },
+  "artifacts/probe-accum30.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "1000000/33333",
+        "avg_frame_rate": "1000000/33333",
+        "duration": "2.033313",
+        "nb_read_frames": "61"
+      }
+    ]
+  },
+  "artifacts/probe-accum60.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "1000000/16667",
+        "avg_frame_rate": "1000000/16667",
+        "duration": "2.000040",
+        "nb_read_frames": "120"
+      }
+    ]
+  },
+  "artifacts/probe-portrait60.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1080,
+        "height": 1920,
+        "r_frame_rate": "1000000/16667",
+        "avg_frame_rate": "1000000/16667",
+        "duration": "2.000040",
+        "nb_read_frames": "120"
+      }
+    ]
+  },
+  "artifacts/webav-silent.mp4": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "1000000/33333",
+        "avg_frame_rate": "1000000/33333",
+        "duration": "20.033133",
+        "nb_read_frames": "601"
+      }
+    ]
+  }
+}
