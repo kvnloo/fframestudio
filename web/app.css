@@ -12,7 +12,7 @@ a{color:inherit}button,input,textarea,select{font:inherit;color:inherit}button{b
 .pill:hover{color:var(--ink);border-color:var(--faint)}.pill.on{color:var(--acc);border-color:color-mix(in oklab,var(--acc) 60%,transparent)}
 header{display:flex;align-items:center;gap:16px;padding:0 22px;height:52px;border-bottom:1px solid var(--line);position:sticky;top:0;background:color-mix(in oklab,var(--bg) 92%,transparent);backdrop-filter:blur(8px);z-index:5}
 header .logo{display:flex;align-items:center;gap:9px;font:600 14px "Plex Mono",monospace;text-decoration:none}header .logo svg{width:18px;height:18px}
-header nav{font:12px "Plex Mono",monospace;color:var(--mute);display:flex;gap:8px}header nav a{text-decoration:none}header nav a:hover{color:var(--ink)}
+header nav{font:12px "Plex Mono",monospace;color:var(--mute);display:flex;gap:8px;min-width:0;overflow:hidden;white-space:nowrap}header nav>*{min-width:0;overflow:hidden;text-overflow:ellipsis}header nav{align-items:center;align-self:stretch}header .logo{flex:none}header nav a{text-decoration:none}header nav a:hover{color:var(--ink)}
 header .right{margin-left:auto;display:flex;gap:10px;align-items:center}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--faint);margin-right:6px;vertical-align:1px}.dot.ok{background:var(--acc)}.dot.bad{background:var(--bad)}
 main{padding:24px 22px 60px}
