@@ -1,0 +1,12 @@
+{"editorGzipBytes":21731}
+{"commands":[{"command":"add","ms":4.821066999999999},{"command":"select","ms":0.18699000000000865},{"command":"move","ms":1.3578120000000098},{"command":"trim","ms":5.503053000000008},{"command":"split","ms":1.1571909999999974},{"command":"replace","ms":1.1370189999999951},{"command":"edit-text","ms":0.9837710000000044},{"command":"duplicate","ms":0.7820930000000033},{"command":"group","ms":6.341070000000002},{"command":"set-beat-lock","ms":0.9454980000000148},{"command":"retime","ms":4.478808999999984},{"command":"delete","ms":1.2221590000000049},{"command":"edit-style","ms":0.9666299999999808},{"command":"save-version","ms":6.617533000000009},{"command":"restore-version","ms":8.195110999999997},{"command":"undo","ms":0.06322299999999359},{"command":"redo","ms":0.018268000000006168}]}
+✔ editor shipped JavaScript stays below 150 KiB gzip, excluding ACP (15.758319ms)
+✔ every document command stays under 16ms at 500 clips (worker CPU, no paint) (141.841037ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 287.958182

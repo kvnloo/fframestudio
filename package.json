@@ -11,11 +11,15 @@
     "test:acp": "node test/acp-e2e.mjs",
     "setup": "bash scripts/setup.sh",
     "doctor": "bash scripts/setup.sh --check",
-    "test": "node test/acp-e2e.mjs",
+    "test": "node --test test/doc/*.test.mjs && node test/acp-e2e.mjs",
     "test:agents": "node test/acp-e2e.mjs claude codex hermes --edit claude",
     "import": "python3 tools/import_projects.py",
     "demo": "python3 tools/make_demo.py",
-    "verify": "node test/verify.mjs"
+    "verify": "node test/verify.mjs",
+    "test:doc": "node --test test/doc/*.test.mjs",
+    "test:editor": "node tools/verify-editor.mjs",
+    "test:editor-acp": "node tools/verify-editor.mjs --acp",
+    "test:perf": "node --test test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf"
   },
   "devDependencies": {
     "@agentclientprotocol/sdk": "1.9.0",

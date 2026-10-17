@@ -1,6 +1,8 @@
 // fframestudio web app: project library + project view + ACP assistant.
 // Served by the local bridge (same origin), authenticated by the cookie the /open link sets.
-import { bridgeApi, connectAgent } from '/app/dist/acp-client.js';
+import { Editor } from '/app/src/editor.js';
+const connectAgent=async options=>(await import('/app/dist/acp-client.js')).connectAgent(options);
+const bridgeApi=()=>({read:async p=>{const r=await fetch('/fs?path='+encodeURIComponent(p));if(!r.ok)throw Error('Read failed: '+r.status);return r.json();},agents:async()=>{const r=await fetch('/agents');return r.json();},events:fn=>{const es=new EventSource('/events');es.onmessage=e=>fn(JSON.parse(e.data));return ()=>es.close();}});
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -15,17 +17,17 @@ async function boot() {
   try { ME = await fetch('/me').then((r) => r.json()); } catch {}
   if (!ME?.ok) { $('#bridge').innerHTML = '<span class="dot bad"></span>not signed in'; $('#view').innerHTML = `<div class="gate"><div class="cap">fframestudio</div><h1>Open the link the bridge printed</h1>
     <p>Start the bridge with <code>npm run bridge</code> and open the <code>/open?token=…</code> link it prints (also in <code>~/.config/fframestudio/bridge.json</code>). The link sets a same-site cookie so this page can reach your projects and agents.</p></div>`; return; }
-  AGENTS = (await api.agents()).agents;
-  $('#bridge').innerHTML = `<span class="dot ok"></span>bridge · ${AGENTS.filter((a) => a.available).length} agents`;
-  api.events((e) => { if (CUR && e.path === `projects/${CUR.id}/project.json` && Date.now() - lastSave > 1500) reloadProject(true); if (e.path === 'projects/library.json') loadLib().then(route); });
-  await loadLib(); addEventListener('hashchange', route); route();
+  $('#bridge').innerHTML='<span class="dot ok"></span>bridge connected';
+  api.agents().then(r=>{AGENTS=r.agents;renderAssistant($('#assistant-slot'));}).catch(()=>{});
+  api.events(e=>{EDITOR?.external(e.path).catch(err=>toast(err.message));if(e.path==='projects/library.json')loadLib();});
+  addEventListener('hashchange',route);if(location.hash.startsWith('#/p/')){loadLib();route();}else{await loadLib();route();}
 }
 async function loadLib() { LIB = await fetch('/lib/library.json').then((r) => (r.ok ? r.json() : { projects: [] })); }
 
 function route() {
   const m = location.hash.match(/^#\/p\/([\w.-]+)/);
   if (m) return showProject(m[1]);
-  CUR = null; $('#crumbs').innerHTML = ''; showLibrary();
+  if(EDITOR?.dirty&&!confirm('Leave unsaved edits?')){location.hash='#/p/'+EDITOR.doc.id;return;}EDITOR?.destroy();EDITOR=null;CUR=null;$('#crumbs').innerHTML='';showLibrary();
 }
 
 /* ---------------- library ---------------- */
@@ -42,56 +44,20 @@ function showLibrary() {
 }
 
 /* ---------------- project ---------------- */
-let CUR = null, SEL = null, lastSave = 0, AG = null;
-const TEXT = (s) => ({ ...(s.text || {}), ...((CUR.edits || {})[s.id] || {}) });
-async function reloadProject(external) {
-  const j = await api.read(`projects/${CUR.id}/project.json`); CUR = JSON.parse(j.content); CUR.__abs = j.absolute;
-  renderProject(); if (external) toast('Project updated by the assistant');
+let CUR=null,AG=null,EDITOR=null;
+async function showProject(id){
+ if(EDITOR?.doc.id===id)return;
+ if(EDITOR?.dirty&&!confirm('Leave unsaved edits?')){location.hash='#/p/'+EDITOR.doc.id;return;}
+ EDITOR?.destroy();AG?.session?.close();AG=null;CHAT=[];
+ const j=await api.read(`projects/${id}/project.json`);
+ EDITOR=new Editor($('#view'),{api,toast,onChange:d=>{CUR={...d,__abs:j.absolute};},assistant:renderAssistant});
+ await EDITOR.open(j.content,j.absolute);window.ffs=EDITOR;
+ $('#crumbs').innerHTML=`<a href="#/">library</a> / <span>${esc(CUR.title)}</span>`;
 }
-async function showProject(id) {
-  CUR = { id }; await reloadProject(false);
-  $('#crumbs').innerHTML = `<a href="#/">library</a> / <span>${esc(CUR.title)}</span>`;
-}
-function renderProject() {
-  const P = CUR, dur = P.duration_s || (P.shots.at(-1)?.t1 ?? 0), proxy = P.media?.proxy, poster = P.media?.poster;
-  const vid = P.renders.length && proxy ? `<video id="vid" src="${url(P.id, proxy)}" poster="${url(P.id, poster)}" controls preload="metadata"></video>` : poster ? `<img src="${url(P.id, poster)}" alt="">` : '<div class="none" style="position:absolute;inset:0;display:grid;place-items:center;color:var(--faint)">no render yet</div>';
-  const fields = (s) => { const t = TEXT(s), orig = s.text || {}; return Object.keys(t).filter((k) => typeof t[k] === 'string').map((k) => `<div class="fld"><label>${esc(k)}</label><input data-shot="${esc(s.id)}" data-k="${esc(k)}" value="${esc(t[k])}" class="${t[k] !== orig[k] ? 'edited' : ''}"></div>`).join(''); };
-  const scroll = scrollY;
-  $('#view').innerHTML = `<div class="ph-title"><h1>${esc(P.title)}</h1><span class="cap">${esc(P.kind)} · ${P.canvas ? `${P.canvas.width}×${P.canvas.height} @ ${P.canvas.fps}` : ''} · ${fmt(dur)} · ${P.shots.length} shots</span></div>
-  <div class="proj"><div>
-    <div class="player">${vid}</div>
-    <div class="tl" id="tl">${P.shots.map((s) => `<div class="s ${s.id === SEL ? 'sel' : ''}" data-id="${esc(s.id)}" style="flex:${Math.max(0.2, s.t1 - s.t0)}" title="${esc(s.name)} · ${fmt(s.t0)}">${s.thumb ? `<img src="${url(P.id, s.thumb)}" loading="lazy" alt="">` : ''}<span>${esc((s.name || s.id).slice(0, 18))}</span></div>`).join('')}<div class="ph" id="ph"></div></div>
-    <div class="shots">${P.shots.map((s) => `<div class="shot ${s.id === SEL ? 'sel' : ''}" id="shot-${esc(s.id)}">${s.thumb ? `<img src="${url(P.id, s.thumb)}" loading="lazy" alt="">` : '<div></div>'}
-      <div><div class="hd"><b>${esc(s.name || s.id)}</b><span>${fmt(s.t0)} → ${fmt(s.t1)} · ${(s.t1 - s.t0).toFixed(2)} s${s.origin ? ` · from ${esc(s.origin)}` : ''}</span></div><div class="flds">${fields(s)}</div></div></div>`).join('')}</div>
-  </div>
-  <aside class="side">
-    <div class="box"><h3>Assistant <span>ACP · your subscription</span></h3>
-      <div class="agents">${AGENTS.map((a) => `<button class="pill ${AG?.id === a.id ? 'on' : ''}" data-agent="${a.id}" ${a.available ? '' : 'disabled'} title="${esc(a.login)}">${esc(a.name)}</button>`).join('')}</div>
-      <div class="hint" id="aghint">${AG ? `Connected to ${esc(AG.name)}. It can read and edit this project's file.` : 'Pick an agent. It runs on this machine with its own login, so no API key is needed here.'}</div>
-      <div class="chat" id="chat" style="margin-top:10px"></div>
-      <div class="compose"><textarea id="ask" placeholder="e.g. Tighten the hook to under 3 s and rewrite shot 2's headline"></textarea><button class="pill on" id="send">send</button></div></div>
-    <div class="box"><h3>Source</h3><dl class="kv">
-      <dt>edit in</dt><dd>${esc(P.edit_in?.app || '')}</dd>
-      <dt>folder</dt><dd>${esc(P.source?.path || '')}</dd>
-      ${P.edit_in?.url ? `<dt>live</dt><dd><a href="${esc(P.edit_in.url)}" target="_blank" rel="noopener">${esc(P.edit_in.url)}</a></dd>` : ''}
-      ${Object.entries(P.docs || {}).map(([k, v]) => `<dt>${esc(k)}</dt><dd><a href="${url(P.id, v)}" target="_blank">${esc(v.split('/').pop())}</a></dd>`).join('')}
-      ${P.renders.map((r) => `<dt>${esc(r.label)}</dt><dd>${r.width}×${r.height} · ${r.fps} fps · ${fmt(r.duration_s)}</dd>`).join('')}
-      <dt>project</dt><dd>${esc(CUR.__abs || '')}</dd></dl>
-      ${(P.notes || []).map((n) => `<div class="hint">${esc(n)}</div>`).join('')}</div>
-  </aside></div>`;
-  scrollTo(0, scroll);
-  chatRender();
-  const v = $('#vid');
-  if (v) v.ontimeupdate = () => { $('#ph').style.left = `${(v.currentTime / (dur || 1)) * 100}%`; const s = P.shots.find((x) => v.currentTime >= x.t0 && v.currentTime < x.t1); if (s && s.id !== SEL) { SEL = s.id; $$('.tl .s').forEach((e) => e.classList.toggle('sel', e.dataset.id === SEL)); $$('.shot').forEach((e) => e.classList.toggle('sel', e.id === 'shot-' + SEL)); } };
-  $$('.tl .s').forEach((e) => (e.onclick = () => { const s = P.shots.find((x) => x.id === e.dataset.id); SEL = s.id; if (v) { v.currentTime = s.t0 + 0.01; } $('#shot-' + CSS.escape(s.id))?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); $$('.tl .s').forEach((x) => x.classList.toggle('sel', x === e)); }));
-  $$('.fld input').forEach((i) => (i.onchange = () => saveEdit(i.dataset.shot, i.dataset.k, i.value)));
-  $$('[data-agent]').forEach((b) => (b.onclick = () => connect(b.dataset.agent)));
-  $('#send').onclick = sendPrompt; $('#ask').onkeydown = (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendPrompt(); };
-}
-async function saveEdit(shot, k, v) {
-  CUR.edits ||= {}; (CUR.edits[shot] ||= {})[k] = v;
-  const { __abs, ...clean } = CUR; lastSave = Date.now();
-  await api.write(`projects/${CUR.id}/project.json`, JSON.stringify(clean, null, 1)); toast('Saved'); renderProject();
+function renderProject(){renderAssistant($('#assistant-slot'));}
+function renderAssistant(slot){if(!slot)return;
+ slot.innerHTML=`<div class="box assistant-box"><h3>Assistant <span>ACP · reviewable proposals</span></h3><div class="agents">${AGENTS.map(a=>`<button class="pill ${AG?.id===a.id?'on':''}" data-agent="${esc(a.id)}" ${a.available?'':'disabled'}>${esc(a.name)}</button>`).join('')}</div><div class="hint" id="aghint">${AG?'Connected to '+esc(AG.name):'Choose an agent. Proposed edits stay pending until you apply them.'}</div><div class="chat" id="chat"></div><div class="compose"><textarea id="ask" placeholder="Suggest a tighter opening…"></textarea><button class="pill on" id="send">send</button></div></div>`;
+ $$('[data-agent]').forEach(b=>b.onclick=()=>connect(b.dataset.agent));$('#send').onclick=sendPrompt;$('#ask').onkeydown=e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))sendPrompt();};chatRender();
 }
 
 /* ---------------- assistant (ACP) ---------------- */
@@ -117,22 +83,23 @@ async function connect(id) {
         else if (u.sessionUpdate === 'tool_call') tools.set(u.toolCallId, push({ kind: 'tool', title: u.title || u.kind, status: u.status }));
         else if (u.sessionUpdate === 'tool_call_update') { const t = tools.get(u.toolCallId); if (t) { if (u.status) t.status = u.status; if (u.title) t.title = u.title; chatRender(); } } },
       permission: (req) => new Promise((resolve) => push({ kind: 'perm', title: `${a.name} wants to: ${req.toolCall?.title || 'run a tool'}`, options: req.options, resolve })),
-      wroteFile: (p) => { if (p.endsWith(`/projects/${CUR.id}/project.json`)) setTimeout(() => reloadProject(true), 200); },
+      root:ME.root,
+      canWrite:p=>!p.split('/').includes('..') && p.startsWith(`${ME.root}/projects/${CUR.id}/proposals/`) && /^\d+\.json$/.test(p.split('/').pop()),
+      wroteFile:p=>EDITOR.external(p.startsWith(ME.root+'/')?p.slice(ME.root.length+1):p),
       closed: (why) => push({ kind: 'note', text: `${a.name} disconnected: ${why}` }),
     } });
     CHAT.at(-1).text = `${a.name} ready · ${AG.session.init.agentInfo?.name || ''} ${AG.session.init.agentInfo?.version || ''}`; chatRender();
-    $('#aghint').textContent = `Connected to ${a.name}. It can read and edit this project's file.`;
+    $('#aghint').textContent = `Connected to ${a.name}. Edits arrive as proposals for review.`;
   } catch (e) { push({ kind: 'note', text: `Could not start ${a.name}: ${e.message}` }); AG = null; }
 }
 async function sendPrompt() {
   const text = $('#ask').value.trim(); if (!text || BUSY) return;
   if (!AG?.session) { toast('Pick an agent first'); return; }
   $('#ask').value = ''; push({ kind: 'you', text }); BUSY = true;
-  const first = !CHAT.some((m) => m.kind === 'agent');
-  const ctx = first ? `You are the assistant inside fframestudio, a video editor. The open project is ${CUR.__abs} (schema fframestudio.project/0). ` +
-    `Shots are in "shots" (id, name, t0, t1 in seconds, text). To change on-screen words, write them under "edits": {"<shot id>": {"<field>": "new text"}} rather than editing "text". ` +
-    `Retiming = change t0/t1 and keep shots contiguous. Keep the file valid JSON and every other key unchanged. Be brief in replies.\n\nRequest: ` : '';
-  try { const r = await AG.session.prompt(ctx + text); push({ kind: 'note', text: `turn ended: ${r.stopReason}` }); }
+  if(!(await EDITOR.save())){BUSY=false;return;}
+  const proposalPath=`${ME.root}/projects/${CUR.id}/proposals/${Date.now()}.json`;
+  const ctx=`You are the assistant inside fframestudio. NEVER edit project.json or source media. Read ${CUR.__abs}, schema fframestudio.project/1. Write ONLY a proposal to ${proposalPath}. Format: {"schema":"fframestudio.proposal/1","projectId":"${CUR.id}","baseRevision":${CUR.revision},"title":"short description","commands":[...]}. Commands: edit-text {clipId,field,value}, trim {clipId,duration,sourceIn?} (INTEGER FRAMES), move {clipId,index}, split {clipId,at,newId} (at is clip-local frames), duplicate {clipId,newId}, delete {clipId}, replace {clipId,mediaId}, group {clipIds,id,name}, set-beat-lock {clipId,value}, retime {clipId,speed:{num,den}}. Every command may include videoId. Text values are strings or string arrays. Existing IDs must match. New IDs must be unique. Beat-locked timing edits require explicit unlocking. Scope is this clip unless edit-style {styleId,color} explicitly changes all clips using the style. No code in JSON. The user will Inspect, Apply or Reject. Do not claim the project changed. Selection: ${EDITOR.selection}. Video: ${EDITOR.videoId}. Be brief. Request: `;
+  try { const r = await AG.session.prompt(ctx + text); push({ kind: 'note', text: `turn ended: ${r.stopReason}` }); await EDITOR.external(proposalPath.slice(ME.root.length+1)); }
   catch (e) { push({ kind: 'note', text: `error: ${e.message}` }); }
   BUSY = false;
 }

@@ -13,7 +13,7 @@
 //
 // Usage: fframestudio-bridge [--port 7878] [--root DIR] [--allow-origin URL]... [--token T]
 import { spawn, spawnSync } from 'node:child_process';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes, timingSafeEqual, createHash } from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -86,12 +86,26 @@ const NOFOLLOW_WRITE = fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constan
 
 function cors(req, res) {
   const o = req.headers.origin;
-  if (o && originOk(o)) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type'); res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS'); res.setHeader('Access-Control-Allow-Private-Network', 'true'); }
+  if (o && originOk(o)) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-FFS-Expected'); res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS'); res.setHeader('Access-Control-Allow-Private-Network', 'true'); }
 }
 const send = (res, code, body, type = 'application/json') => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(type === 'application/json' ? JSON.stringify(body) : body); };
 
 const watchers = new Set();
-try { fs.watch(ROOT, { recursive: true }, (ev, file) => { if (!file) return; const msg = `data: ${JSON.stringify({ ev, path: file })}\n\n`; watchers.forEach((r) => r.write(msg)); }); } catch (e) { log('fs.watch unavailable:', e.message); }
+const publish=(ev,file)=>{const msg=`data: ${JSON.stringify({ev,path:file})}\n\n`;watchers.forEach(r=>r.write(msg));};
+try { fs.watch(ROOT, { recursive: true }, (ev, file) => { if(file)publish(ev,String(file)); }); } catch (e) { log('fs.watch unavailable:', e.message); }
+// fs.watch can lose inode subscriptions after an atomic rename; poll the small document
+// surface as a recovery lane, not media directories. Also covers new proposal files.
+let checking=false;const stamps=new Map();
+const poll=setInterval(async()=>{if(!watchers.size||checking)return;checking=true;try{
+ const entries=await fs.promises.readdir(LIBDIR,{withFileTypes:true}).catch(()=>[]);
+ for(const entry of entries){if(!entry.isDirectory())continue;const base=`projects/${entry.name}`;
+  const proposals=await fs.promises.readdir(path.join(ROOT,base,'proposals')).catch(()=>[]);
+  for(const rel of [`${base}/project.json`,...proposals.filter(n=>n.endsWith('.json')).map(n=>`${base}/proposals/${n}`)]){
+   const st=await fs.promises.stat(path.join(ROOT,rel),{bigint:true}).catch(()=>null);if(!st)continue;
+   const stamp=`${st.mtimeNs}:${st.size}`;if(stamps.has(rel)&&stamps.get(rel)!==stamp)publish('change',rel);else if(!stamps.has(rel)&&rel.includes('/proposals/'))publish('rename',rel);stamps.set(rel,stamp);
+  }
+ }
+}finally{checking=false;}},750);poll.unref();
 
 const server = http.createServer(async (req, res) => {
   cors(req, res);
@@ -118,7 +132,14 @@ const server = http.createServer(async (req, res) => {
     const p = fsPath(u.searchParams.get('path'), req.method === 'PUT'); if (!p) return send(res, 400, { error: 'path outside project root' });
     if (req.method === 'GET') { try { return send(res, 200, { path: path.relative(ROOT, p), absolute: p, content: fs.readFileSync(p, 'utf8') }); } catch { return send(res, 404, { error: 'not found' }); } }
     if (req.method === 'PUT') { let b = ''; for await (const c of req) { b += c; if (b.length > 8e6) return send(res, 413, { error: 'too big' }); }
-      fs.mkdirSync(path.dirname(p), { recursive: true }); if (!fsPath(path.relative(ROOT, p), true)) return send(res, 400, { error: 'path outside project root' }); fs.writeFileSync(p, b, { flag: NOFOLLOW_WRITE }); return send(res, 200, { ok: true, absolute: p }); }
+      const expected=req.headers['x-ffs-expected'];
+      if(expected){let current='';try{current=fs.readFileSync(p,'utf8');}catch{}if(createHash('sha256').update(current).digest('hex')!==expected)return send(res,409,{error:'File changed since load'});}
+      fs.mkdirSync(path.dirname(p), { recursive: true });
+      if (!fsPath(path.relative(ROOT, p), true)) return send(res, 400, { error: 'path outside project root' });
+      // atomic: write a fresh temp file (O_EXCL|O_NOFOLLOW) and rename it over the target; rename replaces the entry, never follows a link
+      const tmp=p+'.ffs-'+randomBytes(6).toString('hex');
+      try{fs.writeFileSync(tmp,b,{flag:NOFOLLOW_WRITE|fs.constants.O_EXCL});fs.renameSync(tmp,p);}catch(e){try{fs.unlinkSync(tmp);}catch{}return send(res,500,{error:e.message});}
+      publish('change',path.relative(ROOT,p));return send(res, 200, { ok: true, absolute: p }); }
   }
   if (u.pathname === '/events') { res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' }); res.write(': ok\n\n'); watchers.add(res); req.on('close', () => watchers.delete(res)); return; }
   send(res, 404, { error: 'not found' });
@@ -154,7 +175,7 @@ function attach(ws, agent) {
 
 server.listen(PORT, '127.0.0.1', () => {
   const cfg = path.join(os.homedir(), '.config', 'fframestudio'); fs.mkdirSync(cfg, { recursive: true });
-  fs.writeFileSync(path.join(cfg, 'bridge.json'), JSON.stringify({ url: `http://127.0.0.1:${PORT}`, token: TOKEN, root: ROOT, pid: process.pid }), { mode: 0o600 });
+  if(!argv.includes('--no-config')) fs.writeFileSync(path.join(cfg, 'bridge.json'), JSON.stringify({ url: `http://127.0.0.1:${PORT}`, token: TOKEN, root: ROOT, pid: process.pid }), { mode: 0o600 });
   console.log(`fframestudio bridge ${VERSION} on http://127.0.0.1:${PORT}  root=${ROOT}`);
   console.log(`open the studio: http://127.0.0.1:${PORT}/open?token=${QUIET ? '<see ~/.config/fframestudio/bridge.json>' : TOKEN}`);
   console.log(`agents: ${AGENTS.map((a) => `${a.id}${has(a) ? '' : ' (not available)'}`).join(', ')}`);

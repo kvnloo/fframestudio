@@ -45,7 +45,8 @@ export async function connectAgent({ bridge, token, agent, cwd, handlers = {}, W
   await new Promise((ok, bad) => { ws.addEventListener('open', ok, { once: true }); ws.addEventListener('close', (e) => bad(new Error(`bridge refused connection (${e.code} ${e.reason || ''})`)), { once: true }); });
   ws.addEventListener('close', (e) => handlers.closed?.(e.reason || `closed ${e.code}`));
   const api = bridgeApi(bridge, token);
-  const rel = (p) => (cwd && p.startsWith(cwd) ? p.slice(cwd.length).replace(/^\/+/, '') : p);
+  const root=handlers.root || cwd;
+  const rel = p => root && p.startsWith(root+'/') ? p.slice(root.length+1) : p;
   const client = {
     async sessionUpdate(n) { handlers.update?.(n); },
     async requestPermission(req) {
@@ -58,7 +59,7 @@ export async function connectAgent({ bridge, token, agent, cwd, handlers = {}, W
       if (line || limit) { const ls = content.split('\n'); const s = Math.max(0, (line || 1) - 1); content = ls.slice(s, limit ? s + limit : undefined).join('\n'); }
       return { content };
     },
-    async writeTextFile({ path, content }) { await api.write(rel(path), content); handlers.wroteFile?.(path, content); return {}; },
+    async writeTextFile({ path, content }) { if(handlers.canWrite && !handlers.canWrite(path))throw Error('Only proposal files may be written by this assistant'); await api.write(rel(path), content); handlers.wroteFile?.(path, content); return {}; },
   };
   const conn = new ClientSideConnection(() => client, wsStream(ws, { onStderr: handlers.stderr }));
   const init = await conn.initialize({ protocolVersion: PROTOCOL_VERSION, clientCapabilities: { fs: { readTextFile: true, writeTextFile: true }, terminal: false }, clientInfo: CLIENT_INFO });
