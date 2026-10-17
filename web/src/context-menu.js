@@ -92,7 +92,7 @@ export class ContextMenu {
       const label = document.createElement('span');
       label.textContent = item.label;
       const shortcut = document.createElement('kbd');
-      shortcut.textContent = item.shortcut || '';
+      shortcut.textContent = prettyShortcut(item.shortcut);
       button.append(label, shortcut);
       button.onclick = () => {
         if (button.disabled) return;
@@ -127,4 +127,15 @@ export class ContextMenu {
     this.menu.hidden = true;
     if (restoreFocus && this.invoker?.isConnected) this.invoker.focus({ preventScroll: true });
   }
+}
+
+// 'Mod+Shift+z' -> '⇧⌘Z' on Apple platforms, 'Ctrl+Shift+Z' elsewhere.
+const APPLE = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+export function prettyShortcut(binding) {
+  if (!binding) return '';
+  const parts = binding.split('+');
+  const key = parts.pop();
+  const k = key.length === 1 ? key.toUpperCase() : key;
+  const mods = parts.map((m) => (m === 'Mod' ? (APPLE ? '⌘' : 'Ctrl') : m === 'Shift' ? (APPLE ? '⇧' : 'Shift') : m === 'Alt' ? (APPLE ? '⌥' : 'Alt') : m));
+  return APPLE ? mods.join('') + k : [...mods, k].join('+');
 }
