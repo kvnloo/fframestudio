@@ -13,4 +13,4 @@ ok   recovery: external change preserves the pending recovery choice
 ok   assistant: agents listed, unavailable ones disabled
 ok   mobile: 390 px has no horizontal overflow
 ok   console clean
-PASS  evidence: /mnt/zer0models/workspace/zer0/products/fframestudio-wt-core/verify-out/next-frame-final
+PASS  evidence: <local>/next-frame-final

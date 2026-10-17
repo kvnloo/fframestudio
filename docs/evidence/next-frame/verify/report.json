@@ -1,6 +1,6 @@
 {
  "started": "2026-10-17T09:31:48.324Z",
- "out": "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-core/verify-out/next-frame-final",
+ "out": "<local>/next-frame-final",
  "journeys": [
   {
    "name": "gate: app refuses without the link",

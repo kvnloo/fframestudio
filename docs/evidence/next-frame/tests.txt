@@ -48,7 +48,7 @@ npm notice run node --test test/doc/*.test.mjs && node test/acp-e2e.mjs
 ℹ todo 0
 ℹ duration_ms 2510.877013
 {
- "root": "/home/kvn/.hermes/profiles/clean/cache/scratch/ffs-acp-1tY1y6",
+ "root": "<local>/ffs-acp-1tY1y6",
  "security": {
   "no_token": 401,
   "bad_token": 401,

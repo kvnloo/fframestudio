@@ -371,7 +371,7 @@
         "duration": 3.800000011920929
       },
       {
-        "name": "http://127.0.0.1:7879/fs?path=projects%2Fexpresslane-i880%2Fproject.json",
+        "name": "http://127.0.0.1:7879/fs?path=projects%2Fsample-project%2Fproject.json",
         "start": 50,
         "duration": 3
       },

@@ -12,7 +12,7 @@ npm notice run node --test test/perf/*.test.mjs && node tools/verify-editor.mjs 
 ℹ skipped 0
 ℹ todo 0
 ℹ duration_ms 156.620064
-Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-aVWc7f
+Disposable library: <local>/ffs-editor-aVWc7f
 {
   "domStable": true,
   "story": 7,
@@ -37,20 +37,20 @@ Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-aV
   }
 }
 Traceback (most recent call last):
-  File "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-core/test/editor-perf.py", line 79, in <module>
+  File "<local>/editor-perf.py", line 79, in <module>
     asyncio.run(main())
     ~~~~~~~~~~~^^^^^^^^
-  File "/home/kvn/.local/share/uv/python/cpython-3.14.7-linux-x86_64-gnu/lib/python3.14/asyncio/runners.py", line 205, in run
+  File "<local>/runners.py", line 205, in run
     return runner.run(main)
            ~~~~~~~~~~^^^^^^
-  File "/home/kvn/.local/share/uv/python/cpython-3.14.7-linux-x86_64-gnu/lib/python3.14/asyncio/runners.py", line 128, in run
+  File "<local>/runners.py", line 128, in run
     return self._loop.run_until_complete(task)
            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
-  File "/home/kvn/.local/share/uv/python/cpython-3.14.7-linux-x86_64-gnu/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+  File "<local>/base_events.py", line 720, in run_until_complete
     return future.result()
            ~~~~~~~~~~~~~^^
-  File "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-core/test/editor-perf.py", line 78, in main
+  File "<local>/editor-perf.py", line 78, in main
     await b.close();assert all(data['budgets'].values()),data['budgets']
                            ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
 AssertionError: {'coldOpen': True, 'commandPaintReady': True, 'commandNextFrame': False, 'scrubNoLongtasks': True, 'scrub60fps': True, 'gzip': True, 'virtualized': True, 'stableDOM': True}
-Evidence: /mnt/zer0models/workspace/zer0/products/fframestudio-wt-core/docs/evidence/editor-core/perf/run-3
+Evidence: <local>/run-3
