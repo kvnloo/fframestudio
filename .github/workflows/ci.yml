@@ -22,6 +22,8 @@ jobs:
         run: npm run build:acp && git diff --exit-code web/dist/
       - name: bridge security
         run: npm test
+      - name: tern beta-ui add-on
+        run: npm --prefix tern ci --no-audit --no-fund && node --test tern/test/*.test.mjs
       - name: drive the app
         run: npm run verify -- --out verify-out/ci
         env: { PW_CHANNEL: chrome }
