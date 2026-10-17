@@ -4,6 +4,8 @@
 //  - for each agent: initialize + new session + one prompt ("pong"), timing and stop reason
 //  - --edit <agent>: asks that agent to edit project.json and verifies the file changed
 import { spawn } from 'node:child_process';
+import assert from 'node:assert/strict';
+import { once } from 'node:events';
 import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -20,10 +22,26 @@ const base = `http://127.0.0.1:${port}`;
 const PROJECT = { title: 'I-880 demo', shots: [{ id: 'hook', type: 'statement', text: "There's a camera every mile.", bars: 2 }, { id: 'map', type: 'map', text: 'Where the gap opens', bars: 2 }, { id: 'ask', type: 'ask', text: 'Book a walkthrough', bars: 1 }] };
 fs.writeFileSync(path.join(root, 'project.json'), JSON.stringify(PROJECT, null, 2));
 
-const bridge = spawn(process.execPath, [path.resolve('bridge/bridge.mjs'), '--port', String(port), '--root', root, '--token', token, '--quiet'], { stdio: ['ignore', 'pipe', 'inherit'] });
-await new Promise((ok) => bridge.stdout.once('data', ok));
+// Snapshot only for comparison: never log credentials or restore a shared discovery file.
+const configPath = path.join(os.homedir(), '.config/fframestudio/bridge.json');
+const snapshotConfig = () => {
+  try {
+    return { mtimeNs: fs.statSync(configPath, { bigint: true }).mtimeNs, content: fs.readFileSync(configPath) };
+  } catch (error) {
+    if (error.code === 'ENOENT') return null;
+    throw error;
+  }
+};
+const configBefore = snapshotConfig();
+const bridge = spawn(process.execPath, [path.resolve('bridge/bridge.mjs'), '--port', String(port), '--root', root, '--token', token, '--quiet', '--no-config'], { stdio: ['ignore', 'pipe', 'inherit'] });
 const out = { root, security: {}, agents: {} };
 try {
+  await new Promise((ok, bad) => {
+    const timer = setTimeout(() => bad(Error('test bridge startup timed out')), 15000);
+    bridge.stdout.once('data', () => { clearTimeout(timer); ok(); });
+    bridge.once('error', (error) => { clearTimeout(timer); bad(error); });
+    bridge.once('exit', () => { clearTimeout(timer); bad(Error('test bridge exited before startup')); });
+  });
   const r = (p, h = {}) => fetch(base + p, { headers: h }).then((x) => x.status);
   out.security.no_token = await r('/agents');
   out.security.bad_token = await r('/agents', { Authorization: 'Bearer nope' });
@@ -79,7 +97,21 @@ try {
       a.close();
     } catch (e) { out.edit = { agent: editAgent, ok: false, error: String(e.message || e).slice(0, 300) }; }
   }
-} finally { bridge.kill(); }
+} finally {
+  if (bridge.exitCode === null && bridge.signalCode === null && bridge.pid) {
+    const exited = once(bridge, 'exit');
+    bridge.kill('SIGTERM');
+    await exited;
+  }
+  const configAfter = snapshotConfig();
+  const bothAbsent = configBefore === null && configAfter === null;
+  out.discovery_config = {
+    mtime_unchanged: bothAbsent || !!(configBefore && configAfter && configBefore.mtimeNs === configAfter.mtimeNs),
+    content_unchanged: bothAbsent || !!(configBefore && configAfter && configBefore.content.equals(configAfter.content)),
+  };
+  assert.equal(out.discovery_config.mtime_unchanged, true, 'test bridge changed discovery config mtime');
+  assert.equal(out.discovery_config.content_unchanged, true, 'test bridge changed discovery config content');
+}
 console.log(JSON.stringify(out, null, 1));
 // fail loudly so CI and agents can rely on the exit code
 const sec = out.security, fails = [];

@@ -34,6 +34,7 @@ Preconditions:
 - **Open the link.** Run `await page.goto(`${base}/open?token=${token}`);`. The response is a 302 that sets the `ffs` cookie and redirects to `/`.
 - **Signed-in state.** The library renders and `#bridge` reads `bridge · N agents` with a green dot. `GET /me` returns `{ ok: true, root }`.
 - **Proof.** Screenshot the gate. The harness writes `01-gate.png`. It shows the sign-in page without any project data.
+- **Discovery stays untouched.** The ACP test snapshots `~/.config/fframestudio/bridge.json` before launch and, after its owned bridge exits, asserts both its mtime and exact bytes are unchanged (or that it remains absent). Only pass/fail booleans are reported, never its credentials. Test bridges use `--no-config`.
 - **Guards beyond the gate.** The origin, host, WebSocket, path-escape and token checks are covered by `npm run test:acp` (`node test/acp-e2e.mjs`). That run asserts 401 without a token, 401 with a bad token, 403 for a foreign `Origin`, 403 for a rebinding `Host`, 400 for a path escape, and a refused WebSocket without a token.
 
 ## Gotchas

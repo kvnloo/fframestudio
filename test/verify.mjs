@@ -40,7 +40,7 @@ try {
   const sourceHash = () => createHash('sha256').update(fs.readFileSync(source)).digest('hex');
   const sourceBefore = sourceHash();
   const port = await freePort(), token = 'verify-' + Math.random().toString(36).slice(2);
-  bridge = spawn(process.execPath, ['bridge/bridge.mjs', '--port', String(port), '--root', path.join(HOME, 'fframestudio'), '--token', token, '--quiet'], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
+  bridge = spawn(process.execPath, ['bridge/bridge.mjs', '--port', String(port), '--root', path.join(HOME, 'fframestudio'), '--token', token, '--quiet', '--no-config'], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
   await new Promise((ok, bad) => { bridge.stdout.once('data', ok); bridge.once('exit', (c) => bad(new Error('bridge exited ' + c))); setTimeout(() => bad(new Error('bridge not ready in 15 s')), 15000); });
   const base = `http://127.0.0.1:${port}`;
   report.bridge = { port, health: await fetch(base + '/health').then((r) => r.json()) };
