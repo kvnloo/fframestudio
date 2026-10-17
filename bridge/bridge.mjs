@@ -30,7 +30,8 @@ const all = (k) => argv.flatMap((a, i) => (a === k ? [argv[i + 1]] : []));
 const PORT = Number(opt('--port', 7878));
 const ROOT = path.resolve(opt('--root', path.join(os.homedir(), 'fframestudio')));
 const TOKEN = opt('--token', process.env.FFS_BRIDGE_TOKEN || randomBytes(24).toString('base64url'));
-const ORIGINS = new Set(all('--allow-origin'));
+const HOSTED = opt('--hosted-origin', 'https://fframestudio.vercel.app');
+const ORIGINS = new Set([HOSTED, ...all('--allow-origin')]);
 const QUIET = argv.includes('--quiet');
 const WEB = path.resolve(opt('--web', path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'web')));
 const LIBDIR = path.join(ROOT, 'projects');
@@ -144,7 +145,7 @@ const server = http.createServer(async (req, res) => {
   if (u.pathname === '/fs') {
     const p = fsPath(u.searchParams.get('path'), req.method === 'PUT'); if (!p) return send(res, 400, { error: 'path outside project root' });
     if (req.method === 'GET') { try { return send(res, 200, { path: path.relative(ROOT, p), absolute: p, content: fs.readFileSync(p, 'utf8') }); } catch { return send(res, 404, { error: 'not found' }); } }
-    if (req.method === 'PUT') { let b = ''; for await (const c of req) { b += c; if (b.length > 8e6) return send(res, 413, { error: 'too big' }); }
+    if (req.method === 'PUT') { const binary=req.headers['content-type']==='application/octet-stream', chunks=[]; let size=0; for await (const c of req) { size+=c.length; if(size>(binary?60e6:8e6))return send(res,413,{error:'too big'}); chunks.push(c); } const b=binary?Buffer.concat(chunks):Buffer.concat(chunks).toString('utf8');
       const expected=req.headers['x-ffs-expected'];
       if(expected){let current='';try{current=fs.readFileSync(p,'utf8');}catch{}if(createHash('sha256').update(current).digest('hex')!==expected)return send(res,409,{error:'File changed since load'});}
       fs.mkdirSync(path.dirname(p), { recursive: true });
@@ -193,5 +194,6 @@ server.listen(PORT, '127.0.0.1', () => {
   }
   console.log(`fframestudio bridge ${VERSION} on http://127.0.0.1:${PORT}  root=${ROOT}`);
   console.log(`open the studio: http://127.0.0.1:${PORT}/open?token=${QUIET ? '<see ~/.config/fframestudio/bridge.json>' : TOKEN}`);
+  console.log(`hosted studio: ${HOSTED}/#bridge=http://127.0.0.1:${PORT}&token=${QUIET ? '<hidden>' : TOKEN}`);
   console.log(`agents: ${AGENTS.map((a) => `${a.id}${has(a) ? '' : ' (not available)'}`).join(', ')}`);
 });

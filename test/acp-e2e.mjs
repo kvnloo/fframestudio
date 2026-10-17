@@ -10,6 +10,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { WebSocket as TestWebSocket } from 'ws';
 import { connectAgent, bridgeApi } from '../web/src/acp-client.mjs';
 
 const args = process.argv.slice(2);
@@ -33,7 +34,9 @@ const snapshotConfig = () => {
   }
 };
 const configBefore = snapshotConfig();
-const bridge = spawn(process.execPath, [path.resolve('bridge/bridge.mjs'), '--port', String(port), '--root', root, '--token', token, '--quiet', '--no-config', '--theme-home', root], { stdio: ['ignore', 'pipe', 'inherit'] });
+const mockAgents=path.join(root,'agents.json');
+fs.writeFileSync(mockAgents,JSON.stringify({fixture:{name:'Security fixture',cmd:process.execPath,check:'node',args:['-e','setInterval(()=>{},1000)']}}));
+const bridge = spawn(process.execPath, [path.resolve('bridge/bridge.mjs'), '--port', String(port), '--root', root, '--token', token, '--quiet', '--no-config', '--theme-home', root, '--agents', mockAgents], { stdio: ['ignore', 'pipe', 'inherit'] });
 const out = { root, security: {}, agents: {} };
 try {
   await new Promise((ok, bad) => {
@@ -48,6 +51,15 @@ try {
   out.security.foreign_origin = await r('/agents', { Authorization: `Bearer ${token}`, Origin: 'https://evil.example' });
   out.security.rebinding_host = await new Promise((ok) => http.get({ host: '127.0.0.1', port, path: '/agents', headers: { Host: 'evil.example', Authorization: `Bearer ${token}` } }, (x) => { ok(x.statusCode); x.resume(); }).on('error', () => ok('refused')));
   out.security.ok = await r('/agents', { Authorization: `Bearer ${token}` });
+  const hosted='https://fframestudio.vercel.app';
+  const allowed=await fetch(base+'/agents',{headers:{Origin:hosted,Authorization:'Bearer '+token}});
+  out.security.hosted_token=allowed.status;out.security.hosted_cors=allowed.headers.get('access-control-allow-origin')===hosted;
+  out.security.hosted_no_token=await r('/agents',{Origin:hosted});
+  const preflight=await fetch(base+'/fs',{method:'OPTIONS',headers:{Origin:hosted,'Access-Control-Request-Method':'PUT','Access-Control-Request-Headers':'Authorization, Content-Type, X-FFS-Expected','Access-Control-Request-Private-Network':'true'}});
+  out.security.pna_preflight=preflight.status===204&&preflight.headers.get('access-control-allow-private-network')==='true'&&preflight.headers.get('access-control-allow-origin')===hosted&&preflight.headers.get('access-control-allow-headers').includes('X-FFS-Expected');
+  const foreign=await fetch(base+'/agents',{headers:{Origin:'https://other.example',Authorization:'Bearer '+token}});out.security.foreign_cors_absent=foreign.status===403&&!foreign.headers.has('access-control-allow-origin');
+  const handshake=(origin,tok)=>new Promise(resolve=>{const w=new TestWebSocket(base.replace('http:','ws:')+'/acp?agent=fixture',['fframestudio.'+tok],{headers:{Origin:origin}});w.once('open',()=>{w.close();resolve(true);});w.once('error',()=>resolve(false));});
+  out.security.hosted_ws=await handshake(hosted,token);out.security.foreign_ws_refused=!await handshake('https://other.example',token);out.security.hosted_bad_ws_refused=!await handshake(hosted,'wrong-token');
   out.security.path_escape = await r('/fs?path=../../etc/passwd', { Authorization: `Bearer ${token}` });
   // symlinks inside the root must not lead outside it (read, dangling-link write, write through a linked dir)
   const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'ffs-outside-'));
@@ -115,7 +127,7 @@ try {
 console.log(JSON.stringify(out, null, 1));
 // fail loudly so CI and agents can rely on the exit code
 const sec = out.security, fails = [];
-const want = { no_token: 401, bad_token: 401, foreign_origin: 403, rebinding_host: 403, ok: 200, path_escape: 400, symlink_read: 400, symlink_write_dangling: 400, symlink_write_dir: 400, symlink_mkdir_dir: 400, outside_untouched: true, inside_write: 200, ws_no_token: 'refused', ws_bad_token: 'refused' };
+const want = { hosted_token:200,hosted_cors:true,hosted_no_token:401,pna_preflight:true,foreign_cors_absent:true,hosted_ws:true,foreign_ws_refused:true,hosted_bad_ws_refused:true, no_token: 401, bad_token: 401, foreign_origin: 403, rebinding_host: 403, ok: 200, path_escape: 400, symlink_read: 400, symlink_write_dangling: 400, symlink_write_dir: 400, symlink_mkdir_dir: 400, outside_untouched: true, inside_write: 200, ws_no_token: 'refused', ws_bad_token: 'refused' };
 for (const [k, v] of Object.entries(want)) if (sec[k] !== v) fails.push(`security.${k}: got ${sec[k]}, want ${v}`);
 for (const [id, r] of Object.entries(out.agents)) if (!r.ok) fails.push(`agent ${id}: ${r.error || 'no pong'}`);
 if (out.edit && !out.edit.ok) fails.push(`edit ${out.edit.agent}: ${out.edit.error || 'file not changed as asked'}`);
