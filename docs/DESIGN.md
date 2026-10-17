@@ -62,7 +62,7 @@ Diffusion Studio watermark terms. (03 §8)
 - Generation pilot: **ACE-Step 1.5** (MIT code and weights, commercial output permitted, 8–12 GB
   GPU configuration). Not MusicGen/MusicGPT (CC BY-NC weights).
 - **Earshot** = `Leonxlnx/earshot` (MIT, CPU): soundtrack critique, sync and loudness checks,
-  procedural SFX. An `audio.analyze` plugin, not a song generator. Confirm this is the one meant.
+  procedural SFX. An `audio.analyze` plugin, not a song generator. Confirmed by Kevin 2026-10-17.
 - Export is fail-closed: non-commercial or unverifiable assets block a commercial export, and
   credits are generated automatically. (04 §6)
 - Executable plugins run in capability-scoped workers or sandboxed iframes; no desktop IPC. (03 §1)
@@ -88,6 +88,5 @@ and how quickly people move to faster routes such as shortcuts and the palette. 
 
 ## Open questions
 
-- Is `Leonxlnx/earshot` the Earshot meant?
 - Acceptable to start Electron-only for desktop?
 - Diffusion Studio and Freesound commercial terms need legal reading before use.

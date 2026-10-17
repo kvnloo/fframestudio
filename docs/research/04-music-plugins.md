@@ -104,7 +104,7 @@ Commands used: `gh search repos earshot --sort stars`, related repository search
 
 ### 4.2 “Earshot” disambiguation
 
-**Most likely match: `Leonxlnx/earshot`.** Its README describes “ears for coding agents,” CPU-only CLI/Python/MCP interfaces, soundtrack listening/critique, matching and locating sounds, and a Forge subsystem for code/DSP synthesis and fitting recordings. It also includes a real-recordings soundtrack workflow. This is unusually close to the user's video-studio context, but identity remains an inference until the user confirms.[1]
+**Most likely match: `Leonxlnx/earshot`.** Its README describes “ears for coding agents,” CPU-only CLI/Python/MCP interfaces, soundtrack listening/critique, matching and locating sounds, and a Forge subsystem for code/DSP synthesis and fitting recordings. It also includes a real-recordings soundtrack workflow. This is unusually close to the user's video-studio context, and the user confirmed it on 2026-10-17.[1]
 
 - **Licensing:** MIT code; README lists CLAP `laion/larger_clap_general` as Apache-2.0 and AST `MIT/ast-finetuned-audioset-10-10-0.4593` as BSD-3-Clause. Independently pin and verify those checkpoint terms before bundling. References used for recording-to-code fitting remain separately licensed; Earshot cannot certify provenance or licence compliance.[1]
 - **Hardware/latency:** CPU-only; Python 3.10+, FFmpeg/ffprobe; first model use downloads roughly 1.4 GB. Author reports roughly 1.5 minutes for listening through a 60–90-second film on a laptop CPU. No GPU or browser-native inference required/verified.[1]
