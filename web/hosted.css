@@ -1,0 +1,19 @@
+.local-library { border:1px solid var(--line); border-radius:8px; padding:24px; margin:8px 0 24px; background:var(--bg2); }
+.local-library h2,.examples-shelf h2 { font-size:clamp(24px,3vw,40px); margin:8px 0 12px; line-height:1.15; }
+.local-library p,.examples-shelf p { color:var(--mute); max-width:70ch; line-height:1.5; }
+.folder-actions { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin:16px 0; }
+.folder-actions .pill { min-height:44px; display:inline-flex; align-items:center; }
+.folder-fallback { position:relative; overflow:hidden; cursor:pointer; }
+.folder-fallback input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+.folder-fallback:focus-within { outline:2px solid var(--acc); outline-offset:3px; }
+.examples-shelf { scroll-margin-top:64px; border-top:1px solid var(--line); margin-top:32px; padding-top:24px; }
+.folder-actions a { min-height:44px; display:inline-flex; align-items:center; }
+.examples-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr)); gap:24px; }
+.example-card { border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--bg2); }
+.example-card img { width:100%; aspect-ratio:16/9; object-fit:cover; }
+.example-card .tx { padding:20px; }
+.example-card h3 { font-size:24px; margin:0 0 8px; }
+.examples-shelf a { color:var(--acc); }
+.install-command { white-space:pre-wrap; overflow-wrap:anywhere; font-size:11px; line-height:1.7; }
+#bridge { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px; }
+@media(max-width:600px) { .local-library { padding:18px; } #bridge { font-size:9px; max-width:160px; } .examples-grid { gap:16px; } }
