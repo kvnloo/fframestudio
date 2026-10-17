@@ -41,6 +41,10 @@ Playwright (`playwright` devDependency). Browser: `PW_CHANNEL=chrome` (CI), else
 | `/open?token=T` | sets the `ffs` cookie, redirects to the library |
 | `.card`, `.card .t` | library cards and titles |
 | `#preview-video` | project player (proxy video) |
+| `[data-slate-tab]`, `.direction-card` | Shot / Narrative / Direction tabs and project look cards |
+| `#theme`, `#library-theme` | Studio, Paper and retained workspace themes |
+| `[data-action="loop-shot"]`, `[data-action="loop-film"]`, `[data-action="mute"]`, `[data-action="screening"]` | real playback toggles and fullscreen canvas |
+| `#audio-wave` | worker-computed peak/RMS display; hidden without audio |
 | `#timeline .timeline-clip[data-select]` | timeline shot blocks; click seeks to the shot |
 | `input[data-field]`, `textarea[data-field]` | selected clip text; `change` edits, `[data-action="save"]` writes `textOverrides` |
 | `[data-agent]`, `#ask`, `#send`, `#chat` | assistant agent pills, prompt, send, transcript |

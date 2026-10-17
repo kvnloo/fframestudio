@@ -4,6 +4,7 @@ The library is the app's home. It lists every imported project as a card with a 
 
 ## Sub-features
 
+- `library-themes` uses `#library-theme` to select Studio/Paper or retained legacy themes; the selection is shared with Workspace. Cards carry `.kind-chip` and stable `data-colour` values.
 - `library-open` opens the library from the `/open?token=…` link and lands on route `#/`.
 - `library-list` renders one `.card` per project with a title in `.card .t`.
 - `library-meta` shows kind, shot count, render count and tags on each card.

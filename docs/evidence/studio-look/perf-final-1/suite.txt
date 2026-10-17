@@ -1,0 +1,48 @@
+
+> test:perf
+> node --test test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf
+
+{"editorGzipBytes":35117}
+{"commands":[{"command":"add","ms":3.5799900000000022},{"command":"select","ms":0.05801699999999954},{"command":"move","ms":0.6102330000000009},{"command":"trim","ms":3.8696040000000025},{"command":"split","ms":0.7287199999999956},{"command":"replace","ms":0.69203499999999},{"command":"edit-text","ms":0.5576380000000114},{"command":"duplicate","ms":0.5108869999999968},{"command":"group","ms":0.6371849999999881},{"command":"set-beat-lock","ms":0.41489900000000546},{"command":"retime","ms":4.297015999999999},{"command":"delete","ms":0.6563650000000081},{"command":"edit-style","ms":0.6335480000000047},{"command":"save-version","ms":2.782966000000002},{"command":"restore-version","ms":6.500436999999991},{"command":"undo","ms":0.06513400000000047},{"command":"redo","ms":0.01831300000000624}]}
+✔ editor shipped JavaScript stays below 150 KiB gzip, excluding ACP (4.306544ms)
+✔ every document command stays under 16ms at 500 clips (CommandStore CPU, no paint) (92.689621ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 154.669843
+Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-xl918i
+{
+  "domStable": true,
+  "story": 7,
+  "timeline": 28,
+  "scrubLongtasks": [],
+  "coldOpenMs": 158.19999998807907,
+  "editorGzipBytes": 35015,
+  "autosave": {
+    "writes": 13,
+    "cpuWorstMs": 4.599999964237213,
+    "wallWorstMs": 5
+  },
+  "budgets": {
+    "coldOpen": true,
+    "commandPaintReady": true,
+    "commandNextFrame": true,
+    "scrubNoLongtasks": true,
+    "scrub60fps": true,
+    "gzip": true,
+    "virtualized": true,
+    "stableDOM": true,
+    "autosaveFrameWork": true
+  },
+  "frameIntervalMedianMs": 16.699999999999818,
+  "summary": {
+    "cmdWorstMs": 9.100000023841858,
+    "nextFrameWorstMs": 16.80000001192093,
+    "scrubFps": 60.003000150007495
+  }
+}
+Evidence: /mnt/zer0models/project-artifacts/fframestudio/ui-compare/studio-look/perf-final-1

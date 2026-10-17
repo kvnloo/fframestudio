@@ -4,6 +4,7 @@ The editor plays the source proxy in `#preview-video`. Clicking a Timeline clip 
 
 ## Sub-features
 
+- `player-studio` adds the poster HUD, display words, colour-coded timeline, slate tabs and actual loop/mute/fullscreen controls; see [studio.md](./studio.md).
 - `player-load` loads the proxy video in `#preview-video`.
 - `player-timeline` mounts visible `.timeline-clip[data-select]` blocks inside `#timeline`.
 - `player-seek` seeks to a clip start when its block is clicked.

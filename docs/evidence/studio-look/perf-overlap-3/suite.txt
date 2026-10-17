@@ -1,0 +1,48 @@
+
+> test:perf
+> node --test test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf
+
+{"editorGzipBytes":35581}
+{"commands":[{"command":"add","ms":3.3375819999999976},{"command":"select","ms":0.052795000000003256},{"command":"move","ms":0.5790859999999967},{"command":"trim","ms":3.7968989999999962},{"command":"split","ms":0.765900000000002},{"command":"replace","ms":0.6716770000000025},{"command":"edit-text","ms":0.5709939999999989},{"command":"duplicate","ms":0.5480699999999956},{"command":"group","ms":0.635436999999996},{"command":"set-beat-lock","ms":0.4287620000000061},{"command":"retime","ms":4.311999999999998},{"command":"delete","ms":0.5600660000000062},{"command":"edit-style","ms":0.5896710000000098},{"command":"save-version","ms":2.6825199999999967},{"command":"restore-version","ms":6.428082000000003},{"command":"undo","ms":0.05623500000000092},{"command":"redo","ms":0.01809399999999073}]}
+✔ editor shipped JavaScript stays below 150 KiB gzip, excluding ACP (3.818815ms)
+✔ every document command stays under 16ms at 500 clips (CommandStore CPU, no paint) (91.932975ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 148.851388
+Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-WJlPdu
+{
+  "domStable": true,
+  "story": 7,
+  "timeline": 28,
+  "scrubLongtasks": [],
+  "coldOpenMs": 139.69999998807907,
+  "editorGzipBytes": 35475,
+  "autosave": {
+    "writes": 13,
+    "cpuWorstMs": 4.799999952316284,
+    "wallWorstMs": 5
+  },
+  "budgets": {
+    "coldOpen": true,
+    "commandPaintReady": true,
+    "commandNextFrame": true,
+    "scrubNoLongtasks": true,
+    "scrub60fps": true,
+    "gzip": true,
+    "virtualized": true,
+    "stableDOM": true,
+    "autosaveFrameWork": true
+  },
+  "frameIntervalMedianMs": 16.699999999999818,
+  "summary": {
+    "cmdWorstMs": 8.699999988079071,
+    "nextFrameWorstMs": 16.80000001192093,
+    "scrubFps": 59.99999999999999
+  }
+}
+Evidence: /mnt/zer0models/project-artifacts/fframestudio/ui-compare/studio-look/perf-overlap-3

@@ -1,0 +1,48 @@
+
+> test:perf
+> node --test test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf
+
+{"editorGzipBytes":35117}
+{"commands":[{"command":"add","ms":3.3615330000000014},{"command":"select","ms":0.06402599999999836},{"command":"move","ms":0.6245899999999978},{"command":"trim","ms":3.6238230000000016},{"command":"split","ms":0.7212909999999937},{"command":"replace","ms":0.662109000000001},{"command":"edit-text","ms":0.5509289999999964},{"command":"duplicate","ms":0.5179009999999948},{"command":"group","ms":0.6328440000000057},{"command":"set-beat-lock","ms":0.4096129999999931},{"command":"retime","ms":4.234285},{"command":"delete","ms":0.5784309999999948},{"command":"edit-style","ms":0.6113589999999931},{"command":"save-version","ms":2.943450999999996},{"command":"restore-version","ms":6.642937000000003},{"command":"undo","ms":0.05957800000000191},{"command":"redo","ms":0.01768999999998755}]}
+✔ editor shipped JavaScript stays below 150 KiB gzip, excluding ACP (3.842767ms)
+✔ every document command stays under 16ms at 500 clips (CommandStore CPU, no paint) (91.800322ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 150.926631
+Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-BiAU5T
+{
+  "domStable": true,
+  "story": 7,
+  "timeline": 28,
+  "scrubLongtasks": [],
+  "coldOpenMs": 178,
+  "editorGzipBytes": 35015,
+  "autosave": {
+    "writes": 13,
+    "cpuWorstMs": 4.600000023841858,
+    "wallWorstMs": 5.100000023841858
+  },
+  "budgets": {
+    "coldOpen": true,
+    "commandPaintReady": true,
+    "commandNextFrame": true,
+    "scrubNoLongtasks": true,
+    "scrub60fps": true,
+    "gzip": true,
+    "virtualized": true,
+    "stableDOM": true,
+    "autosaveFrameWork": true
+  },
+  "frameIntervalMedianMs": 16.699999999999818,
+  "summary": {
+    "cmdWorstMs": 9,
+    "nextFrameWorstMs": 16.80000001192093,
+    "scrubFps": 60.00600060006
+  }
+}
+Evidence: /mnt/zer0models/project-artifacts/fframestudio/ui-compare/studio-look/perf-final-2

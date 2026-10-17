@@ -1,0 +1,48 @@
+
+> test:perf
+> node --test test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf
+
+{"editorGzipBytes":35581}
+{"commands":[{"command":"add","ms":3.3075900000000047},{"command":"select","ms":0.04813500000000204},{"command":"move","ms":0.6401910000000015},{"command":"trim","ms":3.545468999999997},{"command":"split","ms":0.9473289999999963},{"command":"replace","ms":0.682824999999994},{"command":"edit-text","ms":0.5583309999999955},{"command":"duplicate","ms":0.5729109999999906},{"command":"group","ms":0.6346999999999952},{"command":"set-beat-lock","ms":0.4067320000000052},{"command":"retime","ms":4.470261999999991},{"command":"delete","ms":0.5669210000000078},{"command":"edit-style","ms":0.6468519999999955},{"command":"save-version","ms":2.956755000000001},{"command":"restore-version","ms":6.346954999999994},{"command":"undo","ms":0.05475199999997926},{"command":"redo","ms":0.01841500000000451}]}
+✔ editor shipped JavaScript stays below 150 KiB gzip, excluding ACP (4.128571ms)
+✔ every document command stays under 16ms at 500 clips (CommandStore CPU, no paint) (92.504556ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 161.304756
+Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-Cs5fjx
+{
+  "domStable": true,
+  "story": 7,
+  "timeline": 28,
+  "scrubLongtasks": [],
+  "coldOpenMs": 136.19999998807907,
+  "editorGzipBytes": 35475,
+  "autosave": {
+    "writes": 13,
+    "cpuWorstMs": 4.699999988079071,
+    "wallWorstMs": 5.100000023841858
+  },
+  "budgets": {
+    "coldOpen": true,
+    "commandPaintReady": true,
+    "commandNextFrame": true,
+    "scrubNoLongtasks": true,
+    "scrub60fps": true,
+    "gzip": true,
+    "virtualized": true,
+    "stableDOM": true,
+    "autosaveFrameWork": true
+  },
+  "frameIntervalMedianMs": 16.699999999999818,
+  "summary": {
+    "cmdWorstMs": 9.199999988079071,
+    "nextFrameWorstMs": 16.899999976158142,
+    "scrubFps": 60.003000150007495
+  }
+}
+Evidence: /mnt/zer0models/project-artifacts/fframestudio/ui-compare/studio-look/perf-overlap-2

@@ -4,6 +4,7 @@ Inspector lets a user change the selected shot's on-screen text. Change commits 
 
 ## Sub-features
 
+- `edit-slate` opens `[data-slate-tab="shot"]` when Direction or Narrative is selected. Shot retains frame timing, timecode, beat lock, text, replacement and shared-style controls.
 - `edit-fields` shows `input[data-field]` or `textarea[data-field]` for the selected clip.
 - `edit-merge` displays original text merged with saved overrides.
 - `edit-commit` applies the field's `change` event to the local document.

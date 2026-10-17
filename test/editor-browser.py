@@ -62,7 +62,7 @@ async def main():
         await page.locator('[data-action="toggle-story"]:visible').click()
         await page.reload();await page.wait_for_function('window.ffs?.doc');assert await page.locator('.story-panel').evaluate('(n)=>n.classList.contains("collapsed")')
         await page.locator('[data-action="toggle-story"]:visible').click()
-        pane=page.locator('.story-panel');box=await pane.bounding_box();assert box is not None
+        pane=page.locator('.story-panel');await pane.scroll_into_view_if_needed();box=await pane.bounding_box();assert box is not None
         await page.mouse.move(box['x']+box['width']-3,box['y']+box['height']-3);await page.mouse.down();await page.mouse.move(box['x']+box['width']+37,box['y']+box['height']-3,steps=5);await page.mouse.up()
         await page.wait_for_function('JSON.parse(localStorage.getItem("ffs.settings")).storyWidth>290')
         width=await pane.evaluate('(n)=>n.getBoundingClientRect().width');await page.reload();await page.wait_for_function('window.ffs?.doc');assert abs(await pane.evaluate('(n)=>n.getBoundingClientRect().width')-width)<2

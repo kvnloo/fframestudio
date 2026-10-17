@@ -1,8 +1,68 @@
 # Editor performance and recovery
 
-The main-thread command path and crash recovery are implemented. **The full performance
-acceptance gate still fails.** All three final `npm run test:perf` processes exit 1 because
-command-to-next-rAF exceeds the unchanged <16 ms budget. Do not qualify this as a <16 ms editor.
+The Studio film desk passes the existing performance runner in three final processes. The
+thresholds and measurement phase in `test/editor-perf.py` and `test/perf/` are unchanged by this
+branch. Previous failed measurements remain below as historical evidence, not the current result.
+
+## Studio look qualification
+
+Measured on the same 48-clip cold-open and 500-clip command/scrub fixtures, with autosave active.
+No host processes were stopped and no browser scheduling flags, test thresholds or measurement
+start/end points were changed. Fonts remain separate, locally hosted and `font-display: swap`.
+
+| Measure | Final median | Final worst | Result |
+| --- | --- | --- | --- |
+| Cold navigation → interactive, including recovery lookup | 139.7 ms | 140.7 ms | PASS <300 ms |
+| 500-clip command → main-thread DOM/layout ready | 9.0 ms | 9.2 ms | PASS <16 ms |
+| Command → next rAF callback | 16.8 ms | 16.9 ms | PASS existing next-frame gate |
+| Scrub rate | 60.003 fps | 60.000 fps | PASS |
+| Scrub long tasks >50 ms | 0 | 0 | PASS |
+| Shipped editor JS, Python gzip excluding ACP | 35,475 bytes | 35,475 bytes | PASS <150 KiB |
+| Mounted Story / Timeline nodes for 500 clips | 7 / 28 | 7 / 28 | PASS windowed |
+| Canvas and same-selection inspector identity | preserved | preserved | PASS |
+| Autosave structured-clone / transaction setup | 4.7 ms | 4.8 ms | PASS <16 ms |
+
+| Run | Cold | Worst ready | Worst next rAF | Scrub fps | Exit |
+| --- | --- | --- | --- | --- | --- |
+| [1](evidence/studio-look/perf-overlap-1/perf.json) | 140.7 ms | 9.0 ms | 16.8 ms | 60.003 | 0 |
+| [2](evidence/studio-look/perf-overlap-2/perf.json) | 136.2 ms | 9.2 ms | 16.9 ms | 60.003 | 0 |
+| [3](evidence/studio-look/perf-overlap-3/perf.json) | 139.7 ms | 8.7 ms | 16.8 ms | 60.000 | 0 |
+
+The pre-existing runner gates next-rAF against 1.5× the measured median frame interval, with
+main-thread work separately gated at <16 ms. These ~16.8 ms samples are the next callback on a
+~16.7 ms clock, **not a claim of <16 ms compositor presentation**. No threshold was changed here.
+
+The initial colourful-lane trial mounted 92 timeline nodes and missed next-rAF at 107 ms.
+Long documents now retain the original minimum lane scale/windowing (28 nodes here), while
+ordinary projects fit the film so the actual 48-shot project mounts all shots at default zoom.
+Further cold trials measured 353.6/309.6/262.9 ms. Their receipts are retained. One had a 100 ms
+project request queued alongside agent discovery; others spent most of the remaining time after
+worker migration. Recovery opening now starts concurrently with DOM mounting, and direct-project
+navigation waits for the project before discovering optional assistant agents. `interactiveAt`
+still waits for the full recovery lookup and the root remains inert while loading. This is not a
+controlled baseline/candidate speedup claim; it is the actual final qualification on this host.
+
+Earlier candidate runs, including a 57.5 fps scrub sample accepted by the existing runner's
+tolerance, remain under `evidence/studio-look/`. Final raw values and suite outputs are in the
+three linked directories and [aggregate](evidence/studio-look/overlap-perf-runs.json).
+
+`npm test` passes 43 tests plus ACP/bridge security checks. `npm run verify` passes all 14
+journeys (the original 13 plus Studio controls), including recovery/conflict cases. The additional
+editor workflow proves repeated native drags, command patch isolation, versions, resize/collapse,
+legacy/custom themes and remapped shortcuts. The visual/audio harness proves all 48 real shots,
+five type colours, narrow-shot selection, loops, mute, fullscreen, nonzero worker peaks/RMS,
+cache reuse and byte-identical original project.json. See the retained [browser report](evidence/studio-look/verify-report.json)
+and [visual/audio report](evidence/studio-look/studio-report.json).
+
+Twelve 1600×1000 screenshots plus reference/Studio and reference/Paper comparison sheets live in
+`/mnt/zer0models/project-artifacts/fframestudio/ui-compare/studio-look/`; they were visually inspected.
+The ACP and browser test launchers now explicitly use `--no-config`; an earlier ACP launcher
+omission was discovered during this work. Final tests were checked to leave the existing shared
+bridge discovery file byte-identical. Do not restore a live bridge config from a captured test copy.
+
+## Historical editor-core measurements
+
+The sections below retain earlier measurements and their original failures unchanged.
 
 ## Reproduce
 

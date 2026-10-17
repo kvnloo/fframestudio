@@ -1,0 +1,55 @@
+{
+  "screenshots": [
+    "library-studio.png",
+    "demo-studio.png",
+    "demo-direction-studio.png",
+    "expresslane-i880-studio.png",
+    "expresslane-slate-studio.png",
+    "library-paper.png",
+    "demo-paper.png",
+    "demo-direction-paper.png",
+    "expresslane-i880-paper.png",
+    "expresslane-slate-paper.png",
+    "screening-room.png",
+    "audio-waveform-fixture.png"
+  ],
+  "checks": {
+    "realClips": 48,
+    "realPalette": [
+      "0",
+      "1",
+      "3",
+      "2",
+      "4"
+    ],
+    "narrowShotSelection": true,
+    "loopShot": true,
+    "loopFilmState": {
+      "frame": 4.998000000000011,
+      "total": 360,
+      "duration": 90,
+      "loop": "loop-film",
+      "rate": 1,
+      "bounds": [
+        0,
+        360
+      ]
+    },
+    "loopFilm": true,
+    "mute": true,
+    "screeningRoom": true,
+    "audioPeaks": {
+      "peaks": 1400,
+      "nonzero": true,
+      "energy": true,
+      "visible": true
+    },
+    "audioCache": true,
+    "legacyLight": true,
+    "legacyContrast": true,
+    "sourceUnchanged": true
+  },
+  "errors": [],
+  "ok": true,
+  "home": "/home/kvn/.hermes/profiles/clean/cache/scratch/ffs-studio-5udr2J"
+}

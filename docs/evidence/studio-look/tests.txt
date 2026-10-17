@@ -1,0 +1,84 @@
+
+> test
+> node --test test/doc/*.test.mjs && node test/acp-e2e.mjs
+
+✔ patches reproduce array deletion and escaped text keys, preserve untouched references (2.149139ms)
+✔ add is validated, previewable, undo/redo round trip (4.642015ms)
+✔ move is validated, previewable, undo/redo round trip (0.462393ms)
+✔ trim is validated, previewable, undo/redo round trip (0.616599ms)
+✔ split is validated, previewable, undo/redo round trip (0.85415ms)
+✔ replace is validated, previewable, undo/redo round trip (0.711339ms)
+✔ duplicate is validated, previewable, undo/redo round trip (0.762611ms)
+✔ group is validated, previewable, undo/redo round trip (0.486714ms)
+✔ set-beat-lock is validated, previewable, undo/redo round trip (0.532084ms)
+✔ retime is validated, previewable, undo/redo round trip (3.750746ms)
+✔ delete is validated, previewable, undo/redo round trip (0.484346ms)
+✔ edit-style is validated, previewable, undo/redo round trip (0.518397ms)
+✔ save-version is validated, previewable, undo/redo round trip (0.407192ms)
+✔ select is an ephemeral named command with inverse; does not dirty content history (0.22901ms)
+✔ split partitions attached text and source ranges; move keeps attachments (0.296186ms)
+✔ invalid batch leaves document/history untouched; stale and unsafe proposals rejected (0.975211ms)
+✔ multi-video proposals preview and rollback without touching either source video (0.890058ms)
+✔ versions restore through history and compare exact content (0.569212ms)
+✔ grouping and version saves share unchanged clips without sharing mutable snapshots (0.603547ms)
+✔ object-creating commands require explicit IDs so preview and apply cannot drift (0.284323ms)
+✔ returned inverse executes through the command system (0.392855ms)
+✔ beat lock rejects ripple displacement and mutation rolls back (0.3405ms)
+✔ edit text preview shows scope and changes without mutation; inverse restores (0.367124ms)
+✔ an edit updates the authoritative store and views before a blocked worker can reply (3.256197ms)
+✔ main thread and real module worker replay the same seeded 200 commands including undo and redo (116.632832ms)
+✔ recovery can undo across the saved baseline without the old in-memory history (1.170033ms)
+✔ persisted undo/redo patches reproduce every step across a saved history boundary (2.393465ms)
+✔ an external change preserves a pending recovery offer as a local conflict (0.621381ms)
+✔ an edit committed during external migration survives the worker reply (0.660094ms)
+✔ global Save shortcut is gated while recovery is opening (0.520776ms)
+✔ migration CLI writes a distinct new copy and refuses overwrite (140.532974ms)
+✔ migrate studio-spec: deterministic, non-destructive, text overrides (6.37531ms)
+✔ migrate fframes: deterministic, non-destructive, text overrides (0.579591ms)
+✔ migrate fframes-clips: deterministic, non-destructive, text overrides (0.473942ms)
+✔ migrate html-film: deterministic, non-destructive, text overrides (0.337266ms)
+✔ migrate capture-manifest: deterministic, non-destructive, text overrides (0.413059ms)
+✔ migrate every actual library project on disposable copies (23.515557ms)
+ℹ Migrated 8 copied projects; originals unchanged
+✔ bridge compare-and-swap refuses external edit, preserves bytes, accepts matching base (1571.246172ms)
+✔ film palette is stable by kind, with five meanings and deterministic unknown kinds (1.021748ms)
+✔ beat frames provide tempo only when source BPM is absent (0.192931ms)
+✔ film timecode preserves frame positions and project text is escaped (0.241983ms)
+✔ fractional playback crosses film and shot loop boundaries without sticking at the last frame (0.162146ms)
+✔ waveform worker reduces real PCM to bounded peak and RMS bins, including silence (1.355972ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 43
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1644.962864
+{
+ "root": "/home/kvn/.hermes/profiles/clean/cache/scratch/ffs-acp-71bMRD",
+ "security": {
+  "no_token": 401,
+  "bad_token": 401,
+  "foreign_origin": 403,
+  "rebinding_host": 403,
+  "ok": 200,
+  "path_escape": 400,
+  "symlink_read": 400,
+  "symlink_write_dangling": 400,
+  "symlink_write_dir": 400,
+  "symlink_mkdir_dir": 400,
+  "outside_untouched": true,
+  "inside_write": 200,
+  "ws_no_token": "refused",
+  "ws_bad_token": "refused"
+ },
+ "agents": {},
+ "available": [
+  "claude",
+  "codex",
+  "gemini",
+  "hermes",
+  "opencode"
+ ]
+}
+ok

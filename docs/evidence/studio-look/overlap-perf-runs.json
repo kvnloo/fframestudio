@@ -1,0 +1,101 @@
+[
+  {
+    "run": 1,
+    "exit": 0,
+    "coldOpenMs": 140.70000004768372,
+    "metrics": {
+      "openStart": 56.40000003576279,
+      "workerDone": 68,
+      "mountedAt": 110.20000004768372,
+      "journalDoneAt": 140.70000004768372
+    },
+    "summary": {
+      "cmdWorstMs": 9,
+      "nextFrameWorstMs": 16.80000001192093,
+      "scrubFps": 60.00300015000751
+    },
+    "budgets": {
+      "coldOpen": true,
+      "commandPaintReady": true,
+      "commandNextFrame": true,
+      "scrubNoLongtasks": true,
+      "scrub60fps": true,
+      "gzip": true,
+      "virtualized": true,
+      "stableDOM": true,
+      "autosaveFrameWork": true
+    },
+    "gzip": 35475,
+    "autosave": {
+      "writes": 13,
+      "cpuWorstMs": 4.600000023841858,
+      "wallWorstMs": 4.900000035762787
+    }
+  },
+  {
+    "run": 2,
+    "exit": 0,
+    "coldOpenMs": 136.19999998807907,
+    "metrics": {
+      "openStart": 47.69999998807907,
+      "workerDone": 63.39999997615814,
+      "mountedAt": 107.39999997615814,
+      "journalDoneAt": 136.19999998807907
+    },
+    "summary": {
+      "cmdWorstMs": 9.199999988079071,
+      "nextFrameWorstMs": 16.899999976158142,
+      "scrubFps": 60.003000150007495
+    },
+    "budgets": {
+      "coldOpen": true,
+      "commandPaintReady": true,
+      "commandNextFrame": true,
+      "scrubNoLongtasks": true,
+      "scrub60fps": true,
+      "gzip": true,
+      "virtualized": true,
+      "stableDOM": true,
+      "autosaveFrameWork": true
+    },
+    "gzip": 35475,
+    "autosave": {
+      "writes": 13,
+      "cpuWorstMs": 4.699999988079071,
+      "wallWorstMs": 5.100000023841858
+    }
+  },
+  {
+    "run": 3,
+    "exit": 0,
+    "coldOpenMs": 139.69999998807907,
+    "metrics": {
+      "openStart": 54.80000001192093,
+      "workerDone": 66,
+      "mountedAt": 109.59999996423721,
+      "journalDoneAt": 139.69999998807907
+    },
+    "summary": {
+      "cmdWorstMs": 8.699999988079071,
+      "nextFrameWorstMs": 16.80000001192093,
+      "scrubFps": 59.99999999999999
+    },
+    "budgets": {
+      "coldOpen": true,
+      "commandPaintReady": true,
+      "commandNextFrame": true,
+      "scrubNoLongtasks": true,
+      "scrub60fps": true,
+      "gzip": true,
+      "virtualized": true,
+      "stableDOM": true,
+      "autosaveFrameWork": true
+    },
+    "gzip": 35475,
+    "autosave": {
+      "writes": 13,
+      "cpuWorstMs": 4.799999952316284,
+      "wallWorstMs": 5
+    }
+  }
+]

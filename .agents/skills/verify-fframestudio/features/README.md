@@ -56,6 +56,7 @@ When you change a feature, update its file and the matching journey in `test/ver
 
 | feature | file | journey in `test/verify.mjs` |
 | --- | --- | --- |
+| Studio film desk | [studio.md](./studio.md) | `studio: themes, slate tabs, loops and screening room`; additional `tools/verify-studio.mjs` visual/audio proof |
 | Library | [library.md](./library.md) | `library: open link, demo project listed` |
 | Project player | [project-player.md](./project-player.md) | `project: plays and seeks by shot` |
 | System theme | [system-theme.md](./system-theme.md) | `system theme: follows and live-updates` |

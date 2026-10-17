@@ -1,0 +1,48 @@
+
+> test:perf
+> node --test test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf
+
+{"editorGzipBytes":35581}
+{"commands":[{"command":"add","ms":3.3148080000000064},{"command":"select","ms":0.05532300000000134},{"command":"move","ms":0.6297020000000018},{"command":"trim","ms":3.767043000000001},{"command":"split","ms":0.7857130000000012},{"command":"replace","ms":0.695019000000002},{"command":"edit-text","ms":0.6106850000000037},{"command":"duplicate","ms":0.6149950000000075},{"command":"group","ms":0.6506690000000077},{"command":"set-beat-lock","ms":0.42304800000000853},{"command":"retime","ms":4.254010999999991},{"command":"delete","ms":0.6470739999999893},{"command":"edit-style","ms":0.7427050000000008},{"command":"save-version","ms":2.7549040000000105},{"command":"restore-version","ms":6.559484999999995},{"command":"undo","ms":0.05945199999999318},{"command":"redo","ms":0.01897299999998836}]}
+✔ editor shipped JavaScript stays below 150 KiB gzip, excluding ACP (4.13636ms)
+✔ every document command stays under 16ms at 500 clips (CommandStore CPU, no paint) (93.231942ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 158.367493
+Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-BlZ2uf
+{
+  "domStable": true,
+  "story": 7,
+  "timeline": 28,
+  "scrubLongtasks": [],
+  "coldOpenMs": 140.70000004768372,
+  "editorGzipBytes": 35475,
+  "autosave": {
+    "writes": 13,
+    "cpuWorstMs": 4.600000023841858,
+    "wallWorstMs": 4.900000035762787
+  },
+  "budgets": {
+    "coldOpen": true,
+    "commandPaintReady": true,
+    "commandNextFrame": true,
+    "scrubNoLongtasks": true,
+    "scrub60fps": true,
+    "gzip": true,
+    "virtualized": true,
+    "stableDOM": true,
+    "autosaveFrameWork": true
+  },
+  "frameIntervalMedianMs": 16.699999999999818,
+  "summary": {
+    "cmdWorstMs": 9,
+    "nextFrameWorstMs": 16.80000001192093,
+    "scrubFps": 60.00300015000751
+  }
+}
+Evidence: /mnt/zer0models/project-artifacts/fframestudio/ui-compare/studio-look/perf-overlap-1

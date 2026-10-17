@@ -1,0 +1,48 @@
+
+> test:perf
+> node --test test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf
+
+{"editorGzipBytes":35549}
+{"commands":[{"command":"add","ms":4.047063999999999},{"command":"select","ms":0.08029799999999909},{"command":"move","ms":0.7017349999999993},{"command":"trim","ms":4.817949999999996},{"command":"split","ms":1.8070060000000012},{"command":"replace","ms":0.9079160000000002},{"command":"edit-text","ms":0.749526000000003},{"command":"duplicate","ms":0.7338409999999982},{"command":"group","ms":0.9750849999999929},{"command":"set-beat-lock","ms":0.4713119999999975},{"command":"retime","ms":5.215427000000005},{"command":"delete","ms":1.0807839999999942},{"command":"edit-style","ms":1.022166999999996},{"command":"save-version","ms":3.0406790000000115},{"command":"restore-version","ms":8.899744999999996},{"command":"undo","ms":0.10306400000001759},{"command":"redo","ms":0.026808999999985872}]}
+✔ editor shipped JavaScript stays below 150 KiB gzip, excluding ACP (4.992518ms)
+✔ every document command stays under 16ms at 500 clips (CommandStore CPU, no paint) (111.43475ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 186.944582
+Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-Axx5rZ
+{
+  "domStable": true,
+  "story": 7,
+  "timeline": 28,
+  "scrubLongtasks": [],
+  "coldOpenMs": 262.9000000357628,
+  "editorGzipBytes": 35444,
+  "autosave": {
+    "writes": 13,
+    "cpuWorstMs": 8,
+    "wallWorstMs": 8.399999976158142
+  },
+  "budgets": {
+    "coldOpen": true,
+    "commandPaintReady": true,
+    "commandNextFrame": true,
+    "scrubNoLongtasks": true,
+    "scrub60fps": true,
+    "gzip": true,
+    "virtualized": true,
+    "stableDOM": true,
+    "autosaveFrameWork": true
+  },
+  "frameIntervalMedianMs": 16.699999999999818,
+  "summary": {
+    "cmdWorstMs": 8.899999976158142,
+    "nextFrameWorstMs": 16.80000001192093,
+    "scrubFps": 60.003000150007495
+  }
+}
+Evidence: /mnt/zer0models/project-artifacts/fframestudio/ui-compare/studio-look/perf-qualified-3
