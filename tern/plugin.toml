@@ -1,0 +1,6 @@
+schema = 1
+id = "fframestudio"
+name = "fframestudio beta-ui"
+version = "0.1.0"
+description = "Native library and project review with the web editor and ACP beside it."
+window = "window.luau"
