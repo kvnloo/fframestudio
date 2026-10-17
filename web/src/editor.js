@@ -2,6 +2,7 @@ import { fpsOf, textOf, uid, rational } from './doc/project.js';
 import { scope, COMMANDS, CommandStore, proposalCommand, recoveryCommand } from './doc/commands.js';
 import { RecoveryJournal, fileHash } from './doc/journal.js';
 import { setThemeSettings, themeInfo, onTheme, shotColorSlot } from './system-theme.js';
+import { StudioView, colourSlot, clipKind, timecode, advanceFrame } from './studio.js';
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
@@ -162,9 +163,12 @@ export class Editor {
     this.baseRaw = raw;
     this.videoId = this.doc.videos[0].id;
     this.selection = this.video.clips[0]?.id || null;
+    const journalOpening = this.openJournal(raw);
     this.mount();
+    this.metrics.mountedAt = performance.now();
     this.onChange?.(this.doc);
-    await this.openJournal(raw);
+    await journalOpening;
+    this.metrics.journalDoneAt = performance.now();
     this.interactiveAt = performance.now();
     return this;
   }
@@ -195,7 +199,7 @@ export class Editor {
   <section class="canvas-panel panel"><div class="panel-title">Canvas <span id="selection-label"></span></div><div class="player" id="canvas" tabindex="0" aria-label="Canvas"><video id="preview-video" muted playsinline preload="metadata"></video><canvas id="preview-still" width="960" height="540"></canvas><div id="preview-text"></div></div><div class="preview-label">Editorial preview · source proxy / thumbnail + text. Final compositing not available.</div><div class="transport">${button('reverse', 'J ◀')}${button('play', 'Space · Play')}${button('pause', 'K ■')}${button('forward', 'L ▶')}<output id="time">0 f</output><input id="seek" type="range" min="0" value="0" aria-label="Playhead frame"></div></section>
   <section class="inspector-panel panel"><div class="panel-title">Inspector ${button('toggle-inspector', 'Collapse')}</div><div id="inspector"></div></section></div>
   <section class="timeline-panel panel"><div class="panel-title">Timeline <span id="scope" aria-live="polite">Select a clip to edit</span><label>Zoom <input id="zoom" type="range" min="0.5" max="8" step="0.25" value="1"></label><label><input id="snap" type="checkbox" checked> Snap</label></div><div id="timeline"><div id="timeline-space"><div id="beats"></div><div id="lane"></div><div id="playhead"></div></div></div><div class="panel-foot">${button('split', 'Split · S')}${button('duplicate', 'Duplicate')}${button('delete', 'Delete')}<span class="hint">Drag story cards to reorder · drag clip edges to trim · attached layers follow</span></div></section>
-  <div class="secondary-grid"><section class="panel"><div class="panel-title">Versions</div><div class="version-tools"><input id="version-name" placeholder="Name this version" aria-label="Version name">${button('save-version', 'Save version')}<select id="version-a" aria-label="Version A"></select><select id="version-b" aria-label="Version B"></select>${button('compare', 'Compare')}${button('restore-version', 'Restore A')}</div><pre id="version-diff"></pre></section><section class="panel"><div class="panel-title">Assistant proposals <span>Inspect → Apply → Undo</span></div><div id="proposals">No pending proposal. Ask the assistant for an edit.</div></section></div>
+  <div class="secondary-grid"><section class="panel"><div class="panel-title">Takes <span>film versions</span></div><div class="version-tools"><input id="version-name" placeholder="Name this version" aria-label="Version name">${button('save-version', 'Save version')}<select id="version-a" aria-label="Version A"></select><select id="version-b" aria-label="Version B"></select>${button('compare', 'Compare')}${button('restore-version', 'Restore A')}</div><pre id="version-diff"></pre></section><section class="panel"><div class="panel-title">Assistant proposals <span>Inspect → Apply → Undo</span></div><div id="proposals">No pending proposal. Ask the assistant for an edit.</div></section></div>
   <details class="source-panel"><summary>Source & provenance</summary><p>${esc(this.doc.metadata?.source?.path || '')}</p><p>${esc((this.doc.metadata?.notes || []).join(' · '))}</p><dl class="kv">${Object.entries(
     this.doc.metadata?.docs || {},
   )
@@ -207,7 +211,7 @@ export class Editor {
       '',
     )}${(this.doc.metadata?.renders || []).map((r) => `<dt>${esc(r.label)}</dt><dd><a href="${esc(this.url(r.file))}" target="_blank" rel="noopener">${esc(r.width)}×${esc(r.height)} · ${esc(r.fps)} fps · source render</a></dd>`).join('')}</dl><p>Original media stays untouched. Project: ${esc(this.absolute)}</p></details>
   <div id="assistant-slot"></div><dialog id="palette"><div class="panel-title">Commands <button data-action="close-palette">Esc · close</button></div><input id="command-search" placeholder="Find a command…" aria-label="Search commands"><div id="command-list"></div></dialog>
-  <dialog id="settings"><div class="panel-title">Workspace ${button('close-settings', 'Close')}</div><label>Theme <select id="theme"><option value="system">Follow system</option><option value="dark">Dark</option><option value="light">Light</option><option value="contrast">High contrast</option><option value="custom">Custom</option></select></label><p id="theme-source" class="hint" role="status"></p><div id="custom-tokens">${['bg', 'ink', 'acc'].map((k) => `<label>${k}<input type="color" data-token="${k}" value="${this.settings.tokens?.[k] || { bg: '#0a0a0b', ink: '#ecebe7', acc: '#7fd49a' }[k]}"></label>`).join('')}</div><p>Resize side panels using their lower-right handle. Collapse choices are remembered.</p><p>Key names: Mod+z, Mod+Shift+z, Space, ArrowLeft…</p><div class="keybindings">${Object.entries(
+  <dialog id="settings"><div class="panel-title">Workspace ${button('close-settings', 'Close')}</div><label>Theme <select id="theme"><option value="system">Follow system</option><option value="studio">Studio</option><option value="paper">Paper</option><option value="dark">Dark</option><option value="light">Light</option><option value="contrast">High contrast</option><option value="custom">Custom</option></select></label><p id="theme-source" class="hint" role="status"></p><div id="custom-tokens">${['bg', 'ink', 'acc'].map((k) => `<label>${k}<input type="color" data-token="${k}" value="${this.settings.tokens?.[k] || { bg: '#0a0a0b', ink: '#ecebe7', acc: '#7fd49a' }[k]}"></label>`).join('')}</div><p>Resize side panels using their lower-right handle. Collapse choices are remembered.</p><p>Key names: Mod+z, Mod+Shift+z, Space, ArrowLeft…</p><div class="keybindings">${Object.entries(
     defaults,
   )
     .map(
@@ -215,6 +219,8 @@ export class Editor {
         `<label>${k}<input data-binding="${k}" value="${esc(this.settings.keys?.[k] || v)}"></label>`,
     )
     .join('')}</div>${button('reset-settings', 'Reset workspace')}</dialog>`;
+    this.studio = new StudioView(this);
+    this.studio.mount();
     $('#recovery').oncancel = (e) => e.preventDefault();
     this.assistant?.($('#assistant-slot', this.root));
     this.root.onclick = (e) => {
@@ -298,7 +304,7 @@ export class Editor {
           ? 'storyWidth'
           : 'inspectorWidth';
         if (innerWidth > 1000)
-          this.settings[k] = Math.round(e.contentRect.width + 26);
+          this.settings[k] = Math.round(e.borderBoxSize[0].inlineSize);
       }
       localStorage.setItem('ffs.settings', JSON.stringify(this.settings));
     });
@@ -313,14 +319,9 @@ export class Editor {
       if (this.dead) return;
       const delta = this.tick ? Math.min(t - this.tick, 100) : 0;
       this.tick = t;
-      if (this.rate)
-        this.frame = Math.max(
-          0,
-          Math.min(
-            this.total - 1,
-            this.frame + (delta * this.rate * fpsOf(this.doc)) / 1000,
-          ),
-        );
+      if (this.rate) {
+        this.frame = advanceFrame(this.frame, delta * this.rate * fpsOf(this.doc) / 1000, this.total, this.studio.loop ? this.studio.bounds() : null);
+      }
       // No layout reads, text changes, reconciliation, or decoding in the animation loop.
       playhead.style.transform = `translateX(${this.frame * this.scale}px)`;
       this.raf = requestAnimationFrame(loop);
@@ -352,7 +353,7 @@ export class Editor {
   }
   updateScale() {
     this.scale =
-      Math.max(0.4, this.timelineWidth / Math.max(this.total, 1)) * this.zoom;
+      Math.max(this.video.clips.length > 100 ? 0.4 : 0.02, this.timelineWidth / Math.max(this.total, 1)) * this.zoom;
   }
   refresh(result) {
     if ($('.ph-title h1').textContent !== this.doc.title)
@@ -368,6 +369,7 @@ export class Editor {
     this.renderStory();
     this.renderTimeline();
     this.renderInspector();
+    this.studio?.inspector();
     this.renderVersions();
     this.updatePreview(true);
     if (result) {
@@ -435,6 +437,7 @@ export class Editor {
         node.className =
           'story-card' + (c.id === this.selection ? ' selected' : '');
         node.dataset.select = c.id;
+        node.dataset.colour = colourSlot(clipKind(c));
         node.setAttribute('role', 'button');
         node.tabIndex = 0;
         node.setAttribute('aria-pressed', c.id === this.selection);
@@ -511,7 +514,8 @@ export class Editor {
       node.setAttribute('role', 'button');
       node.setAttribute('aria-label', c.name);
       node.setAttribute('aria-pressed', c.id === this.selection);
-      node.style.setProperty('--shot-color', `var(--shot-${shotColorSlot(c.metadata?.type || c.kind)},var(--line2))`);
+      node.dataset.colour = colourSlot(clipKind(c));
+      node.title = `${c.name} · ${c.duration} frames · ${clipKind(c)}`;
       node.style.transform = `translateX(${c.start * this.scale}px)`;
       node.style.width = `${Math.max(2, c.duration * this.scale)}px`;
       const sig = JSON.stringify([
@@ -543,6 +547,7 @@ export class Editor {
         )
         .join('');
     }
+    this.studio?.timeline();
     $('#timeline-space').onpointerdown = (e) => {
       if (e.button !== 0) return;
       if (!e.target.closest('.timeline-clip')) {
@@ -596,6 +601,7 @@ export class Editor {
       removeEventListener('pointermove', move);
       removeEventListener('pointerup', up);
       if (cmd) this.run(cmd).catch((err) => this.toast(err.message));
+      else this.select(c.id).catch((err) => this.toast(err.message));
     };
     addEventListener('pointermove', move);
     addEventListener('pointerup', up, { once: true });
@@ -632,7 +638,7 @@ export class Editor {
         if (e.value !== value) e.value = value;
       }
       const range = $('[data-range]', box),
-        text = `Start ${c.start} f · ${this.doc.fps.num}/${this.doc.fps.den} fps`;
+        text = `IN ${timecode(c.start, fpsOf(this.doc))} · ${c.start} f · ${this.doc.fps.num}/${this.doc.fps.den} fps`;
       if (range.textContent !== text) range.textContent = text;
       return;
     }
@@ -640,7 +646,7 @@ export class Editor {
     const active = document.activeElement?.dataset.field,
       selectionStart = document.activeElement?.selectionStart;
     const fields = { title: '', ...textOf(c) };
-    box.innerHTML = `<p class="scope-label">This clip: <b>${esc(c.name)}</b><br>Timing edits ripple downstream</p><fieldset><legend>Timing · integer frames</legend><label>Source in <input id="source-in" type="number" min="0" step="1" value="${c.sourceIn}"></label><label>Duration <input id="duration" type="number" min="1" step="1" value="${c.duration}"></label><label>Speed <input id="speed" type="number" min="0.01" step="0.25" value="${c.speed.num / c.speed.den}"></label><label><input id="beat-lock" type="checkbox" ${c.beatLock ? 'checked' : ''}> Beat lock (position + duration)</label><span class="hint" data-range>Start ${c.start} f · ${this.doc.fps.num}/${this.doc.fps.den} fps</span></fieldset><fieldset><legend>Words · this clip only</legend>${Object.entries(
+    box.innerHTML = `<p class="scope-label">This clip: <b>${esc(c.name)}</b><br>Timing edits ripple downstream</p><fieldset><legend>Timing · integer frames</legend><label>Source in <input id="source-in" type="number" min="0" step="1" value="${c.sourceIn}"></label><label>Duration <input id="duration" type="number" min="1" step="1" value="${c.duration}"></label><label>Speed <input id="speed" type="number" min="0.01" step="0.25" value="${c.speed.num / c.speed.den}"></label><label><input id="beat-lock" type="checkbox" ${c.beatLock ? 'checked' : ''}> Beat lock (position + duration)</label><span class="hint" data-range>IN ${timecode(c.start, fpsOf(this.doc))} · ${c.start} f · ${this.doc.fps.num}/${this.doc.fps.den} fps</span></fieldset><fieldset><legend>Words · this clip only</legend>${Object.entries(
       fields,
     )
       .map(
@@ -735,6 +741,7 @@ export class Editor {
     if (textOnly) {
       this.renderStory();
       this.renderInspector();
+      this.studio?.inspector();
       this.updatePreview(true);
       $('[data-action="undo"]').disabled = !result.undo;
       $('[data-action="redo"]').disabled = !result.redo;
@@ -751,6 +758,7 @@ export class Editor {
     this.renderStory();
     this.renderTimeline();
     this.renderInspector();
+    this.studio?.inspector();
     $('#selection-label').textContent = this.clip.name;
     if (seek) this.seek(this.clip.start);
   }
@@ -765,22 +773,20 @@ export class Editor {
     const c = this.video.clips.find(
       (c) => this.frame >= c.start && this.frame < c.start + c.duration,
     );
-    const time = `${Math.floor(this.frame)} f / ${this.total} f`;
-    if ($('#time').textContent !== time) $('#time').textContent = time;
+    if (c) this.studio?.preview(c);
     if (+$('#seek').value !== Math.floor(this.frame))
       $('#seek').value = Math.floor(this.frame);
     if (!c) return;
     const sig = JSON.stringify([c.id, textOf(c), this.video.styles[c.styleId]]);
     if (sig !== this.previewSignature) {
       this.previewSignature = sig;
-      $('#preview-text').textContent = Object.values(textOf(c))
-        .flat()
-        .join('\n');
+      $('#preview-text').innerHTML = Object.entries(textOf(c)).flatMap(([field,value]) => (Array.isArray(value) ? value : [value]).filter(Boolean).map(line => `<span class="preview-line" data-word="${esc(field)}">${esc(line)}</span>`)).join('');
       $('#preview-text').dataset.select = c.id;
       $('#preview-video').dataset.select = c.id;
       $('#preview-still').dataset.select = c.id;
-      $('#preview-text').style.color =
-        this.video.styles[c.styleId]?.color || '';
+      const colour = this.video.styles[c.styleId]?.color || '';
+      $('#preview-text').style.color = colour;
+      $('#canvas').dataset.customInk = String(!!colour && colour !== '#ecebe7');
       const still = $('#preview-still'),
         src = c.thumb || this.doc.preview.poster;
       still.style.display = src ? 'block' : 'none';
@@ -1028,6 +1034,7 @@ export class Editor {
   }
   async action(a, { clipId } = {}) {
     if (this.loading) return;
+    if (['loop-shot','loop-film','mute','screening'].includes(a)) return this.studio.action(a);
     if (a !== 'palette' && a !== 'close-palette' && $('#palette').open)
       $('#palette').close();
     if (a === 'recover' || a === 'discard-recovery') return this.recover(a === 'discard-recovery');
@@ -1254,6 +1261,7 @@ export class Editor {
         this.settings.inspectorCollapsed = false;
         this.saveSettings();
       }
+      if (a !== 'select') this.studio.showTab('shot');
       $(targets[a])?.closest('details')?.setAttribute('open', '');
       $(targets[a])?.focus();
     }
@@ -1279,6 +1287,7 @@ export class Editor {
   }
   destroy() {
     this.dead = true;
+    this.studio?.destroy();
     cancelAnimationFrame(this.raf);
     clearInterval(this.previewTimer);
     this.journal?.close();

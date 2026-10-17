@@ -1,8 +1,8 @@
-@font-face{font-family:"Plex Mono";src:url(/app/fonts/IBMPlexMono-Regular.ttf) format("truetype");font-weight:400}
-@font-face{font-family:"Plex Mono";src:url(/app/fonts/IBMPlexMono-SemiBold.ttf) format("truetype");font-weight:600}
-@font-face{font-family:"Instrument Sans";src:url(/app/fonts/InstrumentSans-Regular.ttf) format("truetype");font-weight:400}
-@font-face{font-family:"Instrument Sans";src:url(/app/fonts/InstrumentSans-Bold.ttf) format("truetype");font-weight:600}
-@font-face{font-family:"Instrument Serif";font-style:italic;src:url(/app/fonts/InstrumentSerif-Italic.ttf) format("truetype")}
+@font-face{font-display:swap;font-family:"Plex Mono";src:url(/app/fonts/IBMPlexMono-Regular.ttf) format("truetype");font-weight:400}
+@font-face{font-display:swap;font-family:"Plex Mono";src:url(/app/fonts/IBMPlexMono-SemiBold.ttf) format("truetype");font-weight:600}
+@font-face{font-display:swap;font-family:"Instrument Sans";src:url(/app/fonts/InstrumentSans-Regular.ttf) format("truetype");font-weight:400}
+@font-face{font-display:swap;font-family:"Instrument Sans";src:url(/app/fonts/InstrumentSans-Bold.ttf) format("truetype");font-weight:600}
+@font-face{font-display:swap;font-family:"Instrument Serif";font-style:italic;src:url(/app/fonts/InstrumentSerif-Italic.ttf) format("truetype")}
 :root{--bg:#0a0a0b;--bg2:#101012;--ink:#ecebe7;--mute:#8b8a85;--faint:#55544f;--line:#232327;--line2:#36363b;--acc:#7fd49a;--warn:#e2b25c;--bad:#ef7b6b}
 *{box-sizing:border-box}html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:14px/1.45 "Instrument Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}

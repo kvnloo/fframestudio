@@ -98,6 +98,33 @@ and how quickly people move to faster routes such as shortcuts and the palette. 
 5. OTIO export, collaboration.
 6. Tern beta-ui add-on.
 
+## 11. Studio film desk (implemented)
+
+Studio is the default dark, colourful theme; Paper is a warm light counterpart. Dark, Light,
+High contrast and Custom remain selectable in Workspace. The library and editor share the choice.
+`web/studio.css` owns surface, paper, display and five semantic shot-colour tokens. Archivo Black
+carries the poster; Instrument Serif supplies the human voice; Instrument Sans carries body copy;
+Plex Mono is reserved for labels and time. Fonts are local, OFL, with `font-display: swap`.
+
+The hero frame and film timeline lead. Story, Takes (film versions), proposals, provenance and
+the assistant remain available below; these are the same document views and commands, not a
+second editing mode. The right slate has Shot / Narrative / Direction tabs. Direction renders
+source metadata, actual shared styles, format and poster-derived swatches, never pretend presets.
+Generated shots have paper poster frames; source clips retain actual media and display words.
+These are editorial previews, not a new final compositor or an export qualification.
+
+Shot types use a stable teal/amber/yellow/coral/green mapping, with deterministic hashing for
+unknown kinds/groups. Chapters, ruler and beat/shot markers share the existing windowed lane.
+Authored bar counts are read from shot metadata; otherwise the footer estimates bars from BPM.
+Attached soundtracks and embedded source-proxy audio get worker-reduced peak/RMS displays cached by source SHA-256, bounded to
+32 sources. No audio file means no invented waveform. Analysis starts after cold open.
+Loop shot, Loop film, Mute and Screening room are real playback/fullscreen actions. The single
+rAF remains math + playhead transform only; slate/readout/media updates use the existing preview
+timer. No runtime dependency or framework was added.
+
+Visual/audio qualification is reproducible with `node tools/verify-studio.mjs`; see the
+[Studio feature map](../.agents/skills/verify-fframestudio/features/studio.md) for stable handles.
+
 ## Open questions
 
 - Diffusion Studio and Freesound commercial terms need legal reading before use.

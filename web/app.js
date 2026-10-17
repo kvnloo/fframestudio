@@ -3,6 +3,7 @@
 import { Editor, defaults } from '/app/src/editor.js';
 import { ContextMenu } from '/app/src/context-menu.js';
 import { initSystemTheme, receiveTheme } from '/app/src/system-theme.js';
+import { colourSlot } from '/app/src/studio.js';
 const connectAgent=async options=>(await import('/app/dist/acp-client.js')).connectAgent(options);
 const bridgeApi=()=>({read:async p=>{const r=await fetch('/fs?path='+encodeURIComponent(p));if(!r.ok)throw Error('Read failed: '+r.status);return r.json();},agents:async()=>{const r=await fetch('/agents');return r.json();},events:fn=>{const es=new EventSource('/events');es.addEventListener('theme',e=>receiveTheme(JSON.parse(e.data)));es.onmessage=e=>fn(JSON.parse(e.data));return ()=>es.close();}});
 
@@ -50,10 +51,10 @@ async function boot() {
   if (!ME?.ok) { $('#bridge').innerHTML = '<span class="dot bad"></span>not signed in'; $('#view').innerHTML = `<div class="gate"><div class="cap">fframestudio</div><h1>Open the link the bridge printed</h1>
     <p>Start the bridge with <code>npm run bridge</code> and open the <code>/open?token=…</code> link it prints (also in <code>~/.config/fframestudio/bridge.json</code>). The link sets a same-site cookie so this page can reach your projects and agents.</p></div>`; return; }
   $('#bridge').innerHTML='<span class="dot ok"></span>bridge connected';
-  initSystemTheme(); // One small fetch in parallel with agents, library and project loading.
-  api.agents().then(r=>{AGENTS=r.agents;renderAssistant($('#assistant-slot'));}).catch(()=>{});
+  initSystemTheme();
   api.events(e=>{EDITOR?.external(e.path).catch(err=>{console.error(err.stack);toast(err.message);});if(e.path==='projects/library.json')loadLib();});
-  addEventListener('hashchange',route);if(location.hash.startsWith('#/p/')){loadLib();route();}else{await loadLib();route();}
+  addEventListener('hashchange',route);if(location.hash.startsWith('#/p/')){loadLib();await route();}else{await loadLib();route();}
+  api.agents().then(r=>{AGENTS=r.agents;renderAssistant($('#assistant-slot'));}).catch(()=>{});
 }
 async function loadLib() { LIB = await fetch('/lib/library.json').then((r) => (r.ok ? r.json() : { projects: [] })); }
 
@@ -68,11 +69,13 @@ let TAG = '';
 function showLibrary() {
   const ps = LIB.projects, tags = [...new Set(ps.flatMap((p) => p.tags || []))].sort();
   const shown = ps.filter((p) => !TAG || (p.tags || []).includes(TAG));
-  $('#view').innerHTML = `<div class="libhead"><div><div class="cap">library · ${ps.length} projects</div><h1>Every film, <em>one place.</em></h1></div>
+  const settings=applyLibraryTheme();
+  $('#view').innerHTML = `<label class="library-theme">WORKSPACE <select id="library-theme" aria-label="Library theme">${['studio','paper','dark','light','contrast','custom'].map(t=>`<option value="${t}" ${t===(settings.theme||'studio')?'selected':''}>${t}</option>`).join('')}</select></label><div class="libhead"><div><div class="cap">THE FILM LIBRARY · ${ps.length} PRODUCTIONS</div><h1>Every film, <em>one place.</em></h1></div>
     <div class="chips"><button class="pill ${!TAG ? 'on' : ''}" data-tag="">all</button>${tags.map((t) => `<button class="pill ${TAG === t ? 'on' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>
-  <div class="grid">${shown.map((p) => `<a class="card brk" data-project="${esc(p.id)}" href="#/p/${esc(p.id)}"><div class="pv">${p.poster ? `<img src="/lib/${esc(p.poster)}" loading="lazy" alt="">` : '<div class="none">no render yet</div>'}<span class="rt">${fmt(p.duration_s)}</span></div>
-    <div class="tx"><div class="t">${esc(p.title)}</div><div class="m"><span>${esc(p.kind)}</span><span>${p.shots} shots</span><span>${p.renders} render${p.renders === 1 ? '' : 's'}</span><span>${(p.tags || []).map(esc).join(' · ')}</span></div>
+  <div class="grid">${shown.map((p,index) => `<a data-project="${esc(p.id)}" data-colour="${colourSlot(p.kind)}" class="card brk" href="#/p/${esc(p.id)}"><div class="pv">${p.poster ? `<img src="/lib/${esc(p.poster)}" loading="lazy" alt="">` : '<div class="none">no render yet</div>'}<span class="poster-index">CUT ${String(index+1).padStart(2,'0')} / ${esc(p.kind)}</span><span class="rt">RUNTIME ${fmt(p.duration_s)}</span></div>
+    <div class="tx"><div class="t">${esc(p.title)}</div><div class="m"><span class="kind-chip">${esc(p.kind)}</span><span>${p.shots} shots</span><span>${p.renders} render${p.renders === 1 ? '' : 's'}</span><span>${(p.tags || []).map(esc).join(' · ')}</span></div>
     <div class="strip">${Array.from({ length: Math.min(40, p.shots || 1) }, () => '<i></i>').join('')}</div></div></a>`).join('')}</div>`;
+  $('#library-theme').onchange=e=>{settings.theme=e.target.value;localStorage.setItem('ffs.settings',JSON.stringify(settings));applyLibraryTheme();};
   $$('[data-tag]').forEach((b) => (b.onclick = () => { TAG = b.dataset.tag; showLibrary(); }));
   $$('.card').forEach((card) => (card.onclick = (event) => {
     if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
