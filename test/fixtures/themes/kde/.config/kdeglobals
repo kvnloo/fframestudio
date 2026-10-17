@@ -1,0 +1,5 @@
+[Colors:Window]
+BackgroundNormal=239,240,241
+ForegroundNormal=35,38,41
+[Colors:Selection]
+BackgroundNormal=61,174,233

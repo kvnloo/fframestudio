@@ -33,7 +33,7 @@ const snapshotConfig = () => {
   }
 };
 const configBefore = snapshotConfig();
-const bridge = spawn(process.execPath, [path.resolve('bridge/bridge.mjs'), '--port', String(port), '--root', root, '--token', token, '--quiet', '--no-config'], { stdio: ['ignore', 'pipe', 'inherit'] });
+const bridge = spawn(process.execPath, [path.resolve('bridge/bridge.mjs'), '--port', String(port), '--root', root, '--token', token, '--quiet', '--no-config', '--theme-home', root], { stdio: ['ignore', 'pipe', 'inherit'] });
 const out = { root, security: {}, agents: {} };
 try {
   await new Promise((ok, bad) => {

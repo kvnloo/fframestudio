@@ -1,0 +1,12 @@
+{
+  "mSurface": "#181f23",
+  "mSurfaceVariant": "#282d2a",
+  "mHover": "#383c31",
+  "mOnSurface": "#d1deda",
+  "mOnSurfaceVariant": "#a0afa8",
+  "mOutline": "#494c39",
+  "mPrimary": "#c8be72",
+  "mSecondary": "#96b697",
+  "mTertiary": "#a9a2ce",
+  "mError": "#e75e78"
+}

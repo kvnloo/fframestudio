@@ -21,6 +21,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { WebSocketServer } from 'ws';
 import { AGENTS as BUILTIN } from './agents.mjs';
+import { watchTheme, detectTheme } from './system-theme.mjs';
 
 const VERSION = '0.1.0';
 const argv = process.argv.slice(2);
@@ -107,6 +108,13 @@ const poll=setInterval(async()=>{if(!watchers.size||checking)return;checking=tru
  }
 }finally{checking=false;}},750);poll.unref();
 
+const THEME_HOME = path.resolve(opt('--theme-home', os.homedir()));
+const themeOptions = { home: THEME_HOME, source: opt('--theme-source', undefined), desktop: !argv.includes('--theme-home') };
+const theme = watchTheme({ ...themeOptions, onChange: state => {
+  const msg = `event: theme\ndata: ${JSON.stringify(state)}\n\n`; watchers.forEach(r => r.write(msg));
+} });
+process.once('SIGTERM', () => { theme.close(); process.exit(0); });
+process.once('SIGINT', () => { theme.close(); process.exit(0); });
 const server = http.createServer(async (req, res) => {
   cors(req, res);
   const u = new URL(req.url, 'http://x');
@@ -125,6 +133,11 @@ const server = http.createServer(async (req, res) => {
   const auth = (req.headers.authorization || '').replace(/^Bearer /, '') || u.searchParams.get('token') || cookieTok(req); // query only for EventSource
   if (u.pathname === '/me') return send(res, 200, tokenOk(auth) ? { ok: true, root: ROOT } : { ok: false }); // lets the app show the sign-in page without a console error
   if (!tokenOk(auth)) return send(res, 401, { error: 'bad token' });
+  if (u.pathname === '/theme' && req.method === 'GET') {
+    await theme.ready;
+    const source = u.searchParams.get('source');
+    return send(res, 200, source ? await detectTheme({ ...themeOptions, source }) : theme.state);
+  }
   if (u.pathname.startsWith('/lib/')) { const f = path.resolve(LIBDIR, decodeURIComponent(u.pathname.slice(5))); if (!f.startsWith(LIBDIR + path.sep)) return send(res, 400, { error: 'bad path' }); return serveFile(req, res, f); }
   if (u.pathname === '/file') { const f = path.resolve(String(u.searchParams.get('path') || '')); if (!referenced().has(f)) return send(res, 403, { error: 'file is not referenced by any project' }); return serveFile(req, res, f); }
   if (u.pathname === '/agents') return send(res, 200, { root: ROOT, agents: AGENTS.map((a) => ({ id: a.id, name: a.name, login: a.login, available: has(a) })) });
@@ -141,7 +154,7 @@ const server = http.createServer(async (req, res) => {
       try{fs.writeFileSync(tmp,b,{flag:NOFOLLOW_WRITE|fs.constants.O_EXCL});fs.renameSync(tmp,p);}catch(e){try{fs.unlinkSync(tmp);}catch{}return send(res,500,{error:e.message});}
       publish('change',path.relative(ROOT,p));return send(res, 200, { ok: true, absolute: p }); }
   }
-  if (u.pathname === '/events') { res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' }); res.write(': ok\n\n'); watchers.add(res); req.on('close', () => watchers.delete(res)); return; }
+  if (u.pathname === '/events') { res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' }); res.write(': ok\n\n'); res.write(`event: theme\ndata: ${JSON.stringify(theme.state)}\n\n`); watchers.add(res); req.on('close', () => watchers.delete(res)); return; }
   send(res, 404, { error: 'not found' });
 });
 
@@ -174,8 +187,10 @@ function attach(ws, agent) {
 }
 
 server.listen(PORT, '127.0.0.1', () => {
-  const cfg = path.join(os.homedir(), '.config', 'fframestudio'); fs.mkdirSync(cfg, { recursive: true });
-  if(!argv.includes('--no-config')) fs.writeFileSync(path.join(cfg, 'bridge.json'), JSON.stringify({ url: `http://127.0.0.1:${PORT}`, token: TOKEN, root: ROOT, pid: process.pid }), { mode: 0o600 });
+  if (!argv.includes('--no-config')) {
+    const cfg = path.join(os.homedir(), '.config', 'fframestudio'); fs.mkdirSync(cfg, { recursive: true });
+    fs.writeFileSync(path.join(cfg, 'bridge.json'), JSON.stringify({ url: `http://127.0.0.1:${PORT}`, token: TOKEN, root: ROOT, pid: process.pid }), { mode: 0o600 });
+  }
   console.log(`fframestudio bridge ${VERSION} on http://127.0.0.1:${PORT}  root=${ROOT}`);
   console.log(`open the studio: http://127.0.0.1:${PORT}/open?token=${QUIET ? '<see ~/.config/fframestudio/bridge.json>' : TOKEN}`);
   console.log(`agents: ${AGENTS.map((a) => `${a.id}${has(a) ? '' : ' (not available)'}`).join(', ')}`);
