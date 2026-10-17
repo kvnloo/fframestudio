@@ -5,7 +5,7 @@ description: Drive the fframestudio web app (library, project player, shot edits
 
 # Verify fframestudio
 
-The surface is the web app served by the local bridge. `test/verify.mjs` is the harness: it builds
+The surfaces are the web app served by the local bridge and the static local-first site (see [hosted](features/hosted.md) and [HOSTED.md](../../../docs/HOSTED.md)). `test/verify.mjs` is the harness: it builds
 an isolated world, drives Chromium through the journeys in `features/`, and keeps the evidence.
 
 ## Launch
@@ -37,6 +37,9 @@ Playwright (`playwright` devDependency). Browser: `PW_CHANNEL=chrome` (CI), else
 
 | handle | what |
 | --- | --- |
+| `#open-folder`, `#folder-files` | hosted read/write picker and read-only folder import |
+| `#examples-shelf`, `[data-open-example]` | lazy attributed examples, opened as IndexedDB copies |
+| `[data-action="export-project"]`, `[data-action="save-copy"]` | local project download and example copy to visitor folder |
 | `.gate` | sign-in page shown without the token cookie |
 | `/open?token=T` | sets the `ffs` cookie, redirects to the library |
 | `.card`, `.card .t` | library cards and titles |

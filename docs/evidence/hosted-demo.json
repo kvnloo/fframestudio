@@ -1,0 +1,193 @@
+{
+  "schema": "fframestudio.hosted-qualification/1",
+  "baseline": "fe3dac8",
+  "branch": "feat/hosted-demo",
+  "artifactFolder": "<local>/project-artifacts/fframestudio/ui-compare/hosted-demo",
+  "build": {
+    "ok": true,
+    "bytes": 3517668,
+    "examples": [
+      {
+        "id": "motion-graphics",
+        "author": "Dmitriy Kovalenko",
+        "licence": "MIT"
+      },
+      {
+        "id": "neon-triangle",
+        "author": "Dmitriy Kovalenko",
+        "licence": "MIT"
+      },
+      {
+        "id": "hello-world",
+        "author": "Dmitriy Kovalenko",
+        "licence": "MIT"
+      },
+      {
+        "id": "signal-lab",
+        "author": "Dmitriy Kovalenko",
+        "licence": "MIT"
+      }
+    ]
+  },
+  "npmTest": {
+    "ok": true,
+    "tests": 62,
+    "discoveryConfig": {
+      "mtime_unchanged": true,
+      "content_unchanged": true
+    },
+    "security": {
+      "no_token": 401,
+      "bad_token": 401,
+      "foreign_origin": 403,
+      "rebinding_host": 403,
+      "ok": 200,
+      "hosted_token": 200,
+      "hosted_cors": true,
+      "hosted_no_token": 401,
+      "pna_preflight": true,
+      "foreign_cors_absent": true,
+      "hosted_ws": true,
+      "foreign_ws_refused": true,
+      "hosted_bad_ws_refused": true,
+      "path_escape": 400,
+      "symlink_read": 400,
+      "symlink_write_dangling": 400,
+      "symlink_write_dir": 400,
+      "symlink_mkdir_dir": 400,
+      "outside_untouched": true,
+      "inside_write": 200,
+      "ws_no_token": "refused",
+      "ws_bad_token": "refused"
+    }
+  },
+  "verifyRuns": [
+    {
+      "receipt": "final/verify-1/report.json",
+      "ok": true,
+      "journeys": 21,
+      "hostedJourneys": 4,
+      "consoleErrors": 0,
+      "failedRequests": 0
+    },
+    {
+      "receipt": "final/verify-2/report.json",
+      "ok": true,
+      "journeys": 21,
+      "hostedJourneys": 4,
+      "consoleErrors": 0,
+      "failedRequests": 0
+    },
+    {
+      "receipt": "final/verify-3/report.json",
+      "ok": true,
+      "journeys": 21,
+      "hostedJourneys": 4,
+      "consoleErrors": 0,
+      "failedRequests": 0
+    }
+  ],
+  "hostedVerifier": {
+    "ok": true,
+    "journeys": 4,
+    "receipt": "final/hosted/report.json"
+  },
+  "performance": {
+    "latestExitCode": 0,
+    "receipt": "final/perf-retry-1/perf.json",
+    "coldOpenMs": 169.8,
+    "commandReadyWorstMs": 10.2,
+    "nextRafWorstMs": 16.8,
+    "scrubFps": 60.0,
+    "splitterFps": 60.003,
+    "gzipBytes": 57792,
+    "autosaveCpuWorstMs": 4.7,
+    "budgets": {
+      "coldOpen": true,
+      "commandPaintReady": true,
+      "commandNextFrame": true,
+      "scrubNoLongtasks": true,
+      "scrub60fps": true,
+      "gzip": true,
+      "virtualized": true,
+      "stableDOM": true,
+      "autosaveFrameWork": true,
+      "layoutNoLongtasks": true,
+      "splitterNoLongtasks": true,
+      "splitter60fps": true
+    },
+    "retainedFailedAttempt": {
+      "receipt": "final/perf.log",
+      "command": "duplicate",
+      "cpuMs": 95.616741,
+      "stage": "Node CommandStore CPU budget, before browser launch",
+      "explanation": "Unexplained timing outlier; command-store implementation is unchanged. Fresh serial rerun passed without code or budget changes."
+    }
+  },
+  "coldComparison": [
+    {
+      "receipt": "cold-comparison.json",
+      "baselineMedianMs": 118.4,
+      "hostAdapterMedianMs": 124.8,
+      "baselineMs": [
+        1018,
+        113.1,
+        118.4,
+        124.6,
+        117.7
+      ],
+      "hostAdapterMs": [
+        134.7,
+        124.8,
+        121.4,
+        118.9,
+        127.5
+      ],
+      "optionalHostedModulesFetched": false,
+      "withinUnchangedBudget": true
+    },
+    {
+      "receipt": "final/cold-compare/cold-comparison.json",
+      "baselineMedianMs": 131.4,
+      "hostAdapterMedianMs": 129.3,
+      "baselineMs": [
+        1109.7,
+        149.3,
+        125.3,
+        131.4,
+        118.4
+      ],
+      "hostAdapterMs": [
+        134.3,
+        121.1,
+        123.9,
+        145.7,
+        129.3
+      ],
+      "optionalHostedModulesFetched": false,
+      "withinUnchangedBudget": true
+    }
+  ],
+  "visual": {
+    "screenshots": [
+      "empty-1896x880.png",
+      "examples-1896x880.png",
+      "example-editor-1896x880.png",
+      "empty-1366x680.png",
+      "examples-1366x680.png",
+      "example-editor-1366x680.png",
+      "empty-390x780.png",
+      "examples-390x780.png",
+      "example-editor-390x780.png"
+    ],
+    "extraFullPage": "example-editor-390x780-full.png",
+    "reviewed": true,
+    "findings": "Studio styling retained. Fixed hosted example navigation retaining shelf scroll on phones; added shelf sticky-header scroll margin and 44px source-link hit areas. All requested viewport images inspected."
+  },
+  "limitations": [
+    "Native showDirectoryPicker UI was not driven. In-memory FileSystemDirectoryHandle and storage doubles cover native-style reads/writes/conflicts/permission re-request; real IndexedDB file-input workflows are browser-tested.",
+    "ACP proposal qualification uses a deterministic local fixture, not a new live-provider qualification.",
+    "Production HTTPS browser local-network prompts, Firefox and Safari were not exercised. No deployment, merge or push.",
+    "Cold-open medians vary by run; no speedup or literal zero-overhead claim. Ordinary bridge mode fetches no optional folder/example modules and retains the unchanged 300ms gate."
+  ]
+}
