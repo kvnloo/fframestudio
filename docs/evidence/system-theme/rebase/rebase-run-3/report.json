@@ -1,0 +1,310 @@
+{
+ "started": "2026-10-17T18:40:27.583Z",
+ "out": "verify-out/rebase-run-3",
+ "journeys": [
+  {
+   "name": "gate: app refuses without the link",
+   "ok": true,
+   "ms": 146,
+   "agents_without_token": 401
+  },
+  {
+   "name": "library: open link, demo project listed",
+   "ok": true,
+   "ms": 121,
+   "titles": [
+    "Demo film"
+   ]
+  },
+  {
+   "name": "project: plays and seeks by shot",
+   "ok": true,
+   "ms": 948,
+   "duration_s": 12.033333,
+   "shots": 4,
+   "seek_to_shot3_s": 6
+  },
+  {
+   "name": "system theme: follows and live-updates",
+   "ok": true,
+   "ms": 1401,
+   "liveMs": 116,
+   "noReload": true,
+   "fixedThemePersists": true,
+   "openMenu": {
+    "before": {
+     "background": "rgb(30, 32, 41)",
+     "minimumTextContrast": 5.364481261439478,
+     "visible": true
+    },
+    "after": {
+     "background": "rgb(24, 51, 55)",
+     "minimumTextContrast": 4.560328312832768,
+     "visible": true
+    }
+   },
+   "applyMs": [
+    0.3999999761581421,
+    0.30000001192092896,
+    0.19999998807907104,
+    0.19999998807907104,
+    0.19999998807907104,
+    0.30000001192092896,
+    0.19999998807907104,
+    0.20000004768371582,
+    0.19999998807907104,
+    0.19999998807907104,
+    0.19999998807907104,
+    0.6000000238418579,
+    0.19999998807907104,
+    0.19999998807907104,
+    0.10000002384185791,
+    0.19999998807907104,
+    0.19999998807907104,
+    0.10000002384185791,
+    0.10000002384185791,
+    0.19999998807907104,
+    0.10000002384185791,
+    0.09999996423721313,
+    0.30000001192092896,
+    0.10000002384185791,
+    2.599999964237213,
+    0.10000002384185791,
+    0.6000000238418579,
+    0.09999996423721313,
+    0.19999998807907104,
+    0.10000002384185791
+   ],
+   "applyWorstMs": 2.599999964237213,
+   "navigation": {
+    "interactiveMs": 221.5,
+    "themeFetches": [
+     {
+      "start": 39.69999998807907,
+      "ms": 1.399999976158142,
+      "bytes": 775
+     }
+    ]
+   },
+   "browserFallback": true,
+   "themeWithoutToken": 401
+  },
+  {
+   "name": "context menu: native menu replaced, actions work",
+   "ok": true,
+   "ms": 2532,
+   "menu_open_ms": {
+    "median": 15.600000023841858,
+    "worst": 15.800000011920929
+   },
+   "open_ready_median_ms": 1.300000011920929,
+   "open_ready_worst_ms": 1.699999988079071,
+   "samples": [
+    {
+     "ready_ms": 1.699999988079071,
+     "rendering_opportunity_ms": 14.5
+    },
+    {
+     "ready_ms": 1.699999988079071,
+     "rendering_opportunity_ms": 15.099999964237213
+    },
+    {
+     "ready_ms": 1.300000011920929,
+     "rendering_opportunity_ms": 15.599999964237213
+    },
+    {
+     "ready_ms": 1.300000011920929,
+     "rendering_opportunity_ms": 15.600000023841858
+    },
+    {
+     "ready_ms": 1.300000011920929,
+     "rendering_opportunity_ms": 15.699999988079071
+    },
+    {
+     "ready_ms": 1.199999988079071,
+     "rendering_opportunity_ms": 15.799999952316284
+    },
+    {
+     "ready_ms": 1.199999988079071,
+     "rendering_opportunity_ms": 15.399999976158142
+    },
+    {
+     "ready_ms": 1.300000011920929,
+     "rendering_opportunity_ms": 15.700000047683716
+    },
+    {
+     "ready_ms": 1.300000011920929,
+     "rendering_opportunity_ms": 15.600000023841858
+    },
+    {
+     "ready_ms": 1.399999976158142,
+     "rendering_opportunity_ms": 15.800000011920929
+    }
+   ],
+   "browser_default_prevented": true,
+   "native_input": true,
+   "seek_s": 3,
+   "source_path_copied": "<home>/fframestudio/demo-src",
+   "undo_redo": true,
+   "themes": [
+    "dark",
+    "light",
+    "contrast"
+   ]
+  },
+  {
+   "name": "edit: shot title saves and survives reload",
+   "ok": true,
+   "ms": 472,
+   "before": "Hook",
+   "after": "Hook (verified)",
+   "clip_id": "s01",
+   "source_sha256": "7687abe9ed2729f1f8f208ce0af8a3fca83293f2ea996c79ffd2331f801d3930"
+  },
+  {
+   "name": "recovery: unsaved title survives page close, undo and explicit save",
+   "ok": true,
+   "ms": 1060,
+   "before": "Hook (verified)",
+   "recovered": "Hook (verified) (recovered)",
+   "version": 8,
+   "expected_hash": "70b71db497906ffb737b5acc96b959aa4705585041c293f86dbee622d275c76f",
+   "disk_unchanged_before_save": true
+  },
+  {
+   "name": "recovery: discard keeps disk title and clears the offer",
+   "ok": true,
+   "ms": 734,
+   "saved_title": "Hook (verified) (recovered)"
+  },
+  {
+   "name": "recovery: edits during Save survive its journal checkpoint",
+   "ok": true,
+   "ms": 600,
+   "saved_snapshot": "Captured for Save",
+   "recovered_edit": "Committed while Save was pending"
+  },
+  {
+   "name": "recovery: undo across Save recovers without prior history",
+   "ok": true,
+   "ms": 833,
+   "saved_title": "Saved before undo",
+   "recovered_undo": "Committed while Save was pending"
+  },
+  {
+   "name": "recovery: Save on disk before acknowledgement preserves later edits",
+   "ok": true,
+   "ms": 734,
+   "saved_snapshot": "Saved before acknowledgement",
+   "recovered_edit": "Durable edit after captured Save"
+  },
+  {
+   "name": "recovery: external change preserves the pending recovery choice",
+   "ok": true,
+   "ms": 702,
+   "recovered_title": "Pending recovery during external change",
+   "external_title": "External change while recovery was pending"
+  },
+  {
+   "name": "assistant: agents listed, unavailable ones disabled",
+   "ok": true,
+   "ms": 4,
+   "agents": [
+    {
+     "id": "claude",
+     "disabled": false
+    },
+    {
+     "id": "codex",
+     "disabled": false
+    },
+    {
+     "id": "gemini",
+     "disabled": false
+    },
+    {
+     "id": "hermes",
+     "disabled": false
+    },
+    {
+     "id": "opencode",
+     "disabled": true
+    }
+   ]
+  },
+  {
+   "name": "mobile: 390 px has no horizontal overflow",
+   "ok": true,
+   "ms": 278,
+   "library": 390,
+   "project": 390
+  },
+  {
+   "name": "console clean",
+   "ok": true,
+   "ms": 0
+  }
+ ],
+ "console_errors": [],
+ "failed_requests": [],
+ "bridge": {
+  "port": 36411,
+  "health": {
+   "ok": true,
+   "name": "fframestudio-bridge",
+   "version": "0.1.0"
+  }
+ },
+ "context_menu": {
+  "menu_open_ms": {
+   "median": 15.600000023841858,
+   "worst": 15.800000011920929
+  },
+  "open_ready_median_ms": 1.300000011920929,
+  "open_ready_worst_ms": 1.699999988079071,
+  "samples": [
+   {
+    "ready_ms": 1.699999988079071,
+    "rendering_opportunity_ms": 14.5
+   },
+   {
+    "ready_ms": 1.699999988079071,
+    "rendering_opportunity_ms": 15.099999964237213
+   },
+   {
+    "ready_ms": 1.300000011920929,
+    "rendering_opportunity_ms": 15.599999964237213
+   },
+   {
+    "ready_ms": 1.300000011920929,
+    "rendering_opportunity_ms": 15.600000023841858
+   },
+   {
+    "ready_ms": 1.300000011920929,
+    "rendering_opportunity_ms": 15.699999988079071
+   },
+   {
+    "ready_ms": 1.199999988079071,
+    "rendering_opportunity_ms": 15.799999952316284
+   },
+   {
+    "ready_ms": 1.199999988079071,
+    "rendering_opportunity_ms": 15.399999976158142
+   },
+   {
+    "ready_ms": 1.300000011920929,
+    "rendering_opportunity_ms": 15.700000047683716
+   },
+   {
+    "ready_ms": 1.300000011920929,
+    "rendering_opportunity_ms": 15.600000023841858
+   },
+   {
+    "ready_ms": 1.399999976158142,
+    "rendering_opportunity_ms": 15.800000011920929
+   }
+  ]
+ },
+ "finished": "2026-10-17T18:40:45.777Z",
+ "ok": true
+}

@@ -293,7 +293,7 @@ shot borders remain 3:1. Workspace discloses the exact color adjustments. Both r
 screenshots and the fixture before/live/fixed states were visually inspected: layout is unchanged,
 Noctalia retains olive/gold surfaces, and wal retains its low-saturation slate/green identity.
 No real desktop file was changed. Screenshots live in
-`/mnt/zer0models/project-artifacts/fframestudio/ui-compare/system-theme/`.
+`<local>/system-theme/`.
 
 ### Retained failures and receipts
 
@@ -319,3 +319,32 @@ independently and all 53 passed. No budget, sampling phase, host process or brow
 
 Reproduce with `npm test`, `npm run verify`, and `FFS_PORT=<free-private-port> npm run test:perf`.
 See [system-theme.md](system-theme.md) for provider paths and the read-only screenshot command.
+
+### Rebase onto context-menu main
+
+Rebased onto `55053d0` without removing either feature. The final sequence passes build (no
+`web/dist` diff), 53 Node tests plus ACP security, the local-path check, three consecutive
+**15/15-journey** browser runs, and the existing performance suite. Both original journey sets
+are checked against the combined reports. The final perf sample records 127.3 ms cold open,
+10.1 ms worst command-to-layout-ready and 16.8 ms next-rAF; every existing budget passes.
+
+The combined journey keeps a context menu open during a wal fixture change and checks its
+computed background changes without dismissal. It checks enabled labels and shortcuts at
+4.5:1, including the focused row. An initial failure exposed an accent-mixed focus surface
+outside the palette's contrast correction; system menus now use the corrected `bg3` surface.
+Final minimum text contrast is 5.36:1 before and 4.56:1 after the update. The
+[open-menu screenshot](evidence/system-theme/rebase/system-palette-menu.png) was visually
+inspected: labels, shortcuts, focus, disabled entries and separators are readable and fit.
+
+A further repeated run exposed a recovery-test ordering race: an external-change GET could
+be intercepted before the released PUT reached disk. The test now awaits the actual successful
+PUT response while retaining the blocked verification GET and all disk/recovery assertions.
+[All attempt reports](evidence/system-theme/rebase/summary.json), including both failures,
+and the final [perf receipt](evidence/system-theme/rebase/rebase-qualified-perf/perf.json) are retained.
+No latency threshold or sample was relaxed.
+
+Shared discovery configuration bytes and mtime remained unchanged across the complete final
+build/test/three-verify/perf sequence. They do **not** match the initial pre-rebase snapshot:
+the shared file was replaced at 13:36:06 CDT while rebase was paused, before rebase completed
+at 13:36:57 and before this lane launched tests. It pointed to an exited ACP fixture bridge on port 7989. This lane did
+not restore or write the shared file; the responsible process is not established.

@@ -488,7 +488,10 @@ try {
     await page.click('[data-action="save"]'); await put;
     await field.fill(laterTitle); await field.press('Tab');
     await page.waitForFunction(() => window.ffs.journal.persistedVersion === window.ffs.doc.revision);
-    releasePut(); await read;
+    // A delayed external-change GET can reach this route before the released PUT.
+    // Synchronize on the actual successful write, while its verification GET stays held.
+    const written = page.waitForResponse(response => response.request().method() === 'PUT' && new URL(response.url()).searchParams.get('path') === 'projects/demo/project.json' && response.ok());
+    releasePut(); await written; await read;
     assert(JSON.parse(fs.readFileSync(filePath, 'utf8')).videos[0].clips[0].textOverrides.title === savedTitle, 'captured Save did not reach disk');
     await page.close(); releaseRead(); page = await ctx.newPage(); await page.goto(base + '/#/p/demo');
     await page.waitForSelector('[data-action="recover"]'); await page.click('[data-action="recover"]');

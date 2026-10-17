@@ -63,7 +63,7 @@ npm notice run node --test test/doc/*.test.mjs test/theme/*.test.mjs && node tes
 ℹ todo 0
 ℹ duration_ms 1554.742899
 {
- "root": "/home/kvn/.hermes/profiles/clean/cache/scratch/ffs-acp-SlTixS",
+ "root": "<tmp>/ffs-acp-SlTixS",
  "security": {
   "no_token": 401,
   "bad_token": 401,

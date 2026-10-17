@@ -1,6 +1,6 @@
 {
   "started": "2026-10-17T18:25:41.856Z",
-  "out": "/mnt/zer0models/project-artifacts/fframestudio/ui-compare/system-theme/verify",
+  "out": "<local>/system-theme/verify",
   "journeys": [
     {
       "name": "gate: app refuses without the link",
@@ -180,7 +180,7 @@
       "version": "0.1.0"
     }
   },
-  "home": "/home/kvn/.hermes/profiles/clean/cache/scratch/ffs-verify-vTQqW8",
+  "home": "<tmp>/ffs-verify-vTQqW8",
   "finished": "2026-10-17T18:25:57.723Z",
   "ok": true
 }

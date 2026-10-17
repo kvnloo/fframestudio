@@ -1,9 +1,9 @@
 {
-  "root": "/home/kvn/.hermes/profiles/clean/cache/scratch/ffs-theme-visual-fNgGwm",
+  "root": "<tmp>/ffs-theme-visual-fNgGwm",
   "results": [
     {
       "source": "noctalia",
-      "screenshot": "/mnt/zer0models/project-artifacts/fframestudio/ui-compare/system-theme/noctalia-editor.png",
+      "screenshot": "<local>/system-theme/noctalia-editor.png",
       "adjustments": [
         "danger: #e75e78 \u2192 #ed8598 (4.5:1)"
       ],
@@ -45,7 +45,7 @@
     },
     {
       "source": "wal",
-      "screenshot": "/mnt/zer0models/project-artifacts/fframestudio/ui-compare/system-theme/wal-editor.png",
+      "screenshot": "<local>/system-theme/wal-editor.png",
       "adjustments": [
         "accent: #5a6b62 \u2192 #7b8981 (4.5:1)",
         "danger: #364950 \u2192 #7b888c (4.5:1)",

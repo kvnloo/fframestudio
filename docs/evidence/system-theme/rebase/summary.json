@@ -1,0 +1,101 @@
+{
+  "base": "55053d0a0b6a3dfbbfe07362aa72ddc59f8ddc31",
+  "gates": {
+    "build:acp": 0,
+    "dist unchanged": 0,
+    "npm test": 0,
+    "no local paths": 0,
+    "verify 1": 0,
+    "verify 2": 0,
+    "verify 3": 0,
+    "test:perf": 0,
+    "config_mtime_unchanged_during_gates": true,
+    "config_content_unchanged_during_gates": true
+  },
+  "npm_ci_exit": 0,
+  "node_tests_passed": 53,
+  "journeys_per_run": [
+    15,
+    15,
+    15
+  ],
+  "all_original_journeys_preserved": true,
+  "attempts": [
+    {
+      "run": "rebase-attempt-1",
+      "ok": false,
+      "journeys": 15,
+      "failures": [
+        {
+          "name": "system theme: follows and live-updates",
+          "error": "updated system menu text is unreadable"
+        },
+        {
+          "name": "context menu: native menu replaced, actions work",
+          "error": "page.waitForFunction: Timeout 30000ms exceeded."
+        }
+      ]
+    },
+    {
+      "run": "rebase-final-run-1",
+      "ok": true,
+      "journeys": 15,
+      "failures": []
+    },
+    {
+      "run": "rebase-final-run-2",
+      "ok": false,
+      "journeys": 15,
+      "failures": [
+        {
+          "name": "recovery: Save on disk before acknowledgement preserves later edits",
+          "error": "captured Save did not reach disk"
+        }
+      ]
+    },
+    {
+      "run": "rebase-qualified-run-1",
+      "ok": true,
+      "journeys": 15,
+      "failures": []
+    },
+    {
+      "run": "rebase-qualified-run-2",
+      "ok": true,
+      "journeys": 15,
+      "failures": []
+    },
+    {
+      "run": "rebase-qualified-run-3",
+      "ok": true,
+      "journeys": 15,
+      "failures": []
+    },
+    {
+      "run": "rebase-run-1",
+      "ok": true,
+      "journeys": 15,
+      "failures": []
+    },
+    {
+      "run": "rebase-run-2",
+      "ok": true,
+      "journeys": 15,
+      "failures": []
+    },
+    {
+      "run": "rebase-run-3",
+      "ok": true,
+      "journeys": 15,
+      "failures": []
+    }
+  ],
+  "config": {
+    "unchanged_from_initial_rebase_snapshot": false,
+    "initial_mtime": "2026-10-17T18:32:14.571953+00:00",
+    "observed_replacement_mtime": "2026-10-17T18:36:06.195219+00:00",
+    "note": "Config changed while rebase was paused, before this lane launched tests; observed target was an exited ACP fixture bridge on port 7989. No restoration or write was performed. The complete final command sequence preserved both bytes and mtime."
+  },
+  "screenshot": "system-palette-menu.png",
+  "visual_review": "Labels, shortcuts, focused Select row, disabled entries and separators are readable; menu fits within 1440x900 viewport."
+}
