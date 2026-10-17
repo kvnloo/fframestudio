@@ -470,7 +470,9 @@ try {
   if (bridge && bridge.exitCode === null) bridge.kill('SIGTERM');
   if (!KEEP) fs.rmSync(HOME, { recursive: true, force: true }); else report.home = HOME;
   report.finished = new Date().toISOString(); report.ok = report.journeys.every((j) => j.ok);
-  fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 1));
+  // Evidence may be committed: keep machine paths out (repo-relative OUT, temp HOME shown as <home>).
+  const scrub = (k, v) => (typeof v === 'string' ? v.split(HOME).join('<home>').split(ROOT + path.sep).join('').split(os.tmpdir()).join('<tmp>') : v);
+  fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, scrub, 1));
   console.error(`${report.ok ? 'PASS' : 'FAIL'}  evidence: ${OUT}`);
   process.exit(report.ok ? 0 : 1);
 }

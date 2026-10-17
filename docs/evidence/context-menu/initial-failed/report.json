@@ -1,6 +1,6 @@
 {
  "started": "2026-10-17T18:11:57.873Z",
- "out": "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-core/verify-out/context-menu-final-1",
+ "out": "verify-out/context-menu-final-1",
  "journeys": [
   {
    "name": "gate: app refuses without the link",
