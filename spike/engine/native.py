@@ -8,9 +8,11 @@ def run(label,args,cwd=R,timeout=180):
  except subprocess.TimeoutExpired as e:(A/(label+'.log')).write_bytes(e.stdout or b'');r={'seconds':time.perf_counter()-start,'error':'timeout','command':args}
  results[label]=r;(A/'native-results.json').write_text(json.dumps(results,indent=2));print(label,r,flush=True)
  return r
-binary=Path('/mnt/zer0models/hermes-wt/render-lab/demo/fframes-film/target/release/one-take')
-results['fframesBinary']={'sha256':hashlib.sha256(binary.read_bytes()).hexdigest(),'sourceHead':subprocess.check_output(['git','-C','/mnt/zer0models/hermes-wt/render-lab/upstream/fframes','rev-parse','HEAD'],text=True).strip()}
-run('fframes',[str(binary),'render','0s..2s','--json','-o',str(A/'fframes-2s.mkv')],Path('/mnt/zer0models/hermes-wt/render-lab/demo/one-take'))
+import os
+# Local fframes build (not in the repo): FFS_FFRAMES_BIN (film binary), FFS_FFRAMES_SRC (fframes checkout), FFS_FFRAMES_PROJECT (film dir)
+binary=Path(os.environ['FFS_FFRAMES_BIN'])
+results['fframesBinary']={'sha256':hashlib.sha256(binary.read_bytes()).hexdigest(),'sourceHead':subprocess.check_output(['git','-C',os.environ['FFS_FFRAMES_SRC'],'rev-parse','HEAD'],text=True).strip()}
+run('fframes',[str(binary),'render','0s..2s','--json','-o',str(A/'fframes-2s.mkv')],Path(os.environ['FFS_FFRAMES_PROJECT']))
 if (A/'fframes-2s.mkv').exists():run('fframes-h264',['ffmpeg','-v','error','-y','-i',str(A/'fframes-2s.mkv'),'-c:v','libx264','-preset','fast','-crf','18','-threads','2','-c:a','aac',str(A/'fframes-2s.mp4')])
 # Moving average ends at output time; retain every Nth frame after the first complete window.
 for fps in [60,30]:

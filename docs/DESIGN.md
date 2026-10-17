@@ -39,13 +39,14 @@ They are views over one document, never separate "simple" and "pro" projects. (0
   or the renderer. (02 §11.4, 03 §1)
 - Collaboration: Yjs for document state and collaborative undo; media stays outside the CRDT. (03 §1)
 
-## 5. Engine stack (conditional, each behind an adapter and a qualification gate)
+## 5. Engine stack (each behind an adapter and a qualification gate; spike measured 2026-10-17)
 
 | job | first candidate | risk to check |
 | --- | --- | --- |
-| preview + browser export | WebAV (MIT) | last push 2026-01-10: maintenance pace; Chromium-only |
-| media I/O, proxies, thumbnails | Mediabunny (MPL-2.0) | file-level copyleft obligations |
-| native / server export | audited FFmpeg build; fframes (MIT) as optional motion-graphics backend | fframes does not consume our spec yet |
+| preview | our own canvas compositor over Mediabunny frames | WebAV rejected: seeks up to 2 frames off, hard 30 Hz scheduler (spike/engine/REPORT.md) |
+| media I/O, proxies, thumbnails, seeking | Mediabunny (MPL-2.0) — **GO**: 50/50 seeks frame-exact vs an FFmpeg oracle | file-level copyleft obligations; VFR/rotation not yet tested |
+| final export | **the bridge**, native FFmpeg (codec, AAC, 10-bit, NVENC), every output verified (frame count, A/V sync, VMAF) | browser builds cannot encode AAC; `video_encode: disabled_software` |
+| motion graphics backend | fframes (MIT), replaceable behind the same render interface | fframes does not consume our spec yet |
 | desktop shell | deferred: the web app + local bridge covers files, agents and offline; revisit for one-click install, identical export codecs, background renders | — |
 | captions | Transformers.js (browser), whisper.cpp (native) | model sizes |
 | masks | MediaPipe | quality on hard edges |

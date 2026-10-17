@@ -119,7 +119,7 @@
         }
       ],
       "format": {
-        "filename": "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/public/media/proxy.mp4",
+        "filename": "<local>/proxy.mp4",
         "nb_streams": 2,
         "nb_programs": 0,
         "nb_stream_groups": 0,
@@ -214,7 +214,7 @@
         }
       ],
       "format": {
-        "filename": "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/public/media/fly.mp4",
+        "filename": "<local>/fly.mp4",
         "nb_streams": 1,
         "nb_programs": 0,
         "nb_stream_groups": 0,
@@ -306,7 +306,7 @@
         }
       ],
       "format": {
-        "filename": "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/public/media/cctv.mp4",
+        "filename": "<local>/cctv.mp4",
         "nb_streams": 1,
         "nb_programs": 0,
         "nb_stream_groups": 0,
@@ -380,7 +380,7 @@
         }
       ],
       "format": {
-        "filename": "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/public/media/music.mp3",
+        "filename": "<local>/music.mp3",
         "nb_streams": 1,
         "nb_programs": 0,
         "nb_stream_groups": 0,
@@ -459,7 +459,7 @@
         }
       ],
       "format": {
-        "filename": "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/public/media/music-sync.wav",
+        "filename": "<local>/music-sync.wav",
         "nb_streams": 1,
         "nb_programs": 0,
         "nb_stream_groups": 0,
@@ -550,7 +550,7 @@
         }
       ],
       "format": {
-        "filename": "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/public/media/source60.mp4",
+        "filename": "<local>/source60.mp4",
         "nb_streams": 1,
         "nb_programs": 0,
         "nb_stream_groups": 0,
@@ -638,7 +638,7 @@
         }
       ],
       "format": {
-        "filename": "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/public/media/source4k.mp4",
+        "filename": "<local>/source4k.mp4",
         "nb_streams": 1,
         "nb_programs": 0,
         "nb_stream_groups": 0,

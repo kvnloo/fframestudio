@@ -3,7 +3,9 @@ from pathlib import Path
 import subprocess, json, hashlib, shutil
 root=Path(__file__).parent
 out=root/'public/media'; out.mkdir(parents=True,exist_ok=True)
-lab=Path('/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/lab')
+import os
+# Local fixture media (not in the repo): a folder with moves/, cctv/ and audio/ clips.
+lab=Path(os.environ.get('FFS_SPIKE_MEDIA', 'fixtures-media'))
 sources={'proxy.mp4':Path.home()/'fframestudio/projects/hermes-one-take/media/proxy.mp4','fly.mp4':lab/'moves/01-2.mp4','cctv.mp4':lab/'cctv/20261016-2322-tv704-i-880-at-jct-92.mp4','music.mp3':lab/'audio/drive-full.mp3','font.ttf':root.parents[1]/'web/fonts/IBMPlexMono-Regular.ttf'}
 for name,p in sources.items():
     dst=out/name

@@ -10,7 +10,7 @@
       "-r",
       "60",
       "-i",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/fframes-2s.mkv",
+      "<local>/fframes-2s.mkv",
       "-frames:v",
       "120",
       "-pix_fmt",
@@ -25,7 +25,7 @@
       "2",
       "-c:a",
       "aac",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/fframes-normalized.mp4"
+      "<local>/fframes-normalized.mp4"
     ],
     "log": "",
     "probe": {
@@ -60,7 +60,7 @@
       "-r",
       "60",
       "-i",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/fframes-2s.mkv",
+      "<local>/fframes-2s.mkv",
       "-frames:v",
       "120",
       "-pix_fmt",
@@ -73,7 +73,7 @@
       "12M",
       "-c:a",
       "aac",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/fframes-nvenc.mp4"
+      "<local>/fframes-nvenc.mp4"
     ],
     "log": "",
     "probe": {
@@ -108,7 +108,7 @@
       "-framerate",
       "30",
       "-i",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/capture-%03d.png",
+      "<local>%03d.png",
       "-frames:v",
       "60",
       "-pix_fmt",
@@ -121,7 +121,7 @@
       "12M",
       "-c:a",
       "aac",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/chromium-nvenc.mp4"
+      "<local>/chromium-nvenc.mp4"
     ],
     "log": "",
     "probe": {

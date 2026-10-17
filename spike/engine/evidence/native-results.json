@@ -7,12 +7,12 @@
     "seconds": 13.239669358998071,
     "exitCode": 0,
     "command": [
-      "/mnt/zer0models/hermes-wt/render-lab/demo/fframes-film/target/release/one-take",
+      "<local>/one-take",
       "render",
       "0s..2s",
       "--json",
       "-o",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/fframes-2s.mkv"
+      "<local>/fframes-2s.mkv"
     ]
   },
   "fframes-h264": {
@@ -24,7 +24,7 @@
       "error",
       "-y",
       "-i",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/fframes-2s.mkv",
+      "<local>/fframes-2s.mkv",
       "-c:v",
       "libx264",
       "-preset",
@@ -35,7 +35,7 @@
       "2",
       "-c:a",
       "aac",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/fframes-2s.mp4"
+      "<local>/fframes-2s.mp4"
     ]
   },
   "tmix60": {
@@ -47,7 +47,7 @@
       "error",
       "-y",
       "-i",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/probe-1080p240.mp4",
+      "<local>/probe-1080p240.mp4",
       "-vf",
       "tmix=frames=4:weights='1 1 1 1',select='eq(mod(n,4),3)',setpts=N/(60*TB)",
       "-r",
@@ -60,7 +60,7 @@
       "18",
       "-threads",
       "2",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/tmix60.mp4"
+      "<local>/tmix60.mp4"
     ]
   },
   "tmix30": {
@@ -72,7 +72,7 @@
       "error",
       "-y",
       "-i",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/probe-1080p240.mp4",
+      "<local>/probe-1080p240.mp4",
       "-vf",
       "tmix=frames=8:weights='1 1 1 1 1 1 1 1',select='eq(mod(n,8),7)',setpts=N/(30*TB)",
       "-r",
@@ -85,7 +85,7 @@
       "18",
       "-threads",
       "2",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/tmix30.mp4"
+      "<local>/tmix30.mp4"
     ]
   },
   "chromium-frames-encode": {
@@ -99,7 +99,7 @@
       "-framerate",
       "30",
       "-i",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/capture-%03d.png",
+      "<local>%03d.png",
       "-frames:v",
       "60",
       "-c:v",
@@ -110,7 +110,7 @@
       "18",
       "-threads",
       "2",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/chromium-native.mp4"
+      "<local>/chromium-native.mp4"
     ]
   },
   "native-mux": {
@@ -122,9 +122,9 @@
       "error",
       "-y",
       "-i",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/webav-silent.mp4",
+      "<local>/webav-silent.mp4",
       "-i",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/public/media/music-sync.wav",
+      "<local>/music-sync.wav",
       "-map",
       "0:v",
       "-map",
@@ -137,7 +137,7 @@
       "192k",
       "-t",
       "20",
-      "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/webav-native-audio.mp4"
+      "<local>/webav-native-audio.mp4"
     ]
   }
 }

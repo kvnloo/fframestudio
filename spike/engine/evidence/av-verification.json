@@ -122,7 +122,7 @@
         }
       ],
       "format": {
-        "filename": "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/webav-native-audio.mp4",
+        "filename": "<local>/webav-native-audio.mp4",
         "nb_streams": 2,
         "nb_programs": 0,
         "nb_stream_groups": 0,
@@ -294,7 +294,7 @@
         }
       ],
       "format": {
-        "filename": "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-engine/spike/engine/artifacts/diffusion-final.mp4",
+        "filename": "<local>/diffusion-final.mp4",
         "nb_streams": 2,
         "nb_programs": 0,
         "nb_stream_groups": 0,
