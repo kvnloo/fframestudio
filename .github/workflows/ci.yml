@@ -15,7 +15,7 @@ jobs:
       - name: ffmpeg
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - run: npm ci --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chrome
       - name: doctor
         run: npm run doctor
       - name: build
@@ -24,6 +24,7 @@ jobs:
         run: npm test
       - name: drive the app
         run: npm run verify -- --out verify-out/ci
+        env: { PW_CHANNEL: chrome }
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: verify-evidence, path: verify-out/ci, retention-days: 14 }

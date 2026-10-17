@@ -32,8 +32,8 @@ curl -s 127.0.0.1:<port>/health         # {"ok":true,"name":"fframestudio-bridge
 
 ## Drive
 
-Playwright (`playwright` devDependency). Chromium: `$CHROMIUM`, else `/usr/bin/chromium`, else the
-Playwright-managed browser (`npx playwright install chromium`). Stable handles:
+Playwright (`playwright` devDependency). Browser: `PW_CHANNEL=chrome` (CI), else `$CHROMIUM`, else
+`/usr/bin/chromium`. Playwright's bundled Chromium cannot decode H.264, so the player journey fails on it. Stable handles:
 
 | handle | what |
 | --- | --- |

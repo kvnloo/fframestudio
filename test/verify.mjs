@@ -41,8 +41,10 @@ try {
   const base = `http://127.0.0.1:${port}`;
   report.bridge = { port, health: await fetch(base + '/health').then((r) => r.json()) };
 
-  const exe = process.env.CHROMIUM || (fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined);
-  browser = await chromium.launch({ executablePath: exe, args: ['--autoplay-policy=no-user-gesture-required'] });
+  // Playwright's bundled Chromium has no H.264; use Chrome (PW_CHANNEL=chrome) or a system Chromium build with codecs.
+  const channel = process.env.PW_CHANNEL;
+  const exe = channel ? undefined : process.env.CHROMIUM || (fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined);
+  browser = await chromium.launch({ channel, executablePath: exe, args: ['--autoplay-policy=no-user-gesture-required'] });
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
   page.on('console', (m) => { if (m.type() === 'error' && !/favicon/.test(m.text())) report.console_errors.push(m.text().slice(0, 300)); });
@@ -63,7 +65,8 @@ try {
   });
   await journey('project: plays and seeks by shot', async () => {
     await page.click('.card'); await page.waitForSelector('#vid');
-    await page.waitForFunction(() => document.querySelector('#vid').readyState >= 2, null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('#vid').readyState >= 2, null, { timeout: 15000 })
+      .catch(async () => { throw new Error('video not decodable here: ' + JSON.stringify(await page.$eval('#vid', (v) => ({ src: v.currentSrc, err: v.error?.code, h264: v.canPlayType('video/mp4; codecs="avc1.640028"') })))); });
     const dur = await page.$eval('#vid', (v) => v.duration); assert(Math.abs(dur - 12) < 0.5, `duration ${dur}`);
     const shots = await page.$$eval('.tl .s', (e) => e.length); assert(shots === 4, `shots ${shots}`);
     await page.click('.tl .s:nth-child(3)'); await page.waitForTimeout(400);
