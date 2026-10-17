@@ -70,7 +70,9 @@ try {
     const titles = await page.$$eval('.card .t', (e) => e.map((x) => x.textContent));
     assert(titles.includes('Demo film'), `cards: ${titles.join(', ')}`);
     const posterOk = await page.$eval('.card img', (i) => i.complete && i.naturalWidth > 0);
-    assert(posterOk, 'poster image did not load'); await shot('02-library'); return { titles };
+    assert(posterOk, 'poster image did not load');
+    assert(await page.locator('.kind-chip').count() === titles.length, 'film kind chips missing');
+    assert(await page.locator('#library-theme').inputValue() === 'studio', 'Studio is not the library default'); await shot('02-library'); return { titles };
   });
   await journey('project: plays and seeks by shot', async () => {
     await page.click('.card'); await page.waitForSelector('#preview-video');
@@ -347,6 +349,41 @@ try {
     const frameMs = await page.evaluate(() => new Promise((ok) => { const t = []; const f = (x) => { t.push(x); t.length < 12 ? requestAnimationFrame(f) : ok(t.slice(1).map((v, i) => v - t[i]).sort((a, b) => a - b)[5]); }; requestAnimationFrame(f); }));
     assert(timing.menu_open_ms.worst < 1.5 * frameMs, `menu not presented in the next frame (frame ${frameMs} ms): ${JSON.stringify(timing)}`);
     return { ...timing, browser_default_prevented: prevented, native_input: nativeInput, seek_s: 3, source_path_copied: sourcePath, undo_redo: true, themes: ['dark', 'light', 'contrast'] };
+  });
+  await journey('studio: themes, slate tabs, loops and screening room', async () => {
+    await page.click('[data-action="settings"]');
+    const themes = await page.locator('#theme option').evaluateAll(ns => ns.map(n => n.value));
+    assert(['studio','paper','dark','light','contrast','custom'].every(t => themes.includes(t)), 'a workspace theme was lost');
+    await page.selectOption('#theme', 'paper');
+    assert(await page.evaluate(() => document.documentElement.dataset.theme === 'paper'), 'Paper did not apply');
+    await page.selectOption('#theme', 'studio');
+    await page.click('[data-action="close-settings"]');
+    await page.click('[data-slate-tab="direction"]');
+    assert(await page.locator('.direction-card').count() >= 2, 'project look cards missing');
+    await page.click('[data-slate-tab="narrative"]');
+    assert(await page.locator('#narrative-pane blockquote').isVisible(), 'narrative hidden');
+    await page.click('[data-slate-tab="shot"]');
+    assert(await page.locator('#duration').isVisible(), 'timing fields hidden');
+    await page.locator('#timeline .timeline-clip').first().click();
+    await page.click('[data-action="loop-shot"]');
+    await page.evaluate(() => window.ffs.seek(window.ffs.clip.duration - 1));
+    await page.click('[data-action="play"]');
+    await page.waitForFunction(() => window.ffs.frame < window.ffs.clip.duration / 2);
+    await page.click('[data-action="pause"]');
+    await page.click('[data-action="loop-film"]');
+    await page.evaluate(() => window.ffs.seek(window.ffs.total - 1));
+    await page.click('[data-action="play"]');
+    await page.waitForFunction(() => window.ffs.frame < window.ffs.clip.duration / 2);
+    await page.click('[data-action="pause"]');
+    await page.click('[data-action="loop-film"]');
+    await page.click('[data-action="mute"]');
+    assert(await page.locator('#preview-video').evaluate(v => !v.muted), 'Mute did not unmute source audio');
+    await page.click('[data-action="mute"]');
+    await page.click('[data-action="screening"]');
+    await page.waitForFunction(() => document.fullscreenElement?.id === 'canvas');
+    await page.evaluate(() => document.exitFullscreen());
+    await shot('03-studio-slate');
+    return { themes, loop_shot: true, loop_film: true, mute: true, screening_room: true };
   });
   await journey('edit: shot title saves and survives reload', async () => {
     await page.locator('#timeline .timeline-clip').first().click();
