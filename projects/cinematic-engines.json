@@ -1,0 +1,248 @@
+{
+  "schema": "fframestudio.cinematic-catalog/1",
+  "purpose": "Research and qualify film-quality OSS adapters without claiming runtime support",
+  "engines": [
+    {
+      "id": "fframes",
+      "repo": "dmtrKovalenko/fframes",
+      "tier": "now",
+      "role": "renderer",
+      "fit": "native",
+      "status": "research",
+      "features": [
+        "procedural",
+        "shader",
+        "timeline"
+      ],
+      "first_probe": "Source-aware shot import and read-only stage breakdown"
+    },
+    {
+      "id": "fosfora",
+      "repo": "kevinraymond/fosfora",
+      "tier": "now",
+      "role": "audio",
+      "fit": "external",
+      "status": "research",
+      "features": [
+        "audio-reactive",
+        "shader",
+        "compositing"
+      ],
+      "first_probe": "Export measured onset/amplitude feature stream to a single parameter"
+    },
+    {
+      "id": "motion-canvas",
+      "repo": "motion-canvas/motion-canvas",
+      "tier": "next",
+      "role": "motion",
+      "fit": "adapter",
+      "status": "research",
+      "features": [
+        "procedural",
+        "timeline"
+      ],
+      "first_probe": "Import a short kinetic-typography clip with editable text and timing"
+    },
+    {
+      "id": "ossia-score",
+      "repo": "ossia/score",
+      "tier": "next",
+      "role": "audio",
+      "fit": "external",
+      "status": "research",
+      "features": [
+        "audio-reactive",
+        "timeline",
+        "shader"
+      ],
+      "first_probe": "Assess OSC/interchange as external-process boundary; check GPL impact"
+    },
+    {
+      "id": "theatre",
+      "repo": "theatre-js/theatre",
+      "tier": "next",
+      "role": "motion",
+      "fit": "adapter",
+      "status": "research",
+      "features": [
+        "camera",
+        "timeline"
+      ],
+      "first_probe": "Keyframe import/export; review Studio AGPL boundary separately"
+    },
+    {
+      "id": "postprocessing",
+      "repo": "pmndrs/postprocessing",
+      "tier": "next",
+      "role": "look",
+      "fit": "reference",
+      "status": "research",
+      "features": [
+        "shader",
+        "compositing",
+        "color",
+        "camera"
+      ],
+      "first_probe": "Define bloom/DOF/aberration parameters; compare to SkSL implementation"
+    },
+    {
+      "id": "shader-park",
+      "repo": "shader-park/shader-park-core",
+      "tier": "next",
+      "role": "look",
+      "fit": "adapter",
+      "status": "research",
+      "features": [
+        "shader",
+        "procedural"
+      ],
+      "first_probe": "Assess GL shader interchange; never assume direct SkSL compatibility"
+    },
+    {
+      "id": "otio",
+      "repo": "AcademySoftwareFoundation/OpenTimelineIO",
+      "tier": "next",
+      "role": "interchange",
+      "fit": "adapter",
+      "status": "research",
+      "features": [
+        "timeline"
+      ],
+      "first_probe": "Loss-aware cuts-only export retaining sidecar metadata"
+    },
+    {
+      "id": "ocio",
+      "repo": "AcademySoftwareFoundation/OpenColorIO",
+      "tier": "next",
+      "role": "color",
+      "fit": "external",
+      "status": "research",
+      "features": [
+        "color"
+      ],
+      "first_probe": "Compare test-pattern transforms and declare color-space metadata"
+    },
+    {
+      "id": "effectcraft",
+      "repo": "storytold/effectcraft",
+      "tier": "evaluate",
+      "role": "compositor",
+      "fit": "external",
+      "status": "research",
+      "features": [
+        "compositing",
+        "camera",
+        "timeline"
+      ],
+      "first_probe": "Evaluate early-stage Rust renderer on a reproducible title fixture"
+    },
+    {
+      "id": "filmcraft",
+      "repo": "storytold/filmcraft",
+      "tier": "evaluate",
+      "role": "editor",
+      "fit": "reference",
+      "status": "research",
+      "features": [
+        "timeline",
+        "compositing",
+        "color"
+      ],
+      "first_probe": "Compare command contract and frame-timing semantics"
+    },
+    {
+      "id": "natron",
+      "repo": "NatronGitHub/Natron",
+      "tier": "evaluate",
+      "role": "compositor",
+      "fit": "external",
+      "status": "research",
+      "features": [
+        "compositing",
+        "color"
+      ],
+      "first_probe": "Test external finishing boundary for one shot; review GPL"
+    },
+    {
+      "id": "blender",
+      "repo": "blender/blender",
+      "tier": "evaluate",
+      "role": "renderer",
+      "fit": "external",
+      "status": "research",
+      "features": [
+        "camera",
+        "procedural",
+        "compositing",
+        "color"
+      ],
+      "first_probe": "External scene/render worker for one camera and lighting fixture; review GPL"
+    },
+    {
+      "id": "cables",
+      "repo": "cables-gl/cables",
+      "tier": "evaluate",
+      "role": "look",
+      "fit": "reference",
+      "status": "research",
+      "features": [
+        "shader",
+        "procedural"
+      ],
+      "first_probe": "Review runtime license and graph interchange"
+    },
+    {
+      "id": "hydra",
+      "repo": "hydra-synth/hydra-synth",
+      "tier": "evaluate",
+      "role": "look",
+      "fit": "reference",
+      "status": "research",
+      "features": [
+        "shader",
+        "audio-reactive"
+      ],
+      "first_probe": "Assess deterministic capture of a short shader sequence"
+    },
+    {
+      "id": "ghost-arcade",
+      "repo": "riskcapital/ghost-arcade",
+      "tier": "evaluate",
+      "role": "audio",
+      "fit": "external",
+      "status": "research",
+      "features": [
+        "audio-reactive",
+        "shader",
+        "compositing"
+      ],
+      "first_probe": "Try external capture or OSC boundary; review AGPL restrictions"
+    },
+    {
+      "id": "rust-motion",
+      "repo": "sjkim1127/rust-motion",
+      "tier": "evaluate",
+      "role": "renderer",
+      "fit": "reference",
+      "status": "research",
+      "features": [
+        "procedural",
+        "timeline"
+      ],
+      "first_probe": "Study native preview and headless export contracts"
+    },
+    {
+      "id": "remotion",
+      "repo": "remotion-dev/remotion",
+      "tier": "evaluate",
+      "role": "renderer",
+      "fit": "reference",
+      "status": "research",
+      "features": [
+        "procedural",
+        "timeline"
+      ],
+      "first_probe": "Compare rendering concepts; review licensing before any dependency"
+    }
+  ]
+}
