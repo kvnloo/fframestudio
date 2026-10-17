@@ -23,8 +23,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/youtube-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/youtube-h264_nvenc-0.mp4",
+    "input": "<local>/youtube-loop.mkv",
+    "output": "<local>/youtube-h264_nvenc-0.mp4",
     "load_average_at_start": [
       13.4873046875,
       16.67138671875,
@@ -59,8 +59,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/youtube-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/youtube-h264_nvenc-1.mp4",
+    "input": "<local>/youtube-loop.mkv",
+    "output": "<local>/youtube-h264_nvenc-1.mp4",
     "load_average_at_start": [
       13.2041015625,
       16.4140625,
@@ -95,8 +95,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/youtube-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/youtube-h264_nvenc-2.mp4",
+    "input": "<local>/youtube-loop.mkv",
+    "output": "<local>/youtube-h264_nvenc-2.mp4",
     "load_average_at_start": [
       12.13818359375,
       15.96484375,
@@ -131,8 +131,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/youtube-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/youtube-libx264-0.mp4",
+    "input": "<local>/youtube-loop.mkv",
+    "output": "<local>/youtube-libx264-0.mp4",
     "load_average_at_start": [
       12.22998046875,
       15.7529296875,
@@ -167,8 +167,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/youtube-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/youtube-libx264-1.mp4",
+    "input": "<local>/youtube-loop.mkv",
+    "output": "<local>/youtube-libx264-1.mp4",
     "load_average_at_start": [
       12.318359375,
       15.59375,
@@ -203,8 +203,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/youtube-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/youtube-libx264-2.mp4",
+    "input": "<local>/youtube-loop.mkv",
+    "output": "<local>/youtube-libx264-2.mp4",
     "load_average_at_start": [
       11.490234375,
       15.18359375,
@@ -239,8 +239,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/shorts-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/shorts-h264_nvenc-0.mp4",
+    "input": "<local>/shorts-loop.mkv",
+    "output": "<local>/shorts-h264_nvenc-0.mp4",
     "load_average_at_start": [
       14.34423828125,
       15.3671875,
@@ -275,8 +275,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/shorts-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/shorts-h264_nvenc-1.mp4",
+    "input": "<local>/shorts-loop.mkv",
+    "output": "<local>/shorts-h264_nvenc-1.mp4",
     "load_average_at_start": [
       20.1396484375,
       16.76806640625,
@@ -311,8 +311,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/shorts-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/shorts-h264_nvenc-2.mp4",
+    "input": "<local>/shorts-loop.mkv",
+    "output": "<local>/shorts-h264_nvenc-2.mp4",
     "load_average_at_start": [
       20.18310546875,
       17.01953125,
@@ -347,8 +347,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/shorts-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/shorts-libx264-0.mp4",
+    "input": "<local>/shorts-loop.mkv",
+    "output": "<local>/shorts-libx264-0.mp4",
     "load_average_at_start": [
       22.96630859375,
       17.86767578125,
@@ -383,8 +383,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/shorts-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/shorts-libx264-1.mp4",
+    "input": "<local>/shorts-loop.mkv",
+    "output": "<local>/shorts-libx264-1.mp4",
     "load_average_at_start": [
       18.22021484375,
       17.32275390625,
@@ -419,8 +419,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/shorts-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/shorts-libx264-2.mp4",
+    "input": "<local>/shorts-loop.mkv",
+    "output": "<local>/shorts-libx264-2.mp4",
     "load_average_at_start": [
       16.79150390625,
       16.9736328125,
@@ -455,8 +455,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/tiktok-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/tiktok-h264_nvenc-0.mp4",
+    "input": "<local>/tiktok-loop.mkv",
+    "output": "<local>/tiktok-h264_nvenc-0.mp4",
     "load_average_at_start": [
       18.125,
       17.21142578125,
@@ -491,8 +491,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/tiktok-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/tiktok-h264_nvenc-1.mp4",
+    "input": "<local>/tiktok-loop.mkv",
+    "output": "<local>/tiktok-h264_nvenc-1.mp4",
     "load_average_at_start": [
       16.1904296875,
       16.8876953125,
@@ -527,8 +527,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/tiktok-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/tiktok-h264_nvenc-2.mp4",
+    "input": "<local>/tiktok-loop.mkv",
+    "output": "<local>/tiktok-h264_nvenc-2.mp4",
     "load_average_at_start": [
       15.4169921875,
       16.66748046875,
@@ -563,8 +563,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/tiktok-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/tiktok-libx264-0.mp4",
+    "input": "<local>/tiktok-loop.mkv",
+    "output": "<local>/tiktok-libx264-0.mp4",
     "load_average_at_start": [
       18.0947265625,
       17.13525390625,
@@ -599,8 +599,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/tiktok-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/tiktok-libx264-1.mp4",
+    "input": "<local>/tiktok-loop.mkv",
+    "output": "<local>/tiktok-libx264-1.mp4",
     "load_average_at_start": [
       15.892578125,
       16.7294921875,
@@ -635,8 +635,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/tiktok-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/tiktok-libx264-2.mp4",
+    "input": "<local>/tiktok-loop.mkv",
+    "output": "<local>/tiktok-libx264-2.mp4",
     "load_average_at_start": [
       21.4453125,
       17.95556640625,
@@ -673,8 +673,8 @@
       "bufsize_kbits": 10000,
       "max_upload_bitrate_kbps": 25000
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/reels-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/reels-h264_nvenc-0.mp4",
+    "input": "<local>/reels-loop.mkv",
+    "output": "<local>/reels-h264_nvenc-0.mp4",
     "load_average_at_start": [
       21.89599609375,
       18.8017578125,
@@ -711,8 +711,8 @@
       "bufsize_kbits": 10000,
       "max_upload_bitrate_kbps": 25000
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/reels-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/reels-h264_nvenc-1.mp4",
+    "input": "<local>/reels-loop.mkv",
+    "output": "<local>/reels-h264_nvenc-1.mp4",
     "load_average_at_start": [
       20.90380859375,
       18.78125,
@@ -749,8 +749,8 @@
       "bufsize_kbits": 10000,
       "max_upload_bitrate_kbps": 25000
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/reels-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/reels-h264_nvenc-2.mp4",
+    "input": "<local>/reels-loop.mkv",
+    "output": "<local>/reels-h264_nvenc-2.mp4",
     "load_average_at_start": [
       20.4501953125,
       18.8037109375,
@@ -787,8 +787,8 @@
       "bufsize_kbits": 10000,
       "max_upload_bitrate_kbps": 25000
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/reels-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/reels-libx264-0.mp4",
+    "input": "<local>/reels-loop.mkv",
+    "output": "<local>/reels-libx264-0.mp4",
     "load_average_at_start": [
       20.93798828125,
       19.064453125,
@@ -825,8 +825,8 @@
       "bufsize_kbits": 10000,
       "max_upload_bitrate_kbps": 25000
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/reels-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/reels-libx264-1.mp4",
+    "input": "<local>/reels-loop.mkv",
+    "output": "<local>/reels-libx264-1.mp4",
     "load_average_at_start": [
       21.73046875,
       19.47021484375,
@@ -863,8 +863,8 @@
       "bufsize_kbits": 10000,
       "max_upload_bitrate_kbps": 25000
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/reels-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/reels-libx264-2.mp4",
+    "input": "<local>/reels-loop.mkv",
+    "output": "<local>/reels-libx264-2.mp4",
     "load_average_at_start": [
       21.2841796875,
       19.427734375,
@@ -899,8 +899,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/x-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/x-h264_nvenc-0.mp4",
+    "input": "<local>/x-loop.mkv",
+    "output": "<local>/x-h264_nvenc-0.mp4",
     "load_average_at_start": [
       16.640625,
       18.43115234375,
@@ -935,8 +935,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/x-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/x-h264_nvenc-1.mp4",
+    "input": "<local>/x-loop.mkv",
+    "output": "<local>/x-h264_nvenc-1.mp4",
     "load_average_at_start": [
       19.3310546875,
       18.84228515625,
@@ -971,8 +971,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/x-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/x-h264_nvenc-2.mp4",
+    "input": "<local>/x-loop.mkv",
+    "output": "<local>/x-h264_nvenc-2.mp4",
     "load_average_at_start": [
       15.34814453125,
       17.65283203125,
@@ -1007,8 +1007,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/x-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/x-libx264-0.mp4",
+    "input": "<local>/x-loop.mkv",
+    "output": "<local>/x-libx264-0.mp4",
     "load_average_at_start": [
       21.673828125,
       19.30908203125,
@@ -1043,8 +1043,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/x-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/x-libx264-1.mp4",
+    "input": "<local>/x-loop.mkv",
+    "output": "<local>/x-libx264-1.mp4",
     "load_average_at_start": [
       26.5546875,
       20.89306640625,
@@ -1079,8 +1079,8 @@
       "audio_kbps": 192,
       "qualification": "candidate, pending measurements"
     },
-    "input": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/x-loop.mkv",
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/performance/x-libx264-2.mp4",
+    "input": "<local>/x-loop.mkv",
+    "output": "<local>/x-libx264-2.mp4",
     "load_average_at_start": [
       33.701171875,
       23.51953125,

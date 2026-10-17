@@ -163,8 +163,8 @@
       }
     },
     "export_seconds_per_minute": 33.29514174023643,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/ui-720-naive-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1920x1080.mkv"
+    "playback": "<local>/ui-720-naive-playback.mp4",
+    "reference": "<local>/ref-ui-1920x1080.mkv"
   },
   {
     "content": "ui",
@@ -330,8 +330,8 @@
       }
     },
     "export_seconds_per_minute": 30.0053094397299,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/ui-720-matched_bicubic-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1920x1080.mkv"
+    "playback": "<local>/ui-720-matched_bicubic-playback.mp4",
+    "reference": "<local>/ref-ui-1920x1080.mkv"
   },
   {
     "content": "ui",
@@ -497,8 +497,8 @@
       }
     },
     "export_seconds_per_minute": 53.10175991966389,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/ui-720-lanczos_cas-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1920x1080.mkv"
+    "playback": "<local>/ui-720-lanczos_cas-playback.mp4",
+    "reference": "<local>/ref-ui-1920x1080.mkv"
   },
   {
     "content": "ui",
@@ -664,8 +664,8 @@
       }
     },
     "export_seconds_per_minute": 86.37035531923175,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/ui-720-linear_cas-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1920x1080.mkv"
+    "playback": "<local>/ui-720-linear_cas-playback.mp4",
+    "reference": "<local>/ref-ui-1920x1080.mkv"
   },
   {
     "content": "ui",
@@ -831,8 +831,8 @@
       }
     },
     "export_seconds_per_minute": 22.03147116000764,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/ui-480-naive-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1920x1080.mkv"
+    "playback": "<local>/ui-480-naive-playback.mp4",
+    "reference": "<local>/ref-ui-1920x1080.mkv"
   },
   {
     "content": "ui",
@@ -998,8 +998,8 @@
       }
     },
     "export_seconds_per_minute": 20.203325640177354,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/ui-480-matched_bicubic-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1920x1080.mkv"
+    "playback": "<local>/ui-480-matched_bicubic-playback.mp4",
+    "reference": "<local>/ref-ui-1920x1080.mkv"
   },
   {
     "content": "ui",
@@ -1165,8 +1165,8 @@
       }
     },
     "export_seconds_per_minute": 100.65394186065532,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/ui-480-lanczos_cas-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1920x1080.mkv"
+    "playback": "<local>/ui-480-lanczos_cas-playback.mp4",
+    "reference": "<local>/ref-ui-1920x1080.mkv"
   },
   {
     "content": "ui",
@@ -1332,8 +1332,8 @@
       }
     },
     "export_seconds_per_minute": 109.70807524048723,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/ui-480-linear_cas-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1920x1080.mkv"
+    "playback": "<local>/ui-480-linear_cas-playback.mp4",
+    "reference": "<local>/ref-ui-1920x1080.mkv"
   },
   {
     "content": "satellite",
@@ -1499,8 +1499,8 @@
       }
     },
     "export_seconds_per_minute": 62.27611382026225,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/satellite-720-naive-color-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1920x1080-bt709.mkv",
+    "playback": "<local>/satellite-720-naive-color-playback.mp4",
+    "reference": "<local>/ref-satellite-1920x1080-bt709.mkv",
     "source_matrix_correction": "bt470bg full -> bt709 limited"
   },
   {
@@ -1667,8 +1667,8 @@
       }
     },
     "export_seconds_per_minute": 59.64848975883797,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/satellite-720-matched_bicubic-color-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1920x1080-bt709.mkv",
+    "playback": "<local>/satellite-720-matched_bicubic-color-playback.mp4",
+    "reference": "<local>/ref-satellite-1920x1080-bt709.mkv",
     "source_matrix_correction": "bt470bg full -> bt709 limited"
   },
   {
@@ -1835,8 +1835,8 @@
       }
     },
     "export_seconds_per_minute": 52.38770877942443,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/satellite-720-lanczos_cas-color-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1920x1080-bt709.mkv",
+    "playback": "<local>/satellite-720-lanczos_cas-color-playback.mp4",
+    "reference": "<local>/ref-satellite-1920x1080-bt709.mkv",
     "source_matrix_correction": "bt470bg full -> bt709 limited"
   },
   {
@@ -2003,8 +2003,8 @@
       }
     },
     "export_seconds_per_minute": 70.65716340090148,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/satellite-720-linear_cas-color-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1920x1080-bt709.mkv",
+    "playback": "<local>/satellite-720-linear_cas-color-playback.mp4",
+    "reference": "<local>/ref-satellite-1920x1080-bt709.mkv",
     "source_matrix_correction": "bt470bg full -> bt709 limited"
   },
   {
@@ -2171,8 +2171,8 @@
       }
     },
     "export_seconds_per_minute": 53.30118651967496,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/satellite-480-naive-color-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1920x1080-bt709.mkv",
+    "playback": "<local>/satellite-480-naive-color-playback.mp4",
+    "reference": "<local>/ref-satellite-1920x1080-bt709.mkv",
     "source_matrix_correction": "bt470bg full -> bt709 limited"
   },
   {
@@ -2339,8 +2339,8 @@
       }
     },
     "export_seconds_per_minute": 31.40523983980529,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/satellite-480-matched_bicubic-color-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1920x1080-bt709.mkv",
+    "playback": "<local>/satellite-480-matched_bicubic-color-playback.mp4",
+    "reference": "<local>/ref-satellite-1920x1080-bt709.mkv",
     "source_matrix_correction": "bt470bg full -> bt709 limited"
   },
   {
@@ -2507,8 +2507,8 @@
       }
     },
     "export_seconds_per_minute": 44.212877380196005,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/satellite-480-lanczos_cas-color-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1920x1080-bt709.mkv",
+    "playback": "<local>/satellite-480-lanczos_cas-color-playback.mp4",
+    "reference": "<local>/ref-satellite-1920x1080-bt709.mkv",
     "source_matrix_correction": "bt470bg full -> bt709 limited"
   },
   {
@@ -2675,8 +2675,8 @@
       }
     },
     "export_seconds_per_minute": 59.59607009892352,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/lowres/satellite-480-linear_cas-color-playback.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1920x1080-bt709.mkv",
+    "playback": "<local>/satellite-480-linear_cas-color-playback.mp4",
+    "reference": "<local>/ref-satellite-1920x1080-bt709.mkv",
     "source_matrix_correction": "bt470bg full -> bt709 limited"
   }
 ]

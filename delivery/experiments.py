@@ -98,7 +98,7 @@ def temporal(out, smoke=False, pan_stress=False):
             "-ss",
             "8",
             "-i",
-            "/mnt/zer0models/hermes-wt/render-lab/out/film/realtime-540fps-4k.mp4",
+            __import__("benchmark").SOURCES["motion"]["path"],
         ]
     args += [
         "-t",

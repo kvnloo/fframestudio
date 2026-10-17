@@ -7,24 +7,16 @@ import json
 from pathlib import Path
 from deliver import HERE, export, measure, probe, run, simulate
 
-SOURCES = {
-    "ui": {
-        "path": "/mnt/zer0models/hermes-wt/render-lab/demo/one-take/out/one-take-master.mkv",
-        "start": 8,
-    },
-    "gradient": {
-        "path": "/mnt/zer0models/z0-wt/salvage/theme-gallery-demo/v3/video/out/master.mkv",
-        "start": 14,
-    },
-    "satellite": {
-        "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/%04d.jpg",
-        "start": 0,
-        "sequence": True,
-    },
-    "motion": {
-        "path": "/mnt/zer0models/hermes-wt/render-lab/out/film/realtime-540fps-4k.mp4",
-        "start": 8,
-    },
+# The four benchmark clips are local media, not part of the repo. Put their paths in
+# delivery/sources.local.json (gitignored), same keys as below: {"ui": {"path": ..., "start": 8}, ...}.
+# Kinds used in REPORT.md: ui = screen-recording film master, gradient = themed UI film with gradients,
+# satellite = JPEG sequence of a 3D globe fly-through, motion = 540 fps 4K render.
+_LOCAL = HERE / "sources.local.json"
+SOURCES = json.loads(_LOCAL.read_text()) if _LOCAL.exists() else {
+    "ui": {"path": "ui-master.mkv", "start": 8},
+    "gradient": {"path": "gradient-master.mkv", "start": 14},
+    "satellite": {"path": "satellite/%04d.jpg", "start": 0, "sequence": True},
+    "motion": {"path": "motion-540fps-4k.mp4", "start": 8},
 }
 VARIANTS = {
     "naive": {"encoder": "libx264", "quality": 23, "scale": "bicubic"},

@@ -221,7 +221,7 @@ All sheets were inspected with `vision_analyze`. Observations are descriptive, n
 - The synthetic-pan filmstrips show the box target and blend smearing glyphs at fast portions of the pan. Interpolation keeps sharper glyphs in some snapshots but does not reliably match the instantaneous reference. The original-motion filmstrips show much smaller differences.
 - The procedural ramp crops show horizontal contouring after 8-bit delivery. Differences are subtle in these displayed PNGs; they do not justify a blanket claim that Main10 removes banding. The display path is not a calibrated 10-bit viewing system.
 
-Artifact directory: `/mnt/zer0models/project-artifacts/fframestudio/delivery/`.
+Encoded artifacts are kept outside the repo; hashes are in `evidence/artifact-integrity.json`.
 
 | Sheets under `sheets/` | Subject |
 |---|---|

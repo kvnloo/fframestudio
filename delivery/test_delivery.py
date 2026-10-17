@@ -422,9 +422,7 @@ class DeliveryTest(unittest.TestCase):
         import os
         import deliver
 
-        source = pathlib.Path(
-            "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1920x1080.mkv"
-        )
+        source = pathlib.Path(os.environ.get("DELIVERY_GRADIENT_REF", "ref-gradient-1920x1080.mkv"))
         if os.environ.get("DELIVERY_TEST_NVENC") != "1" or not source.exists():
             self.skipTest(
                 "opt-in NVENC integration requires the real gradient reference"

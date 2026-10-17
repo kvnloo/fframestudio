@@ -151,9 +151,9 @@
         "p5": 64.046762
       }
     },
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/sensitivity/youtube-libvpx-vp9-0.6-naive-playback.mp4",
-    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-naive-1-upload.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1920x1080.mkv"
+    "playback": "<local>/youtube-libvpx-vp9-0.6-naive-playback.mp4",
+    "upload": "<local>/youtube-gradient-naive-1-upload.mp4",
+    "reference": "<local>/ref-gradient-1920x1080.mkv"
   },
   {
     "platform": "youtube",
@@ -307,9 +307,9 @@
         "p5": 65.55966365
       }
     },
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/sensitivity/youtube-libvpx-vp9-0.6-fast-playback.mp4",
-    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-fast-1-fixed-upload.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1920x1080.mkv"
+    "playback": "<local>/youtube-libvpx-vp9-0.6-fast-playback.mp4",
+    "upload": "<local>/youtube-gradient-fast-1-fixed-upload.mp4",
+    "reference": "<local>/ref-gradient-1920x1080.mkv"
   },
   {
     "platform": "youtube",
@@ -463,9 +463,9 @@
         "p5": 79.1469455
       }
     },
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/sensitivity/youtube-libvpx-vp9-1.5-naive-playback.mp4",
-    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-naive-1-upload.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1920x1080.mkv"
+    "playback": "<local>/youtube-libvpx-vp9-1.5-naive-playback.mp4",
+    "upload": "<local>/youtube-gradient-naive-1-upload.mp4",
+    "reference": "<local>/ref-gradient-1920x1080.mkv"
   },
   {
     "platform": "youtube",
@@ -619,9 +619,9 @@
         "p5": 79.50929695
       }
     },
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/sensitivity/youtube-libvpx-vp9-1.5-fast-playback.mp4",
-    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-fast-1-fixed-upload.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1920x1080.mkv"
+    "playback": "<local>/youtube-libvpx-vp9-1.5-fast-playback.mp4",
+    "upload": "<local>/youtube-gradient-fast-1-fixed-upload.mp4",
+    "reference": "<local>/ref-gradient-1920x1080.mkv"
   },
   {
     "platform": "reels",
@@ -775,9 +775,9 @@
         "p5": 75.3700391
       }
     },
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/sensitivity/reels-libsvtav1-1.0-naive-playback.mp4",
-    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-gradient-naive-1-upload.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1080x1920.mkv"
+    "playback": "<local>/reels-libsvtav1-1.0-naive-playback.mp4",
+    "upload": "<local>/reels-gradient-naive-1-upload.mp4",
+    "reference": "<local>/ref-gradient-1080x1920.mkv"
   },
   {
     "platform": "reels",
@@ -931,8 +931,8 @@
         "p5": 77.36129615
       }
     },
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/sensitivity/reels-libsvtav1-1.0-fast-playback.mp4",
-    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-gradient-fast-bounded-upload.mp4",
-    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1080x1920.mkv"
+    "playback": "<local>/reels-libsvtav1-1.0-fast-playback.mp4",
+    "upload": "<local>/reels-gradient-fast-bounded-upload.mp4",
+    "reference": "<local>/ref-gradient-1080x1920.mkv"
   }
 ]

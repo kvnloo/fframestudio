@@ -1,15 +1,15 @@
 {"platform": "x", "content": "fixture", "variant": "naive", "vmaf": {"mean": 94.8203276, "p5": 93.47349894999999}, "neg": {"mean": 93.18551003333333, "p5": 91.95688704999999}, "sec_per_min": 2.5203667825553566}
 {"platform": "x", "content": "fixture", "variant": "software", "vmaf": {"mean": 98.71734363333333, "p5": 97.03236995}, "neg": {"mean": 94.36601436666666, "p5": 93.0877475}, "sec_per_min": 3.5075256612617522}
-2 verified rows in /workspace/hermes-home/profiles/clean/cache/scratch/tmp90yuf4pk/results.json
+2 verified rows in <local>/results.json
 {"platform": "x", "content": "fixture", "variant": "software", "vmaf": {"mean": 98.46648736666667, "p5": 97.42845115}, "neg": {"mean": 93.9055994, "p5": 92.76138544999999}, "sec_per_min": 3.533438639715314}
-3 verified rows in /workspace/hermes-home/profiles/clean/cache/scratch/tmp90yuf4pk/results.json
+3 verified rows in <local>/results.json
 {"platform": "x", "content": "fixture", "variant": "naive", "vmaf": {"mean": 94.8203276, "p5": 93.47349894999999}, "neg": {"mean": 93.18551003333333, "p5": 91.95688704999999}, "sec_per_min": 2.599336977582425}
 {"platform": "x", "content": "fixture", "variant": "software", "vmaf": {"mean": 98.71734363333333, "p5": 97.03236995}, "neg": {"mean": 94.36601436666666, "p5": 93.0877475}, "sec_per_min": 3.6201205803081393}
-2 verified rows in /workspace/hermes-home/profiles/clean/cache/scratch/tmphm22b5j4/results.json
+2 verified rows in <local>/results.json
 {"mode": "decimate", "fps": 30, "temporal_vs_box": {"mean_delta_error_8bit": 1.24963122605364, "max_delta_error_8bit": 1.334375}, "export_seconds_per_minute": 3.165083461208269}
 {"mode": "blend", "fps": 30, "temporal_vs_box": {"mean_delta_error_8bit": 0.5427729885057472, "max_delta_error_8bit": 0.6121527777777778}, "export_seconds_per_minute": 3.45961170271039}
 {"mode": "interpolate", "fps": 30, "temporal_vs_box": {"mean_delta_error_8bit": 1.2242840038314176, "max_delta_error_8bit": 2.0975}, "export_seconds_per_minute": 33.24185676290654}
-{"output": "/home/kvn/.hermes/profiles/clean/cache/scratch/tmpe47ahdya/output.mp4", "wall_seconds": 0.02866528503363952}
+{"output": "<local>/output.mp4", "wall_seconds": 0.02866528503363952}
 {"content": "fixture", "height": 120, "variant": "naive", "vmaf": {"mean": 37.9866905, "p5": 36.71364735}, "neg": {"mean": 33.997444566666665, "p5": 32.7554036}}
 {"content": "fixture", "height": 120, "variant": "matched_bicubic", "vmaf": {"mean": 38.7476318, "p5": 37.3846523}, "neg": {"mean": 34.56882543333333, "p5": 32.95556585}}
 {"content": "fixture", "height": 120, "variant": "lanczos_cas", "vmaf": {"mean": 44.2144495, "p5": 42.7006565}, "neg": {"mean": 39.134601833333335, "p5": 37.541395449999996}}

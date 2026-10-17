@@ -1,991 +1,991 @@
 [
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-gradient-fast-bounded-metrics.json",
+    "path": "<local>/reels-gradient-fast-bounded-metrics.json",
     "bytes": 122234,
     "sha256": "8323a0d9ccee2562762b9505e2a44c2de474d5a8055970b14721cfe7f96271d2"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-gradient-fast-bounded-playback.mp4",
+    "path": "<local>/reels-gradient-fast-bounded-playback.mp4",
     "bytes": 1250913,
     "sha256": "4b846d18481c788586568625e9f798a1e750b5699f570555d7d8d33a7317f1be"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-gradient-fast-bounded-upload.mp4",
+    "path": "<local>/reels-gradient-fast-bounded-upload.mp4",
     "bytes": 8811337,
     "sha256": "56936eb03da3b6c1677c12529c30398d06e738e408d64eb63108875858cae165"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-gradient-naive-1-metrics.json",
+    "path": "<local>/reels-gradient-naive-1-metrics.json",
     "bytes": 122222,
     "sha256": "085070006dcea6730d7ffa418eaacf780f0669ef5b51526be7f634b6b026dd3d"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-gradient-naive-1-playback.mp4",
+    "path": "<local>/reels-gradient-naive-1-playback.mp4",
     "bytes": 1331355,
     "sha256": "f48d032e56f77efa057318626c7f637cc9e114da474a8f53e4cef770e27d798c"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-gradient-naive-1-upload.mp4",
+    "path": "<local>/reels-gradient-naive-1-upload.mp4",
     "bytes": 3276104,
     "sha256": "17534591e4e5545a9b1ce705a6d29c3d0b4b2575aaa1a4d753c1c2ce4e83100b"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-motion-fast-bounded-metrics.json",
+    "path": "<local>/reels-motion-fast-bounded-metrics.json",
     "bytes": 122192,
     "sha256": "c6d83a69365f644c2084f9d9abce96ad0bb0dbe99401ddaad9b2a6aebb63694d"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-motion-fast-bounded-playback.mp4",
+    "path": "<local>/reels-motion-fast-bounded-playback.mp4",
     "bytes": 258161,
     "sha256": "09f22a9a7073097d5eff44a875921560f61af943aa7d798179432b6a7b065761"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-motion-fast-bounded-upload.mp4",
+    "path": "<local>/reels-motion-fast-bounded-upload.mp4",
     "bytes": 4301089,
     "sha256": "055894e523119ff2e1cacc8d3ca6309058db24e26eda12e07a326c13185ddbff"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-motion-naive-1-metrics.json",
+    "path": "<local>/reels-motion-naive-1-metrics.json",
     "bytes": 122192,
     "sha256": "0288a5982d53e3393f5981e9539d1c8365059e5ee841ab07d8ac8704a971b5af"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-motion-naive-1-playback.mp4",
+    "path": "<local>/reels-motion-naive-1-playback.mp4",
     "bytes": 261696,
     "sha256": "9d8594d0f45d76a5b27e04a6ffa7c6abff60c303bae851a52ee0ae4be4c8b15b"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-motion-naive-1-upload.mp4",
+    "path": "<local>/reels-motion-naive-1-upload.mp4",
     "bytes": 314239,
     "sha256": "34df60b2960064924e8c7ece20da179569e5442091e1ed9ac35511f7c3430172"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-satellite-fast-color-metrics.json",
+    "path": "<local>/reels-satellite-fast-color-metrics.json",
     "bytes": 122811,
     "sha256": "dfe514432b497f58916c86c7d4f233609c4e09939ffa55996755014196f72ea8"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-satellite-fast-color-playback.mp4",
+    "path": "<local>/reels-satellite-fast-color-playback.mp4",
     "bytes": 1269093,
     "sha256": "4a00f335ed4cca66c27ad7804301452a902d7d46d3b148892e72d6aba94a33b0"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-satellite-fast-color-upload.mp4",
+    "path": "<local>/reels-satellite-fast-color-upload.mp4",
     "bytes": 7947159,
     "sha256": "b3a5e14872d43d8de52343c1d3162d22e252dd3c21f67d85bbd94c7d51130b73"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-satellite-naive-color-metrics.json",
+    "path": "<local>/reels-satellite-naive-color-metrics.json",
     "bytes": 122740,
     "sha256": "fb510a81e6e91562a6817af23c247e9e05445575722d8a630c757ce9e62504e2"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-satellite-naive-color-playback.mp4",
+    "path": "<local>/reels-satellite-naive-color-playback.mp4",
     "bytes": 1305733,
     "sha256": "5077044fa2f594ee8f6cdb750a2cd1b5e4c0b2b1b4cdd012de7ac318843c22d6"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-satellite-naive-color-upload.mp4",
+    "path": "<local>/reels-satellite-naive-color-upload.mp4",
     "bytes": 3312896,
     "sha256": "d04c6149b896bb0c128a2f5d6a17883ecccfab3dd62767ca594d5fbd2ae6e0df"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-ui-fast-bounded-metrics.json",
+    "path": "<local>/reels-ui-fast-bounded-metrics.json",
     "bytes": 122194,
     "sha256": "b4b14c22a022a3a6a1dffd501f299b15a74b38c6306ae23ffc4e6745a1252280"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-ui-fast-bounded-playback.mp4",
+    "path": "<local>/reels-ui-fast-bounded-playback.mp4",
     "bytes": 158672,
     "sha256": "4039ba0aa71993723d66d75a9b503d19020bd3d84c1fe6b0757ce7acc5ea6738"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-ui-fast-bounded-upload.mp4",
+    "path": "<local>/reels-ui-fast-bounded-upload.mp4",
     "bytes": 1860494,
     "sha256": "5c3e385d626d990d0eca2a80ce5d6a37c57524089b3a563e494e37c7d077c084"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-ui-naive-1-metrics.json",
+    "path": "<local>/reels-ui-naive-1-metrics.json",
     "bytes": 122192,
     "sha256": "8fadcc2366899b4ae1c3cffb5c26866415bcf19f3bda826ca5d5f2353339d94d"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-ui-naive-1-playback.mp4",
+    "path": "<local>/reels-ui-naive-1-playback.mp4",
     "bytes": 156792,
     "sha256": "bd89b6fda177a3d8c5fd9ea92a465e972981624f08aa1b531cda9495f88540d2"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-ui-naive-1-upload.mp4",
+    "path": "<local>/reels-ui-naive-1-upload.mp4",
     "bytes": 189988,
     "sha256": "f911571f3ce3596b5799da3f55ab088ef5c54f2b501115c13de396e1161deef4"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-ui-software-bounded-metrics.json",
+    "path": "<local>/reels-ui-software-bounded-metrics.json",
     "bytes": 122194,
     "sha256": "6d3b11d088b2758ce786114e71583cce7602c5e75ed409865d92a53129de2036"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-ui-software-bounded-playback.mp4",
+    "path": "<local>/reels-ui-software-bounded-playback.mp4",
     "bytes": 154060,
     "sha256": "7bc21ffb3e812bd08130c62294ea32c852e2f6309bf26868e1e2b408b473f2a0"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-ui-software-bounded-upload.mp4",
+    "path": "<local>/reels-ui-software-bounded-upload.mp4",
     "bytes": 453535,
     "sha256": "8cedb78027af79f7caa6f0c1e06e64f58561add472b1654a4e4d95ad119b8b7a"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1080x1920.mkv",
+    "path": "<local>/ref-gradient-1080x1920.mkv",
     "bytes": 64423254,
     "sha256": "81c14487d321c3d366e973a3ad7b8e678c93fd44d2a6556faad0c47793fc1bca"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1280x720.mkv",
+    "path": "<local>/ref-gradient-1280x720.mkv",
     "bytes": 42035937,
     "sha256": "f764519f64558a821643888dceac259146d04777acb5974a368d8c74a6754c28"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1920x1080.mkv",
+    "path": "<local>/ref-gradient-1920x1080.mkv",
     "bytes": 75435779,
     "sha256": "2e7ca3293a470d12819dbda42ca0f8bc551fea8fa51c72d8b1a1807b5d7926c2"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-motion-1080x1920.mkv",
+    "path": "<local>/ref-motion-1080x1920.mkv",
     "bytes": 11641600,
     "sha256": "a14b6468b3d9c1be3ded1ee5994ca0ee9a81b64ba0ab364f5af3a6d6a95c05d7"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-motion-1280x720.mkv",
+    "path": "<local>/ref-motion-1280x720.mkv",
     "bytes": 6283295,
     "sha256": "0a2a051642205e2cd7228562ab3eb7f09b56e0bb44791940f6ea9bd80646b41d"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-motion-1920x1080.mkv",
+    "path": "<local>/ref-motion-1920x1080.mkv",
     "bytes": 10370273,
     "sha256": "32b1168685ad1ebfb7a082ec02a8ff8594d03944623b2c7c44e2e1b61d4235b8"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1080x1920-bt709.mkv",
+    "path": "<local>/ref-satellite-1080x1920-bt709.mkv",
     "bytes": 103331310,
     "sha256": "39c9354b194ce9838513e1d0b816cf640e3ee1e844e8a8daf18579dcec207462"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1280x720-bt709.mkv",
+    "path": "<local>/ref-satellite-1280x720-bt709.mkv",
     "bytes": 68687559,
     "sha256": "3c4f0fa8c48efa27fa879b0523f88d4896fbff075dd2a94bd299df6833cc2dbe"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1920x1080-bt709.mkv",
+    "path": "<local>/ref-satellite-1920x1080-bt709.mkv",
     "bytes": 135779136,
     "sha256": "4ea17595b018936ceb8df668962d3ee75c581aee7ffdc6b0e62db80388410b9b"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1080x1920.mkv",
+    "path": "<local>/ref-ui-1080x1920.mkv",
     "bytes": 12899837,
     "sha256": "e46a78b6ddc1c6e8553222810c2b2c2cc3cb34ded35877c8d77f75032b7dcc42"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1280x720.mkv",
+    "path": "<local>/ref-ui-1280x720.mkv",
     "bytes": 6724302,
     "sha256": "dfa7ca9418a0e2b2e4d9feb6d0e11e04f4c3e73a51fac60a7852135e2e9dc1f5"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1920x1080.mkv",
+    "path": "<local>/ref-ui-1920x1080.mkv",
     "bytes": 8348975,
     "sha256": "9fdfb875db2fc96fb12d232ee44b05ca9056938a79e832a8ffb944dbcfa99160"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-gradient-fast-1-fixed-upload.mp4",
+    "path": "<local>/shorts-gradient-fast-1-fixed-upload.mp4",
     "bytes": 11471811,
     "sha256": "250297a43c673313e3b17738624339c381ecc155118ff3f1e45c400d2f4800b5"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-gradient-fast-1-metrics.json",
+    "path": "<local>/shorts-gradient-fast-1-metrics.json",
     "bytes": 122245,
     "sha256": "df14cf6b4302c208d81d123eef351c4852dbebd11d33a41e8f4aaab3d32f407e"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-gradient-fast-1-playback.mp4",
+    "path": "<local>/shorts-gradient-fast-1-playback.mp4",
     "bytes": 802205,
     "sha256": "501c7448ca38e69547fdd678b2626c3ac221089ed9685d0131cde59af3dffab3"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-gradient-naive-1-metrics.json",
+    "path": "<local>/shorts-gradient-naive-1-metrics.json",
     "bytes": 122235,
     "sha256": "7a79918e76f9d635886f30d8e4097c02f9c55fe763c9946241f6a77c085c254b"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-gradient-naive-1-playback.mp4",
+    "path": "<local>/shorts-gradient-naive-1-playback.mp4",
     "bytes": 737247,
     "sha256": "1590a32f7f822edc9a912b5754c78ccae5a6d3809678f20fe7105e8e0c9e0e12"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-gradient-naive-1-upload.mp4",
+    "path": "<local>/shorts-gradient-naive-1-upload.mp4",
     "bytes": 3539603,
     "sha256": "05cfda98a12f662f0008d8053786c9d3c8588ec10e8f9d21b23daf59ce04400a"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-motion-fast-1-fixed-upload.mp4",
+    "path": "<local>/shorts-motion-fast-1-fixed-upload.mp4",
     "bytes": 4698062,
     "sha256": "f03a669bbfa97f57ac115d0d6cfcee469177103b4ffee6b9418098d7e4ee3a39"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-motion-fast-1-metrics.json",
+    "path": "<local>/shorts-motion-fast-1-metrics.json",
     "bytes": 122192,
     "sha256": "21b036c632d731d35f9ddf8f0d940988c76f710fe440105f8a275443bceb1acf"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-motion-fast-1-playback.mp4",
+    "path": "<local>/shorts-motion-fast-1-playback.mp4",
     "bytes": 272083,
     "sha256": "338db8ae727ce0af1728db82c58bf37c2b0bd019bebfb83d6b36038a8cd9a9ee"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-motion-naive-1-metrics.json",
+    "path": "<local>/shorts-motion-naive-1-metrics.json",
     "bytes": 122192,
     "sha256": "e762305f22773d0bdfb545c6b4b0fd91f8f290cb5e2da51ea051aceb06e1195f"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-motion-naive-1-playback.mp4",
+    "path": "<local>/shorts-motion-naive-1-playback.mp4",
     "bytes": 317790,
     "sha256": "fe8160f5f3a5d80fa95a046d6452da26d942af3a713e2549a431768c149eff5d"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-motion-naive-1-upload.mp4",
+    "path": "<local>/shorts-motion-naive-1-upload.mp4",
     "bytes": 433180,
     "sha256": "ccd3fbd953b0b3a11d2238e3cd8ead02dbb4b2c1a6062954507f59107ccf6fcd"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-satellite-fast-color-metrics.json",
+    "path": "<local>/shorts-satellite-fast-color-metrics.json",
     "bytes": 122598,
     "sha256": "e7db4f13c660925967113b4cffcaaa03e7b719793e76d0c9fd71da60f4d83b1d"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-satellite-fast-color-playback.mp4",
+    "path": "<local>/shorts-satellite-fast-color-playback.mp4",
     "bytes": 1270481,
     "sha256": "fb5395c251c9457d4e50695e1802eb52b71f220592eae83bdb62df7b299c13e4"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-satellite-fast-color-upload.mp4",
+    "path": "<local>/shorts-satellite-fast-color-upload.mp4",
     "bytes": 10097500,
     "sha256": "8abd01283aff2ad25189c99d595b0e441f0550daeb07bd4dd43b50bdd2e8726d"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-satellite-naive-color-metrics.json",
+    "path": "<local>/shorts-satellite-naive-color-metrics.json",
     "bytes": 122583,
     "sha256": "9ed2c2f61c30a5b36a7710b6ec734541ed0f9438c90e3f7053b2d4a91ce529bc"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-satellite-naive-color-playback.mp4",
+    "path": "<local>/shorts-satellite-naive-color-playback.mp4",
     "bytes": 1262577,
     "sha256": "3286e2d071227b2bb9add4afcfb1d3d2f41caa8cbc25872c80ae8d41c85b3e6d"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-satellite-naive-color-upload.mp4",
+    "path": "<local>/shorts-satellite-naive-color-upload.mp4",
     "bytes": 4086602,
     "sha256": "26483ce19b2d7f111be259d1069736929caaddb192ca5656e678e5e5d3e10952"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-ui-fast-1-fixed-upload.mp4",
+    "path": "<local>/shorts-ui-fast-1-fixed-upload.mp4",
     "bytes": 2263637,
     "sha256": "cdde3c6a2ddbca575f70e29ea6fa93cc7e05e630b3fe92f4a7a014d3b2d6396a"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-ui-fast-1-metrics.json",
+    "path": "<local>/shorts-ui-fast-1-metrics.json",
     "bytes": 122194,
     "sha256": "9aeba3e4f76074c25d8e04f15b0a8042088042e624f55e3c538cdf212c7226cd"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-ui-fast-1-playback.mp4",
+    "path": "<local>/shorts-ui-fast-1-playback.mp4",
     "bytes": 193319,
     "sha256": "11228cdeaf84325e13bcbf172879e50c76d249c4449428bc3ba4fbbad350319c"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-ui-naive-1-metrics.json",
+    "path": "<local>/shorts-ui-naive-1-metrics.json",
     "bytes": 122192,
     "sha256": "25def313ce68cc8de85955be36d098fc549ca3f1947f7abd340003ca9790abe6"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-ui-naive-1-playback.mp4",
+    "path": "<local>/shorts-ui-naive-1-playback.mp4",
     "bytes": 212075,
     "sha256": "2961816f6e9ab89f88b6ed02ac4c2c448e05e79794a1f6341c4604b79abea61d"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-ui-naive-1-upload.mp4",
+    "path": "<local>/shorts-ui-naive-1-upload.mp4",
     "bytes": 265037,
     "sha256": "f63d5ffbe013c6892649db24dc5b74754af518375e21489ae28c4937c15412b3"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-ui-software-1-metrics.json",
+    "path": "<local>/shorts-ui-software-1-metrics.json",
     "bytes": 122194,
     "sha256": "4d10078f9a6ebf34cd126d470ecf25262b21f66ebe6db8eb4d4293f96c20e871"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-ui-software-1-playback.mp4",
+    "path": "<local>/shorts-ui-software-1-playback.mp4",
     "bytes": 197466,
     "sha256": "0b20a95ed4d2ae85260dd9cf429a82c49bcf645a78046fc56b749608c8b0d0e0"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-ui-software-1-upload.mp4",
+    "path": "<local>/shorts-ui-software-1-upload.mp4",
     "bytes": 619931,
     "sha256": "0cb363ccce08996314fe6cc66e34243047ad84fd9f8c9cf9aa04aa1bec5eba6c"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-gradient-fast-1-fixed-upload.mp4",
+    "path": "<local>/tiktok-gradient-fast-1-fixed-upload.mp4",
     "bytes": 11474410,
     "sha256": "9a056bccae3de01d3fdfcb4d23c3ea6cc20c6c304fca1c60f60b289eef561cf0"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-gradient-fast-1-metrics.json",
+    "path": "<local>/tiktok-gradient-fast-1-metrics.json",
     "bytes": 122236,
     "sha256": "f5d35db4b56d5ef67b2dbead25c5dda06d35059e655ef033be94f351a03a87e1"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-gradient-fast-1-playback.mp4",
+    "path": "<local>/tiktok-gradient-fast-1-playback.mp4",
     "bytes": 956402,
     "sha256": "94ce622bcafc7e417adea2027f46a0e0a701b142b0cbca4e02ee2d5be47e0468"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-gradient-naive-1-metrics.json",
+    "path": "<local>/tiktok-gradient-naive-1-metrics.json",
     "bytes": 122236,
     "sha256": "3fa8dc0da097be09d6d95ecedab3020c989fec0ede436db1dd028474f0f700df"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-gradient-naive-1-playback.mp4",
+    "path": "<local>/tiktok-gradient-naive-1-playback.mp4",
     "bytes": 1032822,
     "sha256": "1600fed78097bfde3348960a9ef988edb69aec20cf36db5d3d603c6abe7ac05b"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-gradient-naive-1-upload.mp4",
+    "path": "<local>/tiktok-gradient-naive-1-upload.mp4",
     "bytes": 3276104,
     "sha256": "17534591e4e5545a9b1ce705a6d29c3d0b4b2575aaa1a4d753c1c2ce4e83100b"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-motion-fast-1-fixed-upload.mp4",
+    "path": "<local>/tiktok-motion-fast-1-fixed-upload.mp4",
     "bytes": 4300313,
     "sha256": "662011aa91c2e6eb641ab578e44cfdd25da1f1f429d163137f7a91b8a5af22ee"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-motion-fast-1-metrics.json",
+    "path": "<local>/tiktok-motion-fast-1-metrics.json",
     "bytes": 122192,
     "sha256": "caa609f976f1799e3d5698de03450826162b21e1dc009d31890c0d0ece225a0a"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-motion-fast-1-playback.mp4",
+    "path": "<local>/tiktok-motion-fast-1-playback.mp4",
     "bytes": 229080,
     "sha256": "6eb3b435345df00a6522931e3fd2b9e14cc6685cd314d13b1f58b7d21de03d44"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-motion-naive-1-metrics.json",
+    "path": "<local>/tiktok-motion-naive-1-metrics.json",
     "bytes": 122192,
     "sha256": "72a0ed143dc148214a2ae2ec8ab6fbda444c3e2698451749f11c0e42105e0034"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-motion-naive-1-playback.mp4",
+    "path": "<local>/tiktok-motion-naive-1-playback.mp4",
     "bytes": 237542,
     "sha256": "004da7085018538016e47128db1eaf749944da4850fc404f6d9d16e0aefe7ad7"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-motion-naive-1-upload.mp4",
+    "path": "<local>/tiktok-motion-naive-1-upload.mp4",
     "bytes": 314239,
     "sha256": "34df60b2960064924e8c7ece20da179569e5442091e1ed9ac35511f7c3430172"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-satellite-fast-color-metrics.json",
+    "path": "<local>/tiktok-satellite-fast-color-metrics.json",
     "bytes": 122682,
     "sha256": "a15260ad9da0ed2eb700561026c729e062beb0e1705367bed2b70afc0563638c"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-satellite-fast-color-playback.mp4",
+    "path": "<local>/tiktok-satellite-fast-color-playback.mp4",
     "bytes": 1037063,
     "sha256": "96e33e64cfc5c37b86f4fe477569c8a9858bf771323aba354696f57d91c4a593"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-satellite-fast-color-upload.mp4",
+    "path": "<local>/tiktok-satellite-fast-color-upload.mp4",
     "bytes": 10190500,
     "sha256": "77df258b8b2fc31da3da8723538dafb1d211177573b867e940ec6cd3dafcc177"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-satellite-naive-color-metrics.json",
+    "path": "<local>/tiktok-satellite-naive-color-metrics.json",
     "bytes": 122783,
     "sha256": "8c3836e4e468c8186d7242b91b99a90d717d6eb710c3f9e98f2abac7fad86553"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-satellite-naive-color-playback.mp4",
+    "path": "<local>/tiktok-satellite-naive-color-playback.mp4",
     "bytes": 1078533,
     "sha256": "86d2ed95295b36d9347f5f49d3f24c87fa19a411cbf8fad87b74ba22ac5b0891"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-satellite-naive-color-upload.mp4",
+    "path": "<local>/tiktok-satellite-naive-color-upload.mp4",
     "bytes": 3312896,
     "sha256": "d04c6149b896bb0c128a2f5d6a17883ecccfab3dd62767ca594d5fbd2ae6e0df"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-ui-fast-1-fixed-upload.mp4",
+    "path": "<local>/tiktok-ui-fast-1-fixed-upload.mp4",
     "bytes": 1860169,
     "sha256": "102a3b3c0017052bcac1112e01edfc3f55929f6002779e3ee2a5e14955c09497"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-ui-fast-1-metrics.json",
+    "path": "<local>/tiktok-ui-fast-1-metrics.json",
     "bytes": 122194,
     "sha256": "3e0d45b5e707b26fa4035b6af3fc04dacb7ef1266fc3feac6c0fa3226d0bd588"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-ui-fast-1-playback.mp4",
+    "path": "<local>/tiktok-ui-fast-1-playback.mp4",
     "bytes": 144643,
     "sha256": "1a8bf4cc8c009ec832819207379da7be4ed58e50075ed598bc240a0c0438eecc"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-ui-naive-1-metrics.json",
+    "path": "<local>/tiktok-ui-naive-1-metrics.json",
     "bytes": 122192,
     "sha256": "aa04465fc732fdcecffcbb2c8396e0ae171a9e6384f9da645109d04083e31e2b"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-ui-naive-1-playback.mp4",
+    "path": "<local>/tiktok-ui-naive-1-playback.mp4",
     "bytes": 143661,
     "sha256": "841a5d2d855d189672db325844f47a83fd578a43da324de1cdf607506ce96c36"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-ui-naive-1-upload.mp4",
+    "path": "<local>/tiktok-ui-naive-1-upload.mp4",
     "bytes": 189988,
     "sha256": "f911571f3ce3596b5799da3f55ab088ef5c54f2b501115c13de396e1161deef4"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-ui-software-1-metrics.json",
+    "path": "<local>/tiktok-ui-software-1-metrics.json",
     "bytes": 122194,
     "sha256": "45d09beb16e0836ac68f6ba89af619572df3034be92cec9f30bb95f682f00df1"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-ui-software-1-playback.mp4",
+    "path": "<local>/tiktok-ui-software-1-playback.mp4",
     "bytes": 140935,
     "sha256": "9daa36129a4d08a6e9636e271228a1d02ee5c9aff22b441d9f54449d3faeb78b"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-ui-software-1-upload.mp4",
+    "path": "<local>/tiktok-ui-software-1-upload.mp4",
     "bytes": 453535,
     "sha256": "bce0f297b4aea81c9cc36ab26bea95d4c453ef3bca5f78785dafafddfcf94827"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-cas-1-metrics.json",
+    "path": "<local>/x-gradient-cas-1-metrics.json",
     "bytes": 122249,
     "sha256": "227ca869d98abffc31f06aee331b780269614d2a69df5fc54ce22f94407cf4c3"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-cas-1-playback.mp4",
+    "path": "<local>/x-gradient-cas-1-playback.mp4",
     "bytes": 560966,
     "sha256": "5c8beb0b7972875f9322a5b970fc0014a59320bdcc46ea267b4435f13f57df6c"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-cas-1-upload.mp4",
+    "path": "<local>/x-gradient-cas-1-upload.mp4",
     "bytes": 3597965,
     "sha256": "58c2eb71087334a59647df6cf6df981d25aab6154d549f6a6031b90cec1c99ff"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-fast-1-fixed-metrics.json",
+    "path": "<local>/x-gradient-fast-1-fixed-metrics.json",
     "bytes": 122249,
     "sha256": "a869dc627633269071fa77f4cf67ed735d79b3df30e0a7cc8f52c8f4522e57ae"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-fast-1-fixed-playback.mp4",
+    "path": "<local>/x-gradient-fast-1-fixed-playback.mp4",
     "bytes": 506216,
     "sha256": "1b7d7b5798ea86d1fce7df7c3b2030ab2ce421427ab221e8c8bc7e332d0cff90"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-fast-1-fixed-upload.mp4",
+    "path": "<local>/x-gradient-fast-1-fixed-upload.mp4",
     "bytes": 3499742,
     "sha256": "74bbe6d8e372f939051bb7472590525126c264a0d30e46d4a7f4f666c414b84a"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-naive-1-metrics.json",
+    "path": "<local>/x-gradient-naive-1-metrics.json",
     "bytes": 122245,
     "sha256": "791d448b37fb35c0d87d8277e12f70ab5ace35ffa45dd5d2ad5b3f132fc45a8e"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-naive-1-playback.mp4",
+    "path": "<local>/x-gradient-naive-1-playback.mp4",
     "bytes": 539017,
     "sha256": "9b60777ecdf972ecc71fdc998f358aa0f6fc6401aebf00081527fc3efcfef90f"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-naive-1-upload.mp4",
+    "path": "<local>/x-gradient-naive-1-upload.mp4",
     "bytes": 673254,
     "sha256": "b013e8fed6261ee36ab4bb26de3d1ab4c1e0a9fefb5d437c8779caa8c4a64cc7"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-software-cas-metrics.json",
+    "path": "<local>/x-gradient-software-cas-metrics.json",
     "bytes": 122251,
     "sha256": "616b5bb26df0a10dc540e3ee0dcdd4f69e3ce5a7f93c17b249cbffadb4872fb5"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-software-cas-playback.mp4",
+    "path": "<local>/x-gradient-software-cas-playback.mp4",
     "bytes": 571304,
     "sha256": "45e7d36b436553c2495e9816b6611c7a7c7236dd51ac88183ac8ccd6edac1d1e"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-software-cas-upload.mp4",
+    "path": "<local>/x-gradient-software-cas-upload.mp4",
     "bytes": 3720153,
     "sha256": "d97bbf50ca2c84a7923ccaa6e0ab5afc3fde73f49ff489aac8fc59c9317d0b23"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-cas-1-metrics.json",
+    "path": "<local>/x-motion-cas-1-metrics.json",
     "bytes": 122192,
     "sha256": "61f26b3984f6b5b4d373ccfaa45cd7f4da903f4b10173f8312c41914f8f2a523"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-cas-1-playback.mp4",
+    "path": "<local>/x-motion-cas-1-playback.mp4",
     "bytes": 173583,
     "sha256": "b7e9622f43e81c8caa90ed11918e7e19ecd6bd52bb51403316b6ff61651f7bb4"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-cas-1-upload.mp4",
+    "path": "<local>/x-motion-cas-1-upload.mp4",
     "bytes": 2645945,
     "sha256": "375bf28c3955587ab84ab5f0592aba008a7cada29f20ae4bea373daac7711131"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-fast-1-fixed-upload.mp4",
+    "path": "<local>/x-motion-fast-1-fixed-upload.mp4",
     "bytes": 2247296,
     "sha256": "25cb9e213d4561830612bc05a5e502726eeda1a859f00c60ae3eef1f5ce98760"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-fast-1-metrics.json",
+    "path": "<local>/x-motion-fast-1-metrics.json",
     "bytes": 122192,
     "sha256": "7505a5c26c06a2818b79fec5c60f32bbe3e673e72e959088b3ad62dac4ad437a"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-fast-1-playback.mp4",
+    "path": "<local>/x-motion-fast-1-playback.mp4",
     "bytes": 166432,
     "sha256": "fb92432331a9428b63906354b879a4607de12cbff9310788b859d8b80cd1ff2b"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-naive-1-metrics.json",
+    "path": "<local>/x-motion-naive-1-metrics.json",
     "bytes": 122192,
     "sha256": "a759841fe6865abd4de1a8fa7c4ce67a40a58de7ce9f3b7d2eb83bbd6b46ea70"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-naive-1-playback.mp4",
+    "path": "<local>/x-motion-naive-1-playback.mp4",
     "bytes": 164466,
     "sha256": "fc9891be3b739b826222ee9e4c66b33355de1ab5a44cfef4142bab2b6944fa64"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-naive-1-upload.mp4",
+    "path": "<local>/x-motion-naive-1-upload.mp4",
     "bytes": 197786,
     "sha256": "f537a1b6ea37cd18793acbbd926b85c525f9313028b3325aac234b2f5136ef10"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-software-cas-metrics.json",
+    "path": "<local>/x-motion-software-cas-metrics.json",
     "bytes": 122192,
     "sha256": "9aed4548fab7b1baf65369cfb61d882bbe609c24a3168e47edcc8bbcb64d0852"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-software-cas-playback.mp4",
+    "path": "<local>/x-motion-software-cas-playback.mp4",
     "bytes": 183061,
     "sha256": "b0b16b046d0f3771798992e3f0013efc9393203aa0eb3d13562a9b993cb1e44a"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-software-cas-upload.mp4",
+    "path": "<local>/x-motion-software-cas-upload.mp4",
     "bytes": 575129,
     "sha256": "0374b5dc53dc005012aa1a933ce2791d20f1ccd11b46b2934f8e6da2ca628fc2"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-cas-color-metrics.json",
+    "path": "<local>/x-satellite-cas-color-metrics.json",
     "bytes": 122454,
     "sha256": "ade53005852824a9af9617e366bf1a99cf19085509913f52bac9eb119f200ebf"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-cas-color-playback.mp4",
+    "path": "<local>/x-satellite-cas-color-playback.mp4",
     "bytes": 870913,
     "sha256": "a42bc144756d4440a47ecdee6df4225a1f85edb4de67ffc1788c0b68d2665ff9"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-cas-color-upload.mp4",
+    "path": "<local>/x-satellite-cas-color-upload.mp4",
     "bytes": 3180043,
     "sha256": "758a682593e25c8d5a35c7cfef1d92c60a268dea27533fd36589a86e4113dc06"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-chroma-color-metrics.json",
+    "path": "<local>/x-satellite-chroma-color-metrics.json",
     "bytes": 122451,
     "sha256": "e470d6f247ebb2b5ba7f8af2771d5ab8a8431f734398e79286a0f7f24a881ea8"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-chroma-color-playback.mp4",
+    "path": "<local>/x-satellite-chroma-color-playback.mp4",
     "bytes": 836691,
     "sha256": "2e1811f7bf2d9b7ea2ed12ab9a7bcc1c70c273e7c144ff255af6cf7edd31ad58"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-chroma-color-upload.mp4",
+    "path": "<local>/x-satellite-chroma-color-upload.mp4",
     "bytes": 3118347,
     "sha256": "f29b172b5b6ff1c118f1d56c1a67f8881902c7985d78cd93efdc27ff4eb4809b"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-denoise-color-metrics.json",
+    "path": "<local>/x-satellite-denoise-color-metrics.json",
     "bytes": 122447,
     "sha256": "31bc90edcc574613f1ea5c72d472a3c542b312aad416e3fd3722e1ae1818fe09"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-denoise-color-playback.mp4",
+    "path": "<local>/x-satellite-denoise-color-playback.mp4",
     "bytes": 844872,
     "sha256": "54d27370127ca3f84d3017b791e246a2b1ae027771e0b4ccadf8772167d2011d"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-denoise-color-upload.mp4",
+    "path": "<local>/x-satellite-denoise-color-upload.mp4",
     "bytes": 3119019,
     "sha256": "f240edd3fac287276195d25d277525bbc92b98915a30ef4da96ad7fa95d315ae"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-fast-color-metrics.json",
+    "path": "<local>/x-satellite-fast-color-metrics.json",
     "bytes": 122448,
     "sha256": "812a45c551e1bb57763ae18a0e3a12b547363c52de663cc1a2db53985775e9f2"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-fast-color-playback.mp4",
+    "path": "<local>/x-satellite-fast-color-playback.mp4",
     "bytes": 844487,
     "sha256": "326eed5cfcbfe90ae7478571ea300c5a52c427966ec8a367c3240e5c656549ad"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-fast-color-upload.mp4",
+    "path": "<local>/x-satellite-fast-color-upload.mp4",
     "bytes": 3120818,
     "sha256": "e0d086c1566e0daa7197dd91f3b274ff2f5e6abc8f513690760d80fdb1255bf8"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-naive-color-metrics.json",
+    "path": "<local>/x-satellite-naive-color-metrics.json",
     "bytes": 122427,
     "sha256": "8322ff0f7bfc75382fe0902d1035f2a93876e7221156395f32d28004a5d56b78"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-naive-color-playback.mp4",
+    "path": "<local>/x-satellite-naive-color-playback.mp4",
     "bytes": 864441,
     "sha256": "5a68701e4e3341df5872f5cf6906c9ab618ce6a966e2321468886066756e7b2c"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-naive-color-upload.mp4",
+    "path": "<local>/x-satellite-naive-color-upload.mp4",
     "bytes": 1844945,
     "sha256": "c7afca2388b9b6f84e05205fed4c573ff90b9c138fb6863750a5afc3b52a8997"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-software-cas-metrics.json",
+    "path": "<local>/x-satellite-software-cas-metrics.json",
     "bytes": 122445,
     "sha256": "38364d6addc1caf8e1b73be87fe4f745bbcb8a1c6b891b6e9f46f12771ec51ec"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-software-cas-playback.mp4",
+    "path": "<local>/x-satellite-software-cas-playback.mp4",
     "bytes": 880981,
     "sha256": "d5b4ee1a8d0684ec8f4d547a4e81f2ac064cba5e91f874d41a91b170577c476d"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-software-cas-upload.mp4",
+    "path": "<local>/x-satellite-software-cas-upload.mp4",
     "bytes": 3647418,
     "sha256": "b6769ace17e5651bc677b0ac0297bc04ff5fbbb66214d9ad0e122ff2be957f92"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-cas-1-metrics.json",
+    "path": "<local>/x-ui-cas-1-metrics.json",
     "bytes": 122200,
     "sha256": "968767b051cdf8b85f70c84c0c42e662353556853e689106363a4633d338a232"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-cas-1-playback.mp4",
+    "path": "<local>/x-ui-cas-1-playback.mp4",
     "bytes": 146039,
     "sha256": "82b2180ad0eac78f2eb5db6e472c5467ad6210b1f0daf339c8584b096ddbf3c8"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-cas-1-upload.mp4",
+    "path": "<local>/x-ui-cas-1-upload.mp4",
     "bytes": 1253030,
     "sha256": "3c2093a1730b521a1267f44ec5d56f9ba3e08c3cf81e7ad76263b995a72b8717"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-chroma-1-metrics.json",
+    "path": "<local>/x-ui-chroma-1-metrics.json",
     "bytes": 122192,
     "sha256": "8eb412fc8792315fedd21be1081d28fa23e42c39fb2b1248a52ffbf5a7920ad4"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-chroma-1-playback.mp4",
+    "path": "<local>/x-ui-chroma-1-playback.mp4",
     "bytes": 134592,
     "sha256": "88f22951a91903f107ae300bfa6eec26a7327a087da966c2712c163e5804c0fa"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-chroma-1-upload.mp4",
+    "path": "<local>/x-ui-chroma-1-upload.mp4",
     "bytes": 1089406,
     "sha256": "2f1086bc1e1cf8542c08de688a69df11c7686e2915c69d9c75c6eb8705c11f43"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-denoise-1-metrics.json",
+    "path": "<local>/x-ui-denoise-1-metrics.json",
     "bytes": 122192,
     "sha256": "4adae8d96a588793202421e69002631984a09e752ad0b3e04889536b7faa7f75"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-denoise-1-playback.mp4",
+    "path": "<local>/x-ui-denoise-1-playback.mp4",
     "bytes": 140623,
     "sha256": "318bde160e6098fb3edad5bf7769a37f479c0691680767fb9aa71b80e50096b7"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-denoise-1-upload.mp4",
+    "path": "<local>/x-ui-denoise-1-upload.mp4",
     "bytes": 1120538,
     "sha256": "619b95c565d79e9c02f1f064183d9083fc6f15bde6a9a4819cafb6b9a1123e84"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-fast-1-fixed-upload.mp4",
+    "path": "<local>/x-ui-fast-1-fixed-upload.mp4",
     "bytes": 1096055,
     "sha256": "47d557bb96557778d76ba05675d2b0506e9ea6c108c761ebe9aad50a711038f8"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-fast-1-metrics.json",
+    "path": "<local>/x-ui-fast-1-metrics.json",
     "bytes": 122192,
     "sha256": "835f42b38c517fc9373a7c858bc0c280f7c89657503302d3f08a85a7e20f9864"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-fast-1-playback.mp4",
+    "path": "<local>/x-ui-fast-1-playback.mp4",
     "bytes": 136314,
     "sha256": "72f87c5a4be4391c184240275254b18ef4657eba0a6583fb0929bdbb434646a3"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-naive-1-metrics.json",
+    "path": "<local>/x-ui-naive-1-metrics.json",
     "bytes": 122192,
     "sha256": "a2438733bbaa1e62674dba084d534632b916ca4b06cde5735ee68d247ac336ff"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-naive-1-playback.mp4",
+    "path": "<local>/x-ui-naive-1-playback.mp4",
     "bytes": 141191,
     "sha256": "164ce39cbe128f522fd62cbbb9f76fa300cd655451caf4776b618948da126cd1"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-naive-1-upload.mp4",
+    "path": "<local>/x-ui-naive-1-upload.mp4",
     "bytes": 167002,
     "sha256": "ac74caa079a12b300c3d7a3ff51a8dd28f4ba536f956f72a2b1c31c0c3f2b1c1"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-software-1-metrics.json",
+    "path": "<local>/x-ui-software-1-metrics.json",
     "bytes": 122192,
     "sha256": "60b44233d5894cb618ca99662896dd5e6a6bee0c4e9a1d2bdddc63d6337f0a90"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-software-1-playback.mp4",
+    "path": "<local>/x-ui-software-1-playback.mp4",
     "bytes": 139614,
     "sha256": "f626411da30076d9fba33f4dfccd75c8b3353f5eae29591aef01eb8307a0600f"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-software-1-upload.mp4",
+    "path": "<local>/x-ui-software-1-upload.mp4",
     "bytes": 354037,
     "sha256": "0c864d52d3917c8079d73d5777cb83b5cac30051c7b100c22b385b22ae63bb51"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-software-cas-metrics.json",
+    "path": "<local>/x-ui-software-cas-metrics.json",
     "bytes": 122200,
     "sha256": "46b82f4abad1bf1b58fb99fa8051358ab9f5bc8eeca1ba3468310307c6dd9cf4"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-software-cas-playback.mp4",
+    "path": "<local>/x-ui-software-cas-playback.mp4",
     "bytes": 145199,
     "sha256": "271c767ad088ed91ddfb9a9f8bdb2b8e219a71f795a57ce3f6c17bed434fecd7"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-software-cas-upload.mp4",
+    "path": "<local>/x-ui-software-cas-upload.mp4",
     "bytes": 401216,
     "sha256": "d5b71a33d50e870e413fc5d1f2b6b8357866df292b2a95ac07e1136da39aba01"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-fast-1-fixed-metrics.json",
+    "path": "<local>/youtube-gradient-fast-1-fixed-metrics.json",
     "bytes": 122282,
     "sha256": "933ce7d588d4db9397b44c1c57190c85979e7c656b76ff3924dd35e67b1fcd19"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-fast-1-fixed-playback.mp4",
+    "path": "<local>/youtube-gradient-fast-1-fixed-playback.mp4",
     "bytes": 1068438,
     "sha256": "bad0cfa58ef6ca277dd4c4649433a4f221468c834bf73215a43f05fc8c2463f6"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-fast-1-fixed-upload.mp4",
+    "path": "<local>/youtube-gradient-fast-1-fixed-upload.mp4",
     "bytes": 11535401,
     "sha256": "a8c9832540d4263d1e883286af1f6367cd0580a02127ae5c65213f619c40b5e5"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-hevc10-1-fixed-metrics.json",
+    "path": "<local>/youtube-gradient-hevc10-1-fixed-metrics.json",
     "bytes": 122283,
     "sha256": "953df349c9cff3045148581e42a6ba739b255a00c51fea329dfcabe8cfe8eb02"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-hevc10-1-fixed-playback.mp4",
+    "path": "<local>/youtube-gradient-hevc10-1-fixed-playback.mp4",
     "bytes": 1109447,
     "sha256": "276605fc96be26cdb4e267fed6cac1a6e1764a9ae376b06f064173e0b6739e70"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-hevc10-1-fixed-upload.mp4",
+    "path": "<local>/youtube-gradient-hevc10-1-fixed-upload.mp4",
     "bytes": 10280763,
     "sha256": "63bb7e111d0bd6c6f54d679ed7532a751c80b30f7416887b6c68a92b2c48ce0c"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-naive-1-metrics.json",
+    "path": "<local>/youtube-gradient-naive-1-metrics.json",
     "bytes": 122271,
     "sha256": "bcf7dacfff8cdf82efcb12cfbab36bf2693da4a406160471e56568b39fc4994f"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-naive-1-playback.mp4",
+    "path": "<local>/youtube-gradient-naive-1-playback.mp4",
     "bytes": 963278,
     "sha256": "84f92724dbbea0c709f3cb9e68d17d3acc6fcfa7b296d8c74e06da24528a399d"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-naive-1-upload.mp4",
+    "path": "<local>/youtube-gradient-naive-1-upload.mp4",
     "bytes": 2318018,
     "sha256": "415dc742c17e7c3a738958d1b82f1783e6436e45a73472f644a457d9905d16e9"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-software-1-metrics.json",
+    "path": "<local>/youtube-gradient-software-1-metrics.json",
     "bytes": 122284,
     "sha256": "566003a196c9d9444a6aac8e613f184abf9f0c85e7c29d144427f809b5cbd80f"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-software-1-playback.mp4",
+    "path": "<local>/youtube-gradient-software-1-playback.mp4",
     "bytes": 1096488,
     "sha256": "a69df3cdfba2d7ea7db244946a3d41fa50768bed37731c8639e3f70c07f0b63e"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-software-1-upload.mp4",
+    "path": "<local>/youtube-gradient-software-1-upload.mp4",
     "bytes": 11698843,
     "sha256": "f515698897f1ffb28e1ff282d7a59020989d177afc1e21a06d1d9e901af2ccf1"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-motion-fast-1-fixed-upload.mp4",
+    "path": "<local>/youtube-motion-fast-1-fixed-upload.mp4",
     "bytes": 4460205,
     "sha256": "f8a4f089cab52a0957eaed5b31d6ab241c962d02c8c6ff0b95a4d6e4f4bfca97"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-motion-fast-1-metrics.json",
+    "path": "<local>/youtube-motion-fast-1-metrics.json",
     "bytes": 122192,
     "sha256": "3547e59638df6b2981969ade0d2f0eb65db795376a03671cc96507de593901d0"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-motion-fast-1-playback.mp4",
+    "path": "<local>/youtube-motion-fast-1-playback.mp4",
     "bytes": 263580,
     "sha256": "02f6b46894def78be0204ec49d6d40cbe1c3b437f234822ea61c15cd54b8afe3"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-motion-naive-1-metrics.json",
+    "path": "<local>/youtube-motion-naive-1-metrics.json",
     "bytes": 122192,
     "sha256": "3f41e349fb8e7b0f78072c8834838a7882dbe1c24e4718d51047fd2cfb339da7"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-motion-naive-1-playback.mp4",
+    "path": "<local>/youtube-motion-naive-1-playback.mp4",
     "bytes": 314784,
     "sha256": "765496ed266aed638f7a7b69f892ba8e7b4089d0dafec15c13fda17c5a3db5ad"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-motion-naive-1-upload.mp4",
+    "path": "<local>/youtube-motion-naive-1-upload.mp4",
     "bytes": 442999,
     "sha256": "3ded4ae893902661de8dad76c38dbb4340134fd0decb5462779b5ab52a51faab"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-satellite-fast-color-metrics.json",
+    "path": "<local>/youtube-satellite-fast-color-metrics.json",
     "bytes": 122581,
     "sha256": "585ddbedd4932eaa3971c31e4825bd6446b69cd2bb230140c29cbdab8679c1e7"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-satellite-fast-color-playback.mp4",
+    "path": "<local>/youtube-satellite-fast-color-playback.mp4",
     "bytes": 2091842,
     "sha256": "be2c3fb1ed799d9adedbfa4c82fbe03a511697bdbfcf8939a3889d8a3bb2a887"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-satellite-fast-color-upload.mp4",
+    "path": "<local>/youtube-satellite-fast-color-upload.mp4",
     "bytes": 9822330,
     "sha256": "5fa3daecc5f1009077216b35356b799e3e71aa59188a21a81fe83e31f73ce7a2"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-satellite-naive-color-metrics.json",
+    "path": "<local>/youtube-satellite-naive-color-metrics.json",
     "bytes": 122561,
     "sha256": "42812995a4ee5750e420a20e8d653b9b5a34029bca848a8202311e28a911a41f"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-satellite-naive-color-playback.mp4",
+    "path": "<local>/youtube-satellite-naive-color-playback.mp4",
     "bytes": 2045702,
     "sha256": "6aadbb051b959b90f22cea911327fc23fc6d799dd6ffd21b06db40b4e2dce004"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-satellite-naive-color-upload.mp4",
+    "path": "<local>/youtube-satellite-naive-color-upload.mp4",
     "bytes": 4970530,
     "sha256": "ff1ac9585f9f7cf1f166651b3d356bccc6119724dc5ec61fa2d24179715becad"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-fast-1-fixed-upload.mp4",
+    "path": "<local>/youtube-ui-fast-1-fixed-upload.mp4",
     "bytes": 2035511,
     "sha256": "dfd45cea63091f7b8dae21f59e755c17b90954b157c07b0380c99ae29db0493f"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-fast-1-metrics.json",
+    "path": "<local>/youtube-ui-fast-1-metrics.json",
     "bytes": 122194,
     "sha256": "bcef801bbfadd743a01b991d82352c569f989989fd12c0bfa2d9cebee313e3fb"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-fast-1-playback.mp4",
+    "path": "<local>/youtube-ui-fast-1-playback.mp4",
     "bytes": 345078,
     "sha256": "5b06028a44604f0e970521284295dbd27806509b45f3bc610b794f568befd779"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-hevc10-1-fixed-upload.mp4",
+    "path": "<local>/youtube-ui-hevc10-1-fixed-upload.mp4",
     "bytes": 1445625,
     "sha256": "dac0b6f15a629c58bdd91c16af903b0a6e2813928598617b27c1b528977313c3"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-hevc10-1-metrics.json",
+    "path": "<local>/youtube-ui-hevc10-1-metrics.json",
     "bytes": 122192,
     "sha256": "b2570afa4fb7c9b573136fb7e3aaaeb4e682940a3355ce2a8268d84537d2c408"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-hevc10-1-playback.mp4",
+    "path": "<local>/youtube-ui-hevc10-1-playback.mp4",
     "bytes": 344027,
     "sha256": "6bcc2f7956e1dc26b678610a3437f618eb79a3a33560173030bd804a8331df5b"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-naive-1-metrics.json",
+    "path": "<local>/youtube-ui-naive-1-metrics.json",
     "bytes": 122194,
     "sha256": "398c1183d040b43f197fa12d20343e85a62d1c23afdf7af225fd385b2f4ed858"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-naive-1-playback.mp4",
+    "path": "<local>/youtube-ui-naive-1-playback.mp4",
     "bytes": 403792,
     "sha256": "d05a2d5005962d2a0f9f1afa3e31dd692620efb345a624ce7c07b8e3e9ed3125"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-naive-1-upload.mp4",
+    "path": "<local>/youtube-ui-naive-1-upload.mp4",
     "bytes": 413696,
     "sha256": "9c58ce4e31efb5c8cb44b41ca0c6042eebb5fd4deac9756c943bb37372895590"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-software-1-metrics.json",
+    "path": "<local>/youtube-ui-software-1-metrics.json",
     "bytes": 122192,
     "sha256": "f45032e0d2d0f0164a80e14792e8d9b4c9481f979d02d8a609e8ec5e9d210c83"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-software-1-playback.mp4",
+    "path": "<local>/youtube-ui-software-1-playback.mp4",
     "bytes": 355148,
     "sha256": "20f587ebca2f5ad0ea5f769241724ea6872b5690fe16b154267250a2d2620b68"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-software-1-upload.mp4",
+    "path": "<local>/youtube-ui-software-1-upload.mp4",
     "bytes": 794236,
     "sha256": "e4634472ba95310372815480c170b2d940635783d6f0db0cc595e3d3894457a3"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-up1440-1-metrics.json",
+    "path": "<local>/youtube-ui-up1440-1-metrics.json",
     "bytes": 122192,
     "sha256": "8846b5771e246fb571f54487a1740a77d6828c81c1737115a3b4361a7eef82f7"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-up1440-1-playback.mp4",
+    "path": "<local>/youtube-ui-up1440-1-playback.mp4",
     "bytes": 325508,
     "sha256": "5fd7a01b2b09483720be72281deb6b488141c0df219a80f3c401ba3880dfb0e1"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-up1440-1-upload.mp4",
+    "path": "<local>/youtube-ui-up1440-1-upload.mp4",
     "bytes": 3277473,
     "sha256": "54d7d4b7eb5b07b62c16da3b3514f6182237226afc099b729f6a26526fe543f2"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-up2160-1-metrics.json",
+    "path": "<local>/youtube-ui-up2160-1-metrics.json",
     "bytes": 122192,
     "sha256": "b14acdaf0370e919350a5e90be74f57492b5bd9724823e2e95cfec145bc926d4"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-up2160-1-playback.mp4",
+    "path": "<local>/youtube-ui-up2160-1-playback.mp4",
     "bytes": 325494,
     "sha256": "b782cab622a661679262ace0c02d02a01667820f8f3c2ff4571144107e5edda3"
   },
   {
-    "path": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-up2160-1-upload.mp4",
+    "path": "<local>/youtube-ui-up2160-1-upload.mp4",
     "bytes": 3223996,
     "sha256": "9fde9dd17a7af283007579ff0b6c26a4876727ee39804a0739f4e05d625cc64e"
   }

@@ -21,7 +21,7 @@
     },
     {
       "command": [
-        "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python",
+        "<local>/python",
         "-m",
         "compileall",
         "-q",

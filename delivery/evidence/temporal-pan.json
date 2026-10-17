@@ -276,7 +276,7 @@
       "max_delta_error_8bit": 0.8497916666666666
     },
     "export_seconds_per_minute": 134.14761900203303,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/temporal-pan/decimate-30-playback.mp4"
+    "playback": "<local>/decimate-30-playback.mp4"
   },
   {
     "mode": "blend",
@@ -555,7 +555,7 @@
       "max_delta_error_8bit": 0.22631944444444443
     },
     "export_seconds_per_minute": 216.66097860317677,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/temporal-pan/blend-30-playback.mp4"
+    "playback": "<local>/blend-30-playback.mp4"
   },
   {
     "mode": "interpolate",
@@ -834,7 +834,7 @@
       "max_delta_error_8bit": 1.175625
     },
     "export_seconds_per_minute": 304.0151259605773,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/temporal-pan/interpolate-30-aligned-playback.mp4",
+    "playback": "<local>/interpolate-30-aligned-playback.mp4",
     "sampling_phase": "first source frame byte-identical to instant reference"
   },
   {
@@ -1114,7 +1114,7 @@
       "max_delta_error_8bit": 0.3564583333333333
     },
     "export_seconds_per_minute": 66.2164201203268,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/temporal-pan/decimate-60-playback.mp4"
+    "playback": "<local>/decimate-60-playback.mp4"
   },
   {
     "mode": "blend",
@@ -1393,7 +1393,7 @@
       "max_delta_error_8bit": 0.18055555555555555
     },
     "export_seconds_per_minute": 87.77671542484313,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/temporal-pan/blend-60-playback.mp4"
+    "playback": "<local>/blend-60-playback.mp4"
   },
   {
     "mode": "interpolate",
@@ -1672,7 +1672,7 @@
       "max_delta_error_8bit": 1.0824305555555556
     },
     "export_seconds_per_minute": 516.9961596617941,
-    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/temporal-pan/interpolate-60-aligned-playback.mp4",
+    "playback": "<local>/interpolate-60-aligned-playback.mp4",
     "sampling_phase": "first source frame byte-identical to instant reference"
   }
 ]

@@ -1,11 +1,11 @@
 [
   {
     "command": [
-      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python",
+      "<local>/python",
       "delivery/deliver.py",
       "export",
-      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1920x1080.mkv",
-      "/mnt/zer0models/project-artifacts/fframestudio/delivery/profile-smoke-lowres-480.mp4",
+      "<local>/ref-ui-1920x1080.mkv",
+      "<local>/profile-smoke-lowres-480.mp4",
       "--platform",
       "x",
       "--profile",
@@ -80,15 +80,15 @@
         "encoder": "Lavc63.1.101 h264_nvenc"
       }
     },
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/profile-smoke-lowres-480.mp4"
+    "output": "<local>/profile-smoke-lowres-480.mp4"
   },
   {
     "command": [
-      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python",
+      "<local>/python",
       "delivery/deliver.py",
       "export",
-      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1920x1080.mkv",
-      "/mnt/zer0models/project-artifacts/fframestudio/delivery/profile-smoke-lowres-720.mp4",
+      "<local>/ref-ui-1920x1080.mkv",
+      "<local>/profile-smoke-lowres-720.mp4",
       "--platform",
       "x",
       "--profile",
@@ -163,6 +163,6 @@
         "encoder": "Lavc63.1.101 h264_nvenc"
       }
     },
-    "output": "/mnt/zer0models/project-artifacts/fframestudio/delivery/profile-smoke-lowres-720.mp4"
+    "output": "<local>/profile-smoke-lowres-720.mp4"
   }
 ]

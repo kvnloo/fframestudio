@@ -66,7 +66,7 @@ Run on an otherwise idle machine for comparative performance numbers. The record
 ```sh
 python -m unittest discover -s delivery -v
 
-ART=/mnt/zer0models/project-artifacts/fframestudio/delivery/reproduce
+ART=${ART:-$PWD/delivery-artifacts}
 python delivery/benchmark.py --out "$ART/main" --variants naive,fast
 python delivery/benchmark.py --out "$ART/main" --variants software --contents ui
 python delivery/benchmark.py --out "$ART/main" --platforms youtube --contents gradient --variants software

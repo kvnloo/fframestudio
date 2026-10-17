@@ -3,20 +3,20 @@ test_audio_two_pass (test_delivery.DeliveryTest.test_audio_two_pass) ... ok
 test_av1_simulator (test_delivery.DeliveryTest.test_av1_simulator) ... ok
 test_benchmark_preserves_prior_recipe_artifacts (test_delivery.DeliveryTest.test_benchmark_preserves_prior_recipe_artifacts) ... {"platform": "x", "content": "fixture", "variant": "naive", "vmaf": {"mean": 94.8203276, "p5": 93.47349894999999}, "neg": {"mean": 93.18551003333333, "p5": 91.95688704999999}, "sec_per_min": 2.5328824832104146}
 {"platform": "x", "content": "fixture", "variant": "software", "vmaf": {"mean": 98.71734363333333, "p5": 97.03236995}, "neg": {"mean": 94.36601436666666, "p5": 93.0877475}, "sec_per_min": 3.6978237598668784}
-2 verified rows in /workspace/hermes-home/profiles/clean/cache/scratch/tmponqucxca/results.json
+2 verified rows in <local>/results.json
 {"platform": "x", "content": "fixture", "variant": "software", "vmaf": {"mean": 98.46648736666667, "p5": 97.42845115}, "neg": {"mean": 93.9055994, "p5": 92.76138544999999}, "sec_per_min": 3.487171442247927}
-3 verified rows in /workspace/hermes-home/profiles/clean/cache/scratch/tmponqucxca/results.json
+3 verified rows in <local>/results.json
 ok
 test_benchmark_smoke (test_delivery.DeliveryTest.test_benchmark_smoke) ... {"platform": "x", "content": "fixture", "variant": "naive", "vmaf": {"mean": 94.8203276, "p5": 93.47349894999999}, "neg": {"mean": 93.18551003333333, "p5": 91.95688704999999}, "sec_per_min": 2.4662343005184084}
 {"platform": "x", "content": "fixture", "variant": "software", "vmaf": {"mean": 98.71734363333333, "p5": 97.03236995}, "neg": {"mean": 94.36601436666666, "p5": 93.0877475}, "sec_per_min": 3.576834239065647}
-2 verified rows in /workspace/hermes-home/profiles/clean/cache/scratch/tmpy4d75s8w/results.json
+2 verified rows in <local>/results.json
 ok
 test_custom_high_output_rate (test_delivery.DeliveryTest.test_custom_high_output_rate) ... ok
 test_experiments_smoke (test_delivery.DeliveryTest.test_experiments_smoke) ... {"mode": "decimate", "fps": 30, "temporal_vs_box": {"mean_delta_error_8bit": 1.24963122605364, "max_delta_error_8bit": 1.334375}, "export_seconds_per_minute": 3.1583408382721245}
 {"mode": "blend", "fps": 30, "temporal_vs_box": {"mean_delta_error_8bit": 0.5427729885057472, "max_delta_error_8bit": 0.6121527777777778}, "export_seconds_per_minute": 3.4519053564872593}
 {"mode": "interpolate", "fps": 30, "temporal_vs_box": {"mean_delta_error_8bit": 1.2242840038314176, "max_delta_error_8bit": 2.0975}, "export_seconds_per_minute": 32.87839188007638}
 ok
-test_export_real_video (test_delivery.DeliveryTest.test_export_real_video) ... {"output": "/home/kvn/.hermes/profiles/clean/cache/scratch/tmpkekckkc8/output.mp4", "wall_seconds": 0.02846643200609833}
+test_export_real_video (test_delivery.DeliveryTest.test_export_real_video) ... {"output": "<local>/output.mp4", "wall_seconds": 0.02846643200609833}
 ok
 test_jpeg_reference_converts_601_to_709 (test_delivery.DeliveryTest.test_jpeg_reference_converts_601_to_709) ... ok
 test_low_resolution_smoke (test_delivery.DeliveryTest.test_low_resolution_smoke) ... {"content": "fixture", "height": 120, "variant": "naive", "vmaf": {"mean": 37.9866905, "p5": 36.71364735}, "neg": {"mean": 33.997444566666665, "p5": 32.7554036}}
