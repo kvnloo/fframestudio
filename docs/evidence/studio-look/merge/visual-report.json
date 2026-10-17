@@ -1,0 +1,1396 @@
+{
+  "screenshots": [
+    "library-studio-1600x1000.png",
+    "demo-studio-1600x1000.png",
+    "expresslane-i880-studio-1600x1000.png",
+    "menu-studio-1600x1000.png",
+    "workspace-studio-1600x1000.png",
+    "gev-showcase-studio-1600x1000.png",
+    "library-studio-1280x800.png",
+    "demo-studio-1280x800.png",
+    "expresslane-i880-studio-1280x800.png",
+    "menu-studio-1280x800.png",
+    "gev-showcase-studio-1280x800.png",
+    "library-paper-1600x1000.png",
+    "demo-paper-1600x1000.png",
+    "expresslane-i880-paper-1600x1000.png",
+    "menu-paper-1600x1000.png",
+    "workspace-paper-1600x1000.png",
+    "gev-showcase-paper-1600x1000.png",
+    "library-paper-1280x800.png",
+    "demo-paper-1280x800.png",
+    "expresslane-i880-paper-1280x800.png",
+    "menu-paper-1280x800.png",
+    "gev-showcase-paper-1280x800.png",
+    "library-noctalia-1600x1000.png",
+    "demo-noctalia-1600x1000.png",
+    "expresslane-i880-noctalia-1600x1000.png",
+    "menu-noctalia-1600x1000.png",
+    "workspace-noctalia-1600x1000.png",
+    "gev-showcase-noctalia-1600x1000.png",
+    "library-noctalia-1280x800.png",
+    "demo-noctalia-1280x800.png",
+    "expresslane-i880-noctalia-1280x800.png",
+    "menu-noctalia-1280x800.png",
+    "gev-showcase-noctalia-1280x800.png",
+    "library-wal-1600x1000.png",
+    "demo-wal-1600x1000.png",
+    "expresslane-i880-wal-1600x1000.png",
+    "menu-wal-1600x1000.png",
+    "workspace-wal-1600x1000.png",
+    "gev-showcase-wal-1600x1000.png",
+    "library-wal-1280x800.png",
+    "demo-wal-1280x800.png",
+    "expresslane-i880-wal-1280x800.png",
+    "menu-wal-1280x800.png",
+    "gev-showcase-wal-1280x800.png"
+  ],
+  "screens": [
+    {
+      "project": "demo",
+      "theme": "studio",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 926.1875,
+        "right": 1164,
+        "bottom": 970.1875,
+        "width": 1146,
+        "height": 44
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#0b0c0b",
+      "accent": "#79c9a7",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 4,
+      "palette": [
+        "#f0ac63",
+        "#9ac88c",
+        "#69c9b0",
+        "#e6d36d"
+      ]
+    },
+    {
+      "project": "expresslane-i880",
+      "theme": "studio",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 926.1875,
+        "right": 1164,
+        "bottom": 970.1875,
+        "width": 1146,
+        "height": 44
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#0b0c0b",
+      "accent": "#79c9a7",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 48,
+      "palette": [
+        "#69c9b0",
+        "#f0ac63",
+        "#ee7865",
+        "#e6d36d",
+        "#9ac88c"
+      ],
+      "menuMinimumTextContrast": 6.143936545308621
+    },
+    {
+      "project": "gev-showcase",
+      "theme": "studio",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#0b0c0b",
+      "accent": "#79c9a7",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 0,
+      "energy": 0,
+      "analysis": "absent",
+      "clips": 8,
+      "palette": [
+        "#ee7865",
+        "#9ac88c",
+        "#f0ac63",
+        "#e6d36d"
+      ]
+    },
+    {
+      "project": "demo",
+      "theme": "studio",
+      "provider": "noctalia",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 723.1875,
+        "right": 844,
+        "bottom": 767.1875,
+        "width": 826,
+        "height": 44
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "noctalia",
+      "background": "#0b0c0b",
+      "accent": "#79c9a7",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 4,
+      "palette": [
+        "#f0ac63",
+        "#9ac88c",
+        "#69c9b0",
+        "#e6d36d"
+      ]
+    },
+    {
+      "project": "expresslane-i880",
+      "theme": "studio",
+      "provider": "noctalia",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 723.1875,
+        "right": 844,
+        "bottom": 767.1875,
+        "width": 826,
+        "height": 44
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "noctalia",
+      "background": "#0b0c0b",
+      "accent": "#79c9a7",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 48,
+      "palette": [
+        "#69c9b0",
+        "#f0ac63",
+        "#ee7865",
+        "#e6d36d",
+        "#9ac88c"
+      ],
+      "menuMinimumTextContrast": 6.143936545308621
+    },
+    {
+      "project": "gev-showcase",
+      "theme": "studio",
+      "provider": "noctalia",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "noctalia",
+      "background": "#0b0c0b",
+      "accent": "#79c9a7",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 0,
+      "energy": 0,
+      "analysis": "absent",
+      "clips": 8,
+      "palette": [
+        "#ee7865",
+        "#9ac88c",
+        "#f0ac63",
+        "#e6d36d"
+      ]
+    },
+    {
+      "project": "demo",
+      "theme": "paper",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 926.1875,
+        "right": 1164,
+        "bottom": 970.1875,
+        "width": 1146,
+        "height": 44
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#e9e6dc",
+      "accent": "#287056",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 4,
+      "palette": [
+        "#b96b2f",
+        "#568149",
+        "#369a82",
+        "#a58b26"
+      ]
+    },
+    {
+      "project": "expresslane-i880",
+      "theme": "paper",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 926.1875,
+        "right": 1164,
+        "bottom": 970.1875,
+        "width": 1146,
+        "height": 44
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#e9e6dc",
+      "accent": "#287056",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 48,
+      "palette": [
+        "#369a82",
+        "#b96b2f",
+        "#c35043",
+        "#a58b26",
+        "#568149"
+      ],
+      "menuMinimumTextContrast": 5.092418216116895
+    },
+    {
+      "project": "gev-showcase",
+      "theme": "paper",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#e9e6dc",
+      "accent": "#287056",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 0,
+      "energy": 0,
+      "analysis": "absent",
+      "clips": 8,
+      "palette": [
+        "#c35043",
+        "#568149",
+        "#b96b2f",
+        "#a58b26"
+      ]
+    },
+    {
+      "project": "demo",
+      "theme": "paper",
+      "provider": "noctalia",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 723.1875,
+        "right": 844,
+        "bottom": 767.1875,
+        "width": 826,
+        "height": 44
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "noctalia",
+      "background": "#e9e6dc",
+      "accent": "#287056",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 4,
+      "palette": [
+        "#b96b2f",
+        "#568149",
+        "#369a82",
+        "#a58b26"
+      ]
+    },
+    {
+      "project": "expresslane-i880",
+      "theme": "paper",
+      "provider": "noctalia",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 723.1875,
+        "right": 844,
+        "bottom": 767.1875,
+        "width": 826,
+        "height": 44
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "noctalia",
+      "background": "#e9e6dc",
+      "accent": "#287056",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 48,
+      "palette": [
+        "#369a82",
+        "#b96b2f",
+        "#c35043",
+        "#a58b26",
+        "#568149"
+      ],
+      "menuMinimumTextContrast": 5.092418216116895
+    },
+    {
+      "project": "gev-showcase",
+      "theme": "paper",
+      "provider": "noctalia",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "noctalia",
+      "background": "#e9e6dc",
+      "accent": "#287056",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 0,
+      "energy": 0,
+      "analysis": "absent",
+      "clips": 8,
+      "palette": [
+        "#c35043",
+        "#568149",
+        "#b96b2f",
+        "#a58b26"
+      ]
+    },
+    {
+      "project": "demo",
+      "theme": "system:noctalia",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 926.1875,
+        "right": 1164,
+        "bottom": 970.1875,
+        "width": 1146,
+        "height": 44
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#181f23",
+      "accent": "#c8be72",
+      "paper": "#edede5",
+      "paperContrast": 14.173594892972604,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 4,
+      "palette": [
+        "#cfc683",
+        "#c8be72",
+        "#dcd5a5",
+        "#d1deda"
+      ]
+    },
+    {
+      "project": "expresslane-i880",
+      "theme": "system:noctalia",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 926.1875,
+        "right": 1164,
+        "bottom": 970.1875,
+        "width": 1146,
+        "height": 44
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#181f23",
+      "accent": "#c8be72",
+      "paper": "#edede5",
+      "paperContrast": 14.173594892972604,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 48,
+      "palette": [
+        "#dcd5a5",
+        "#cfc683",
+        "#ed8598",
+        "#d1deda",
+        "#c8be72"
+      ],
+      "menuMinimumTextContrast": 8.162041161497358
+    },
+    {
+      "project": "gev-showcase",
+      "theme": "system:noctalia",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#181f23",
+      "accent": "#c8be72",
+      "paper": "#edede5",
+      "paperContrast": 14.173594892972604,
+      "peaks": 0,
+      "energy": 0,
+      "analysis": "absent",
+      "clips": 8,
+      "palette": [
+        "#ed8598",
+        "#c8be72",
+        "#cfc683",
+        "#d1deda"
+      ]
+    },
+    {
+      "project": "demo",
+      "theme": "system:noctalia",
+      "provider": "noctalia",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 723.1875,
+        "right": 844,
+        "bottom": 767.1875,
+        "width": 826,
+        "height": 44
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "noctalia",
+      "background": "#181f23",
+      "accent": "#c8be72",
+      "paper": "#edede5",
+      "paperContrast": 14.173594892972604,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 4,
+      "palette": [
+        "#cfc683",
+        "#c8be72",
+        "#dcd5a5",
+        "#d1deda"
+      ]
+    },
+    {
+      "project": "expresslane-i880",
+      "theme": "system:noctalia",
+      "provider": "noctalia",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 723.1875,
+        "right": 844,
+        "bottom": 767.1875,
+        "width": 826,
+        "height": 44
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "noctalia",
+      "background": "#181f23",
+      "accent": "#c8be72",
+      "paper": "#edede5",
+      "paperContrast": 14.173594892972604,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 48,
+      "palette": [
+        "#dcd5a5",
+        "#cfc683",
+        "#ed8598",
+        "#d1deda",
+        "#c8be72"
+      ],
+      "menuMinimumTextContrast": 8.162041161497358
+    },
+    {
+      "project": "gev-showcase",
+      "theme": "system:noctalia",
+      "provider": "noctalia",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "noctalia",
+      "background": "#181f23",
+      "accent": "#c8be72",
+      "paper": "#edede5",
+      "paperContrast": 14.173594892972604,
+      "peaks": 0,
+      "energy": 0,
+      "analysis": "absent",
+      "clips": 8,
+      "palette": [
+        "#ed8598",
+        "#c8be72",
+        "#cfc683",
+        "#d1deda"
+      ]
+    },
+    {
+      "project": "demo",
+      "theme": "system",
+      "provider": "wal",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 926.1875,
+        "right": 1164,
+        "bottom": 970.1875,
+        "width": 1146,
+        "height": 44
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "wal",
+      "background": "#161821",
+      "accent": "#84a0c6",
+      "paper": "#ecebe4",
+      "paperContrast": 14.805561124923177,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 4,
+      "palette": [
+        "#e2a478",
+        "#b4be82",
+        "#89b8c2",
+        "#a093c7"
+      ]
+    },
+    {
+      "project": "expresslane-i880",
+      "theme": "system",
+      "provider": "wal",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 926.1875,
+        "right": 1164,
+        "bottom": 970.1875,
+        "width": 1146,
+        "height": 44
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "wal",
+      "background": "#161821",
+      "accent": "#84a0c6",
+      "paper": "#ecebe4",
+      "paperContrast": 14.805561124923177,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 48,
+      "palette": [
+        "#89b8c2",
+        "#e2a478",
+        "#e27878",
+        "#a093c7",
+        "#b4be82"
+      ],
+      "menuMinimumTextContrast": 5.930244277217093
+    },
+    {
+      "project": "gev-showcase",
+      "theme": "system",
+      "provider": "wal",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "wal",
+      "background": "#161821",
+      "accent": "#84a0c6",
+      "paper": "#ecebe4",
+      "paperContrast": 14.805561124923177,
+      "peaks": 0,
+      "energy": 0,
+      "analysis": "absent",
+      "clips": 8,
+      "palette": [
+        "#e27878",
+        "#b4be82",
+        "#e2a478",
+        "#a093c7"
+      ]
+    },
+    {
+      "project": "demo",
+      "theme": "system",
+      "provider": "wal",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 723.1875,
+        "right": 844,
+        "bottom": 767.1875,
+        "width": 826,
+        "height": 44
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "wal",
+      "background": "#161821",
+      "accent": "#84a0c6",
+      "paper": "#ecebe4",
+      "paperContrast": 14.805561124923177,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 4,
+      "palette": [
+        "#e2a478",
+        "#b4be82",
+        "#89b8c2",
+        "#a093c7"
+      ]
+    },
+    {
+      "project": "expresslane-i880",
+      "theme": "system",
+      "provider": "wal",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 723.1875,
+        "right": 844,
+        "bottom": 767.1875,
+        "width": 826,
+        "height": 44
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "wal",
+      "background": "#161821",
+      "accent": "#84a0c6",
+      "paper": "#ecebe4",
+      "paperContrast": 14.805561124923177,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 48,
+      "palette": [
+        "#89b8c2",
+        "#e2a478",
+        "#e27878",
+        "#a093c7",
+        "#b4be82"
+      ],
+      "menuMinimumTextContrast": 5.930244277217093
+    },
+    {
+      "project": "gev-showcase",
+      "theme": "system",
+      "provider": "wal",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "wal",
+      "background": "#161821",
+      "accent": "#84a0c6",
+      "paper": "#ecebe4",
+      "paperContrast": 14.805561124923177,
+      "peaks": 0,
+      "energy": 0,
+      "analysis": "absent",
+      "clips": 8,
+      "palette": [
+        "#e27878",
+        "#b4be82",
+        "#e2a478",
+        "#a093c7"
+      ]
+    }
+  ],
+  "errors": [],
+  "sourceUnchanged": true,
+  "discoveryUnchanged": true,
+  "soundtrack": {
+    "title": "Leftside Travels",
+    "beats": 358,
+    "bytes": 2880856,
+    "copiedBytesMatch": true
+  },
+  "ok": true
+}

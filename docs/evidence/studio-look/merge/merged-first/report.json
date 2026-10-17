@@ -1,0 +1,247 @@
+{
+ "started": "2026-10-17T18:55:19.205Z",
+ "out": "verify-out/merged-first",
+ "journeys": [
+  {
+   "name": "gate: app refuses without the link",
+   "ok": true,
+   "ms": 238,
+   "agents_without_token": 401
+  },
+  {
+   "name": "library: open link, demo project listed",
+   "ok": false,
+   "ms": 106,
+   "error": "Studio is not the library default"
+  },
+  {
+   "name": "project: plays and seeks by shot",
+   "ok": true,
+   "ms": 952,
+   "duration_s": 12.033333,
+   "shots": 4,
+   "seek_to_shot3_s": 6
+  },
+  {
+   "name": "system theme: follows and live-updates",
+   "ok": true,
+   "ms": 1422,
+   "liveMs": 108,
+   "noReload": true,
+   "fixedThemePersists": true,
+   "openMenu": {
+    "before": {
+     "background": "rgb(30, 32, 41)",
+     "minimumTextContrast": 5.364481261439478,
+     "visible": true
+    },
+    "after": {
+     "background": "rgb(24, 51, 55)",
+     "minimumTextContrast": 4.560328312832768,
+     "visible": true
+    }
+   },
+   "applyMs": [
+    1,
+    0.8999999761581421,
+    0.699999988079071,
+    0.9000000357627869,
+    0.5999999642372131,
+    0.6000000238418579,
+    0.6000000238418579,
+    0.800000011920929,
+    0.800000011920929,
+    0.5,
+    0.5,
+    0.6000000238418579,
+    0.6000000238418579,
+    0.5999999642372131,
+    0.6000000238418579,
+    0.5999999642372131,
+    0.6000000238418579,
+    0.699999988079071,
+    0.5,
+    0.6000000238418579,
+    0.5999999642372131,
+    0.5,
+    0.7000000476837158,
+    0.5999999642372131,
+    0.6000000238418579,
+    0.5,
+    0.6000000238418579,
+    0.6000000238418579,
+    0.699999988079071,
+    0.5
+   ],
+   "applyWorstMs": 1,
+   "navigation": {
+    "interactiveMs": 228.19999998807907,
+    "themeFetches": [
+     {
+      "start": 31.69999998807907,
+      "ms": 1.699999988079071,
+      "bytes": 775
+     }
+    ]
+   },
+   "browserFallback": true,
+   "themeWithoutToken": 401
+  },
+  {
+   "name": "context menu: native menu replaced, actions work",
+   "ok": false,
+   "ms": 31227,
+   "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('menu', { name: 'Clip actions' }).locator('[data-menu-action=\"edit-text\"]')\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" tabindex=\"-1\" role=\"menuitem\" aria-disabled=\"false\" data-menu-action=\"edit-text\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m "
+  },
+  {
+   "name": "studio: themes, slate tabs, loops and screening room",
+   "ok": false,
+   "ms": 30095,
+   "error": "page.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-slate-tab=\"direction\"]')\u001b[22m\n\u001b[2m    - locator resolved to <button role=\"tab\" id=\"tab-direction\" aria-selected=\"false\" data-slate-tab=\"direction\" aria-controls=\"direction-pane\">direction</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visi"
+  },
+  {
+   "name": "edit: shot title saves and survives reload",
+   "ok": false,
+   "ms": 30035,
+   "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[data-field=\"title\"]')\u001b[22m\n\u001b[2m    - locator resolved to <input value=\"Hook\" data-field=\"title\"/>\u001b[22m\n\u001b[2m    - fill(\"Hook (verified)\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      -"
+  },
+  {
+   "name": "recovery: unsaved title survives page close, undo and explicit save",
+   "ok": false,
+   "ms": 30004,
+   "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[data-field=\"title\"]')\u001b[22m\n\u001b[2m    - locator resolved to <input value=\"Hook\" data-field=\"title\"/>\u001b[22m\n\u001b[2m    - fill(\"Hook (recovered)\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      "
+  },
+  {
+   "name": "recovery: discard keeps disk title and clears the offer",
+   "ok": false,
+   "ms": 30002,
+   "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[data-field=\"title\"]')\u001b[22m\n\u001b[2m    - locator resolved to <input value=\"Hook\" data-field=\"title\"/>\u001b[22m\n\u001b[2m    - fill(\"Discard this unsaved title\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n"
+  },
+  {
+   "name": "recovery: edits during Save survive its journal checkpoint",
+   "ok": false,
+   "ms": 30001,
+   "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[data-field=\"title\"]')\u001b[22m\n\u001b[2m    - locator resolved to <input value=\"Hook\" data-field=\"title\"/>\u001b[22m\n\u001b[2m    - fill(\"Captured for Save\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m     "
+  },
+  {
+   "name": "recovery: undo across Save recovers without prior history",
+   "ok": false,
+   "ms": 30002,
+   "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[data-field=\"title\"]')\u001b[22m\n\u001b[2m    - locator resolved to <input value=\"Hook\" data-field=\"title\"/>\u001b[22m\n\u001b[2m    - fill(\"Saved before undo\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m     "
+  },
+  {
+   "name": "recovery: Save on disk before acknowledgement preserves later edits",
+   "ok": false,
+   "ms": 30002,
+   "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[data-field=\"title\"]')\u001b[22m\n\u001b[2m    - locator resolved to <input value=\"Hook\" data-field=\"title\"/>\u001b[22m\n\u001b[2m    - fill(\"Saved before acknowledgement\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22"
+  },
+  {
+   "name": "recovery: external change preserves the pending recovery choice",
+   "ok": false,
+   "ms": 30002,
+   "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[data-field=\"title\"]')\u001b[22m\n\u001b[2m    - locator resolved to <input value=\"Hook\" data-field=\"title\"/>\u001b[22m\n\u001b[2m    - fill(\"Pending recovery during external change\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill"
+  },
+  {
+   "name": "assistant: agents listed, unavailable ones disabled",
+   "ok": true,
+   "ms": 4,
+   "agents": [
+    {
+     "id": "claude",
+     "disabled": false
+    },
+    {
+     "id": "codex",
+     "disabled": false
+    },
+    {
+     "id": "gemini",
+     "disabled": false
+    },
+    {
+     "id": "hermes",
+     "disabled": false
+    },
+    {
+     "id": "opencode",
+     "disabled": true
+    }
+   ]
+  },
+  {
+   "name": "mobile: 390 px has no horizontal overflow",
+   "ok": true,
+   "ms": 454,
+   "library": 390,
+   "project": 390
+  },
+  {
+   "name": "console clean",
+   "ok": true,
+   "ms": 0
+  }
+ ],
+ "console_errors": [],
+ "failed_requests": [],
+ "bridge": {
+  "port": 13145,
+  "health": {
+   "ok": true,
+   "name": "fframestudio-bridge",
+   "version": "0.1.0"
+  }
+ },
+ "context_menu": {
+  "menu_open_ms": {
+   "median": 15.800000011920929,
+   "worst": 16.19999998807907
+  },
+  "open_ready_median_ms": 1.4000000357627869,
+  "open_ready_worst_ms": 1.699999988079071,
+  "samples": [
+   {
+    "ready_ms": 1.699999988079071,
+    "rendering_opportunity_ms": 14.800000011920929
+   },
+   {
+    "ready_ms": 1.4000000357627869,
+    "rendering_opportunity_ms": 15.300000011920929
+   },
+   {
+    "ready_ms": 1.300000011920929,
+    "rendering_opportunity_ms": 16
+   },
+   {
+    "ready_ms": 1.2999999523162842,
+    "rendering_opportunity_ms": 15.899999976158142
+   },
+   {
+    "ready_ms": 1.5,
+    "rendering_opportunity_ms": 14.699999988079071
+   },
+   {
+    "ready_ms": 1.199999988079071,
+    "rendering_opportunity_ms": 16.19999998807907
+   },
+   {
+    "ready_ms": 1.4000000357627869,
+    "rendering_opportunity_ms": 15.800000011920929
+   },
+   {
+    "ready_ms": 1.4000000357627869,
+    "rendering_opportunity_ms": 15.699999988079071
+   },
+   {
+    "ready_ms": 1.4000000357627869,
+    "rendering_opportunity_ms": 15.900000035762787
+   },
+   {
+    "ready_ms": 1.300000011920929,
+    "rendering_opportunity_ms": 15.800000011920929
+   }
+  ]
+ },
+ "home": "<home>",
+ "finished": "2026-10-17T19:00:01.666Z",
+ "ok": false
+}

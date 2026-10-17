@@ -1,0 +1,124 @@
+
+added 8 packages, and audited 10 packages in 618ms
+
+1 package is looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:
+npm warn install-scripts   esbuild@0.25.12 (postinstall: node install.js)
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+
+> build:acp
+> esbuild web/src/acp-client.mjs --bundle --format=esm --target=es2022 --minify --outfile=web/dist/acp-client.js
+
+
+  web/dist/acp-client.js  497.7kb
+
+⚡ Done in 20ms
+
+> test
+> node --test test/doc/*.test.mjs test/theme/*.test.mjs && node test/acp-e2e.mjs
+
+✔ patches reproduce array deletion and escaped text keys, preserve untouched references (2.046809ms)
+✔ add is validated, previewable, undo/redo round trip (4.29873ms)
+✔ move is validated, previewable, undo/redo round trip (0.404783ms)
+✔ trim is validated, previewable, undo/redo round trip (0.523639ms)
+✔ split is validated, previewable, undo/redo round trip (0.542565ms)
+✔ replace is validated, previewable, undo/redo round trip (0.475884ms)
+✔ duplicate is validated, previewable, undo/redo round trip (0.397328ms)
+✔ group is validated, previewable, undo/redo round trip (0.432101ms)
+✔ set-beat-lock is validated, previewable, undo/redo round trip (0.429683ms)
+✔ retime is validated, previewable, undo/redo round trip (0.523035ms)
+✔ delete is validated, previewable, undo/redo round trip (0.460887ms)
+✔ edit-style is validated, previewable, undo/redo round trip (0.453724ms)
+✔ save-version is validated, previewable, undo/redo round trip (0.368917ms)
+✔ select is an ephemeral named command with inverse; does not dirty content history (0.207219ms)
+✔ split partitions attached text and source ranges; move keeps attachments (0.281891ms)
+✔ invalid batch leaves document/history untouched; stale and unsafe proposals rejected (0.896135ms)
+✔ multi-video proposals preview and rollback without touching either source video (0.898498ms)
+✔ versions restore through history and compare exact content (0.43296ms)
+✔ grouping and version saves share unchanged clips without sharing mutable snapshots (0.525958ms)
+✔ object-creating commands require explicit IDs so preview and apply cannot drift (0.26244ms)
+✔ returned inverse executes through the command system (0.372754ms)
+✔ beat lock rejects ripple displacement and mutation rolls back (0.326193ms)
+✔ edit text preview shows scope and changes without mutation; inverse restores (0.342332ms)
+✔ an edit updates the authoritative store and views before a blocked worker can reply (3.856011ms)
+✔ main thread and real module worker replay the same seeded 200 commands including undo and redo (80.679052ms)
+✔ recovery can undo across the saved baseline without the old in-memory history (1.067204ms)
+✔ persisted undo/redo patches reproduce every step across a saved history boundary (2.514178ms)
+✔ an external change preserves a pending recovery offer as a local conflict (0.524068ms)
+✔ an edit committed during external migration survives the worker reply (0.449199ms)
+✔ global Save shortcut is gated while recovery is opening (0.475602ms)
+✔ migration CLI writes a distinct new copy and refuses overwrite (91.814509ms)
+✔ migrate studio-spec: deterministic, non-destructive, text overrides (5.744414ms)
+✔ migrate fframes: deterministic, non-destructive, text overrides (0.40023ms)
+✔ migrate fframes-clips: deterministic, non-destructive, text overrides (0.428483ms)
+✔ migrate html-film: deterministic, non-destructive, text overrides (0.428911ms)
+✔ migrate capture-manifest: deterministic, non-destructive, text overrides (0.341724ms)
+✔ migrate every actual library project on disposable copies (18.517369ms)
+ℹ Migrated 8 copied projects; originals unchanged
+✔ bridge compare-and-swap refuses external edit, preserves bytes, accepts matching base (1483.639285ms)
+✔ Studio system mapping recolours five semantic slots and preserves readable cream paper (3.202382ms)
+✔ studio-spec import resolves the selected ID relative to the studio, copies real bytes and beats without touching sources (42.247497ms)
+✔ film palette is stable by kind, with five meanings and deterministic unknown kinds (0.943336ms)
+✔ beat frames provide tempo only when source BPM is absent (0.201969ms)
+✔ film timecode preserves frame positions and project text is escaped (0.242096ms)
+✔ fractional playback crosses film and shot loop boundaries without sticking at the last frame (0.148214ms)
+✔ waveform worker reduces real PCM to bounded peak and RMS bins, including silence (1.211269ms)
+✔ Omarchy dark: actual v3 Alacritty + current/theme symlink (4.660916ms)
+✔ Omarchy light.mode overrides dark inference (2.207823ms)
+✔ Omarchy kitty, ghostty and current colors.toml adapters (2.246805ms)
+✔ Noctalia Material palette (0.702036ms)
+✔ pywal / wallust palette (0.671473ms)
+✔ KDE window colors and selection accent (0.621158ms)
+✔ GNOME parses bounded gsettings output, rejects default/garbled and tolerates missing executable (0.389761ms)
+✔ GNOME dark/light command results and unavailable desktop (2.54611ms)
+✔ empty and garbled fixture homes return no provider (2.324995ms)
+✔ empty, malformed JSON, invalid colors and oversized files fail closed (2.352352ms)
+✔ detection priority and explicit override (6.56681ms)
+✔ GNOME wins over KDE when no higher-priority file palette exists (0.841136ms)
+✔ WCAG contrast changes only deficient colors, preserving surfaces and ANSI (4.417745ms)
+✔ watcher discovers a provider installed into an initially empty home (121.418372ms)
+✔ watcher handles atomic wal writes, deletions, new providers and Omarchy symlink swaps (406.500459ms)
+ℹ tests 60
+ℹ suites 0
+ℹ pass 60
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1553.428358
+{
+ "root": "<home>/.hermes/profiles/clean/cache/scratch/ffs-acp-BsSLf7",
+ "security": {
+  "no_token": 401,
+  "bad_token": 401,
+  "foreign_origin": 403,
+  "rebinding_host": 403,
+  "ok": 200,
+  "path_escape": 400,
+  "symlink_read": 400,
+  "symlink_write_dangling": 400,
+  "symlink_write_dir": 400,
+  "symlink_mkdir_dir": 400,
+  "outside_untouched": true,
+  "inside_write": 200,
+  "ws_no_token": "refused",
+  "ws_bad_token": "refused"
+ },
+ "agents": {},
+ "available": [
+  "claude",
+  "codex",
+  "gemini",
+  "hermes",
+  "opencode"
+ ],
+ "discovery_config": {
+  "mtime_unchanged": true,
+  "content_unchanged": true
+ }
+}
+ok

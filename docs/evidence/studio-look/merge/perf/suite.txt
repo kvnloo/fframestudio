@@ -1,0 +1,48 @@
+
+> test:perf
+> node --test test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf
+
+{"editorGzipBytes":43038}
+{"commands":[{"command":"add","ms":3.445067999999999},{"command":"select","ms":0.06202899999999545},{"command":"move","ms":0.6220819999999989},{"command":"trim","ms":3.6463350000000005},{"command":"split","ms":0.680263999999994},{"command":"replace","ms":0.652827000000002},{"command":"edit-text","ms":0.5527309999999943},{"command":"duplicate","ms":0.5904890000000051},{"command":"group","ms":0.6258440000000007},{"command":"set-beat-lock","ms":0.4067110000000014},{"command":"retime","ms":4.544765999999996},{"command":"delete","ms":0.5655720000000031},{"command":"edit-style","ms":0.7330050000000057},{"command":"save-version","ms":2.8451009999999997},{"command":"restore-version","ms":6.553809999999999},{"command":"undo","ms":0.06030300000000466},{"command":"redo","ms":0.017749999999992383}]}
+✔ editor shipped JavaScript stays below 150 KiB gzip, excluding ACP (4.299763ms)
+✔ every document command stays under 16ms at 500 clips (CommandStore CPU, no paint) (92.448349ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 154.87255
+Disposable library: <home>/.hermes/profiles/clean/cache/scratch/ffs-editor-NNmRjZ
+{
+  "domStable": true,
+  "story": 7,
+  "timeline": 28,
+  "scrubLongtasks": [],
+  "coldOpenMs": 148.69999998807907,
+  "editorGzipBytes": 42914,
+  "autosave": {
+    "writes": 13,
+    "cpuWorstMs": 4.600000023841858,
+    "wallWorstMs": 5.100000023841858
+  },
+  "budgets": {
+    "coldOpen": true,
+    "commandPaintReady": true,
+    "commandNextFrame": true,
+    "scrubNoLongtasks": true,
+    "scrub60fps": true,
+    "gzip": true,
+    "virtualized": true,
+    "stableDOM": true,
+    "autosaveFrameWork": true
+  },
+  "frameIntervalMedianMs": 16.699999999999818,
+  "summary": {
+    "cmdWorstMs": 8.300000011920929,
+    "nextFrameWorstMs": 16.80000001192093,
+    "scrubFps": 60.00600060006001
+  }
+}
+Evidence: <home>/.hermes/profiles/clean/cache/scratch/ffs-editor-NNmRjZ/evidence

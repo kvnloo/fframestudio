@@ -1,0 +1,98 @@
+{
+  "codeHead": "30f1c47",
+  "base": "c27b698",
+  "gates": {
+    "localPaths": 0,
+    "npmCi": 0,
+    "buildAcp": 0,
+    "webDistDiff": false,
+    "npmTest": {
+      "exit": 0,
+      "tests": 60,
+      "fail": 0,
+      "acpSecurity": true
+    },
+    "verify": [
+      {
+        "run": 1,
+        "exit": 0,
+        "journeys": 16,
+        "allPassed": true,
+        "menuReadyWorstMs": 1.899999976158142
+      },
+      {
+        "run": 2,
+        "exit": 0,
+        "journeys": 16,
+        "allPassed": true,
+        "menuReadyWorstMs": 2
+      },
+      {
+        "run": 3,
+        "exit": 0,
+        "journeys": 16,
+        "allPassed": true,
+        "menuReadyWorstMs": 1.7000000476837158
+      }
+    ],
+    "perf": {
+      "exit": 0,
+      "coldOpenMs": 148.69999998807907,
+      "paintReadyWorstMs": 8.300000011920929,
+      "nextFrameWorstMs": 16.80000001192093,
+      "frameIntervalMedianMs": 16.699999999999818,
+      "scrubFps": 60.00600060006001,
+      "longTasks": 0,
+      "gzipBytes": 42914,
+      "allBudgets": {
+        "coldOpen": true,
+        "commandPaintReady": true,
+        "commandNextFrame": true,
+        "scrubNoLongtasks": true,
+        "scrub60fps": true,
+        "gzip": true,
+        "virtualized": true,
+        "stableDOM": true,
+        "autosaveFrameWork": true
+      }
+    },
+    "bridgeConfigBytesAndMtimeUnchanged": true
+  },
+  "visual": {
+    "screenshots": 44,
+    "editorScreens": 24,
+    "libraryScreens": 8,
+    "themes": [
+      "Studio",
+      "Paper",
+      "real Noctalia",
+      "wal fixture"
+    ],
+    "viewports": [
+      "1600x1000",
+      "1280x800"
+    ],
+    "minEnabledMenuContrast": 5.092418216116895,
+    "allProjectsUnchanged": true,
+    "pageErrors": []
+  },
+  "realImporter": {
+    "exit": 0,
+    "shots": 48,
+    "durationSeconds": 133.097,
+    "file": "media/soundtrack.mp3",
+    "detectedBeats": 358,
+    "copiedAudioBytes": 2880856,
+    "copiedBytesMatch": true
+  },
+  "limitations": [
+    "Older studio-spec libraries require reimport to resolve soundtrack IDs; live library left untouched.",
+    "GEV capture-manifest has no audio track: waveform stays absent rather than fabricated.",
+    "Next-frame gates measure rendering opportunity, not physical compositor presentation."
+  ],
+  "retainedFailures": [
+    "merged-first/report.json",
+    "merged-second/report.json",
+    "paper-contrast-failed.json"
+  ]
+}

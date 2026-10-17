@@ -1,0 +1,476 @@
+{
+  "screenshots": [
+    "library-studio-1600x1000.png",
+    "demo-studio-1600x1000.png",
+    "expresslane-i880-studio-1600x1000.png",
+    "menu-studio-1600x1000.png",
+    "workspace-studio-1600x1000.png",
+    "gev-showcase-studio-1600x1000.png",
+    "library-studio-1280x800.png",
+    "demo-studio-1280x800.png",
+    "expresslane-i880-studio-1280x800.png",
+    "menu-studio-1280x800.png",
+    "gev-showcase-studio-1280x800.png",
+    "library-paper-1600x1000.png",
+    "demo-paper-1600x1000.png",
+    "expresslane-i880-paper-1600x1000.png"
+  ],
+  "screens": [
+    {
+      "project": "demo",
+      "theme": "studio",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 926.1875,
+        "right": 1164,
+        "bottom": 970.1875,
+        "width": 1146,
+        "height": 44
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#0b0c0b",
+      "accent": "#79c9a7",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 4,
+      "palette": [
+        "#f0ac63",
+        "#9ac88c",
+        "#69c9b0",
+        "#e6d36d"
+      ]
+    },
+    {
+      "project": "expresslane-i880",
+      "theme": "studio",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 926.1875,
+        "right": 1164,
+        "bottom": 970.1875,
+        "width": 1146,
+        "height": 44
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#0b0c0b",
+      "accent": "#79c9a7",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 48,
+      "palette": [
+        "#69c9b0",
+        "#f0ac63",
+        "#ee7865",
+        "#e6d36d",
+        "#9ac88c"
+      ],
+      "menuMinimumTextContrast": 4.768239496979572
+    },
+    {
+      "project": "gev-showcase",
+      "theme": "studio",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#0b0c0b",
+      "accent": "#79c9a7",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 0,
+      "energy": 0,
+      "analysis": "absent",
+      "clips": 8,
+      "palette": [
+        "#ee7865",
+        "#9ac88c",
+        "#f0ac63",
+        "#e6d36d"
+      ]
+    },
+    {
+      "project": "demo",
+      "theme": "studio",
+      "provider": "noctalia",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 723.1875,
+        "right": 844,
+        "bottom": 767.1875,
+        "width": 826,
+        "height": 44
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "noctalia",
+      "background": "#0b0c0b",
+      "accent": "#79c9a7",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 4,
+      "palette": [
+        "#f0ac63",
+        "#9ac88c",
+        "#69c9b0",
+        "#e6d36d"
+      ]
+    },
+    {
+      "project": "expresslane-i880",
+      "theme": "studio",
+      "provider": "noctalia",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 723.1875,
+        "right": 844,
+        "bottom": 767.1875,
+        "width": 826,
+        "height": 44
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "noctalia",
+      "background": "#0b0c0b",
+      "accent": "#79c9a7",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 48,
+      "palette": [
+        "#69c9b0",
+        "#f0ac63",
+        "#ee7865",
+        "#e6d36d",
+        "#9ac88c"
+      ],
+      "menuMinimumTextContrast": 4.768239496979572
+    },
+    {
+      "project": "gev-showcase",
+      "theme": "studio",
+      "provider": "noctalia",
+      "width": 1280,
+      "height": 800,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 139.1875,
+        "right": 844,
+        "bottom": 489.1875,
+        "width": 826,
+        "height": 350
+      },
+      "timeline": {
+        "x": 18,
+        "y": 620.1875,
+        "right": 844,
+        "bottom": 778.1875,
+        "width": 826,
+        "height": 158
+      },
+      "wave": {
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "width": 0,
+        "height": 0
+      },
+      "inspector": {
+        "x": 862,
+        "y": 131.1875,
+        "right": 1262,
+        "bottom": 766.1875,
+        "width": 400,
+        "height": 635
+      },
+      "source": "noctalia",
+      "background": "#0b0c0b",
+      "accent": "#79c9a7",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 0,
+      "energy": 0,
+      "analysis": "absent",
+      "clips": 8,
+      "palette": [
+        "#ee7865",
+        "#9ac88c",
+        "#f0ac63",
+        "#e6d36d"
+      ]
+    },
+    {
+      "project": "demo",
+      "theme": "paper",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 926.1875,
+        "right": 1164,
+        "bottom": 970.1875,
+        "width": 1146,
+        "height": 44
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#e9e6dc",
+      "accent": "#287056",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 4,
+      "palette": [
+        "#b96b2f",
+        "#568149",
+        "#369a82",
+        "#a58b26"
+      ]
+    },
+    {
+      "project": "expresslane-i880",
+      "theme": "paper",
+      "provider": "noctalia",
+      "width": 1600,
+      "height": 1000,
+      "overflow": false,
+      "canvas": {
+        "x": 18,
+        "y": 142.1875,
+        "right": 1164,
+        "bottom": 692.1875,
+        "width": 1146,
+        "height": 550
+      },
+      "timeline": {
+        "x": 18,
+        "y": 823.1875,
+        "right": 1164,
+        "bottom": 981.1875,
+        "width": 1146,
+        "height": 158
+      },
+      "wave": {
+        "x": 18,
+        "y": 926.1875,
+        "right": 1164,
+        "bottom": 970.1875,
+        "width": 1146,
+        "height": 44
+      },
+      "inspector": {
+        "x": 1182,
+        "y": 134.1875,
+        "right": 1582,
+        "bottom": 969.1875,
+        "width": 400,
+        "height": 835
+      },
+      "source": "noctalia",
+      "background": "#e9e6dc",
+      "accent": "#287056",
+      "paper": "#efeee6",
+      "paperContrast": 12.794874699271043,
+      "peaks": 1400,
+      "energy": 1400,
+      "analysis": "ready",
+      "clips": 48,
+      "palette": [
+        "#369a82",
+        "#b96b2f",
+        "#c35043",
+        "#a58b26",
+        "#568149"
+      ]
+    }
+  ],
+  "errors": [],
+  "sourceUnchanged": true,
+  "discoveryUnchanged": true,
+  "soundtrack": {
+    "title": "Leftside Travels",
+    "beats": 358,
+    "bytes": 2880856,
+    "copiedBytesMatch": true
+  },
+  "ok": false,
+  "error": "Error: Native menu text contrast paper-1600x1000 4.2163484364627095\n    at file://tools/verify-studio-merge.mjs:99:43"
+}
