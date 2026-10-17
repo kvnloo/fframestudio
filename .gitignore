@@ -1,3 +1,5 @@
 node_modules/
+site/
+__pycache__/
 verify-out/
 delivery/sources.local.json
