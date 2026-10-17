@@ -1,0 +1,907 @@
+{
+ "started": "2026-10-17T19:52:11.558Z",
+ "out": "verify-out/layout-qualified-8",
+ "journeys": [
+  {
+   "name": "gate: app refuses without the link",
+   "ok": true,
+   "ms": 144,
+   "agents_without_token": 401
+  },
+  {
+   "name": "library: open link, demo project listed",
+   "ok": true,
+   "ms": 134,
+   "titles": [
+    "Demo film"
+   ]
+  },
+  {
+   "name": "project: plays and seeks by shot",
+   "ok": true,
+   "ms": 925,
+   "duration_s": 12.033333,
+   "shots": 4,
+   "seek_to_shot3_s": 6
+  },
+  {
+   "name": "system theme: follows and live-updates",
+   "ok": true,
+   "ms": 1487,
+   "liveMs": 114,
+   "noReload": true,
+   "fixedThemePersists": true,
+   "openMenu": {
+    "before": {
+     "background": "rgb(30, 32, 41)",
+     "minimumTextContrast": 5.930244277217093,
+     "visible": true
+    },
+    "after": {
+     "background": "rgb(24, 51, 55)",
+     "minimumTextContrast": 5.119706720682271,
+     "visible": true
+    }
+   },
+   "applyMs": [
+    1,
+    0.699999988079071,
+    0.6000000238418579,
+    1,
+    0.5999999642372131,
+    0.7000000476837158,
+    0.5999999642372131,
+    0.9000000357627869,
+    0.5999999642372131,
+    0.699999988079071,
+    0.5,
+    0.6000000238418579,
+    0.6000000238418579,
+    0.5999999642372131,
+    0.6000000238418579,
+    0.5999999642372131,
+    0.6000000238418579,
+    0.699999988079071,
+    0.6000000238418579,
+    0.5999999642372131,
+    0.6000000238418579,
+    0.699999988079071,
+    0.6000000238418579,
+    0.5999999642372131,
+    0.6000000238418579,
+    0.6000000238418579,
+    0.699999988079071,
+    0.5999999642372131,
+    0.7000000476837158,
+    0.5999999642372131
+   ],
+   "applyWorstMs": 1,
+   "navigation": {
+    "interactiveMs": 241.60000002384186,
+    "themeFetches": [
+     {
+      "start": 28.30000001192093,
+      "ms": 1.9000000357627869,
+      "bytes": 775
+     }
+    ]
+   },
+   "browserFallback": true,
+   "themeWithoutToken": 401
+  },
+  {
+   "name": "context menu: native menu replaced, actions work",
+   "ok": true,
+   "ms": 4532,
+   "menu_open_ms": {
+    "median": 15.650000005960464,
+    "worst": 15.800000011920929
+   },
+   "open_ready_median_ms": 1.4500000178813934,
+   "open_ready_worst_ms": 2.300000011920929,
+   "samples": [
+    {
+     "ready_ms": 1.899999976158142,
+     "rendering_opportunity_ms": 14.699999988079071
+    },
+    {
+     "ready_ms": 1.399999976158142,
+     "rendering_opportunity_ms": 15.800000011920929
+    },
+    {
+     "ready_ms": 1.4000000357627869,
+     "rendering_opportunity_ms": 15.5
+    },
+    {
+     "ready_ms": 1.4000000357627869,
+     "rendering_opportunity_ms": 15.800000011920929
+    },
+    {
+     "ready_ms": 1.5,
+     "rendering_opportunity_ms": 15.099999964237213
+    },
+    {
+     "ready_ms": 1.300000011920929,
+     "rendering_opportunity_ms": 15.399999976158142
+    },
+    {
+     "ready_ms": 2.300000011920929,
+     "rendering_opportunity_ms": 15.600000023841858
+    },
+    {
+     "ready_ms": 1.300000011920929,
+     "rendering_opportunity_ms": 15.800000011920929
+    },
+    {
+     "ready_ms": 1.5,
+     "rendering_opportunity_ms": 15.699999988079071
+    },
+    {
+     "ready_ms": 1.5,
+     "rendering_opportunity_ms": 15.699999988079071
+    }
+   ],
+   "browser_default_prevented": true,
+   "native_input": true,
+   "seek_s": 3,
+   "source_path_copied": "<home>/fframestudio/demo-src",
+   "undo_redo": true,
+   "themes": [
+    "studio",
+    "paper",
+    "dark",
+    "light",
+    "contrast"
+   ]
+  },
+  {
+   "name": "studio: themes, slate tabs, loops and screening room",
+   "ok": true,
+   "ms": 743,
+   "themes": [
+    "system",
+    "studio",
+    "paper",
+    "dark",
+    "light",
+    "contrast",
+    "custom",
+    "system:wal"
+   ],
+   "loop_shot": true,
+   "loop_film": true,
+   "mute": true,
+   "screening_room": true
+  },
+  {
+   "name": "edit: shot title saves and survives reload",
+   "ok": true,
+   "ms": 517,
+   "before": "Hook",
+   "after": "Hook (verified)",
+   "clip_id": "s01",
+   "source_sha256": "7687abe9ed2729f1f8f208ce0af8a3fca83293f2ea996c79ffd2331f801d3930"
+  },
+  {
+   "name": "recovery: unsaved title survives page close, undo and explicit save",
+   "ok": true,
+   "ms": 1065,
+   "before": "Hook (verified)",
+   "recovered": "Hook (verified) (recovered)",
+   "version": 8,
+   "expected_hash": "87aa89b282687c30e084562dcf2c08f9757707eed52f29cf6355c4c0f126ccb9",
+   "disk_unchanged_before_save": true
+  },
+  {
+   "name": "recovery: discard keeps disk title and clears the offer",
+   "ok": true,
+   "ms": 731,
+   "saved_title": "Hook (verified) (recovered)"
+  },
+  {
+   "name": "recovery: edits during Save survive its journal checkpoint",
+   "ok": true,
+   "ms": 661,
+   "saved_snapshot": "Captured for Save",
+   "recovered_edit": "Committed while Save was pending"
+  },
+  {
+   "name": "recovery: undo across Save recovers without prior history",
+   "ok": true,
+   "ms": 899,
+   "saved_title": "Saved before undo",
+   "recovered_undo": "Committed while Save was pending"
+  },
+  {
+   "name": "recovery: Save on disk before acknowledgement preserves later edits",
+   "ok": true,
+   "ms": 734,
+   "saved_snapshot": "Saved before acknowledgement",
+   "recovered_edit": "Durable edit after captured Save"
+  },
+  {
+   "name": "recovery: external change preserves the pending recovery choice",
+   "ok": true,
+   "ms": 753,
+   "recovered_title": "Pending recovery during external change",
+   "external_title": "External change while recovery was pending"
+  },
+  {
+   "name": "assistant: agents listed, unavailable ones disabled",
+   "ok": true,
+   "ms": 3,
+   "agents": [
+    {
+     "id": "claude",
+     "disabled": false
+    },
+    {
+     "id": "codex",
+     "disabled": false
+    },
+    {
+     "id": "gemini",
+     "disabled": false
+    },
+    {
+     "id": "hermes",
+     "disabled": false
+    },
+    {
+     "id": "opencode",
+     "disabled": true
+    }
+   ]
+  },
+  {
+   "name": "mobile: 390 px has no horizontal overflow",
+   "ok": true,
+   "ms": 279,
+   "library": 390,
+   "project": 390
+  },
+  {
+   "name": "layout: fits and adapts across sizes",
+   "ok": true,
+   "ms": 10745,
+   "samples": [
+    {
+     "project": "demo",
+     "width": 2560,
+     "height": 1340,
+     "scrollHeight": 1340,
+     "scrollWidth": 2560,
+     "canvas": {
+      "x": 376,
+      "y": 123,
+      "width": 1568,
+      "height": 882,
+      "right": 1944,
+      "bottom": 1005
+     },
+     "timeline": {
+      "x": 16,
+      "y": 1123,
+      "width": 2528,
+      "height": 161,
+      "right": 2544,
+      "bottom": 1284
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-demo-2560x1340.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source"
+     ]
+    },
+    {
+     "project": "demo",
+     "width": 1896,
+     "height": 880,
+     "scrollHeight": 880,
+     "scrollWidth": 1896,
+     "canvas": {
+      "x": 489.84375,
+      "y": 123,
+      "width": 750.21875,
+      "height": 421.984375,
+      "right": 1240.0625,
+      "bottom": 544.984375
+     },
+     "timeline": {
+      "x": 16,
+      "y": 663,
+      "width": 1864,
+      "height": 161,
+      "right": 1880,
+      "bottom": 824
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-demo-1896x880.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source"
+     ]
+    },
+    {
+     "project": "demo",
+     "width": 1440,
+     "height": 800,
+     "scrollHeight": 800,
+     "scrollWidth": 1440,
+     "canvas": {
+      "x": 385.40625,
+      "y": 123,
+      "width": 608,
+      "height": 342,
+      "right": 993.40625,
+      "bottom": 465
+     },
+     "timeline": {
+      "x": 16,
+      "y": 583,
+      "width": 1408,
+      "height": 161,
+      "right": 1424,
+      "bottom": 744
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-demo-1440x800.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source"
+     ]
+    },
+    {
+     "project": "demo",
+     "width": 1366,
+     "height": 680,
+     "scrollHeight": 680,
+     "scrollWidth": 1366,
+     "canvas": {
+      "x": 436.90625,
+      "y": 103,
+      "width": 448,
+      "height": 252,
+      "right": 884.90625,
+      "bottom": 355
+     },
+     "timeline": {
+      "x": 16,
+      "y": 463,
+      "width": 1334,
+      "height": 161,
+      "right": 1350,
+      "bottom": 624
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-demo-1366x680.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source"
+     ]
+    },
+    {
+     "project": "demo",
+     "width": 1280,
+     "height": 640,
+     "scrollHeight": 640,
+     "scrollWidth": 1280,
+     "canvas": {
+      "x": 431.5625,
+      "y": 103,
+      "width": 376.875,
+      "height": 211.984375,
+      "right": 808.4375,
+      "bottom": 314.984375
+     },
+     "timeline": {
+      "x": 16,
+      "y": 423,
+      "width": 1248,
+      "height": 161,
+      "right": 1264,
+      "bottom": 584
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-demo-1280x640.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source"
+     ]
+    },
+    {
+     "project": "demo",
+     "width": 1024,
+     "height": 700,
+     "scrollHeight": 700,
+     "scrollWidth": 1024,
+     "canvas": {
+      "x": 280,
+      "y": 125.9375,
+      "width": 402,
+      "height": 226.125,
+      "right": 682,
+      "bottom": 352.0625
+     },
+     "timeline": {
+      "x": 16,
+      "y": 483,
+      "width": 992,
+      "height": 161,
+      "right": 1008,
+      "bottom": 644
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-demo-1024x700.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source"
+     ]
+    },
+    {
+     "project": "demo",
+     "width": 768,
+     "height": 960,
+     "scrollHeight": 960,
+     "scrollWidth": 768,
+     "canvas": {
+      "x": 144,
+      "y": 123,
+      "width": 480,
+      "height": 270,
+      "right": 624,
+      "bottom": 393
+     },
+     "timeline": {
+      "x": 16,
+      "y": 511,
+      "width": 736,
+      "height": 161,
+      "right": 752,
+      "bottom": 672
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-demo-768x960.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source",
+      "story"
+     ]
+    },
+    {
+     "project": "demo",
+     "width": 390,
+     "height": 780,
+     "scrollHeight": 1483,
+     "scrollWidth": 390,
+     "canvas": {
+      "x": 12,
+      "y": 231,
+      "width": 366,
+      "height": 205.875,
+      "right": 378,
+      "bottom": 436.875
+     },
+     "timeline": {
+      "x": 12,
+      "y": 706.875,
+      "width": 366,
+      "height": 158,
+      "right": 378,
+      "bottom": 864.875
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-demo-390x780.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source",
+      "story"
+     ]
+    },
+    {
+     "project": "layout-48",
+     "width": 2560,
+     "height": 1340,
+     "scrollHeight": 1340,
+     "scrollWidth": 2560,
+     "canvas": {
+      "x": 376,
+      "y": 123,
+      "width": 1568,
+      "height": 882,
+      "right": 1944,
+      "bottom": 1005
+     },
+     "timeline": {
+      "x": 16,
+      "y": 1123,
+      "width": 2528,
+      "height": 161,
+      "right": 2544,
+      "bottom": 1284
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-layout-48-2560x1340.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source"
+     ]
+    },
+    {
+     "project": "layout-48",
+     "width": 1896,
+     "height": 880,
+     "scrollHeight": 880,
+     "scrollWidth": 1896,
+     "canvas": {
+      "x": 489.84375,
+      "y": 123,
+      "width": 750.21875,
+      "height": 421.984375,
+      "right": 1240.0625,
+      "bottom": 544.984375
+     },
+     "timeline": {
+      "x": 16,
+      "y": 663,
+      "width": 1864,
+      "height": 161,
+      "right": 1880,
+      "bottom": 824
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-layout-48-1896x880.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source"
+     ]
+    },
+    {
+     "project": "layout-48",
+     "width": 1440,
+     "height": 800,
+     "scrollHeight": 800,
+     "scrollWidth": 1440,
+     "canvas": {
+      "x": 385.40625,
+      "y": 123,
+      "width": 608,
+      "height": 342,
+      "right": 993.40625,
+      "bottom": 465
+     },
+     "timeline": {
+      "x": 16,
+      "y": 583,
+      "width": 1408,
+      "height": 161,
+      "right": 1424,
+      "bottom": 744
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-layout-48-1440x800.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source"
+     ]
+    },
+    {
+     "project": "layout-48",
+     "width": 1366,
+     "height": 680,
+     "scrollHeight": 680,
+     "scrollWidth": 1366,
+     "canvas": {
+      "x": 436.90625,
+      "y": 103,
+      "width": 448,
+      "height": 252,
+      "right": 884.90625,
+      "bottom": 355
+     },
+     "timeline": {
+      "x": 16,
+      "y": 463,
+      "width": 1334,
+      "height": 161,
+      "right": 1350,
+      "bottom": 624
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-layout-48-1366x680.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source"
+     ]
+    },
+    {
+     "project": "layout-48",
+     "width": 1280,
+     "height": 640,
+     "scrollHeight": 640,
+     "scrollWidth": 1280,
+     "canvas": {
+      "x": 431.5625,
+      "y": 103,
+      "width": 376.875,
+      "height": 211.984375,
+      "right": 808.4375,
+      "bottom": 314.984375
+     },
+     "timeline": {
+      "x": 16,
+      "y": 423,
+      "width": 1248,
+      "height": 161,
+      "right": 1264,
+      "bottom": 584
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-layout-48-1280x640.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source"
+     ]
+    },
+    {
+     "project": "layout-48",
+     "width": 1024,
+     "height": 700,
+     "scrollHeight": 700,
+     "scrollWidth": 1024,
+     "canvas": {
+      "x": 280,
+      "y": 125.9375,
+      "width": 402,
+      "height": 226.125,
+      "right": 682,
+      "bottom": 352.0625
+     },
+     "timeline": {
+      "x": 16,
+      "y": 483,
+      "width": 992,
+      "height": 161,
+      "right": 1008,
+      "bottom": 644
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-layout-48-1024x700.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source"
+     ]
+    },
+    {
+     "project": "layout-48",
+     "width": 768,
+     "height": 960,
+     "scrollHeight": 960,
+     "scrollWidth": 768,
+     "canvas": {
+      "x": 144,
+      "y": 123,
+      "width": 480,
+      "height": 270,
+      "right": 624,
+      "bottom": 393
+     },
+     "timeline": {
+      "x": 16,
+      "y": 511,
+      "width": 736,
+      "height": 161,
+      "right": 752,
+      "bottom": 672
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-layout-48-768x960.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source",
+      "story"
+     ]
+    },
+    {
+     "project": "layout-48",
+     "width": 390,
+     "height": 780,
+     "scrollHeight": 1483,
+     "scrollWidth": 390,
+     "canvas": {
+      "x": 12,
+      "y": 231,
+      "width": 366,
+      "height": 205.875,
+      "right": 378,
+      "bottom": 436.875
+     },
+     "timeline": {
+      "x": 12,
+      "y": 706.875,
+      "width": 366,
+      "height": 158,
+      "right": 378,
+      "bottom": 864.875
+     },
+     "aspect": 1.7777777777777777,
+     "clipped": [],
+     "escaped": [],
+     "screenshot": "08-layout-layout-48-390x780.png",
+     "tabs": [
+      "shot",
+      "narrative",
+      "direction",
+      "takes",
+      "assistant",
+      "source",
+      "story"
+     ]
+    }
+   ],
+   "midpointPosters": 1,
+   "splitterPersisted": true,
+   "panelCollapsePersisted": true,
+   "virtualStoryReachable": true,
+   "errors": []
+  },
+  {
+   "name": "console clean",
+   "ok": true,
+   "ms": 0
+  }
+ ],
+ "console_errors": [],
+ "failed_requests": [],
+ "bridge": {
+  "port": 22667,
+  "health": {
+   "ok": true,
+   "name": "fframestudio-bridge",
+   "version": "0.1.0"
+  }
+ },
+ "context_menu": {
+  "menu_open_ms": {
+   "median": 15.650000005960464,
+   "worst": 15.800000011920929
+  },
+  "open_ready_median_ms": 1.4500000178813934,
+  "open_ready_worst_ms": 2.300000011920929,
+  "samples": [
+   {
+    "ready_ms": 1.899999976158142,
+    "rendering_opportunity_ms": 14.699999988079071
+   },
+   {
+    "ready_ms": 1.399999976158142,
+    "rendering_opportunity_ms": 15.800000011920929
+   },
+   {
+    "ready_ms": 1.4000000357627869,
+    "rendering_opportunity_ms": 15.5
+   },
+   {
+    "ready_ms": 1.4000000357627869,
+    "rendering_opportunity_ms": 15.800000011920929
+   },
+   {
+    "ready_ms": 1.5,
+    "rendering_opportunity_ms": 15.099999964237213
+   },
+   {
+    "ready_ms": 1.300000011920929,
+    "rendering_opportunity_ms": 15.399999976158142
+   },
+   {
+    "ready_ms": 2.300000011920929,
+    "rendering_opportunity_ms": 15.600000023841858
+   },
+   {
+    "ready_ms": 1.300000011920929,
+    "rendering_opportunity_ms": 15.800000011920929
+   },
+   {
+    "ready_ms": 1.5,
+    "rendering_opportunity_ms": 15.699999988079071
+   },
+   {
+    "ready_ms": 1.5,
+    "rendering_opportunity_ms": 15.699999988079071
+   }
+  ]
+ },
+ "finished": "2026-10-17T19:52:43.866Z",
+ "ok": true
+}

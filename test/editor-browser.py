@@ -39,9 +39,12 @@ async def main():
         await page.reload();await page.wait_for_function('window.ffs?.doc?.videos[0].clips.length===14')
         assert await page.evaluate('window.ffs.doc.videos[0].clips[0].textOverrides.title')=='A clearer opening'
         await page.keyboard.press('Control+k');await page.locator('#palette').wait_for(state='visible');await page.keyboard.press('Escape')
+        await page.locator('[data-slate-tab="takes"]').click()
         await page.locator('#version-name').fill('Baseline');await page.locator('[data-action=\"save-version\"]:visible').click()
         await page.wait_for_function('window.ffs.doc.versions.length===1')
+        await page.locator('[data-slate-tab="shot"]').click()
         await page.locator('#duration').fill('50');await page.locator('#duration').press('Tab');await page.wait_for_function('window.ffs.doc.videos[0].clips[0].duration===50')
+        await page.locator('[data-slate-tab="takes"]').click()
         await page.locator('#version-name').fill('Shorter');await page.locator('[data-action=\"save-version\"]:visible').click();await page.wait_for_function('window.ffs.doc.versions.length===2')
         await page.locator('[data-action=\"compare\"]:visible').click();await page.wait_for_function('document.querySelector("#version-diff").textContent.includes("duration")')
         await page.locator('[data-action=\"restore-version\"]:visible').click();await page.wait_for_function('window.ffs.doc.videos[0].clips[0].duration===60')

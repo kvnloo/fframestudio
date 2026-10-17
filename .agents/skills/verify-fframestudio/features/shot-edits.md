@@ -17,7 +17,7 @@ Inspector lets a user change the selected shot's on-screen text. Change commits 
 ## How to get to it (user POV)
 
 - Open a project and choose a Story or Timeline clip.
-- Edit a Words field in Inspector, then choose Save.
+- Select the Shot slate tab, edit a Words field in Inspector, then choose Save. Versions are in the Takes tab.
 - Reload or reopen the project to confirm persistence.
 
 ## Driving it with Playwright

@@ -1,0 +1,193 @@
+{
+ "runtimeCommit": "4bef2f2",
+ "verifyAttempts": [
+  {
+   "name": "layout-initial",
+   "ok": false,
+   "journeys": 16,
+   "failures": [
+    {
+     "name": "project: plays and seeks by shot",
+     "error": "page.waitForSelector: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#preview-video') to be visible\u001b[22m\n\u001b[2m    63 \u00d7 locator resolved to hidden <video muted=\"\" playsinline=\"\" data-select=\"s01\" id=\"preview-video\" preload=\"metadata\" src=\"/lib/demo/media/proxy.mp4\"></video>\u001b[22m\n"
+    }
+   ]
+  },
+  {
+   "name": "layout-second",
+   "ok": false,
+   "journeys": 17,
+   "failures": [
+    {
+     "name": "project: plays and seeks by shot",
+     "error": "page.waitForSelector: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#preview-video') to be visible\u001b[22m\n\u001b[2m    63 \u00d7 locator resolved to hidden <video muted=\"\" playsinline=\"\" data-select=\"s01\" id=\"preview-video\" preload=\"metadata\" src=\"/lib/demo/media/proxy.mp4\"></video>\u001b[22m\n"
+    }
+   ]
+  },
+  {
+   "name": "layout-third",
+   "ok": true,
+   "journeys": 17,
+   "failures": []
+  },
+  {
+   "name": "layout-final-1",
+   "ok": true,
+   "journeys": 17,
+   "failures": []
+  },
+  {
+   "name": "layout-final-2",
+   "ok": false,
+   "journeys": 17,
+   "failures": [
+    {
+     "name": "layout: fits and adapts across sizes",
+     "error": "Phone touch targets below 40px: version-a,version-b"
+    }
+   ]
+  },
+  {
+   "name": "layout-qualified-1",
+   "ok": true,
+   "journeys": 17,
+   "failures": []
+  },
+  {
+   "name": "layout-qualified-2",
+   "ok": false,
+   "journeys": 17,
+   "failures": [
+    {
+     "name": "context menu: native menu replaced, actions work",
+     "error": "menu not presented in the next frame (frame 16.699999999999818 ms): {\"menu_open_ms\":{\"median\":65.30000001192093,\"worst\":80.40000003576279},\"open_ready_median_ms\":2.449999988079071,\"open_ready_worst_ms\":4.199999988079071,\"samples\":[{\"ready_ms\":2.5,\"rendering_opportunity_ms\":64.30000001192093},{\"ready_ms\":2.300000011920929,\"rendering_opportunity_ms\":80.40000003576279},{\"ready_ms\":2.600000023841858,\"rendering_opportunity_ms\":12.200000047683716},{\"ready_ms\":1.5,\"rendering_opportunity_ms\":70.09999996423721},{\"ready_ms\":2.100000023841858,\"rendering_opportunity_ms\":12.600000023841858},{\"ready_ms\":1.6"
+    }
+   ]
+  },
+  {
+   "name": "layout-qualified-3",
+   "ok": true,
+   "journeys": 17,
+   "failures": []
+  },
+  {
+   "name": "layout-qualified-4",
+   "ok": true,
+   "journeys": 17,
+   "failures": []
+  },
+  {
+   "name": "layout-qualified-5",
+   "ok": true,
+   "journeys": 17,
+   "failures": []
+  },
+  {
+   "name": "layout-qualified-6",
+   "ok": true,
+   "journeys": 17,
+   "failures": []
+  },
+  {
+   "name": "layout-qualified-7",
+   "ok": true,
+   "journeys": 17,
+   "failures": []
+  },
+  {
+   "name": "layout-qualified-8",
+   "ok": true,
+   "journeys": 17,
+   "failures": []
+  }
+ ],
+ "finalConsecutive": [
+  "layout-qualified-6",
+  "layout-qualified-7",
+  "layout-qualified-8"
+ ],
+ "performanceAttempts": [
+  {
+   "name": "layout-perf-1",
+   "ok": true,
+   "coldOpenMs": 173,
+   "summary": {
+    "cmdWorstMs": 10.100000023841858,
+    "nextFrameWorstMs": 16.80000001192093,
+    "scrubFps": 60.003000150007495
+   },
+   "layout": {
+    "resizeLongtasks": [],
+    "splitterLongtasks": [],
+    "splitterFps": 60.00300015000751
+   }
+  },
+  {
+   "name": "layout-perf-final",
+   "ok": false,
+   "coldOpenMs": 607.0999999642372,
+   "summary": {
+    "cmdWorstMs": 92.89999997615814,
+    "nextFrameWorstMs": 95.79999995231628,
+    "scrubFps": 32.5
+   },
+   "layout": {
+    "resizeLongtasks": [],
+    "splitterLongtasks": [
+     82,
+     82,
+     82
+    ],
+    "splitterFps": 26.153846153846153
+   }
+  },
+  {
+   "name": "layout-perf-replay",
+   "ok": true,
+   "coldOpenMs": 146.5999999642372,
+   "summary": {
+    "cmdWorstMs": 9.300000011920929,
+    "nextFrameWorstMs": 16.80000001192093,
+    "scrubFps": 60.00300015000751
+   },
+   "layout": {
+    "resizeLongtasks": [],
+    "splitterLongtasks": [],
+    "splitterFps": 60.003000150007495
+   }
+  }
+ ],
+ "realLibrary": {
+  "samples": [
+   {
+    "width": 1896,
+    "height": 880,
+    "screenshot": "after-1896x880.png",
+    "scrollHeight": 880,
+    "scrollWidth": 1896,
+    "timelineBottom": 824,
+    "theme": "system"
+   },
+   {
+    "width": 1366,
+    "height": 680,
+    "screenshot": "after-1366x680.png",
+    "scrollHeight": 680,
+    "scrollWidth": 1366,
+    "timelineBottom": 624,
+    "theme": "system"
+   },
+   {
+    "width": 390,
+    "height": 780,
+    "screenshot": "after-390x780.png",
+    "scrollHeight": 1483,
+    "scrollWidth": 390,
+    "timelineBottom": 864.875,
+    "theme": "system"
+   }
+  ],
+  "originalProjectsUnchanged": true,
+  "errors": []
+ },
+ "nodeTests": 60
+}

@@ -1,5 +1,71 @@
 # Editor performance and recovery
 
+## Fitted layout qualification
+
+Runtime `4bef2f2` fits the copied real-library editor at **1896×880 → 880 px document
+height**, down from the supplied **1745 px** baseline, and **1366×680 → 680 px**. The
+whole timeline ends at y=824 and y=624 respectively. These are layout measurements,
+not an export or compositor qualification. Phone pages intentionally scroll vertically.
+
+The final three consecutive browser runs each pass **17/17 journeys**, including the
+new `layout: fits and adapts across sizes` journey: eight viewports on the demo and a
+thumbnail-free 48-clip project with real demo-proxy sine audio. Each run keeps 16 layout
+screenshots and checks aspect fit, desktop page bounds, full timeline bounds, every slate
+tab, the final virtualized Story card, text overflow, phone overlap/touch targets,
+midpoint posters, splitter min/max and persisted panel collapse. Previous journeys retain
+their assertions. Native side-panel resize, versions, incremental edits and custom theme/
+shortcut persistence also pass the copied-library `npm run test:editor` workflow.
+
+| Final performance replay | Measured | Existing budget |
+| --- | --- | --- |
+| 48-clip cold navigation → interactive | 146.6 ms | <300 ms |
+| 500-clip command → DOM/layout ready, worst | 9.3 ms | <16 ms |
+| Command → next rAF, worst | 16.8 ms | unchanged measured-next-frame gate |
+| Scrub / timeline splitter scheduling | 60.003 / 60.003 fps | unchanged 17.5 ms mean-interval tolerance |
+| Resize / splitter tasks >50 ms | 0 / 0 | zero |
+| Shipped editor JS gzip, excluding ACP | 46,749 B | <150 KiB |
+| Mounted Story / Timeline clips | 8 / 40 | <20 / <100 |
+| Autosave transaction/clone setup, worst | 4.5 ms | <16 ms |
+
+The added layout lane runs after the unchanged edit/scrub lane. It resizes across all
+viewports, then holds an actual pointer-down while rAF-driven pointer events move the
+splitter for two seconds. It reports rAF intervals and long tasks separately; it does not
+measure physical presentation or claim a controlled speedup. No pre-existing budget,
+sample phase, browser scheduling flag or host process was changed.
+
+`npm test` passes **60 Node tests plus ACP/bridge security**; shared discovery configuration
+bytes and mtime remain unchanged. The local-path gate passes. The real-library screenshot
+harness uses `cp -a`, an owned `--no-config` bridge and read-only owner theme files; original
+project bytes/mtimes remain unchanged and its final page-error list is empty. Owner-size,
+short-laptop, phone, tablet and very-wide screenshots were visually inspected. Private
+before/after and all final layout screenshots are retained in the external `ui-compare/fitted/`
+artifact directory, not published in this repository.
+
+### Retained attempts, not just passing samples
+
+All **13 browser-attempt reports** are retained in [summary.json](evidence/fitted-layout/summary.json).
+The final exact-runtime sequence is [6](evidence/fitted-layout/attempts/layout-qualified-6.json),
+[7](evidence/fitted-layout/attempts/layout-qualified-7.json),
+[8](evidence/fitted-layout/attempts/layout-qualified-8.json). Early composition trials had an
+invisible zero-width canvas; a stronger phone check then exposed undersized empty version
+selects. A separate later menu sample reached **80.4 ms** rendering opportunity despite
+**4.2 ms** worst open-ready work; its cause is unproven and its failed receipt is kept.
+
+An earlier candidate [performance pass](evidence/fitted-layout/layout-perf-1.json) measured
+173.0 ms cold-open / 10.1 ms worst ready / 60.003 fps splitter. A subsequent
+[failed performance attempt](evidence/fitted-layout/layout-perf-final.json) reached
+607.1 ms cold-open, 92.9 ms worst ready, 32.5 fps scrub, 26.154 fps splitter and three
+82 ms splitter long tasks. Do not infer stable tail latency from the
+[passing final replay](evidence/fitted-layout/layout-perf-replay.json); these shared-host
+attempts are not a controlled A/B and the failure is not discarded. A private capture also
+retains one startup `undefined id` error from navigating before the library was ready;
+the harness now awaits the library card before opening the project, and the clean
+[real-library replay](evidence/fitted-layout/real-library.json) keeps the original-file guard.
+
+Reproduce with `npm test`, three consecutive `npm run verify`,
+`FFS_PORT=<free-private-port> npm run test:perf`, and
+`FFS_EVIDENCE=<directory> node tools/layout-evidence.mjs`.
+
 The Studio film desk passes the existing performance runner in three final processes. The
 thresholds and measurement phase in `test/editor-perf.py` and `test/perf/` are unchanged by this
 branch. Previous failed measurements remain below as historical evidence, not the current result.

@@ -56,6 +56,7 @@ When you change a feature, update its file and the matching journey in `test/ver
 
 | feature | file | journey in `test/verify.mjs` |
 | --- | --- | --- |
+| Adaptive fitted layout | [layout.md](./layout.md) | `layout: fits and adapts across sizes` |
 | Studio film desk | [studio.md](./studio.md) | `studio: themes, slate tabs, loops and screening room`; additional `tools/verify-studio.mjs` visual/audio proof |
 | Library | [library.md](./library.md) | `library: open link, demo project listed` |
 | Project player | [project-player.md](./project-player.md) | `project: plays and seeks by shot` |

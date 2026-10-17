@@ -12,6 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { chromium } from 'playwright';
 import { createHash } from 'node:crypto';
+import { makeLayoutFixture, verifyLayout } from './layout-journey.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const argv = process.argv.slice(2);
@@ -38,6 +39,7 @@ try {
   run('python3', ['tools/import_projects.py']);
   fs.cpSync(path.join(ROOT, 'test/fixtures/themes/wal/.cache'), path.join(HOME, '.cache'), { recursive: true });
   const themeFile = path.join(HOME, '.cache/wal/colors.json');
+  makeLayoutFixture(path.join(HOME, 'fframestudio/projects'));
   const source = path.join(HOME, 'fframestudio/demo-src/demo.mp4');
   const sourceHash = () => createHash('sha256').update(fs.readFileSync(source)).digest('hex');
   const sourceBefore = sourceHash();
@@ -586,6 +588,7 @@ try {
     await m.screenshot({ path: path.join(OUT, '05-mobile.png') }); await m.close();
     assert(lib <= 391 && proj <= 391, `scrollWidth library ${lib}, project ${proj}`); return { library: lib, project: proj };
   });
+  await journey('layout: fits and adapts across sizes', () => verifyLayout({browser, context:ctx, base, out:OUT, assert}));
   await journey('console clean', async () => { assert(!report.console_errors.length && !report.failed_requests.length, JSON.stringify({ e: report.console_errors, r: report.failed_requests })); });
 } catch (e) {
   report.journeys.push({ name: 'setup', ok: false, error: String(e.message || e).slice(0, 800) });

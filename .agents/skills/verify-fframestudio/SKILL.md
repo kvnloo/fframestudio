@@ -41,7 +41,10 @@ Playwright (`playwright` devDependency). Browser: `PW_CHANNEL=chrome` (CI), else
 | `/open?token=T` | sets the `ffs` cookie, redirects to the library |
 | `.card`, `.card .t` | library cards and titles |
 | `#preview-video` | project player (proxy video) |
-| `[data-slate-tab]`, `.direction-card` | Shot / Narrative / Direction tabs and project look cards |
+| `[data-slate-tab]`, `.direction-card` | Shot / Narrative / Direction / Takes / Assistant / Source tabs; Story tab below 1024 px |
+| `#timeline-splitter` | Pointer/keyboard timeline height separator; `aria-valuenow` persists |
+| `.story-panel`, `.inspector-panel`, `[data-action="toggle-story"]`, `[data-action="toggle-inspector"]` | Collapsible, internally scrolling views |
+| `.shot-thumbnail`, `.thumb-words`, `canvas[data-video][data-ready="true"]` | Word fallback and decoded clip-midpoint posters |
 | `#theme`, `#library-theme` | Studio, Paper and retained workspace themes |
 | `[data-action="loop-shot"]`, `[data-action="loop-film"]`, `[data-action="mute"]`, `[data-action="screening"]` | real playback toggles and fullscreen canvas |
 | `#audio-wave` | worker-computed peak/RMS display; hidden without audio |

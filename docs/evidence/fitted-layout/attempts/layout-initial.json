@@ -1,0 +1,329 @@
+{
+ "started": "2026-10-17T19:36:23.997Z",
+ "out": "verify-out/layout-initial",
+ "journeys": [
+  {
+   "name": "gate: app refuses without the link",
+   "ok": true,
+   "ms": 233,
+   "agents_without_token": 401
+  },
+  {
+   "name": "library: open link, demo project listed",
+   "ok": true,
+   "ms": 151,
+   "titles": [
+    "Demo film"
+   ]
+  },
+  {
+   "name": "project: plays and seeks by shot",
+   "ok": false,
+   "ms": 30134,
+   "error": "page.waitForSelector: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#preview-video') to be visible\u001b[22m\n\u001b[2m    63 \u00d7 locator resolved to hidden <video muted=\"\" playsinline=\"\" data-select=\"s01\" id=\"preview-video\" preload=\"metadata\" src=\"/lib/demo/media/proxy.mp4\"></video>\u001b[22m\n"
+  },
+  {
+   "name": "system theme: follows and live-updates",
+   "ok": true,
+   "ms": 1526,
+   "liveMs": 116,
+   "noReload": true,
+   "fixedThemePersists": true,
+   "openMenu": {
+    "before": {
+     "background": "rgb(30, 32, 41)",
+     "minimumTextContrast": 5.930244277217093,
+     "visible": true
+    },
+    "after": {
+     "background": "rgb(24, 51, 55)",
+     "minimumTextContrast": 5.119706720682271,
+     "visible": true
+    }
+   },
+   "applyMs": [
+    1.600000023841858,
+    0.800000011920929,
+    0.800000011920929,
+    0.699999988079071,
+    0.8999999761581421,
+    0.6000000238418579,
+    0.5999999642372131,
+    0.9000000357627869,
+    0.8999999761581421,
+    0.699999988079071,
+    0.5,
+    0.5,
+    0.6000000238418579,
+    0.699999988079071,
+    0.5,
+    0.5999999642372131,
+    0.6000000238418579,
+    0.699999988079071,
+    0.5999999642372131,
+    0.5,
+    0.6000000238418579,
+    0.6000000238418579,
+    0.699999988079071,
+    0.6000000238418579,
+    0.6000000238418579,
+    0.5,
+    0.5999999642372131,
+    0.800000011920929,
+    0.699999988079071,
+    0.5
+   ],
+   "applyWorstMs": 1.600000023841858,
+   "navigation": {
+    "interactiveMs": 356.10000002384186,
+    "themeFetches": [
+     {
+      "start": 32,
+      "ms": 1.800000011920929,
+      "bytes": 775
+     }
+    ]
+   },
+   "browserFallback": true,
+   "themeWithoutToken": 401
+  },
+  {
+   "name": "context menu: native menu replaced, actions work",
+   "ok": true,
+   "ms": 5249,
+   "menu_open_ms": {
+    "median": 15.650000005960464,
+    "worst": 18.30000001192093
+   },
+   "open_ready_median_ms": 1.3499999940395355,
+   "open_ready_worst_ms": 1.800000011920929,
+   "samples": [
+    {
+     "ready_ms": 1.800000011920929,
+     "rendering_opportunity_ms": 14.899999976158142
+    },
+    {
+     "ready_ms": 1.399999976158142,
+     "rendering_opportunity_ms": 15.5
+    },
+    {
+     "ready_ms": 1.199999988079071,
+     "rendering_opportunity_ms": 15.5
+    },
+    {
+     "ready_ms": 1.4000000357627869,
+     "rendering_opportunity_ms": 18.30000001192093
+    },
+    {
+     "ready_ms": 1.300000011920929,
+     "rendering_opportunity_ms": 15.5
+    },
+    {
+     "ready_ms": 1.399999976158142,
+     "rendering_opportunity_ms": 15.800000011920929
+    },
+    {
+     "ready_ms": 1.199999988079071,
+     "rendering_opportunity_ms": 15.800000011920929
+    },
+    {
+     "ready_ms": 1.300000011920929,
+     "rendering_opportunity_ms": 15.700000047683716
+    },
+    {
+     "ready_ms": 1.2999999523162842,
+     "rendering_opportunity_ms": 15.599999964237213
+    },
+    {
+     "ready_ms": 1.399999976158142,
+     "rendering_opportunity_ms": 16.69999998807907
+    }
+   ],
+   "browser_default_prevented": true,
+   "native_input": true,
+   "seek_s": 3,
+   "source_path_copied": "<home>/fframestudio/demo-src",
+   "undo_redo": true,
+   "themes": [
+    "studio",
+    "paper",
+    "dark",
+    "light",
+    "contrast"
+   ]
+  },
+  {
+   "name": "studio: themes, slate tabs, loops and screening room",
+   "ok": true,
+   "ms": 734,
+   "themes": [
+    "system",
+    "studio",
+    "paper",
+    "dark",
+    "light",
+    "contrast",
+    "custom",
+    "system:wal"
+   ],
+   "loop_shot": true,
+   "loop_film": true,
+   "mute": true,
+   "screening_room": true
+  },
+  {
+   "name": "edit: shot title saves and survives reload",
+   "ok": true,
+   "ms": 586,
+   "before": "Hook",
+   "after": "Hook (verified)",
+   "clip_id": "s01",
+   "source_sha256": "7687abe9ed2729f1f8f208ce0af8a3fca83293f2ea996c79ffd2331f801d3930"
+  },
+  {
+   "name": "recovery: unsaved title survives page close, undo and explicit save",
+   "ok": true,
+   "ms": 1178,
+   "before": "Hook (verified)",
+   "recovered": "Hook (verified) (recovered)",
+   "version": 8,
+   "expected_hash": "7db8ddcf3b76acfc9df722cf1e946a620fdab97054a3ee5734849a4256307319",
+   "disk_unchanged_before_save": true
+  },
+  {
+   "name": "recovery: discard keeps disk title and clears the offer",
+   "ok": true,
+   "ms": 735,
+   "saved_title": "Hook (verified) (recovered)"
+  },
+  {
+   "name": "recovery: edits during Save survive its journal checkpoint",
+   "ok": true,
+   "ms": 616,
+   "saved_snapshot": "Captured for Save",
+   "recovered_edit": "Committed while Save was pending"
+  },
+  {
+   "name": "recovery: undo across Save recovers without prior history",
+   "ok": true,
+   "ms": 866,
+   "saved_title": "Saved before undo",
+   "recovered_undo": "Committed while Save was pending"
+  },
+  {
+   "name": "recovery: Save on disk before acknowledgement preserves later edits",
+   "ok": true,
+   "ms": 751,
+   "saved_snapshot": "Saved before acknowledgement",
+   "recovered_edit": "Durable edit after captured Save"
+  },
+  {
+   "name": "recovery: external change preserves the pending recovery choice",
+   "ok": true,
+   "ms": 698,
+   "recovered_title": "Pending recovery during external change",
+   "external_title": "External change while recovery was pending"
+  },
+  {
+   "name": "assistant: agents listed, unavailable ones disabled",
+   "ok": true,
+   "ms": 8,
+   "agents": [
+    {
+     "id": "claude",
+     "disabled": false
+    },
+    {
+     "id": "codex",
+     "disabled": false
+    },
+    {
+     "id": "gemini",
+     "disabled": false
+    },
+    {
+     "id": "hermes",
+     "disabled": false
+    },
+    {
+     "id": "opencode",
+     "disabled": true
+    }
+   ]
+  },
+  {
+   "name": "mobile: 390 px has no horizontal overflow",
+   "ok": true,
+   "ms": 414,
+   "library": 390,
+   "project": 390
+  },
+  {
+   "name": "console clean",
+   "ok": true,
+   "ms": 0
+  }
+ ],
+ "console_errors": [],
+ "failed_requests": [],
+ "bridge": {
+  "port": 37623,
+  "health": {
+   "ok": true,
+   "name": "fframestudio-bridge",
+   "version": "0.1.0"
+  }
+ },
+ "context_menu": {
+  "menu_open_ms": {
+   "median": 15.650000005960464,
+   "worst": 18.30000001192093
+  },
+  "open_ready_median_ms": 1.3499999940395355,
+  "open_ready_worst_ms": 1.800000011920929,
+  "samples": [
+   {
+    "ready_ms": 1.800000011920929,
+    "rendering_opportunity_ms": 14.899999976158142
+   },
+   {
+    "ready_ms": 1.399999976158142,
+    "rendering_opportunity_ms": 15.5
+   },
+   {
+    "ready_ms": 1.199999988079071,
+    "rendering_opportunity_ms": 15.5
+   },
+   {
+    "ready_ms": 1.4000000357627869,
+    "rendering_opportunity_ms": 18.30000001192093
+   },
+   {
+    "ready_ms": 1.300000011920929,
+    "rendering_opportunity_ms": 15.5
+   },
+   {
+    "ready_ms": 1.399999976158142,
+    "rendering_opportunity_ms": 15.800000011920929
+   },
+   {
+    "ready_ms": 1.199999988079071,
+    "rendering_opportunity_ms": 15.800000011920929
+   },
+   {
+    "ready_ms": 1.300000011920929,
+    "rendering_opportunity_ms": 15.700000047683716
+   },
+   {
+    "ready_ms": 1.2999999523162842,
+    "rendering_opportunity_ms": 15.599999964237213
+   },
+   {
+    "ready_ms": 1.399999976158142,
+    "rendering_opportunity_ms": 16.69999998807907
+   }
+  ]
+ },
+ "finished": "2026-10-17T19:37:16.289Z",
+ "ok": false
+}

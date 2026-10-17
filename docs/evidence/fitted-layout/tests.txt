@@ -1,0 +1,103 @@
+npm notice run test
+npm notice run node --test test/doc/*.test.mjs test/theme/*.test.mjs && node test/acp-e2e.mjs
+✔ patches reproduce array deletion and escaped text keys, preserve untouched references (1.613096ms)
+✔ add is validated, previewable, undo/redo round trip (4.109241ms)
+✔ move is validated, previewable, undo/redo round trip (0.374845ms)
+✔ trim is validated, previewable, undo/redo round trip (0.48281ms)
+✔ split is validated, previewable, undo/redo round trip (0.492923ms)
+✔ replace is validated, previewable, undo/redo round trip (0.447519ms)
+✔ duplicate is validated, previewable, undo/redo round trip (0.400603ms)
+✔ group is validated, previewable, undo/redo round trip (0.412237ms)
+✔ set-beat-lock is validated, previewable, undo/redo round trip (0.479046ms)
+✔ retime is validated, previewable, undo/redo round trip (0.499435ms)
+✔ delete is validated, previewable, undo/redo round trip (0.361263ms)
+✔ edit-style is validated, previewable, undo/redo round trip (0.382553ms)
+✔ save-version is validated, previewable, undo/redo round trip (0.364255ms)
+✔ select is an ephemeral named command with inverse; does not dirty content history (0.182665ms)
+✔ split partitions attached text and source ranges; move keeps attachments (0.261629ms)
+✔ invalid batch leaves document/history untouched; stale and unsafe proposals rejected (1.079338ms)
+✔ multi-video proposals preview and rollback without touching either source video (0.714204ms)
+✔ versions restore through history and compare exact content (0.450207ms)
+✔ grouping and version saves share unchanged clips without sharing mutable snapshots (0.525301ms)
+✔ object-creating commands require explicit IDs so preview and apply cannot drift (0.267969ms)
+✔ returned inverse executes through the command system (0.39409ms)
+✔ beat lock rejects ripple displacement and mutation rolls back (0.303532ms)
+✔ edit text preview shows scope and changes without mutation; inverse restores (0.393939ms)
+✔ an edit updates the authoritative store and views before a blocked worker can reply (3.39445ms)
+✔ main thread and real module worker replay the same seeded 200 commands including undo and redo (77.92582ms)
+✔ recovery can undo across the saved baseline without the old in-memory history (1.189069ms)
+✔ persisted undo/redo patches reproduce every step across a saved history boundary (2.623878ms)
+✔ an external change preserves a pending recovery offer as a local conflict (0.589001ms)
+✔ an edit committed during external migration survives the worker reply (0.519009ms)
+✔ global Save shortcut is gated while recovery is opening (0.538454ms)
+✔ migration CLI writes a distinct new copy and refuses overwrite (99.581362ms)
+✔ migrate studio-spec: deterministic, non-destructive, text overrides (5.713143ms)
+✔ migrate fframes: deterministic, non-destructive, text overrides (0.404441ms)
+✔ migrate fframes-clips: deterministic, non-destructive, text overrides (0.336695ms)
+✔ migrate html-film: deterministic, non-destructive, text overrides (0.321562ms)
+✔ migrate capture-manifest: deterministic, non-destructive, text overrides (0.314601ms)
+✔ migrate every actual library project on disposable copies (19.604838ms)
+ℹ Migrated 8 copied projects; originals unchanged
+✔ bridge compare-and-swap refuses external edit, preserves bytes, accepts matching base (1480.763102ms)
+✔ Studio system mapping recolours five semantic slots and preserves readable cream paper (3.499998ms)
+✔ studio-spec import resolves the selected ID relative to the studio, copies real bytes and beats without touching sources (34.882949ms)
+✔ film palette is stable by kind, with five meanings and deterministic unknown kinds (0.907112ms)
+✔ beat frames provide tempo only when source BPM is absent (0.179578ms)
+✔ film timecode preserves frame positions and project text is escaped (0.21344ms)
+✔ fractional playback crosses film and shot loop boundaries without sticking at the last frame (0.150647ms)
+✔ waveform worker reduces real PCM to bounded peak and RMS bins, including silence (1.156988ms)
+✔ Omarchy dark: actual v3 Alacritty + current/theme symlink (3.582289ms)
+✔ Omarchy light.mode overrides dark inference (1.085372ms)
+✔ Omarchy kitty, ghostty and current colors.toml adapters (2.596386ms)
+✔ Noctalia Material palette (0.768716ms)
+✔ pywal / wallust palette (0.714965ms)
+✔ KDE window colors and selection accent (0.808959ms)
+✔ GNOME parses bounded gsettings output, rejects default/garbled and tolerates missing executable (0.450332ms)
+✔ GNOME dark/light command results and unavailable desktop (2.982084ms)
+✔ empty and garbled fixture homes return no provider (2.50257ms)
+✔ empty, malformed JSON, invalid colors and oversized files fail closed (2.186018ms)
+✔ detection priority and explicit override (3.63444ms)
+✔ GNOME wins over KDE when no higher-priority file palette exists (0.884662ms)
+✔ WCAG contrast changes only deficient colors, preserving surfaces and ANSI (4.968542ms)
+✔ watcher discovers a provider installed into an initially empty home (122.812991ms)
+✔ watcher handles atomic wal writes, deletions, new providers and Omarchy symlink swaps (426.102238ms)
+ℹ tests 60
+ℹ suites 0
+ℹ pass 60
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1555.643059
+{
+ "root": "<home>/.hermes/profiles/clean/cache/scratch/ffs-acp-PrswEK",
+ "security": {
+  "no_token": 401,
+  "bad_token": 401,
+  "foreign_origin": 403,
+  "rebinding_host": 403,
+  "ok": 200,
+  "path_escape": 400,
+  "symlink_read": 400,
+  "symlink_write_dangling": 400,
+  "symlink_write_dir": 400,
+  "symlink_mkdir_dir": 400,
+  "outside_untouched": true,
+  "inside_write": 200,
+  "ws_no_token": "refused",
+  "ws_bad_token": "refused"
+ },
+ "agents": {},
+ "available": [
+  "claude",
+  "codex",
+  "gemini",
+  "hermes",
+  "opencode"
+ ],
+ "discovery_config": {
+  "mtime_unchanged": true,
+  "content_unchanged": true
+ }
+}
+ok

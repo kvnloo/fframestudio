@@ -1,0 +1,35 @@
+{
+ "samples": [
+  {
+   "width": 1896,
+   "height": 880,
+   "screenshot": "after-1896x880.png",
+   "scrollHeight": 880,
+   "scrollWidth": 1896,
+   "timelineBottom": 824,
+   "theme": "system"
+  },
+  {
+   "width": 1366,
+   "height": 680,
+   "screenshot": "after-1366x680.png",
+   "scrollHeight": 680,
+   "scrollWidth": 1366,
+   "timelineBottom": 624,
+   "theme": "system"
+  },
+  {
+   "width": 390,
+   "height": 780,
+   "screenshot": "after-390x780.png",
+   "scrollHeight": 1483,
+   "scrollWidth": 390,
+   "timelineBottom": 864.875,
+   "theme": "system"
+  }
+ ],
+ "originalProjectsUnchanged": true,
+ "errors": [
+  "Cannot read properties of undefined (reading 'id')"
+ ]
+}

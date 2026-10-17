@@ -6,8 +6,8 @@ Studio presents the same editable document as a colourful film-production desk. 
 
 - `studio-themes` adds Studio and Paper without removing Dark, Light, High contrast or Custom; Workspace persists the choice and the library shares it.
 - `studio-poster` shows large display words, corner brackets, project name, preview status, frame timecode and available BPM/bar metadata. Generated shots use paper; source shots keep their actual media.
-- `studio-slate` provides Shot / Narrative / Direction tabs. Shot retains timing, beat lock, editable words, replacement and shared-style controls. Narrative reads the selected shot. Direction shows real project values, styles, format and poster-sampled swatches; a shared-style card opens the corresponding existing style editor.
-- `studio-timeline` uses stable type colours, a ruler, chapter labels, beat/shot markers and film/music credits. All 48 real-project shots fit at default zoom; long documents remain windowed. Trim handles remain available; text attachments are edited in Shot, not repeated as tiny timeline chips.
+- `studio-slate` provides Shot / Narrative / Direction / Takes / Assistant / Source tabs (plus Story below 1024 px). Shot retains timing, beat lock, editable words, replacement and shared-style controls. Narrative reads the selected shot. Direction shows real project values, styles, format and poster-sampled swatches; a shared-style card opens the corresponding existing style editor.
+- `studio-timeline` uses stable type colours, a ruler, chapter labels, beat/shot markers and film/music credits. All 48 real-project shots fit at default desktop zoom; phones use larger horizontally scrollable shot targets and long documents remain windowed. Trim handles remain available; text attachments are edited in Shot, not repeated as tiny timeline chips.
 - `studio-waveform` reduces attached-track or embedded source-proxy PCM into 1,400 peak/RMS bins in a module worker, caches compact results by source SHA-256 (bounded to 32 sources), and displays no invented waveform when audio is absent.
 - `studio-loop` loops the selected shot or the whole film, including fractional-frame and reverse boundaries.
 - `studio-audio` mutes/unmutes actual source or attached soundtrack playback; audio analysis is deferred beyond cold open.
@@ -19,13 +19,13 @@ Studio presents the same editable document as a colourful film-production desk. 
 - Choose Shot, Narrative or Direction on the right. Arrow keys/Home/End navigate the tabs.
 - Use Loop shot, Loop film, Mute and Screening room under the hero frame.
 - Open Workspace to select any theme; the library also has a theme selector.
-- Story, Takes (film versions), proposals, provenance and the assistant remain below the film desk. Story retains reorder, resize and collapse.
+- Story is the desktop left rail and a tab on smaller screens. Takes, Assistant/proposals and Source are slate tabs. Story retains reorder, resize and collapse.
 
 ## Driving it with Playwright
 
 Preconditions:
 
-- `npm run verify` creates its own demo library and bridge. All sixteen journeys (including Studio, native menus and system following) remain intact.
+- `npm run verify` creates its own demo library and bridge. All seventeen journeys (including Studio, native menus and system following) remain intact.
 - `node tools/verify-studio.mjs` additionally copies `~/fframestudio/projects/expresslane-i880` into a temporary library, creates a separately labelled audio fixture, and starts an owned bridge with `--no-config`.
 
 - **Themes and tabs.** The `studio: themes, slate tabs, loops and screening room` journey selects Paper then Studio through `#theme`, verifies legacy options remain, opens each `[data-slate-tab]` and asserts `.direction-card`, `#narrative-pane blockquote` and `#duration` are visible in their respective tabs.
@@ -42,5 +42,5 @@ Preconditions:
 - Direction metadata cards are informational, not a new preset engine. Shared-style cards lead to the existing undoable style-colour control.
 - The demo's test-pattern video contains burned-in labels. The new title overlay does not erase or claim to recompose source pixels. Final video compositing/export remains explicitly unavailable.
 - Wait for `window.ffs.doc.id` to match the requested project before driving a route change. A previous editor can remain in `window.ffs` while its successor opens.
-- Story is below the hero now; scroll the panel into view before testing its native CSS resize handle. Persist its measured border-box width, not a fixed padding allowance.
+- Story is the left rail on desktop; open its tab below 1024 px. The lower-right native resize handle persists measured border-box width, while automatic responsive shrinkage does not overwrite that preference.
 - `npm run test:perf` measures main-thread paint readiness and next-rAF scheduling, not proof of compositor presentation.

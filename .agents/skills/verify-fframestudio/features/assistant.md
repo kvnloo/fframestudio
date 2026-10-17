@@ -17,7 +17,7 @@ The Assistant box on a project lists the ACP agents installed on this machine, c
 ## How to get to it (user POV)
 
 - Open a project.
-- Look at the Assistant box on the right.
+- Select the Assistant slate tab (`[data-slate-tab="assistant"]`) on the right or below the timeline. Proposals share this tab.
 - Choose an agent pill to connect.
 - Type a request in the prompt and choose `send`.
 

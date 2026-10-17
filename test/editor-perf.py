@@ -58,6 +58,26 @@ async def main():
           await e.journal.flush();
           return {measures:performance.getEntriesByType('measure').map(m=>({name:m.name,start:m.startTime,ms:m.duration,detail:m.detail})),latencies,domStable,story,timeline,scrubLongtasks:longtasks,frameIntervals:frames.slice(1)};
         }''')
+        # Additional layout lane; existing edit/scrub samples and budgets above stay unchanged.
+        await page.evaluate('''()=>{window.layoutTasks=[];window.layoutObserver=new PerformanceObserver(l=>window.layoutTasks.push(...l.getEntries().map(e=>e.duration)));window.layoutObserver.observe({type:'longtask'});}''')
+        for width,height in [(2560,1340),(1896,880),(1440,800),(1366,680),(1280,640),(1024,700),(768,960),(390,780),(1440,1000)]:
+            await page.set_viewport_size({'width':width,'height':height})
+            await page.evaluate('()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))')
+        layout_tasks=await page.evaluate('()=>{window.layoutObserver.disconnect();return window.layoutTasks;}')
+        box=await page.locator('#timeline-splitter').bounding_box()
+        assert box is not None
+        await page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2);await page.mouse.down()
+        drag=await page.evaluate('''()=>new Promise(resolve=>{
+          const node=document.querySelector('#timeline-splitter'),box=node.getBoundingClientRect(),frames=[],tasks=[];
+          const observer=new PerformanceObserver(l=>tasks.push(...l.getEntries().map(e=>e.duration)));observer.observe({type:'longtask'});
+          let previous;const start=performance.now();
+          const sample=t=>{if(previous)frames.push(t-previous);previous=t;
+            node.dispatchEvent(new PointerEvent('pointermove',{pointerId:1,clientY:box.y-32-32*Math.sin((t-start)/240),bubbles:true}));
+            if(t-start<2000)requestAnimationFrame(sample);else{observer.disconnect();resolve({frames,tasks});}};requestAnimationFrame(sample);
+        })''')
+        await page.mouse.up()
+        data['layout']={'resizeLongtasks':layout_tasks,'splitterLongtasks':drag['tasks'],'splitterFrameIntervals':drag['frames'],'splitterFps':1000/(sum(drag['frames'])/len(drag['frames']))}
+        layout_budgets=dict(layoutNoLongtasks=not layout_tasks,splitterNoLongtasks=not drag['tasks'],splitter60fps=sum(drag['frames'])/len(drag['frames'])<17.5)
         files=[pathlib.Path('web/app.js')]+list(pathlib.Path('web/src').rglob('*.js'))
         # All shipped ES editor modules; ACP and its source dependency graph excluded explicitly.
         shipped=sum(len(gzip.compress(f.read_bytes(),mtime=0)) for f in files)
@@ -65,6 +85,7 @@ async def main():
         writes=[m for m in data['measures'] if m['name']=='recovery-write']
         data['autosave']={'writes':len(writes),'cpuWorstMs':max((m['detail']['cpuMs'] for m in writes),default=0),'wallWorstMs':max((m['ms'] for m in writes),default=0)}
         data['budgets']={'coldOpen':cold_ms<300,'commandPaintReady':max(x['ready'] for x in data['latencies'])<16,'commandNextFrame':max(x['present'] for x in data['latencies'])<1.5*sorted(data['frameIntervals'])[len(data['frameIntervals'])//2],'scrubNoLongtasks':not data['scrubLongtasks'],'scrub60fps':sum(data['frameIntervals'])/len(data['frameIntervals'])<17.5,'gzip':shipped<150*1024,'virtualized':data['story']<20 and data['timeline']<100,'stableDOM':data['domStable'],'autosaveFrameWork':bool(writes) and data['autosave']['cpuWorstMs']<16}
+        data['budgets'].update(layout_budgets)
         # commandNextFrame: the edit must be presented in the very next frame (no dropped frame). Commands start
         # right after a rAF, so command->next-rAF is ~one vsync (16.7 ms at 60 Hz) by construction; '<16 ms' was
         # unmeetable regardless of work. Main-thread work is gated separately by commandPaintReady (<16 ms).
