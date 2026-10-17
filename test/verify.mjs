@@ -83,6 +83,195 @@ try {
     const t = await page.$eval('#preview-video', (v) => v.currentTime); assert(Math.abs(t - 6) < 0.2, `seek landed at ${t}`);
     await shot('03-project'); return { duration_s: dur, shots, seek_to_shot3_s: +t.toFixed(3) };
   });
+  await journey('context menu: native menu replaced, actions work', async () => {
+    const clip = page.locator('#timeline .timeline-clip').nth(1);
+    const menu = page.getByRole('menu', { name: 'Clip actions' });
+    const baseline = await page.evaluate(() => ({ selection: window.ffs.selection, frame: window.ffs.frame, revision: window.ffs.doc.revision }));
+    const trace = process.env.FFS_MENU_TRACE ? await ctx.newCDPSession(page) : null;
+    const traceEvents = [];
+    if (trace) {
+      trace.on('Tracing.dataCollected', ({ value }) => traceEvents.push(...value));
+      await trace.send('Tracing.start', { categories: 'devtools.timeline,blink.user_timing', transferMode: 'ReportEvents' });
+    }
+    await clip.click({ button: 'right', position: { x: 30, y: 30 } });
+    await menu.waitFor({ state: 'visible', timeout: 2000 });
+    await page.waitForFunction(() => performance.getEntriesByName('context-menu:open-paint').length);
+    const samples = [];
+    for (let i = 0; i < 10; i++) {
+      if (i) {
+        await page.keyboard.press('Escape');
+        await clip.click({ button: 'right', position: { x: 30, y: 30 } });
+        await page.waitForFunction(() => performance.getEntriesByName('context-menu:open-paint').length);
+      }
+      samples.push(await page.evaluate(() => ({
+        ready_ms: performance.getEntriesByName('context-menu:open-ready').at(-1).duration,
+        rendering_opportunity_ms: performance.getEntriesByName('context-menu:open-paint').at(-1).duration,
+      })));
+    }
+    if (trace) {
+      const complete = new Promise((resolve) => trace.once('Tracing.tracingComplete', resolve));
+      await trace.send('Tracing.end'); await complete;
+      fs.writeFileSync(path.join(OUT, 'context-menu-trace.json'), JSON.stringify({ traceEvents }));
+      await trace.detach();
+    }
+    const median = (values) => {
+      const sorted = [...values].sort((a, b) => a - b), middle = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+    };
+    const timing = {
+      menu_open_ms: {
+        median: median(samples.map((s) => s.rendering_opportunity_ms)),
+        worst: Math.max(...samples.map((s) => s.rendering_opportunity_ms)),
+      },
+      open_ready_median_ms: median(samples.map((s) => s.ready_ms)),
+      open_ready_worst_ms: Math.max(...samples.map((s) => s.ready_ms)),
+      samples,
+    };
+    report.context_menu = timing;
+    assert(timing.open_ready_worst_ms < 16, `menu open work exceeded 16 ms: ${timing.open_ready_worst_ms}`);
+    assert(await page.evaluate((before) => window.ffs.selection === before.selection && window.ffs.frame === before.frame && window.ffs.doc.revision === before.revision, baseline), 'opening a menu changed selection, playhead or document');
+    const prevented = await clip.evaluate((node) => {
+      const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 400, clientY: 450 });
+      node.dispatchEvent(event); return event.defaultPrevented;
+    });
+    assert(prevented, 'timeline contextmenu default was not prevented');
+    await shot('07-context-menu');
+    await page.keyboard.press('Home');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => Math.abs(document.querySelector('#preview-video').currentTime - 3) < 0.05);
+    assert(await menu.isHidden(), 'activation did not close menu');
+    await clip.press('Shift+F10'); await menu.waitFor({ state: 'visible' });
+    await page.keyboard.press('Escape');
+    assert(await menu.isHidden(), 'Escape did not close menu');
+    assert(await clip.evaluate((node) => node === document.activeElement), 'Escape did not restore invoking clip focus');
+    await page.keyboard.press('Space');
+    await page.waitForFunction(() => window.ffs.rate === 1);
+    await page.keyboard.press('Space');
+    await page.waitForFunction(() => window.ffs.rate === 0);
+    await clip.press('ContextMenu');
+    await menu.locator('[data-menu-action="seek-start"]').click();
+    const nativeInput = await page.locator('input[data-field="title"]').evaluate((node) => {
+      const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+      node.dispatchEvent(event); return !event.defaultPrevented;
+    });
+    assert(nativeInput, 'native input menu was prevented');
+    await clip.press('ContextMenu'); await menu.waitFor({ state: 'visible' });
+    await page.keyboard.press('End');
+    assert(await page.evaluate(() => document.activeElement.dataset.menuAction === 'edit-style'), 'End did not skip disabled history items');
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('Home');
+    assert(await page.evaluate(() => document.activeElement.dataset.menuAction === 'select'), 'Home did not focus first item');
+    await menu.locator('[data-menu-action="duplicate"]').focus();
+    await page.keyboard.press('Space');
+    await page.waitForFunction(() => window.ffs.video.clips.length === 5);
+    await clip.press('ContextMenu');
+    await menu.locator('[data-menu-action="undo"]').click();
+    await page.waitForFunction(() => window.ffs.video.clips.length === 4);
+    await clip.press('ContextMenu');
+    await menu.locator('[data-menu-action="redo"]').click();
+    await page.waitForFunction(() => window.ffs.video.clips.length === 5);
+    await clip.press('ContextMenu');
+    await menu.locator('[data-menu-action="undo"]').click();
+    await page.waitForFunction(() => window.ffs.video.clips.length === 4);
+
+    await clip.press('ContextMenu');
+    await menu.locator('[data-menu-action="set-beat-lock"]').click();
+    await clip.press('ContextMenu');
+    assert(await menu.locator('[data-menu-action="delete"]').isDisabled(), 'beat-locked delete was enabled');
+    assert(await menu.locator('[data-menu-action="split"]').isDisabled(), 'beat-locked split was enabled');
+    await page.keyboard.press('Escape');
+    await page.locator('#seek').evaluate((node) => { node.value = '45'; node.dispatchEvent(new Event('input')); });
+    await page.locator('#timeline .timeline-clip').first().press('ContextMenu');
+    for (const id of ['delete', 'duplicate', 'in', 'out'])
+      assert(await menu.locator(`[data-menu-action="${id}"]`).isDisabled(), `${id} would move a downstream beat-locked clip`);
+    await menu.locator('[data-menu-action="undo"]').click();
+    await page.waitForFunction(() => !window.ffs.video.clips.some((c) => c.beatLock));
+    await clip.press('ContextMenu');
+    await menu.locator('[data-menu-action="seek-start"]').click();
+
+    await page.click('[data-action="settings"]');
+    await page.locator('[data-binding="duplicate"]').fill('Mod+Shift+u');
+    await page.locator('[data-binding="duplicate"]').press('Tab');
+    await page.click('[data-action="close-settings"]');
+    await clip.press('ContextMenu');
+    assert(await menu.locator('[data-menu-action="duplicate"] kbd').textContent() === 'Mod+Shift+u', 'menu ignored custom keybinding');
+    await page.keyboard.press('Escape');
+    await page.click('[data-action="toggle-inspector"]');
+    await page.locator('.story-card').nth(1).press('ContextMenu');
+    await menu.locator('[data-menu-action="edit-text"]').click();
+    assert(await page.locator('input[data-field="title"]').evaluate((node) => node === document.activeElement), 'Edit title did not reveal and focus Inspector');
+
+    const nativeFields = await page.evaluate(() => {
+      const wrapper = document.createElement('div');
+      wrapper.contentEditable = 'true'; wrapper.innerHTML = '<span>Editable words</span>';
+      document.body.append(wrapper);
+      const nodes = [document.querySelector('#ask'), document.querySelector('#seek'), wrapper.firstChild];
+      const results = nodes.map((node) => {
+        const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+        node.dispatchEvent(event); return !event.defaultPrevented;
+      });
+      wrapper.remove(); return results;
+    });
+    assert(nativeFields.every(Boolean), 'textarea or nested contenteditable menu was prevented');
+
+    await ctx.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.locator('#canvas').press('ContextMenu');
+    const canvasMenu = page.getByRole('menu', { name: 'Canvas actions' });
+    await canvasMenu.locator('[data-menu-action="nextFrame"]').click();
+    assert(await page.evaluate(() => window.ffs.frame === window.ffs.clip.start + 1), 'Next frame did not advance');
+    await page.locator('#canvas').press('ContextMenu');
+    await canvasMenu.locator('[data-menu-action="previousFrame"]').click();
+    await page.locator('#canvas').press('ContextMenu');
+    await canvasMenu.locator('[data-menu-action="copy-timecode"]').click();
+    await page.waitForFunction(async () => await navigator.clipboard.readText() === '00:00:03:00');
+    await page.locator('#canvas').press('ContextMenu');
+    await canvasMenu.locator('[data-menu-action="play"]').click();
+    await page.waitForFunction(() => window.ffs.rate === 1);
+    await page.locator('#canvas').press('ContextMenu');
+    await canvasMenu.getByRole('menuitem', { name: 'Pause', exact: false }).click();
+    await page.waitForFunction(() => window.ffs.rate === 0);
+
+    for (const theme of ['light', 'contrast', 'dark']) {
+      await page.click('[data-action="settings"]');
+      await page.selectOption('#theme', theme);
+      await page.click('[data-action="close-settings"]');
+      await clip.evaluate((node) => node.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: innerWidth - 1, clientY: innerHeight - 1 })));
+      const bounds = await menu.boundingBox(), viewport = page.viewportSize();
+      assert(bounds.x >= 0 && bounds.y >= 0 && bounds.x + bounds.width <= viewport.width && bounds.y + bounds.height <= viewport.height, 'menu escaped viewport');
+      await shot('07-context-menu-' + theme);
+      await page.keyboard.press('Escape');
+    }
+    await page.locator('.ph-title').click({ button: 'right' });
+    const workspace = page.getByRole('menu', { name: 'Workspace actions' });
+    await workspace.locator('[data-menu-action="palette"]').click();
+    assert(await page.locator('#palette').isVisible(), 'empty-space palette did not open');
+    await page.click('[data-action="close-palette"]');
+    await page.locator('.ph-title').click({ button: 'right' });
+    await workspace.locator('[data-menu-action="settings"]').click();
+    assert(await page.locator('#settings').isVisible(), 'empty-space settings did not open');
+    // Restore settings and saved state for the existing journeys.
+    await page.locator('[data-binding="duplicate"]').fill('Mod+d');
+    await page.locator('[data-binding="duplicate"]').press('Tab');
+    await page.click('[data-action="close-settings"]');
+    await page.click('[data-action="save"]');
+    await page.waitForFunction(() => !window.ffs.dirty);
+    await page.click('#crumbs a'); await page.waitForSelector('.card');
+    await page.locator('.card').press('ContextMenu');
+    const projectMenu = page.getByRole('menu', { name: 'Project actions' });
+    await projectMenu.locator('[data-menu-action="reveal-path"]').click();
+    const sourcePath = JSON.parse(fs.readFileSync(path.join(HOME, 'fframestudio/projects/demo/project.json'), 'utf8')).metadata.source.path;
+    await page.waitForFunction(async (expected) => await navigator.clipboard.readText() === expected, sourcePath);
+    await page.locator('.card').press('Shift+F10');
+    await page.locator('.libhead h1').click();
+    assert(await projectMenu.isHidden(), 'outside click did not close menu');
+    await page.locator('.card').press('ContextMenu');
+    await projectMenu.locator('[data-menu-action="open-project"]').click();
+    await page.waitForFunction(() => window.ffs?.doc && !window.ffs.loading && document.querySelector('#preview-video'));
+    assert(timing.menu_open_ms.worst < 16, `menu open → first rendering opportunity exceeded 16 ms: ${JSON.stringify(timing)}`);
+    return { ...timing, browser_default_prevented: prevented, native_input: nativeInput, seek_s: 3, source_path_copied: sourcePath, undo_redo: true, themes: ['dark', 'light', 'contrast'] };
+  });
   await journey('edit: shot title saves and survives reload', async () => {
     await page.locator('#timeline .timeline-clip').first().click();
     const clipId = await page.locator('#timeline .timeline-clip.selected').getAttribute('data-select');

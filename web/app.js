@@ -1,6 +1,7 @@
 // fframestudio web app: project library + project view + ACP assistant.
 // Served by the local bridge (same origin), authenticated by the cookie the /open link sets.
-import { Editor } from '/app/src/editor.js';
+import { Editor, defaults } from '/app/src/editor.js';
+import { ContextMenu } from '/app/src/context-menu.js';
 const connectAgent=async options=>(await import('/app/dist/acp-client.js')).connectAgent(options);
 const bridgeApi=()=>({read:async p=>{const r=await fetch('/fs?path='+encodeURIComponent(p));if(!r.ok)throw Error('Read failed: '+r.status);return r.json();},agents:async()=>{const r=await fetch('/agents');return r.json();},events:fn=>{const es=new EventSource('/events');es.onmessage=e=>fn(JSON.parse(e.data));return ()=>es.close();}});
 
@@ -11,6 +12,36 @@ const fmt = (t) => { t = Math.max(0, +t || 0); return `${Math.floor(t / 60)}:${S
 const BASE = location.origin, api = bridgeApi(BASE, null);
 const url = (proj, p) => (!p ? '' : p.startsWith('/') ? `/file?path=${encodeURIComponent(p)}` : `/lib/${proj}/${p}`);
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2400); }
+
+async function libraryAction(action, project) {
+  if (action === 'open-project') location.hash = '#/p/' + project.id;
+  if (action === 'reveal-path') {
+    const file = await api.read(`projects/${project.id}/project.json`);
+    const doc = JSON.parse(file.content);
+    const source = (doc.metadata?.source || doc.source)?.path;
+    if (!source?.startsWith('/')) throw Error('Absolute source path unavailable');
+    await navigator.clipboard.writeText(source);
+    toast('Copied source path');
+  }
+}
+new ContextMenu((target) => {
+  if (EDITOR) return EDITOR.contextItems(target);
+  if (!ME?.ok) return null;
+  const card = target.closest('.card');
+  if (card) {
+    const project = LIB.projects.find((p) => p.id === card.dataset.project);
+    return { label: 'Project actions', invoker: card, items: [
+      { id: 'open-project', label: 'Open project', run: () => libraryAction('open-project', project) },
+      { id: 'reveal-path', label: 'Reveal path · copy source', run: () => libraryAction('reveal-path', project) },
+    ] };
+  }
+  let keys = {};
+  try { keys = JSON.parse(localStorage.getItem('ffs.settings') || '{}').keys || {}; } catch {}
+  return { label: 'Workspace actions', items: [
+    ...['palette', 'settings'].map((id) => ({ id, label: id === 'palette' ? 'Command palette' : 'Workspace settings', disabled: true, shortcut: keys[id] ?? defaults[id] })),
+    null, ...['undo', 'redo'].map((id) => ({ id, label: id === 'undo' ? 'Undo' : 'Redo', disabled: true, shortcut: keys[id] ?? defaults[id] })),
+  ] };
+}, (error) => toast(error.message));
 
 let ME = null, AGENTS = [], LIB = null;
 async function boot() {
@@ -37,10 +68,15 @@ function showLibrary() {
   const shown = ps.filter((p) => !TAG || (p.tags || []).includes(TAG));
   $('#view').innerHTML = `<div class="libhead"><div><div class="cap">library · ${ps.length} projects</div><h1>Every film, <em>one place.</em></h1></div>
     <div class="chips"><button class="pill ${!TAG ? 'on' : ''}" data-tag="">all</button>${tags.map((t) => `<button class="pill ${TAG === t ? 'on' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>
-  <div class="grid">${shown.map((p) => `<a class="card brk" href="#/p/${esc(p.id)}"><div class="pv">${p.poster ? `<img src="/lib/${esc(p.poster)}" loading="lazy" alt="">` : '<div class="none">no render yet</div>'}<span class="rt">${fmt(p.duration_s)}</span></div>
+  <div class="grid">${shown.map((p) => `<a class="card brk" data-project="${esc(p.id)}" href="#/p/${esc(p.id)}"><div class="pv">${p.poster ? `<img src="/lib/${esc(p.poster)}" loading="lazy" alt="">` : '<div class="none">no render yet</div>'}<span class="rt">${fmt(p.duration_s)}</span></div>
     <div class="tx"><div class="t">${esc(p.title)}</div><div class="m"><span>${esc(p.kind)}</span><span>${p.shots} shots</span><span>${p.renders} render${p.renders === 1 ? '' : 's'}</span><span>${(p.tags || []).map(esc).join(' · ')}</span></div>
     <div class="strip">${Array.from({ length: Math.min(40, p.shots || 1) }, () => '<i></i>').join('')}</div></div></a>`).join('')}</div>`;
   $$('[data-tag]').forEach((b) => (b.onclick = () => { TAG = b.dataset.tag; showLibrary(); }));
+  $$('.card').forEach((card) => (card.onclick = (event) => {
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    libraryAction('open-project', LIB.projects.find((p) => p.id === card.dataset.project)).catch((error) => toast(error.message));
+  }));
 }
 
 /* ---------------- project ---------------- */

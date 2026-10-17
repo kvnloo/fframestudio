@@ -1,0 +1,195 @@
+{
+ "started": "2026-10-17T18:14:18.392Z",
+ "out": "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-core/verify-out/context-menu-layered-3",
+ "journeys": [
+  {
+   "name": "gate: app refuses without the link",
+   "ok": true,
+   "ms": 196,
+   "agents_without_token": 401
+  },
+  {
+   "name": "library: open link, demo project listed",
+   "ok": true,
+   "ms": 131,
+   "titles": [
+    "Demo film"
+   ]
+  },
+  {
+   "name": "project: plays and seeks by shot",
+   "ok": true,
+   "ms": 897,
+   "duration_s": 12.033333,
+   "shots": 4,
+   "seek_to_shot3_s": 6
+  },
+  {
+   "name": "context menu: native menu replaced, actions work",
+   "ok": true,
+   "ms": 2352,
+   "menu_open_ms": {
+    "median": 15.400000035762787,
+    "worst": 15.600000023841858
+   },
+   "open_ready_median_ms": 1.199999988079071,
+   "open_ready_worst_ms": 2,
+   "samples": [
+    {
+     "ready_ms": 2,
+     "rendering_opportunity_ms": 14.100000023841858
+    },
+    {
+     "ready_ms": 1.300000011920929,
+     "rendering_opportunity_ms": 15.200000047683716
+    },
+    {
+     "ready_ms": 1.199999988079071,
+     "rendering_opportunity_ms": 15.5
+    },
+    {
+     "ready_ms": 1.0999999642372131,
+     "rendering_opportunity_ms": 15.5
+    },
+    {
+     "ready_ms": 1.2999999523162842,
+     "rendering_opportunity_ms": 15.399999976158142
+    },
+    {
+     "ready_ms": 1.199999988079071,
+     "rendering_opportunity_ms": 15.400000035762787
+    },
+    {
+     "ready_ms": 1.199999988079071,
+     "rendering_opportunity_ms": 15.5
+    },
+    {
+     "ready_ms": 1.199999988079071,
+     "rendering_opportunity_ms": 15.099999964237213
+    },
+    {
+     "ready_ms": 1.4000000357627869,
+     "rendering_opportunity_ms": 15.400000035762787
+    },
+    {
+     "ready_ms": 1.199999988079071,
+     "rendering_opportunity_ms": 15.600000023841858
+    }
+   ],
+   "browser_default_prevented": true,
+   "native_input": true,
+   "seek_s": 3,
+   "source_path_copied": "/home/kvn/.hermes/profiles/clean/cache/scratch/ffs-verify-4CKjD4/fframestudio/demo-src",
+   "undo_redo": true,
+   "themes": [
+    "dark",
+    "light",
+    "contrast"
+   ]
+  },
+  {
+   "name": "edit: shot title saves and survives reload",
+   "ok": true,
+   "ms": 489,
+   "before": "Hook",
+   "after": "Hook (verified)",
+   "clip_id": "s01",
+   "source_sha256": "7687abe9ed2729f1f8f208ce0af8a3fca83293f2ea996c79ffd2331f801d3930"
+  },
+  {
+   "name": "recovery: unsaved title survives page close, undo and explicit save",
+   "ok": true,
+   "ms": 1055,
+   "before": "Hook (verified)",
+   "recovered": "Hook (verified) (recovered)",
+   "version": 8,
+   "expected_hash": "64659c6a895a1f78c07298c6c00a5374e18b16cb40add9c531bd8aba0d96d493",
+   "disk_unchanged_before_save": true
+  },
+  {
+   "name": "recovery: discard keeps disk title and clears the offer",
+   "ok": true,
+   "ms": 728,
+   "saved_title": "Hook (verified) (recovered)"
+  },
+  {
+   "name": "recovery: edits during Save survive its journal checkpoint",
+   "ok": true,
+   "ms": 607,
+   "saved_snapshot": "Captured for Save",
+   "recovered_edit": "Committed while Save was pending"
+  },
+  {
+   "name": "recovery: undo across Save recovers without prior history",
+   "ok": true,
+   "ms": 833,
+   "saved_title": "Saved before undo",
+   "recovered_undo": "Committed while Save was pending"
+  },
+  {
+   "name": "recovery: Save on disk before acknowledgement preserves later edits",
+   "ok": true,
+   "ms": 733,
+   "saved_snapshot": "Saved before acknowledgement",
+   "recovered_edit": "Durable edit after captured Save"
+  },
+  {
+   "name": "recovery: external change preserves the pending recovery choice",
+   "ok": true,
+   "ms": 670,
+   "recovered_title": "Pending recovery during external change",
+   "external_title": "External change while recovery was pending"
+  },
+  {
+   "name": "assistant: agents listed, unavailable ones disabled",
+   "ok": true,
+   "ms": 3,
+   "agents": [
+    {
+     "id": "claude",
+     "disabled": false
+    },
+    {
+     "id": "codex",
+     "disabled": false
+    },
+    {
+     "id": "gemini",
+     "disabled": false
+    },
+    {
+     "id": "hermes",
+     "disabled": false
+    },
+    {
+     "id": "opencode",
+     "disabled": true
+    }
+   ]
+  },
+  {
+   "name": "mobile: 390 px has no horizontal overflow",
+   "ok": true,
+   "ms": 262,
+   "library": 390,
+   "project": 390
+  },
+  {
+   "name": "console clean",
+   "ok": true,
+   "ms": 0
+  }
+ ],
+ "console_errors": [],
+ "failed_requests": [],
+ "bridge": {
+  "port": 22939,
+  "health": {
+   "ok": true,
+   "name": "fframestudio-bridge",
+   "version": "0.1.0"
+  }
+ },
+ "finished": "2026-10-17T18:14:34.740Z",
+ "ok": true
+}

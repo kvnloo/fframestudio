@@ -13,7 +13,7 @@ const $ = (s, r = document) => r.querySelector(s),
   $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const button = (action, label) =>
   `<button class="pill" data-action="${action}">${label}</button>`;
-const defaults = {
+export const defaults = {
   play: 'Space',
   reverse: 'j',
   pause: 'k',
@@ -191,7 +191,7 @@ export class Editor {
   <dialog id="recovery" aria-labelledby="recovery-title"><h2 id="recovery-title">Recover unsaved changes?</h2><p>This project has local edits that were not saved to project.json.</p>${button('recover', 'Recover unsaved changes')}${button('discard-recovery', 'Discard')}</dialog>
   <div id="external" class="notice" hidden>File changed outside this editor. Your edits are preserved. ${button('reload-external', 'Load disk (discard local)')}${button('keep-local', 'Keep local / review overwrite')}</div>
   <div class="editor-grid"><section class="story-panel panel"><div class="panel-title">Story <span id="clip-count"></span>${button('toggle-story', 'Collapse')}</div><div id="story" tabindex="0" aria-label="Story clips"><div id="story-space"></div></div><div class="panel-foot">${button('add', 'Add clip')}${button('group', 'Group with next')}</div></section>
-  <section class="canvas-panel panel"><div class="panel-title">Canvas <span id="selection-label"></span></div><div class="player" id="canvas"><video id="preview-video" muted playsinline preload="metadata"></video><canvas id="preview-still" width="960" height="540"></canvas><div id="preview-text"></div></div><div class="preview-label">Editorial preview · source proxy / thumbnail + text. Final compositing not available.</div><div class="transport">${button('reverse', 'J ◀')}${button('play', 'Space · Play')}${button('pause', 'K ■')}${button('forward', 'L ▶')}<output id="time">0 f</output><input id="seek" type="range" min="0" value="0" aria-label="Playhead frame"></div></section>
+  <section class="canvas-panel panel"><div class="panel-title">Canvas <span id="selection-label"></span></div><div class="player" id="canvas" tabindex="0" aria-label="Canvas"><video id="preview-video" muted playsinline preload="metadata"></video><canvas id="preview-still" width="960" height="540"></canvas><div id="preview-text"></div></div><div class="preview-label">Editorial preview · source proxy / thumbnail + text. Final compositing not available.</div><div class="transport">${button('reverse', 'J ◀')}${button('play', 'Space · Play')}${button('pause', 'K ■')}${button('forward', 'L ▶')}<output id="time">0 f</output><input id="seek" type="range" min="0" value="0" aria-label="Playhead frame"></div></section>
   <section class="inspector-panel panel"><div class="panel-title">Inspector ${button('toggle-inspector', 'Collapse')}</div><div id="inspector"></div></section></div>
   <section class="timeline-panel panel"><div class="panel-title">Timeline <span id="scope" aria-live="polite">Select a clip to edit</span><label>Zoom <input id="zoom" type="range" min="0.5" max="8" step="0.25" value="1"></label><label><input id="snap" type="checkbox" checked> Snap</label></div><div id="timeline"><div id="timeline-space"><div id="beats"></div><div id="lane"></div><div id="playhead"></div></div></div><div class="panel-foot">${button('split', 'Split · S')}${button('duplicate', 'Duplicate')}${button('delete', 'Delete')}<span class="hint">Drag story cards to reorder · drag clip edges to trim · attached layers follow</span></div></section>
   <div class="secondary-grid"><section class="panel"><div class="panel-title">Versions</div><div class="version-tools"><input id="version-name" placeholder="Name this version" aria-label="Version name">${button('save-version', 'Save version')}<select id="version-a" aria-label="Version A"></select><select id="version-b" aria-label="Version B"></select>${button('compare', 'Compare')}${button('restore-version', 'Restore A')}</div><pre id="version-diff"></pre></section><section class="panel"><div class="panel-title">Assistant proposals <span>Inspect → Apply → Undo</span></div><div id="proposals">No pending proposal. Ask the assistant for an edit.</div></section></div>
@@ -221,7 +221,7 @@ export class Editor {
       if (action) this.action(action).catch((err) => this.toast(err.message));
       const node = e.target.closest('[data-select]');
       if (node && !e.target.closest('[data-edge]'))
-        this.select(node.dataset.select);
+        this.action('select', { clipId: node.dataset.select }).catch((err) => this.toast(err.message));
     };
     this.storyScroll = 0;
     this.timelineScroll = 0;
@@ -457,7 +457,9 @@ export class Editor {
           }).catch((err) => this.toast(err.message));
         };
         node.onkeydown = (e) => {
-          if (e.key === 'Enter') this.select(c.id);
+          if (e.key === 'Enter') {
+            this.action('select', { clipId: c.id }).catch((err) => this.toast(err.message));
+          }
         };
       },
     );
@@ -498,6 +500,10 @@ export class Editor {
       node.className =
         'timeline-clip' + (c.id === this.selection ? ' selected' : '');
       node.dataset.select = c.id;
+      node.tabIndex = 0;
+      node.setAttribute('role', 'button');
+      node.setAttribute('aria-label', c.name);
+      node.setAttribute('aria-pressed', c.id === this.selection);
       node.style.transform = `translateX(${c.start * this.scale}px)`;
       node.style.width = `${Math.max(2, c.duration * this.scale)}px`;
       const sig = JSON.stringify([
@@ -530,6 +536,7 @@ export class Editor {
         .join('');
     }
     $('#timeline-space').onpointerdown = (e) => {
+      if (e.button !== 0) return;
       if (!e.target.closest('.timeline-clip')) {
         const rect = $('#timeline').getBoundingClientRect();
         this.seek(
@@ -541,6 +548,7 @@ export class Editor {
     };
   }
   dragTrim(e, c, edge) {
+    if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
     const x = e.clientX,
@@ -724,7 +732,7 @@ export class Editor {
       $('[data-action="redo"]').disabled = !result.redo;
     } else this.refresh(result);
   }
-  async select(id) {
+  async select(id, seek = true) {
     if (!this.video.clips.some((c) => c.id === id)) return;
     this.selection = id;
     this.store.commit({
@@ -736,7 +744,7 @@ export class Editor {
     this.renderTimeline();
     this.renderInspector();
     $('#selection-label').textContent = this.clip.name;
-    this.seek(this.clip.start);
+    if (seek) this.seek(this.clip.start);
   }
   seek(frame) {
     this.frame = Math.max(0, Math.min(this.total - 1, Math.round(frame)));
@@ -961,13 +969,82 @@ export class Editor {
       this.recovering = false;
     }
   }
-  async action(a) {
+  shortcut(a) {
+    return this.settings.keys?.[a] ?? defaults[a] ?? '';
+  }
+  contextItems(target) {
+    if (this.loading || !this.doc || $('dialog[open]')) return null;
+    const item = (id, label, disabled = false, clipId) => ({
+      id, label, disabled, shortcut: this.shortcut(id),
+      run: () => this.action(id, { clipId }),
+    });
+    const history = [item('undo', 'Undo', !this.store.past.length), item('redo', 'Redo', !this.store.future.length)];
+    const clipNode = target.closest('.story-card,.timeline-clip');
+    if (clipNode) {
+      const c = this.video.clips.find((c) => c.id === clipNode.dataset.select);
+      if (!c) return null;
+      const clipItem = (id, label, disabled) => item(id, label, disabled, c.id);
+      const at = Math.round(this.frame) - c.start;
+      const inside = at > 0 && at < c.duration;
+      const rippleLocked = this.video.clips.slice(this.video.clips.indexOf(c) + 1).some((clip) => clip.beatLock);
+      return { label: 'Clip actions', invoker: clipNode, items: [
+        clipItem('select', 'Select'),
+        clipItem('play-here', 'Play from here'),
+        clipItem('seek-start', 'Seek to start'),
+        clipItem('edit-text', 'Edit title'), null,
+        clipItem('group', 'Group with next', this.video.clips.at(-1) === c),
+        clipItem('duplicate', 'Duplicate', rippleLocked),
+        clipItem('split', 'Split at playhead', c.beatLock || !inside || !Number.isInteger(at * c.speed.num / c.speed.den)),
+        clipItem('delete', 'Delete', c.beatLock || rippleLocked), null,
+        item('add', 'Add clip'),
+        clipItem('move', 'Move to position…', c.beatLock),
+        clipItem('trim', 'Trim…', c.beatLock),
+        clipItem('in', 'Set in at playhead', c.beatLock || rippleLocked || !inside || !Number.isInteger(at * c.speed.num / c.speed.den)),
+        clipItem('out', 'Set out at playhead', c.beatLock || rippleLocked || !inside),
+        clipItem('replace', 'Replace source…'),
+        clipItem('set-beat-lock', c.beatLock ? 'Unlock beat' : 'Lock to beat'),
+        clipItem('retime', 'Retime…', c.beatLock),
+        clipItem('edit-style', 'Edit shared style…'), null, ...history,
+      ] };
+    }
+    const canvas = target.closest('#canvas');
+    if (canvas) return { label: 'Canvas actions', invoker: canvas, items: [
+      item('play', this.rate ? 'Pause' : 'Play'),
+      item('previousFrame', 'Previous frame', this.frame <= 0),
+      item('nextFrame', 'Next frame', this.frame >= this.total - 1), null,
+      item('copy-timecode', 'Copy timecode'),
+    ] };
+    return { label: 'Workspace actions', items: [
+      item('palette', 'Command palette'), item('settings', 'Workspace settings'), null, ...history,
+    ] };
+  }
+  async action(a, { clipId } = {}) {
     if (this.loading) return;
-    const c = this.clip;
     if (a !== 'palette' && a !== 'close-palette' && $('#palette').open)
       $('#palette').close();
     if (a === 'recover' || a === 'discard-recovery') return this.recover(a === 'discard-recovery');
     if ($('#recovery').open) return;
+    if (clipId) {
+      if (!this.video.clips.some((c) => c.id === clipId)) return;
+      if (a === 'select') return this.select(clipId);
+      if (this.selection !== clipId) await this.select(clipId, false);
+    }
+    const c = this.clip;
+    if (a === 'seek-start' || a === 'play-here') {
+      if (!c) return;
+      this.seek(c.start);
+      if (a === 'play-here') return this.action('forward');
+      return;
+    }
+    if (a === 'copy-timecode') {
+      const frame = Math.floor(this.frame), fps = Math.round(fpsOf(this.doc));
+      const seconds = Math.floor(frame / fps);
+      const timecode = [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60, frame % fps]
+        .map((n) => String(n).padStart(2, '0')).join(':');
+      await navigator.clipboard.writeText(timecode);
+      this.toast('Copied ' + timecode);
+      return;
+    }
     if (a === 'save') return this.save();
     if (a === 'undo' || a === 'redo') {
       return this.run({ type: a });
@@ -1160,18 +1237,22 @@ export class Editor {
       select: '#story',
       trim: '#duration',
       replace: '#replace-media',
-      'edit-text': '[data-field]',
+      'edit-text': '[data-field="title"]',
       retime: '#speed',
       'edit-style': '#style-color',
     };
     if (targets[a]) {
+      if (a !== 'select' && this.settings.inspectorCollapsed) {
+        this.settings.inspectorCollapsed = false;
+        this.saveSettings();
+      }
       $(targets[a])?.closest('details')?.setAttribute('open', '');
       $(targets[a])?.focus();
     }
   }
   key(e) {
     if (e.key === 'Escape') return;
-    const typing = e.target.matches('input,textarea,select,[contenteditable]'),
+    const typing = e.target.matches('input,textarea,select') || e.target.isContentEditable,
       mod = e.ctrlKey || e.metaKey;
     const key =
       (mod ? 'Mod+' : '') +

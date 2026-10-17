@@ -1,0 +1,118 @@
+{
+  "diagnostic_only": true,
+  "instrumentation": "CDP devtools.timeline,blink.user_timing",
+  "version": "before layer isolation; not an acceptance run",
+  "stage_durations_may_overlap": true,
+  "samples": [
+    {
+      "rendering_opportunity_ms": 14.311,
+      "last_paint_end_ms": 13.743,
+      "stages_ms": {
+        "Layout": 0.833,
+        "UpdateLayoutTree": 0.467,
+        "Paint": 0.63,
+        "PrePaint": 0.173,
+        "Layerize": 0.325
+      }
+    },
+    {
+      "rendering_opportunity_ms": 14.909,
+      "last_paint_end_ms": 14.342,
+      "stages_ms": {
+        "Layout": 0.527,
+        "UpdateLayoutTree": 0.378,
+        "Paint": 0.586,
+        "PrePaint": 0.184,
+        "Layerize": 0.323
+      }
+    },
+    {
+      "rendering_opportunity_ms": 15.456,
+      "last_paint_end_ms": 14.934,
+      "stages_ms": {
+        "Layout": 0.639,
+        "UpdateLayoutTree": 0.342,
+        "Paint": 0.569,
+        "PrePaint": 0.199,
+        "Layerize": 0.325
+      }
+    },
+    {
+      "rendering_opportunity_ms": 15.371,
+      "last_paint_end_ms": 14.702,
+      "stages_ms": {
+        "Layout": 0.516,
+        "UpdateLayoutTree": 0.364,
+        "Paint": 0.797,
+        "PrePaint": 0.2,
+        "Layerize": 0.381
+      }
+    },
+    {
+      "rendering_opportunity_ms": 14.416,
+      "last_paint_end_ms": 13.803,
+      "stages_ms": {
+        "Layout": 0.666,
+        "UpdateLayoutTree": 0.39,
+        "Paint": 0.711,
+        "PrePaint": 0.195,
+        "Layerize": 0.356
+      }
+    },
+    {
+      "rendering_opportunity_ms": 15.282,
+      "last_paint_end_ms": 14.664,
+      "stages_ms": {
+        "Layout": 0.65,
+        "UpdateLayoutTree": 0.388,
+        "Paint": 0.679,
+        "PrePaint": 0.414,
+        "Layerize": 0.376
+      }
+    },
+    {
+      "rendering_opportunity_ms": 14.907,
+      "last_paint_end_ms": 14.352,
+      "stages_ms": {
+        "Layout": 0.519,
+        "UpdateLayoutTree": 0.339,
+        "Paint": 0.674,
+        "PrePaint": 0.247,
+        "Layerize": 0.329
+      }
+    },
+    {
+      "rendering_opportunity_ms": 15.242,
+      "last_paint_end_ms": 14.598,
+      "stages_ms": {
+        "Layout": 0.656,
+        "UpdateLayoutTree": 0.467,
+        "Paint": 0.699,
+        "PrePaint": 0.265,
+        "Layerize": 0.399
+      }
+    },
+    {
+      "rendering_opportunity_ms": 15.276,
+      "last_paint_end_ms": 14.717,
+      "stages_ms": {
+        "Layout": 0.565,
+        "UpdateLayoutTree": 0.414,
+        "Paint": 0.684,
+        "PrePaint": 0.216,
+        "Layerize": 0.331
+      }
+    },
+    {
+      "rendering_opportunity_ms": 15.683,
+      "last_paint_end_ms": 15.09,
+      "stages_ms": {
+        "Layout": 0.575,
+        "UpdateLayoutTree": 0.392,
+        "Paint": 0.922,
+        "PrePaint": 0.193,
+        "Layerize": 0.354
+      }
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "samples_per_run": 10,
+  "runs": [
+    {
+      "run": 1,
+      "ok": true,
+      "journeys": 14,
+      "menu_open_ms": {
+        "median": 15.399999976158142,
+        "worst": 15.699999988079071
+      },
+      "open_ready_worst_ms": 2
+    },
+    {
+      "run": 2,
+      "ok": true,
+      "journeys": 14,
+      "menu_open_ms": {
+        "median": 15.450000017881393,
+        "worst": 15.600000023841858
+      },
+      "open_ready_worst_ms": 2.199999988079071
+    },
+    {
+      "run": 3,
+      "ok": true,
+      "journeys": 14,
+      "menu_open_ms": {
+        "median": 15.400000035762787,
+        "worst": 15.600000023841858
+      },
+      "open_ready_worst_ms": 2
+    },
+    {
+      "run": 4,
+      "ok": false,
+      "journeys": 14,
+      "menu_open_ms": {
+        "median": 15.599999964237213,
+        "worst": 17.599999964237213
+      },
+      "open_ready_worst_ms": 2.099999964237213
+    },
+    {
+      "run": 5,
+      "ok": true,
+      "journeys": 14,
+      "menu_open_ms": {
+        "median": 15.350000023841858,
+        "worst": 15.800000011920929
+      },
+      "open_ready_worst_ms": 3.200000047683716
+    }
+  ],
+  "median_of_run_medians_ms": 15.400000035762787,
+  "worst_ms": 17.599999964237213,
+  "strict_16ms_consistently_qualified": false
+}

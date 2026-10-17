@@ -191,3 +191,66 @@ RPCs and a 9.0 ms worst main-thread cost. A `< 16 ms` threshold on that number c
 The gate now states what the user cares about: **the edit is presented in the very next frame**
 (command → next rAF below 1.5 × the measured median frame interval, i.e. no dropped frame), and the
 main-thread work is still held to `< 16 ms` by the paint-ready gate. No other budget changed.
+
+## Context menus: measured open latency
+
+Measured 2026-10-17 on Node v26.7.0 / Chromium 153.0.8010.52, Linux, 1440×900
+headless viewport. The latest `npm test`, `npm run verify` and `npm run test:perf` all
+exit 0. **The strict <16 ms menu rendering-opportunity budget is not consistently
+qualified across repeated runs:** one of five final verification processes fails on a
+17.6 ms tail. The gate remains strict; no frame-rate settings, budgets or sample phase
+were changed to make it pass.
+
+The reusable menu uses `performance.mark('context-menu:open')` before resolving actions
+and building rows. `context-menu:ready` follows sizing, viewport clamping and focus.
+`context-menu:first-paint` is marked in a zero-delay task posted by the next rAF;
+`context-menu:open-paint` measures that first rendering opportunity, **not physical
+compositor presentation**. It includes vsync wait and task scheduling as well as work.
+The menu is paint/layout-contained and positioned with a transform on its own layer,
+so clamping does not require a second position layout.
+
+The new verify journey performs ten actual pointer right-clicks (first open plus nine
+reopens), checks the menu is visible and the editor state is unchanged, and retains
+both timings. It asserts both open-ready work and open-to-rendering-opportunity are
+strictly below 16 ms. No warmup samples are discarded. The five runs below are sequential,
+not an interleaved A/B: they do not establish an optimization speedup.
+
+| Run | Open → rendering opportunity, median / worst | Open-ready worst | Verify |
+| --- | --- | --- | --- |
+| [1](evidence/context-menu/run-1/report.json) | 15.40 / 15.70 ms | 2.0 ms | 14/14 pass |
+| [2](evidence/context-menu/run-2/report.json) | 15.45 / 15.60 ms | 2.2 ms | 14/14 pass |
+| [3](evidence/context-menu/run-3/report.json) | 15.40 / 15.60 ms | 2.0 ms | 14/14 pass |
+| [4](evidence/context-menu/run-4/report.json) | 15.60 / 17.60 ms | 2.1 ms | 13/14; strict menu deadline failed |
+| [5, latest](evidence/context-menu/run-5/report.json) | 15.35 / 15.80 ms | 3.2 ms | 14/14 pass |
+
+The [aggregate](evidence/context-menu/runs.json) is **15.40 ms median of run medians /
+17.60 ms worst**, not a claim that all opens meet 16 ms. Latest open-ready work is
+1.30 ms median / 3.20 ms worst. Shared-host load was 7.68 / 7.42 / 6.55 on 10 logical
+cores before repeated measurement; other workloads and the user's bridges were left alone.
+An [earlier failed run](evidence/context-menu/initial-failed/report.json) reached exactly
+16.0 ms and is retained too. Failed reports predating the dedicated `context_menu` report
+field contain the timing summary in their truncated error; future failures retain all samples.
+
+An optional diagnostic (`FFS_MENU_TRACE=1 npm run verify`) captures CDP timeline events
+around only those ten opens. Its [trace](evidence/context-menu/diagnostic/trace.json.gz) and
+[summary](evidence/context-menu/diagnostic/trace-summary.json) precede layer isolation and are
+not acceptance samples. They show 0.516–0.833 ms Layout, 0.569–0.922 ms Paint per open,
+with the last Paint ending at 13.743–15.090 ms after open and the following task at
+14.311–15.683 ms. Stage durations may overlap; do not sum them as CPU time. The dominant
+wall-time component is waiting for rendering/task scheduling, not row construction. This
+diagnostic cannot prove the later 17.6 ms outlier's compositor timing; reliable strict-tail
+qualification remains open.
+
+The latest [500-clip perf receipt](evidence/context-menu/perf.json) passes all existing
+budgets: 160.2 ms cold open, 9.4 ms worst command-to-layout-ready, 17.7 ms worst next-rAF
+against the unchanged next-frame gate, 60.003 fps scrub, zero scrub long tasks, and
+30,289 shipped JS gzip bytes by Python gzip. `npm test` passes 38 document tests plus ACP
+security, including assertions that discovery config bytes and mtime are unchanged.
+
+The new 14th journey also checks keyboard seek against actual video time, Escape focus
+return, native input/textarea/contenteditable menus, duplicate/undo/redo, beat-lock disabled
+states, custom shortcuts, Canvas transport/clipboard and library source-path copy.
+The final open-menu screenshots were visually inspected in
+[dark](evidence/context-menu/menu-dark.png), [light](evidence/context-menu/menu-light.png)
+and [high contrast](evidence/context-menu/menu-contrast.png); labels, shortcuts, focus and
+separators are readable, and the bottom-right-clamped menu fits the viewport.
