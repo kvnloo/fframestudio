@@ -180,3 +180,14 @@ and an external change while recovery is pending. The
 Remaining performance work is the strict next-frame failure and compositor presentation
 qualification. Structural edits still use whole-array patches where necessary; bounded splice
 patches would need separate correctness and end-to-end measurements.
+
+## Correction: what "command → next frame" measures (2026-10-17)
+
+The suite issues each command immediately after a `requestAnimationFrame` callback, then awaits the
+next one. Command → next rAF is therefore about one vsync interval (16.67 ms at 60 Hz) **by
+construction**, whatever the command costs: three runs gave 16.8 / 16.8 / 16.9 ms with zero command
+RPCs and a 9.0 ms worst main-thread cost. A `< 16 ms` threshold on that number could never pass.
+
+The gate now states what the user cares about: **the edit is presented in the very next frame**
+(command → next rAF below 1.5 × the measured median frame interval, i.e. no dropped frame), and the
+main-thread work is still held to `< 16 ms` by the paint-ready gate. No other budget changed.
