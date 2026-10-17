@@ -1,5 +1,5 @@
 // End-to-end ACP test: real bridge, real agents, real logins.
-// Usage: node test/acp-e2e.mjs [agent ...] [--edit agent]
+// Usage: node test/acp-e2e.mjs [agent ...] [--edit agent]   (no agents: security checks only, ~1 s)
 //  - checks the bridge refuses: no token, wrong token, foreign Origin, rebinding Host
 //  - for each agent: initialize + new session + one prompt ("pong"), timing and stop reason
 //  - --edit <agent>: asks that agent to edit project.json and verifies the file changed
@@ -67,3 +67,10 @@ try {
   }
 } finally { bridge.kill(); }
 console.log(JSON.stringify(out, null, 1));
+// fail loudly so CI and agents can rely on the exit code
+const sec = out.security, fails = [];
+const want = { no_token: 401, bad_token: 401, foreign_origin: 403, rebinding_host: 403, ok: 200, path_escape: 400, ws_no_token: 'refused', ws_bad_token: 'refused' };
+for (const [k, v] of Object.entries(want)) if (sec[k] !== v) fails.push(`security.${k}: got ${sec[k]}, want ${v}`);
+for (const [id, r] of Object.entries(out.agents)) if (!r.ok) fails.push(`agent ${id}: ${r.error || 'no pong'}`);
+if (out.edit && !out.edit.ok) fails.push(`edit ${out.edit.agent}: ${out.edit.error || 'file not changed as asked'}`);
+if (fails.length) { console.error('FAIL\n' + fails.join('\n')); process.exit(1); } else console.error('ok');

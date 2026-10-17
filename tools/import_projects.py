@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Import Kevin's existing video projects into the fframestudio library.
+"""Import existing video projects into the fframestudio library.
 
-Reads projects/sources.json and writes, per project, into the library root
+Reads ~/.config/fframestudio/sources.json (your projects; falls back to projects/sources.example.json) and writes, per project, into the library root
 (~/fframestudio/projects/<id>/, the folder the bridge serves):
   project.json            fframestudio.project/0 (see docs/project-format.md)
   media/poster.jpg        a frame at 30 %
@@ -18,7 +18,10 @@ Usage: python3 tools/import_projects.py [ids...] [--force]
 import datetime as dt, json, os, pathlib, re, subprocess, sys
 
 HERE = pathlib.Path(__file__).resolve().parent.parent
-SRC = json.loads((HERE / "projects/sources.json").read_text())
+SRC_FILE = pathlib.Path(os.environ.get("FFS_SOURCES", os.path.expanduser("~/.config/fframestudio/sources.json")))
+if not SRC_FILE.exists(): SRC_FILE = HERE / "projects/sources.example.json"
+SRC = json.loads(SRC_FILE.read_text())
+for _s in SRC["sources"]: _s["path"] = os.path.expanduser(_s["path"])
 LIB = pathlib.Path(os.path.expanduser(SRC["library_root"])); LIB.mkdir(parents=True, exist_ok=True)
 args = [a for a in sys.argv[1:] if not a.startswith("--")]; FORCE = "--force" in sys.argv
 now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
@@ -110,7 +113,7 @@ def import_one(s):
         poster = pdir / "media" / "poster.jpg"; first = next((sh_["media"][0] for sh_ in P["shots"] if sh_["type"] == "P" and sh_.get("media")), None)
         if first: frame(first, 2.5 if first.endswith('.mp4') else 0, poster, 960)
         P["media"] = {"poster": "media/poster.jpg" if poster.exists() else None, "app": str(base / s["studio"])}
-        P["edit_in"] = {"app": "expresslane studio", "url": "https://expresslane-storyboard.vercel.app/studio", "local": str(base / s["studio"])}
+        P["edit_in"] = {"app": "studio page", "url": s.get("live"), "local": str(base / s["studio"])}
     elif k in ("fframes", "html-film"):
         render = pathlib.Path(s["render"]) if s.get("render", "").startswith("/") else base / s.get("render", "")
         if k == "html-film":

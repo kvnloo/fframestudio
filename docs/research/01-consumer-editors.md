@@ -454,7 +454,7 @@ These are design hypotheses drawn from the cited workflows, not results of contr
 
 ### A. Preserve the seed's structural advantage
 
-Local source inspected: `/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/scripts/studio/studio.js`. Its opening establishes `render(T)` as the common time-based rendering model; shots are timed in bars against detected beats. `DEF` separates direction, narrative and per-shot overrides; `ARCS`, `PACES` and `buildShots()` encode narrative-to-shot construction. These are **local code observations**, not external product claims.
+Local source inspected: `<seed studio repo>/scripts/studio/studio.js`. Its opening establishes `render(T)` as the common time-based rendering model; shots are timed in bars against detected beats. `DEF` separates direction, narrative and per-shot overrides; `ARCS`, `PACES` and `buildShots()` encode narrative-to-shot construction. These are **local code observations**, not external product claims.
 
 **Recommendation:** generalize the structure, not the traffic theme. Keep:
 

@@ -132,7 +132,7 @@ In these tables, **web** means documented browser execution, not that every mobi
 
 ### What fframes actually changes about the seed
 
-The inspected local seed is `traffic-vision/expresslane-pretotypes/scripts/studio/studio.js`, especially lines 634–644. `exportSpec()` emits **`schema: 'pretotype-film/1'`**, direction/narrative, soundtrack attribution, runtime, `fps: 60`, `[1920,1080]`, honesty/watermark metadata and timed shots. A toast says “the fframes build reads this file.” **That toast is not evidence that a reader exists or accepts arbitrary film specs.** This survey inspected the exporter, not a working downstream adapter.
+The inspected local seed is `<seed studio repo>/scripts/studio/studio.js`, especially lines 634–644. `exportSpec()` emits **`schema: 'pretotype-film/1'`**, direction/narrative, soundtrack attribution, runtime, `fps: 60`, `[1920,1080]`, honesty/watermark metadata and timed shots. A toast says “the fframes build reads this file.” **That toast is not evidence that a reader exists or accepts arbitrary film specs.** This survey inspected the exporter, not a working downstream adapter.
 
 Upstream fframes' documented contract is Rust `Video::render_frame(...)` returning an SVG tree. Its [crate manifest](https://github.com/dmtrKovalenko/fframes/blob/main/fframes/Cargo.toml) declares MIT and codec feature gates. Therefore:
 

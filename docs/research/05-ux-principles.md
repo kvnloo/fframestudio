@@ -255,8 +255,8 @@ These are implementation recommendations, not findings claimed for the seed:
 
 **Inspected source:**
 
-- `/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/scripts/studio/studio.js`.
-- `/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/scripts/studio/studio.css`.
+- `<seed studio repo>/scripts/studio/studio.js`.
+- `<seed studio repo>/scripts/studio/studio.css`.
 
 Line references below identify those inspected files. They are source-level observations, not claims about uninspected repository features.
 

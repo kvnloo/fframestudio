@@ -6,16 +6,14 @@ work in something that feels like a film studio.
 
 ## Run it
 
-    npm install
-    npm run build:acp
-    python3 tools/import_projects.py
+    npm run setup
     npm run bridge
 
 Open the link that `npm run bridge` prints.
 
 ## Projects
 
-Each existing film listed in `projects/sources.json` is imported into `~/fframestudio/projects`.
+Each film listed in `~/.config/fframestudio/sources.json` (start from `projects/sources.example.json`) is imported into `~/fframestudio/projects`.
 The import only reads the original files. Your edits are saved in the studio's copy of the project.
 
 ## Assistant

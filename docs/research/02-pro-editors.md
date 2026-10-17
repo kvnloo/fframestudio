@@ -219,7 +219,7 @@ Everything in this section is a proposed design, not a claim about implemented f
 
 ### 11.1 Preserve the seed’s strongest idea; replace its timing substrate
 
-Local source inspected: `/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/scripts/studio/studio.js`.
+Local source inspected: `<seed studio repo>/scripts/studio/studio.js`.
 
 The inspected seed has:
 

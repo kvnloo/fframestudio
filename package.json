@@ -8,7 +8,13 @@
   "scripts": {
     "bridge": "node bridge/bridge.mjs",
     "build:acp": "esbuild web/src/acp-client.mjs --bundle --format=esm --target=es2022 --minify --outfile=web/dist/acp-client.js",
-    "test:acp": "node test/acp-e2e.mjs"
+    "test:acp": "node test/acp-e2e.mjs",
+    "setup": "bash scripts/setup.sh",
+    "doctor": "bash scripts/setup.sh --check",
+    "test": "node test/acp-e2e.mjs",
+    "test:agents": "node test/acp-e2e.mjs claude codex hermes --edit claude",
+    "import": "python3 tools/import_projects.py",
+    "demo": "python3 tools/make_demo.py"
   },
   "devDependencies": {
     "@agentclientprotocol/sdk": "1.9.0",

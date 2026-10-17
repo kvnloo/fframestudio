@@ -369,8 +369,8 @@ This is **future work**, not completed testing: benchmark ACE-Step 1.5 2B turbo 
 
 Read-only inspection confirmed **six** entries in:
 
-- `/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/music/tracks.json`
-- `/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/music/CREDITS.md`
+- `<seed studio repo>/music/tracks.json`
+- `<seed studio repo>/music/CREDITS.md`
 
 | ID | Track | Artist | Existing declared licence | Existing approximate BPM |
 |---|---|---|---|---:|
