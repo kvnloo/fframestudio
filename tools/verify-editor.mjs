@@ -8,10 +8,14 @@ let server,child,cancelled=false;
 const stop=()=>{cancelled=true;child?.kill('SIGTERM');server?.kill('SIGTERM');};
 process.on('SIGTERM',stop);process.on('SIGINT',stop);
 try {
- await fs.cp(process.env.FFS_LIBRARY || path.join(os.homedir(),'fframestudio/projects'),path.join(root,'projects'),{recursive:true});
- if(process.argv.includes('--synthetic')){
-   const clips=Array.from({length:500},(_,i)=>({id:`clip-${i}`,name:`Clip ${i}`,t0:i*3,t1:(i+1)*3,text:{title:`Story ${i}`}}));
-   await fs.mkdir(path.join(root,'projects/perf-500'),{recursive:true});await fs.writeFile(path.join(root,'projects/perf-500/project.json'),JSON.stringify({schema:'fframestudio.project/0',id:'perf-500',title:'500 clip benchmark',kind:'fframes',canvas:{fps:30},shots:clips}));
+ const synthetic=process.argv.includes('--synthetic');
+ // --synthetic is hermetic (CI, contributors): generated projects only. Otherwise copy a library (FFS_LIBRARY or ~/fframestudio/projects).
+ if(!synthetic) await fs.cp(process.env.FFS_LIBRARY || path.join(os.homedir(),'fframestudio/projects'),path.join(root,'projects'),{recursive:true});
+ if(synthetic){
+   const project=async(id,title,n)=>{const clips=Array.from({length:n},(_,i)=>({id:`clip-${i}`,name:`Clip ${i}`,t0:i*3,t1:(i+1)*3,text:{title:`Story ${i}`}}));
+     await fs.mkdir(path.join(root,'projects',id),{recursive:true});await fs.writeFile(path.join(root,'projects',id,'project.json'),JSON.stringify({schema:'fframestudio.project/0',id,title,kind:'fframes',canvas:{fps:30},shots:clips}));};
+   await project('perf-500','500 clip benchmark',500);
+   await project('perf-48','48 clip cold-open fixture',48); // same clip count as the largest real project the budget was set on
  }
  server=spawn(process.execPath,['bridge/bridge.mjs','--port',process.env.FFS_PORT || '7879','--root',root,'--no-config'],{cwd:repo,stdio:['ignore','pipe','pipe']});
  let log='';server.stdout.on('data',d=>log+=d);server.stderr.on('data',d=>{if(process.env.FFS_DEBUG)process.stderr.write(d);});

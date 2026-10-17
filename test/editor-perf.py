@@ -3,7 +3,7 @@ from playwright.async_api import async_playwright
 async def main():
     out=pathlib.Path(os.environ['FFS_EVIDENCE']);out.mkdir(parents=True,exist_ok=True)
     async with async_playwright() as p:
-        b=await p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
+        b=await p.chromium.launch(channel=os.environ.get('PW_CHANNEL'),executable_path=None if os.environ.get('PW_CHANNEL') else os.environ.get('CHROMIUM','/usr/bin/chromium'),args=['--no-sandbox'])
         context=await b.new_context(viewport={'width':1440,'height':1000})
         page=await context.new_page()
         trace=None
@@ -14,7 +14,7 @@ async def main():
         base=page.url.split('#')[0]
         # New page and disabled cache: navigation-to-editor-interactive, includes worker migration.
         cold=await context.new_page();cdp=await context.new_cdp_session(cold);await cdp.send('Network.enable');await cdp.send('Network.setCacheDisabled',{'cacheDisabled':True})
-        await cold.goto(base+'#/p/expresslane-i880',wait_until='domcontentloaded');await cold.wait_for_function('window.ffs?.doc')
+        await cold.goto(base+'#/p/'+os.environ.get('FFS_COLD_PROJECT','perf-48'),wait_until='domcontentloaded');await cold.wait_for_function('window.ffs?.doc')
         cold_ms=await cold.evaluate('window.ffs.interactiveAt')
         cold_details=await cold.evaluate('({metrics:window.ffs.metrics,resources:performance.getEntriesByType("resource").map(r=>({name:r.name,start:r.startTime,duration:r.duration}))})')
         await cold.close();await page.goto(base+'#/p/perf-500');await page.wait_for_function('window.ffs?.doc.id==="perf-500"')

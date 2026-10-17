@@ -20,7 +20,7 @@ library into `$TMPDIR/ffs-editor-*`. It never edits production projects or bridg
 Chromium is `/usr/bin/chromium`; the perf browser uses Python Playwright through uv.
 
 The synthetic document has 500 real clips with text and attachments, three seconds each.
-The cold navigation opens the largest current project, `expresslane-i880`, with 48 clips
+The cold navigation opens a generated 48-clip fixture (`perf-48`, same clip count as the largest real project when the budget was set; override with `FFS_COLD_PROJECT`), with 48 clips
 and 22,958 original JSON bytes. Migration tests copy every actual library project and
 verify that the originals remain byte-identical.
 

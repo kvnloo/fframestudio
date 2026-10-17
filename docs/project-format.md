@@ -66,7 +66,7 @@ module Worker. Opening a v0 file does not write it; Save writes v1 through the b
 The entire original v0 object is kept under `metadata` for loss-aware future adapters; it is
 not an alternate editable timeline. Original `edits` become `textOverrides`. Imported music
 beat lists (`beats` / `beat_times`, seconds relative to `starts_at_s`) become frame lists.
-BPM alone **does not invent a measured beat grid**. The current Expresslane import includes
+BPM alone **does not invent a measured beat grid**. The current import of one real project includes
 BPM but not beat times; its timeline correctly has no manufactured beat lines.
 
 Use `node tools/migrate-project.mjs INPUT.json OUTPUT.json` to migrate a **copy**. The tool
