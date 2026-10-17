@@ -644,10 +644,10 @@ kbd {
   font-size: 8px;
 }
 #timeline {
-  height: 150px;
+  height: 158px;
 }
 #timeline-space {
-  min-height: 170px;
+  min-height: 152px;
   background: none;
 }
 #film-ruler {

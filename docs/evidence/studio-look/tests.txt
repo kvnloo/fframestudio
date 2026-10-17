@@ -55,7 +55,7 @@
 ℹ todo 0
 ℹ duration_ms 1644.962864
 {
- "root": "/home/kvn/.hermes/profiles/clean/cache/scratch/ffs-acp-71bMRD",
+ "root": "<local>/ffs-acp-71bMRD",
  "security": {
   "no_token": 401,
   "bad_token": 401,

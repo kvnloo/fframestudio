@@ -265,7 +265,7 @@ export class Editor {
       select.options[0].textContent = 'Follow system · ' + info.label;
       $('#theme-source').textContent = info.label + (info.adjustments.length ? ' · Contrast adjusted for readability: ' + info.adjustments.join('; ') : ' · Original palette contrast retained');
     };
-    this.untheme?.(); this.untheme = onTheme(updateThemeInfo); updateThemeInfo(themeInfo());
+    this.untheme?.(); this.untheme = onTheme(info => { updateThemeInfo(info); this.studio?.drawWave(); }); updateThemeInfo(themeInfo());
     $('#theme').onchange = (e) => {
       this.settings.theme = e.target.value;
       this.saveSettings();
@@ -527,7 +527,7 @@ export class Editor {
       ]);
       if (node.signature !== sig) {
         node.signature = sig;
-        node.innerHTML = `<div class="clip-body">${this.thumb(c)}<span>${esc(c.name)}${c.beatLock ? ' ◆' : ''}</span><button class="trim left" data-edge="in" aria-label="Trim in ${esc(c.name)}"></button><button class="trim right" data-edge="out" aria-label="Trim out ${esc(c.name)}"></button></div><div class="attached">${c.attached.map((a) => `<div class="attached-item" style="width:${Math.max(2, a.duration * this.scale)}px;transform:translateX(${a.offset * this.scale}px)">${esc(a.kind)} · ${esc(a.field || a.mediaId || '')}</div>`).join('')}</div>`;
+        node.innerHTML = `<div class="clip-body">${this.thumb(c)}<span>${esc(c.name)}${c.beatLock ? ' ◆' : ''}</span><button class="trim left" data-edge="in" aria-label="Trim in ${esc(c.name)}"></button><button class="trim right" data-edge="out" aria-label="Trim out ${esc(c.name)}"></button></div>`;
         this.observeThumbs(node);
       }
       $$('[data-edge]', node).forEach(
@@ -535,7 +535,7 @@ export class Editor {
       );
     });
     $('#timeline-space').style.height =
-      `${Math.max(146, 100 + Math.max(0, ...rows.map(({ c }) => c.attached.length)) * 23)}px`;
+      '152px';
     const beats = this.video.beats.filter((b) => b >= min && b <= max),
       beatSignature = JSON.stringify([this.scale, beats]);
     if (this.beatSignature !== beatSignature) {

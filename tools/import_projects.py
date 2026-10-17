@@ -16,6 +16,7 @@ present; html-film -> the SHOTS table in film.js; otherwise cut detection on the
 Usage: python3 tools/import_projects.py [ids...] [--force]
 """
 import datetime as dt, json, os, pathlib, re, subprocess, sys
+from studio_music import resolve_music
 
 HERE = pathlib.Path(__file__).resolve().parent.parent
 SRC_FILE = pathlib.Path(os.environ.get("FFS_SOURCES", os.path.expanduser("~/.config/fframestudio/sources.json")))
@@ -100,7 +101,7 @@ def import_one(s):
     k = s["kind"]
     if k == "studio-spec":
         spec = spec_from_studio(base / s["studio"])
-        P.update(canvas={"width": spec["size"][0], "height": spec["size"][1], "fps": spec["fps"]}, duration_s=spec["runtime_s"], music=spec["music"], direction=spec["direction"], narrative=spec["narrative"], honesty=spec["honesty"])
+        P.update(canvas={"width": spec["size"][0], "height": spec["size"][1], "fps": spec["fps"]}, duration_s=spec["runtime_s"], music=resolve_music(base, spec["music"], pdir, s["studio"]), direction=spec["direction"], narrative=spec["narrative"], honesty=spec["honesty"])
         sb = base / "storyboard"
         for i, x in enumerate(spec["shots"]):
             media = [str(sb / x[f]) for f in ("move_file", "plate_file", "clip_file") if x.get(f)] + ([str(sb / "frames" / f"{x['screen']}.webp")] if x.get("screen") else [])

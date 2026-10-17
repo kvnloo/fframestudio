@@ -1,6 +1,5 @@
-// The ONLY desktop palette -> studio token mapping. Repoint this table after studio-look
-// merges; providers, settings, and components must not depend on their token spelling.
-export const TOKENS = Object.freeze({ bg: 'bg', bg2: 'surface', bg3: 'surface2', ink: 'fg', mute: 'muted', faint: 'muted', line: 'border', line2: 'border', acc: 'accent', acc2: 'accent2', bad: 'danger', success: 'success', warn: 'warning' });
+// The ONLY desktop palette -> Studio token mapping. Structure never depends on a provider.
+export const TOKENS = Object.freeze({ bg: 'bg', bg2: 'surface', bg3: 'surface2', ink: 'fg', mute: 'muted', faint: 'muted', line: 'border', line2: 'border', acc: 'accent', acc2: 'accent2', bad: 'danger', success: 'success', warn: 'warning', paper: 'paper', 'paper-ink': 'paperInk', 'paper-mute': 'paperMute', 'poster-accent': 'posterAccent', 'poster-lines': 'posterLines', 'wave-ink': 'muted', teal: 'ansi6', amber: 'ansi3', yellow: 'ansi5', coral: 'ansi1', green: 'ansi2', 'shot-1': 'ansi1', 'shot-2': 'ansi2', 'shot-3': 'ansi3', 'shot-4': 'ansi4', 'shot-5': 'ansi5', 'shot-6': 'ansi6' });
 const rgb = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
 const color = a => '#' + a.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
 export function luminance(c) { return rgb(c).map(v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0); }
@@ -27,6 +26,22 @@ export function ensureContrast(p) {
     out[key] = readable(p[key], surfaces, ratio);
     if (out[key] !== p[key]) out.adjustments.push(`${key}: ${p[key]} → ${out[key]} (${ratio}:1)`);
   }
+  // Paper stays warm and light in every palette; only a gentle foreground tint is allowed.
+  const mix = (a, b, t) => color(rgb(a).map((v, i) => v * (1-t) + rgb(b)[i] * t));
+  out.paper = mix('#efeee6', p.fg, 0.08);
+  out.paperInk = readable(p.bg, [out.paper], 7);
+  out.paperMute = readable(p.muted, [out.paper], 4.5);
+  out.posterAccent = readable(p.accent, [out.paper], 4.5);
+  out.posterLines = mix(out.paper, out.paperInk, 0.18);
+  // Material palettes may repeat one accent across ANSI slots. Preserve the hue but
+  // tint duplicates so five shot roles do not collapse into one undifferentiated rail.
+  const used = new Set();
+  for (let i = 1; i <= 6; i++) {
+    let c = readable(p.ansi[i], surfaces, 4.5);
+    for (let tint = 0.12; used.has(c) && tint < 0.9; tint += 0.12)
+      c = readable(mix(p.ansi[i], luminance(p.ansi[i]) > 0.8 ? '#000000' : '#ffffff', tint), surfaces, 4.5);
+    used.add(c); out['ansi'+i] = c;
+  }
   return out;
 }
 export function shotColorSlot(type) {
@@ -38,7 +53,7 @@ export function shotColorSlot(type) {
 let response = { palette: null, source: null, available: [] }, settings = {}, selectedSource = '', request = 0;
 const listeners = new Set();
 let followedSystem = false;
-const choiceOf = () => settings.theme || (response.palette || followedSystem ? 'system' : 'dark');
+const choiceOf = () => settings.theme || (response.palette || followedSystem ? 'system' : 'studio');
 let media;
 function browserPalette() {
   const dark = media?.matches ?? true;
@@ -62,10 +77,9 @@ export function applyTheme(next = settings) {
     const p = ensureContrast(response.palette || browserPalette()); lastPalette = p;
     root.dataset.theme = 'system'; root.style.colorScheme = p.dark ? 'dark' : 'light';
     for (const [token, key] of Object.entries(TOKENS)) root.style.setProperty('--' + token, p[key]);
-    for (let i = 1; i <= 6; i++) root.style.setProperty('--shot-' + i, readable(p.ansi[i], [p.bg, p.surface], 3));
   } else {
     root.dataset.theme = choice;
-    root.style.colorScheme = choice === 'light' ? 'light' : 'dark';
+    root.style.colorScheme = ['light', 'paper'].includes(choice) ? 'light' : 'dark';
     if (choice === 'custom') for (const k of ['bg', 'ink', 'acc']) if (/^#[\da-f]{6}$/i.test(settings.tokens?.[k])) root.style.setProperty('--' + k, settings.tokens[k]);
   }
   for (const fn of listeners) fn(themeInfo());

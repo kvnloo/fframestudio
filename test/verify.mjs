@@ -59,6 +59,13 @@ try {
   });
   let page = await ctx.newPage();
   const shot = (n) => page.screenshot({ path: path.join(OUT, n + '.png') });
+  // Keyboard navigation focuses and reveals its target before invoking a menu.
+  // Studio moves Story below the hero: settle the focus scroll before the menu's scroll-dismiss listener.
+  const keyboardMenu = async (target, key = 'ContextMenu') => {
+    await target.scrollIntoViewIfNeeded(); await target.focus();
+    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    await target.press(key);
+  };
 
   await journey('gate: app refuses without the link', async () => {
     await page.goto(base + '/'); await page.waitForSelector('.gate', { timeout: 10000 });
@@ -72,7 +79,7 @@ try {
     const posterOk = await page.$eval('.card img', (i) => i.complete && i.naturalWidth > 0);
     assert(posterOk, 'poster image did not load');
     assert(await page.locator('.kind-chip').count() === titles.length, 'film kind chips missing');
-    assert(await page.locator('#library-theme').inputValue() === 'studio', 'Studio is not the library default'); await shot('02-library'); return { titles };
+    await page.waitForFunction(() => document.querySelector('#library-theme').value === 'system'); assert(await page.locator('#library-theme').inputValue() === 'system', 'detected system palette is not the library default'); await shot('02-library'); return { titles };
   });
   await journey('project: plays and seeks by shot', async () => {
     await page.click('.card'); await page.waitForSelector('#preview-video');
@@ -96,7 +103,7 @@ try {
     const navigation = await page.evaluate(() => ({ interactiveMs: window.ffs.interactiveAt, themeFetches: performance.getEntriesByType('resource').filter(r => new URL(r.name).pathname === '/theme').map(r => ({start:r.startTime,ms:r.duration,bytes:r.transferSize})) }));
     const themeClip = page.locator('#timeline .timeline-clip').nth(1);
     const themeMenu = page.getByRole('menu', { name: 'Clip actions' });
-    await themeClip.press('ContextMenu');
+    await keyboardMenu(themeClip, 'ContextMenu');
     const menuPalette = () => page.evaluate(async () => {
       const { contrast } = await import('/app/src/system-theme.js');
       const menu = document.querySelector('.context-menu');
@@ -216,7 +223,7 @@ try {
     await page.keyboard.press('Enter');
     await page.waitForFunction(() => Math.abs(document.querySelector('#preview-video').currentTime - 3) < 0.05);
     assert(await menu.isHidden(), 'activation did not close menu');
-    await clip.press('Shift+F10'); await menu.waitFor({ state: 'visible' });
+    await keyboardMenu(clip, 'Shift+F10'); await menu.waitFor({ state: 'visible' });
     await page.keyboard.press('Escape');
     assert(await menu.isHidden(), 'Escape did not close menu');
     assert(await clip.evaluate((node) => node === document.activeElement), 'Escape did not restore invoking clip focus');
@@ -224,14 +231,14 @@ try {
     await page.waitForFunction(() => window.ffs.rate === 1);
     await page.keyboard.press('Space');
     await page.waitForFunction(() => window.ffs.rate === 0);
-    await clip.press('ContextMenu');
+    await keyboardMenu(clip, 'ContextMenu');
     await menu.locator('[data-menu-action="seek-start"]').click();
     const nativeInput = await page.locator('input[data-field="title"]').evaluate((node) => {
       const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
       node.dispatchEvent(event); return !event.defaultPrevented;
     });
     assert(nativeInput, 'native input menu was prevented');
-    await clip.press('ContextMenu'); await menu.waitFor({ state: 'visible' });
+    await keyboardMenu(clip, 'ContextMenu'); await menu.waitFor({ state: 'visible' });
     await page.keyboard.press('End');
     assert(await page.evaluate(() => document.activeElement.dataset.menuAction === 'edit-style'), 'End did not skip disabled history items');
     await page.keyboard.press('ArrowUp');
@@ -240,41 +247,43 @@ try {
     await menu.locator('[data-menu-action="duplicate"]').focus();
     await page.keyboard.press('Space');
     await page.waitForFunction(() => window.ffs.video.clips.length === 5);
-    await clip.press('ContextMenu');
+    await keyboardMenu(clip, 'ContextMenu');
     await menu.locator('[data-menu-action="undo"]').click();
     await page.waitForFunction(() => window.ffs.video.clips.length === 4);
-    await clip.press('ContextMenu');
+    await keyboardMenu(clip, 'ContextMenu');
     await menu.locator('[data-menu-action="redo"]').click();
     await page.waitForFunction(() => window.ffs.video.clips.length === 5);
-    await clip.press('ContextMenu');
+    await keyboardMenu(clip, 'ContextMenu');
     await menu.locator('[data-menu-action="undo"]').click();
     await page.waitForFunction(() => window.ffs.video.clips.length === 4);
 
-    await clip.press('ContextMenu');
+    await keyboardMenu(clip, 'ContextMenu');
     await menu.locator('[data-menu-action="set-beat-lock"]').click();
-    await clip.press('ContextMenu');
+    await keyboardMenu(clip, 'ContextMenu');
     assert(await menu.locator('[data-menu-action="delete"]').isDisabled(), 'beat-locked delete was enabled');
     assert(await menu.locator('[data-menu-action="split"]').isDisabled(), 'beat-locked split was enabled');
     await page.keyboard.press('Escape');
     await page.locator('#seek').evaluate((node) => { node.value = '45'; node.dispatchEvent(new Event('input')); });
-    await page.locator('#timeline .timeline-clip').first().press('ContextMenu');
+    await keyboardMenu(page.locator('#timeline .timeline-clip').first(), 'ContextMenu');
     for (const id of ['delete', 'duplicate', 'in', 'out'])
       assert(await menu.locator(`[data-menu-action="${id}"]`).isDisabled(), `${id} would move a downstream beat-locked clip`);
     await menu.locator('[data-menu-action="undo"]').click();
     await page.waitForFunction(() => !window.ffs.video.clips.some((c) => c.beatLock));
-    await clip.press('ContextMenu');
+    await keyboardMenu(clip, 'ContextMenu');
     await menu.locator('[data-menu-action="seek-start"]').click();
 
     await page.click('[data-action="settings"]');
     await page.locator('[data-binding="duplicate"]').fill('Mod+Shift+u');
     await page.locator('[data-binding="duplicate"]').press('Tab');
     await page.click('[data-action="close-settings"]');
-    await clip.press('ContextMenu');
+    await keyboardMenu(clip, 'ContextMenu');
     const dupKey = await menu.locator('[data-menu-action="duplicate"] kbd').textContent();
     assert(['Ctrl+Shift+U', '⇧⌘U'].includes(dupKey), `menu ignored custom keybinding: ${dupKey}`);
     await page.keyboard.press('Escape');
     await page.click('[data-action="toggle-inspector"]');
-    await page.locator('.story-card').nth(1).press('ContextMenu');
+    await page.locator('.story-card').nth(1).scrollIntoViewIfNeeded();
+    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    await keyboardMenu(page.locator('.story-card').nth(1), 'ContextMenu');
     await menu.locator('[data-menu-action="edit-text"]').click();
     assert(await page.locator('input[data-field="title"]').evaluate((node) => node === document.activeElement), 'Edit title did not reveal and focus Inspector');
 
@@ -292,23 +301,23 @@ try {
     assert(nativeFields.every(Boolean), 'textarea or nested contenteditable menu was prevented');
 
     await ctx.grantPermissions(['clipboard-read', 'clipboard-write']);
-    await page.locator('#canvas').press('ContextMenu');
+    await keyboardMenu(page.locator('#canvas'), 'ContextMenu');
     const canvasMenu = page.getByRole('menu', { name: 'Canvas actions' });
     await canvasMenu.locator('[data-menu-action="nextFrame"]').click();
     assert(await page.evaluate(() => window.ffs.frame === window.ffs.clip.start + 1), 'Next frame did not advance');
-    await page.locator('#canvas').press('ContextMenu');
+    await keyboardMenu(page.locator('#canvas'), 'ContextMenu');
     await canvasMenu.locator('[data-menu-action="previousFrame"]').click();
-    await page.locator('#canvas').press('ContextMenu');
+    await keyboardMenu(page.locator('#canvas'), 'ContextMenu');
     await canvasMenu.locator('[data-menu-action="copy-timecode"]').click();
     await page.waitForFunction(async () => await navigator.clipboard.readText() === '00:00:03:00');
-    await page.locator('#canvas').press('ContextMenu');
+    await keyboardMenu(page.locator('#canvas'), 'ContextMenu');
     await canvasMenu.locator('[data-menu-action="play"]').click();
     await page.waitForFunction(() => window.ffs.rate === 1);
-    await page.locator('#canvas').press('ContextMenu');
+    await keyboardMenu(page.locator('#canvas'), 'ContextMenu');
     await canvasMenu.getByRole('menuitem', { name: 'Pause', exact: false }).click();
     await page.waitForFunction(() => window.ffs.rate === 0);
 
-    for (const theme of ['light', 'contrast', 'dark']) {
+    for (const theme of ['studio', 'paper', 'light', 'contrast', 'dark']) {
       await page.click('[data-action="settings"]');
       await page.selectOption('#theme', theme);
       await page.click('[data-action="close-settings"]');
@@ -333,27 +342,27 @@ try {
     await page.click('[data-action="save"]');
     await page.waitForFunction(() => !window.ffs.dirty);
     await page.click('#crumbs a'); await page.waitForSelector('.card');
-    await page.locator('.card').press('ContextMenu');
+    await keyboardMenu(page.locator('.card'), 'ContextMenu');
     const projectMenu = page.getByRole('menu', { name: 'Project actions' });
     await projectMenu.locator('[data-menu-action="reveal-path"]').click();
     const sourcePath = JSON.parse(fs.readFileSync(path.join(HOME, 'fframestudio/projects/demo/project.json'), 'utf8')).metadata.source.path;
     await page.waitForFunction(async (expected) => await navigator.clipboard.readText() === expected, sourcePath);
-    await page.locator('.card').press('Shift+F10');
+    await keyboardMenu(page.locator('.card'), 'Shift+F10');
     await page.locator('.libhead h1').click();
     assert(await projectMenu.isHidden(), 'outside click did not close menu');
-    await page.locator('.card').press('ContextMenu');
+    await keyboardMenu(page.locator('.card'), 'ContextMenu');
     await projectMenu.locator('[data-menu-action="open-project"]').click();
     await page.waitForFunction(() => window.ffs?.doc && !window.ffs.loading && document.querySelector('#preview-video'));
     // Same rule as the editor perf gate: the menu must be presented in the very next frame (open work is
     // gated <16 ms above). Time to the next rAF is ~one vsync by construction, so compare to the measured frame.
     const frameMs = await page.evaluate(() => new Promise((ok) => { const t = []; const f = (x) => { t.push(x); t.length < 12 ? requestAnimationFrame(f) : ok(t.slice(1).map((v, i) => v - t[i]).sort((a, b) => a - b)[5]); }; requestAnimationFrame(f); }));
     assert(timing.menu_open_ms.worst < 1.5 * frameMs, `menu not presented in the next frame (frame ${frameMs} ms): ${JSON.stringify(timing)}`);
-    return { ...timing, browser_default_prevented: prevented, native_input: nativeInput, seek_s: 3, source_path_copied: sourcePath, undo_redo: true, themes: ['dark', 'light', 'contrast'] };
+    return { ...timing, browser_default_prevented: prevented, native_input: nativeInput, seek_s: 3, source_path_copied: sourcePath, undo_redo: true, themes: ['studio', 'paper', 'dark', 'light', 'contrast'] };
   });
   await journey('studio: themes, slate tabs, loops and screening room', async () => {
     await page.click('[data-action="settings"]');
     const themes = await page.locator('#theme option').evaluateAll(ns => ns.map(n => n.value));
-    assert(['studio','paper','dark','light','contrast','custom'].every(t => themes.includes(t)), 'a workspace theme was lost');
+    assert(['system','studio','paper','dark','light','contrast','custom'].every(t => themes.includes(t)), 'a workspace theme was lost');
     await page.selectOption('#theme', 'paper');
     assert(await page.evaluate(() => document.documentElement.dataset.theme === 'paper'), 'Paper did not apply');
     await page.selectOption('#theme', 'studio');
@@ -382,6 +391,9 @@ try {
     await page.click('[data-action="screening"]');
     await page.waitForFunction(() => document.fullscreenElement?.id === 'canvas');
     await page.evaluate(() => document.exitFullscreen());
+    await page.waitForFunction(() => window.ffs.studio.peaks?.some(x => x > 0));
+    assert(await page.evaluate(() => window.ffs.studio.energy.some(x => x > 0) && !document.querySelector('#audio-wave').hidden), 'Demo real audio waveform/energy missing');
+    assert(await page.locator('.attached-item').count() === 0, 'timeline attachment clutter returned');
     await shot('03-studio-slate');
     return { themes, loop_shot: true, loop_film: true, mute: true, screening_room: true };
   });

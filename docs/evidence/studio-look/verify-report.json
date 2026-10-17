@@ -1,6 +1,6 @@
 {
  "started": "2026-10-17T18:48:16.180Z",
- "out": "/mnt/zer0models/project-artifacts/fframestudio/ui-compare/studio-look/verify-delivery",
+ "out": "<local>/verify-delivery",
  "journeys": [
   {
    "name": "gate: app refuses without the link",

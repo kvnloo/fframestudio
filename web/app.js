@@ -2,7 +2,7 @@
 // Served by the local bridge (same origin), authenticated by the cookie the /open link sets.
 import { Editor, defaults } from '/app/src/editor.js';
 import { ContextMenu } from '/app/src/context-menu.js';
-import { initSystemTheme, receiveTheme } from '/app/src/system-theme.js';
+import { initSystemTheme, receiveTheme, setThemeSettings, themeInfo, onTheme } from '/app/src/system-theme.js';
 import { colourSlot } from '/app/src/studio.js';
 const connectAgent=async options=>(await import('/app/dist/acp-client.js')).connectAgent(options);
 const bridgeApi=()=>({read:async p=>{const r=await fetch('/fs?path='+encodeURIComponent(p));if(!r.ok)throw Error('Read failed: '+r.status);return r.json();},agents:async()=>{const r=await fetch('/agents');return r.json();},events:fn=>{const es=new EventSource('/events');es.addEventListener('theme',e=>receiveTheme(JSON.parse(e.data)));es.onmessage=e=>fn(JSON.parse(e.data));return ()=>es.close();}});
@@ -66,11 +66,21 @@ function route() {
 
 /* ---------------- library ---------------- */
 let TAG = '';
+function applyLibraryTheme() {
+  let settings = {}; try { settings = JSON.parse(localStorage.getItem('ffs.settings') || '{}'); } catch {}
+  setThemeSettings(settings); return settings;
+}
+onTheme(info => {
+  const select = $('#library-theme'); if (!select) return;
+  for (const source of info.available) if (![...select.options].some(o=>o.value==='system:'+source)) { const option=document.createElement('option'); option.value='system:'+source; option.textContent='Follow '+source; select.append(option); }
+  select.options[0].textContent = 'Follow system · ' + info.label;
+  select.value = info.choice;
+});
 function showLibrary() {
   const ps = LIB.projects, tags = [...new Set(ps.flatMap((p) => p.tags || []))].sort();
   const shown = ps.filter((p) => !TAG || (p.tags || []).includes(TAG));
   const settings=applyLibraryTheme();
-  $('#view').innerHTML = `<label class="library-theme">WORKSPACE <select id="library-theme" aria-label="Library theme">${['studio','paper','dark','light','contrast','custom'].map(t=>`<option value="${t}" ${t===(settings.theme||'studio')?'selected':''}>${t}</option>`).join('')}</select></label><div class="libhead"><div><div class="cap">THE FILM LIBRARY · ${ps.length} PRODUCTIONS</div><h1>Every film, <em>one place.</em></h1></div>
+  $('#view').innerHTML = `<label class="library-theme">WORKSPACE <select id="library-theme" aria-label="Library theme">${['system','studio','paper','dark','light','contrast','custom',...themeInfo().available.map(s=>'system:'+s)].map(t=>`<option value="${t}" ${t===themeInfo().choice?'selected':''}>${t==='system'?'Follow system · '+esc(themeInfo().label):t.startsWith('system:')?'Follow '+esc(t.slice(7)):t[0].toUpperCase()+t.slice(1)}</option>`).join('')}</select></label><div class="libhead"><div><div class="cap">THE FILM LIBRARY · ${ps.length} PRODUCTIONS</div><h1>Every film, <em>one place.</em></h1></div>
     <div class="chips"><button class="pill ${!TAG ? 'on' : ''}" data-tag="">all</button>${tags.map((t) => `<button class="pill ${TAG === t ? 'on' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>
   <div class="grid">${shown.map((p,index) => `<a data-project="${esc(p.id)}" data-colour="${colourSlot(p.kind)}" class="card brk" href="#/p/${esc(p.id)}"><div class="pv">${p.poster ? `<img src="/lib/${esc(p.poster)}" loading="lazy" alt="">` : '<div class="none">no render yet</div>'}<span class="poster-index">CUT ${String(index+1).padStart(2,'0')} / ${esc(p.kind)}</span><span class="rt">RUNTIME ${fmt(p.duration_s)}</span></div>
     <div class="tx"><div class="t">${esc(p.title)}</div><div class="m"><span class="kind-chip">${esc(p.kind)}</span><span>${p.shots} shots</span><span>${p.renders} render${p.renders === 1 ? '' : 's'}</span><span>${(p.tags || []).map(esc).join(' · ')}</span></div>

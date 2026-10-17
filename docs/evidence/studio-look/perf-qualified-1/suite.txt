@@ -14,7 +14,7 @@
 ℹ skipped 0
 ℹ todo 0
 ℹ duration_ms 193.611143
-Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-9TGCDA
+Disposable library: <local>/ffs-editor-9TGCDA
 {
   "domStable": true,
   "story": 7,
@@ -45,21 +45,21 @@ Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-9T
     "scrubFps": 60.00600060006001
   }
 }
-Evidence: /mnt/zer0models/project-artifacts/fframestudio/ui-compare/studio-look/perf-qualified-1
+Evidence: <local>/perf-qualified-1
 Traceback (most recent call last):
-  File "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-look/test/editor-perf.py", line 86, in <module>
+  File "test/editor-perf.py", line 86, in <module>
     asyncio.run(main())
     ~~~~~~~~~~~^^^^^^^^
-  File "/home/kvn/.local/share/uv/python/cpython-3.14.7-linux-x86_64-gnu/lib/python3.14/asyncio/runners.py", line 205, in run
+  File "<local>/runners.py", line 205, in run
     return runner.run(main)
            ~~~~~~~~~~^^^^^^
-  File "/home/kvn/.local/share/uv/python/cpython-3.14.7-linux-x86_64-gnu/lib/python3.14/asyncio/runners.py", line 128, in run
+  File "<local>/runners.py", line 128, in run
     return self._loop.run_until_complete(task)
            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
-  File "/home/kvn/.local/share/uv/python/cpython-3.14.7-linux-x86_64-gnu/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+  File "<local>/base_events.py", line 720, in run_until_complete
     return future.result()
            ~~~~~~~~~~~~~^^
-  File "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-look/test/editor-perf.py", line 85, in main
+  File "test/editor-perf.py", line 85, in main
     await b.close();assert all(data['budgets'].values()),data['budgets']
                            ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
 AssertionError: {'coldOpen': False, 'commandPaintReady': True, 'commandNextFrame': True, 'scrubNoLongtasks': True, 'scrub60fps': True, 'gzip': True, 'virtualized': True, 'stableDOM': True, 'autosaveFrameWork': True}

@@ -67,6 +67,7 @@ main{padding:24px 22px 60px}
 .context-menu{position:fixed;left:0;top:0;contain:layout style paint;will-change:transform;z-index:100;min-width:min(240px,calc(100vw - 12px));max-width:calc(100vw - 12px);max-height:calc(100dvh - 12px);overflow:auto;padding:4px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink);box-shadow:0 8px 24px #0005;font:11px/1.4 "Plex Mono",monospace}
 .context-menu[hidden]{display:none}.context-menu [role="menuitem"]{display:flex;align-items:center;justify-content:space-between;gap:24px;width:100%;min-height:28px;padding:5px 9px;text-align:left;font:inherit}
 .context-menu [role="menuitem"] span{min-width:0;overflow-wrap:anywhere}.context-menu kbd{flex:none;color:var(--mute);font:10px "Plex Mono",monospace}.context-menu [role="menuitem"]:focus{outline:1px solid var(--acc);outline-offset:-1px;background:color-mix(in srgb,var(--acc) 14%,var(--bg2));color:var(--ink)}
+.context-menu [role="menuitem"]:focus kbd{color:inherit}
 /* System tokens are contrast-corrected against palette surfaces, not accent mixtures. */
 [data-theme="system"] .context-menu [role="menuitem"]:focus{background:var(--bg3)}
 .context-menu [role="menuitem"]:disabled{opacity:1;color:var(--faint);cursor:default}.context-menu [role="menuitem"]:disabled kbd{color:inherit}.context-menu [role="separator"]{height:1px;background:var(--line2);margin:4px 5px}

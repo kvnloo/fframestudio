@@ -14,7 +14,7 @@
 ℹ skipped 0
 ℹ todo 0
 ℹ duration_ms 158.367493
-Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-BlZ2uf
+Disposable library: <local>/ffs-editor-BlZ2uf
 {
   "domStable": true,
   "story": 7,
@@ -45,4 +45,4 @@ Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-Bl
     "scrubFps": 60.00300015000751
   }
 }
-Evidence: /mnt/zer0models/project-artifacts/fframestudio/ui-compare/studio-look/perf-overlap-1
+Evidence: <local>/perf-overlap-1

@@ -14,7 +14,7 @@
 ℹ skipped 0
 ℹ todo 0
 ℹ duration_ms 186.944582
-Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-Axx5rZ
+Disposable library: <local>/ffs-editor-Axx5rZ
 {
   "domStable": true,
   "story": 7,
@@ -45,4 +45,4 @@ Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-Ax
     "scrubFps": 60.003000150007495
   }
 }
-Evidence: /mnt/zer0models/project-artifacts/fframestudio/ui-compare/studio-look/perf-qualified-3
+Evidence: <local>/perf-qualified-3

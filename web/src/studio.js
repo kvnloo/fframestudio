@@ -361,7 +361,7 @@ export class StudioView {
     $("#time").title = `${Math.floor(e.frame)} f / ${e.total} f`;
     put('[data-action="play"]', e.rate ? "Ⅱ PAUSE" : "▶ PLAY");
     if (this.audio.src) {
-      const target = Math.max(0, (e.frame - this.audioStart) / fps);
+      const target = this.audioSourceIn + Math.max(0, (e.frame - this.audioStart) / fps);
       if (Math.abs(this.audio.currentTime - target) > 0.25)
         this.audio.currentTime = target;
       this.audio.playbackRate = Math.max(
@@ -417,6 +417,7 @@ export class StudioView {
     const media = e.doc.media.find((m) => m.id === attachment?.mediaId);
     this.audioStart = owner ? owner.start + attachment.offset : 0;
     this.audioEnd = this.audioStart + (attachment?.duration || 0);
+    this.audioSourceIn = Number(e.doc.metadata?.music?.starts_at_s) || 0;
     this.samplePoster();
     const analysisFile = media?.file || e.doc.preview.proxy;
     if (!analysisFile || e.dead) {
@@ -476,12 +477,15 @@ export class StudioView {
       const key =
         e.url(analysisFile) +
         ":" +
+        this.audioSourceIn + ":" + this.waveDuration + ":" +
         Array.from(new Uint8Array(digest), (b) =>
           b.toString(16).padStart(2, "0"),
         ).join("");
       this.audioContext = new AudioContext();
       const buffer = await this.audioContext.decodeAudioData(bytes);
-      const samples = buffer.getChannelData(0).slice();
+      const start = media ? Math.round(this.audioSourceIn * buffer.sampleRate) : 0;
+      const end = start + Math.round(this.waveDuration / fpsOf(e.doc) * buffer.sampleRate);
+      const samples = buffer.getChannelData(0).slice(start, end);
       if (e.dead) return;
       this.waveWorker.postMessage({ key, samples }, [samples.buffer]);
       await this.audioContext.close();
