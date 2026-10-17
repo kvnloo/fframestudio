@@ -4,6 +4,7 @@ import { RecoveryJournal, fileHash } from './doc/journal.js';
 import { setThemeSettings, themeInfo, onTheme, shotColorSlot } from './system-theme.js';
 import { StudioView, colourSlot, clipKind, timecode, advanceFrame } from './studio.js';
 import { PosterDecoder } from './poster-decoder.js';
+import { request, mediaURL, isLocal, isCopy, saveCopy, exportProject, preferences as storage } from './host.js';
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
@@ -69,7 +70,7 @@ export class Editor {
       laneNodes: new Map(),
     });
     try {
-      this.settings = JSON.parse(localStorage.getItem('ffs.settings') || '{}');
+      this.settings = JSON.parse(storage.getItem('ffs.settings') || '{}');
     } catch {
       this.settings = {};
     }
@@ -143,11 +144,7 @@ export class Editor {
     return `projects/${this.doc.id}/project.json`;
   }
   url(p) {
-    return !p
-      ? ''
-      : p.startsWith('/')
-        ? `/file?path=${encodeURIComponent(p)}`
-        : `/lib/${encodeURIComponent(this.doc.id)}/${p.split('/').map(encodeURIComponent).join('/')}`;
+    return mediaURL(this.doc.id, p);
   }
   open(raw, absolute) {
     this.loading = true;
@@ -197,7 +194,7 @@ export class Editor {
   }
   mount() {
     this.root.innerHTML = `<div class="ph-title"><h1>${esc(this.doc.title)}</h1><span class="cap">one video · many views</span></div>
-  <div class="editor-tools"><select id="video-choice" aria-label="Video">${this.doc.videos.map((v) => `<option value="${esc(v.id)}">${esc(v.name)}</option>`).join('')}</select><span id="save-status" role="status">Loaded · document v1</span>${button('undo', 'Undo ↶')}${button('redo', 'Redo ↷')}${button('save', 'Save')}${button('palette', 'Commands ⌘K')}${button('settings', 'Workspace')}${button('export', 'Export video')}</div>
+  <div class="editor-tools"><select id="video-choice" aria-label="Video">${this.doc.videos.map((v) => `<option value="${esc(v.id)}">${esc(v.name)}</option>`).join('')}</select><span id="save-status" role="status">${isCopy(this.doc.id) ? 'Example copy · edits stay in this browser' : isLocal() ? 'Local folder · nothing uploaded' : 'Loaded · document v1'}</span>${button('undo', 'Undo ↶')}${button('redo', 'Redo ↷')}${button('save', 'Save')}${button('palette', 'Commands ⌘K')}${button('settings', 'Workspace')}${button('export', 'Export video')}${isLocal() || isCopy(this.doc.id) ? button('export-project', 'Export project.json') : ''}${isCopy(this.doc.id) ? button('save-copy', 'Save to my folder') : ''}</div>
   <dialog id="recovery" aria-labelledby="recovery-title"><h2 id="recovery-title">Recover unsaved changes?</h2><p>This project has local edits that were not saved to project.json.</p>${button('recover', 'Recover unsaved changes')}${button('discard-recovery', 'Discard')}</dialog>
   <div id="external" class="notice" hidden>File changed outside this editor. Your edits are preserved. ${button('reload-external', 'Load disk (discard local)')}${button('keep-local', 'Keep local / review overwrite')}</div>
   <div class="editor-grid"><section class="story-panel panel"><div class="panel-title">Story <span id="clip-count"></span>${button('toggle-story', 'Collapse')}</div><div id="story" tabindex="0" aria-label="Story clips"><div id="story-space"></div></div><div class="panel-foot">${button('add', 'Add clip')}${button('group', 'Group with next')}</div></section>
@@ -205,7 +202,7 @@ export class Editor {
   <section class="inspector-panel panel"><div class="panel-title">Inspector ${button('toggle-inspector', 'Collapse')}</div><div id="inspector"></div></section></div>
   <section class="timeline-panel panel"><div class="panel-title">Timeline <span id="scope" aria-live="polite">Select a clip to edit</span><label>Zoom <input id="zoom" type="range" min="0.5" max="8" step="0.25" value="1"></label><label><input id="snap" type="checkbox" checked> Snap</label></div><div id="timeline"><div id="timeline-space"><div id="beats"></div><div id="lane"></div><div id="playhead"></div></div></div><div class="panel-foot">${button('split', 'Split · S')}${button('duplicate', 'Duplicate')}${button('delete', 'Delete')}<span class="hint">Drag story cards to reorder · drag clip edges to trim · attached layers follow</span></div></section>
   <div class="secondary-grid"><section class="panel"><div class="panel-title">Takes <span>film versions</span></div><div class="version-tools"><input id="version-name" placeholder="Name this version" aria-label="Version name">${button('save-version', 'Save version')}<select id="version-a" aria-label="Version A"></select><select id="version-b" aria-label="Version B"></select>${button('compare', 'Compare')}${button('restore-version', 'Restore A')}</div><pre id="version-diff"></pre></section><section class="panel"><div class="panel-title">Assistant proposals <span>Inspect → Apply → Undo</span></div><div id="proposals">No pending proposal. Ask the assistant for an edit.</div></section></div>
-  <details class="source-panel"><summary>Source & provenance</summary><p>${esc(this.doc.metadata?.source?.path || '')}</p><p>${esc((this.doc.metadata?.notes || []).join(' · '))}</p><dl class="kv">${Object.entries(
+  <details class="source-panel"><summary>Source & provenance</summary>${this.doc.metadata?.example ? `<p>Example copy · ${esc(this.doc.metadata.example.author)} · ${esc(this.doc.metadata.example.licence)}</p><p>${esc(this.doc.metadata.example.credit)}</p><p><a href="${esc(/^https?:\/\//.test(this.doc.metadata.example.source_url) ? this.doc.metadata.example.source_url : '#')}" target="_blank" rel="noopener noreferrer">Original source ↗</a></p>` : ''}<p>${esc(this.doc.metadata?.source?.path || '')}</p><p>${esc((this.doc.metadata?.notes || []).join(' · '))}</p><dl class="kv">${Object.entries(
     this.doc.metadata?.docs || {},
   )
     .map(
@@ -312,7 +309,7 @@ export class Editor {
         if (innerWidth >= 1024)
           this.settings[k] = Math.round(e.borderBoxSize[0].inlineSize);
       }
-      localStorage.setItem('ffs.settings', JSON.stringify(this.settings));
+      storage.setItem('ffs.settings', JSON.stringify(this.settings));
     });
     for (const panel of [$('.story-panel'), $('.inspector-panel')]) {
       panel.addEventListener('pointerdown', event => {
@@ -324,7 +321,7 @@ export class Editor {
       const panel = this.resizingPanel;
       if (panel && !panel.classList.contains('collapsed') && innerWidth >= 1024) {
         this.settings[panel.classList.contains('story-panel') ? 'storyWidth' : 'inspectorWidth'] = Math.round(panel.getBoundingClientRect().width);
-        localStorage.setItem('ffs.settings', JSON.stringify(this.settings));
+        storage.setItem('ffs.settings', JSON.stringify(this.settings));
       }
       this.resizingPanel = null;
     };
@@ -351,7 +348,7 @@ export class Editor {
     this.previewTimer = setInterval(() => this.updatePreview(), 100);
   }
   saveSettings() {
-    localStorage.setItem('ffs.settings', JSON.stringify(this.settings));
+    storage.setItem('ffs.settings', JSON.stringify(this.settings));
     this.applySettings();
   }
   applySettings() {
@@ -868,7 +865,7 @@ export class Editor {
       try {
         const body = await this.rpc('serialize', captured);
         await this.journal?.prepareSave(body, captured.revision).catch((error) => this.toast('Autosave failed: ' + error.message));
-        const r = await fetch(`/fs?path=${encodeURIComponent(this.path())}`, {
+        const r = await request(`/fs?path=${encodeURIComponent(this.path())}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -1161,9 +1158,11 @@ export class Editor {
       this.saveSettings();
       return;
     }
+    if (a === 'save-copy') { try { await saveCopy(this.doc); this.toast('Copy saved to your projects folder'); } catch(error) { this.toast(error.message); } return; }
+    if (a === 'export-project') { exportProject(this.doc.id, await this.rpc('serialize', this.doc)); return; }
     if (a === 'export') {
       this.toast(
-        'Video export unavailable: compositing engine is not qualified. Your project can be saved.',
+        isLocal() ? 'Video export needs the local bridge. Export project.json to keep your edits.' : 'Video export unavailable: compositing engine is not qualified. Your project can be saved.',
       );
       return;
     }

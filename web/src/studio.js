@@ -1,5 +1,6 @@
 import { fpsOf, textOf } from "./doc/project.js";
 import { FittedLayout } from "./fitted-layout.js";
+import { request, preferences as storage } from "./host.js";
 const panelTabs = ["shot", "narrative", "direction", "takes", "assistant", "source", "story"];
 export const escapeHTML = (s) =>
   String(s ?? "").replace(
@@ -194,7 +195,7 @@ export class StudioView {
       $(t === "shot" ? "#inspector" : "#" + t + "-pane").hidden = t !== tab;
     }
     this.e.settings.slateTab = tab;
-    localStorage.setItem("ffs.settings", JSON.stringify(this.e.settings));
+    storage.setItem("ffs.settings", JSON.stringify(this.e.settings));
     this.inspector();
   }
   inspector() {
@@ -474,7 +475,7 @@ export class StudioView {
       this.drawWave();
     };
     try {
-      const bytes = await fetch(e.url(analysisFile)).then((r) => {
+      const bytes = await request(e.url(analysisFile)).then((r) => {
         if (!r.ok) throw Error("Audio unavailable");
         return r.arrayBuffer();
       });

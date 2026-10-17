@@ -1,3 +1,4 @@
+import { request as hostRequest, preferences as storage } from './host.js';
 // The ONLY desktop palette -> Studio token mapping. Structure never depends on a provider.
 export const TOKENS = Object.freeze({ bg: 'bg', bg2: 'surface', bg3: 'surface2', ink: 'fg', mute: 'muted', faint: 'muted', line: 'border', line2: 'border', acc: 'accent', acc2: 'accent2', bad: 'danger', success: 'success', warn: 'warning', paper: 'paper', 'paper-ink': 'paperInk', 'paper-mute': 'paperMute', 'poster-accent': 'posterAccent', 'poster-lines': 'posterLines', 'wave-ink': 'muted', teal: 'ansi6', amber: 'ansi3', yellow: 'ansi5', coral: 'ansi1', green: 'ansi2', 'shot-1': 'ansi1', 'shot-2': 'ansi2', 'shot-3': 'ansi3', 'shot-4': 'ansi4', 'shot-5': 'ansi5', 'shot-6': 'ansi6' });
 const rgb = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
@@ -98,7 +99,7 @@ export function setThemeSettings(next) {
 export async function refreshTheme() {
   const id = ++request;
   try {
-    const r = await fetch('/theme' + (selectedSource ? '?source=' + encodeURIComponent(selectedSource) : ''));
+    const r = await hostRequest('/theme' + (selectedSource ? '?source=' + encodeURIComponent(selectedSource) : ''));
     if (!r.ok) return;
     const next = await r.json(); if (id !== request) return;
     response = next; applyTheme();
@@ -110,7 +111,7 @@ export function receiveTheme(next) {
   ++request; response = next; applyTheme();
 }
 export function initSystemTheme() {
-  try { settings = JSON.parse(localStorage.getItem('ffs.settings') || '{}'); } catch { settings = {}; }
+  try { settings = JSON.parse(storage.getItem('ffs.settings') || '{}'); } catch { settings = {}; }
   selectedSource = settings.theme?.startsWith('system:') ? settings.theme.slice(7) : '';
   media = matchMedia('(prefers-color-scheme: dark)'); media.addEventListener('change', () => applyTheme());
   applyTheme(); return refreshTheme();

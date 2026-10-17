@@ -1,5 +1,6 @@
 // One mounted set of views; only the Story rail changes parent at the drawer breakpoint.
 const $ = s => document.querySelector(s);
+import { preferences as storage } from './host.js';
 export class FittedLayout {
   constructor(editor) { this.e = editor; }
   mount() {
@@ -45,7 +46,7 @@ export class FittedLayout {
     addEventListener('resize', this.windowResize);
     const save = () => {
       e.settings.timelineHeight = this.height;
-      localStorage.setItem('ffs.settings', JSON.stringify(e.settings));
+      storage.setItem('ffs.settings', JSON.stringify(e.settings));
     };
     splitter.onpointerdown = ev => {
       if (ev.button !== 0) return;
