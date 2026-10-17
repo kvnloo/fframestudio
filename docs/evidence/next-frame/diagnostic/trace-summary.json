@@ -1,0 +1,54 @@
+[
+  {
+    "directory": "docs/evidence/next-frame/diagnostic",
+    "coldOpenMs": 136.5999999642372,
+    "cmdWorstMs": 9.899999976158142,
+    "nextFrameWorstMs": 17,
+    "scrubFps": 60.00000000000001,
+    "methods": {
+      "run": {
+        "calls": 0,
+        "totalMs": 0,
+        "maxMs": 0,
+        "layoutsInside": 0,
+        "layoutMs": 0.0
+      },
+      "measure": {
+        "calls": 0,
+        "totalMs": 0,
+        "maxMs": 0,
+        "layoutsInside": 0,
+        "layoutMs": 0.0
+      },
+      "refresh": {
+        "calls": 27,
+        "totalMs": 19.600000202655792,
+        "maxMs": 1.5,
+        "layoutsInside": 0,
+        "layoutMs": 0.0
+      },
+      "renderStory": {
+        "calls": 50,
+        "totalMs": 5.100000023841858,
+        "maxMs": 0.3999999761581421,
+        "layoutsInside": 0,
+        "layoutMs": 0.0
+      },
+      "renderTimeline": {
+        "calls": 28,
+        "totalMs": 9.800000071525574,
+        "maxMs": 0.6000000238418579,
+        "layoutsInside": 0,
+        "layoutMs": 0.0
+      },
+      "rpc": {
+        "calls": 0,
+        "totalMs": 0,
+        "maxMs": 0,
+        "layoutsInside": 0,
+        "layoutMs": 0.0
+      }
+    },
+    "workerQueueWorst": []
+  }
+]

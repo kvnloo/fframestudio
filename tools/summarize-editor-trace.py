@@ -10,13 +10,13 @@ def summarize(directory):
     directory = pathlib.Path(directory)
     data = json.loads((directory / 'perf.json').read_text())
     events = json.loads(gzip.decompress((directory / 'trace.json.gz').read_bytes()))['traceEvents']
-    first = next(event for event in events if event['name'] == 'rpc:1')
+    first = next(event for event in events if event['name'] in ['rpc:1', 'run:1', 'patchViews:1', 'refresh:1', 'renderStory:1'])
     offset = first['ts'] - first['args']['data']['startTime'] * 1000
     layouts = [event for event in events if event['name'] == 'Layout' and 'dur' in event
                and event['pid'] == first['pid'] and event['tid'] == first['tid']
                and event['ts'] > first['ts']]
     methods = {}
-    for name in ['measure', 'refresh', 'renderStory', 'renderTimeline', 'rpc']:
+    for name in ['run', 'measure', 'refresh', 'renderStory', 'renderTimeline', 'rpc']:
         measures = [item for item in data['measures'] if item['name'] == name]
         spans = [(offset + item['start'] * 1000, offset + (item['start'] + item['ms']) * 1000)
                  for item in measures]

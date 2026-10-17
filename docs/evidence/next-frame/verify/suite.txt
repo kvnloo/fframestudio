@@ -1,0 +1,16 @@
+npm notice run verify
+npm notice run node test/verify.mjs --out verify-out/next-frame-final
+ok   gate: app refuses without the link
+ok   library: open link, demo project listed
+ok   project: plays and seeks by shot
+ok   edit: shot title saves and survives reload
+ok   recovery: unsaved title survives page close, undo and explicit save
+ok   recovery: discard keeps disk title and clears the offer
+ok   recovery: edits during Save survive its journal checkpoint
+ok   recovery: undo across Save recovers without prior history
+ok   recovery: Save on disk before acknowledgement preserves later edits
+ok   recovery: external change preserves the pending recovery choice
+ok   assistant: agents listed, unavailable ones disabled
+ok   mobile: 390 px has no horizontal overflow
+ok   console clean
+PASS  evidence: /mnt/zer0models/workspace/zer0/products/fframestudio-wt-core/verify-out/next-frame-final

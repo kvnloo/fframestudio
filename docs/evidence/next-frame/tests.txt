@@ -1,0 +1,77 @@
+npm notice run test
+npm notice run node --test test/doc/*.test.mjs && node test/acp-e2e.mjs
+✔ patches reproduce array deletion and escaped text keys, preserve untouched references (1.735549ms)
+✔ add is validated, previewable, undo/redo round trip (4.668777ms)
+✔ move is validated, previewable, undo/redo round trip (0.590286ms)
+✔ trim is validated, previewable, undo/redo round trip (0.787562ms)
+✔ split is validated, previewable, undo/redo round trip (0.712193ms)
+✔ replace is validated, previewable, undo/redo round trip (0.583909ms)
+✔ duplicate is validated, previewable, undo/redo round trip (0.692408ms)
+✔ group is validated, previewable, undo/redo round trip (0.475816ms)
+✔ set-beat-lock is validated, previewable, undo/redo round trip (0.588391ms)
+✔ retime is validated, previewable, undo/redo round trip (0.562864ms)
+✔ delete is validated, previewable, undo/redo round trip (1.066852ms)
+✔ edit-style is validated, previewable, undo/redo round trip (0.56811ms)
+✔ save-version is validated, previewable, undo/redo round trip (0.511269ms)
+✔ select is an ephemeral named command with inverse; does not dirty content history (0.28322ms)
+✔ split partitions attached text and source ranges; move keeps attachments (0.371571ms)
+✔ invalid batch leaves document/history untouched; stale and unsafe proposals rejected (1.190134ms)
+✔ multi-video proposals preview and rollback without touching either source video (1.347206ms)
+✔ versions restore through history and compare exact content (0.563501ms)
+✔ grouping and version saves share unchanged clips without sharing mutable snapshots (0.557463ms)
+✔ object-creating commands require explicit IDs so preview and apply cannot drift (0.266322ms)
+✔ returned inverse executes through the command system (0.36893ms)
+✔ beat lock rejects ripple displacement and mutation rolls back (0.301711ms)
+✔ edit text preview shows scope and changes without mutation; inverse restores (0.33898ms)
+✔ an edit updates the authoritative store and views before a blocked worker can reply (3.079153ms)
+✔ main thread and real module worker replay the same seeded 200 commands including undo and redo (91.961809ms)
+✔ recovery can undo across the saved baseline without the old in-memory history (1.097387ms)
+✔ persisted undo/redo patches reproduce every step across a saved history boundary (2.35994ms)
+✔ an external change preserves a pending recovery offer as a local conflict (0.512301ms)
+✔ an edit committed during external migration survives the worker reply (0.447801ms)
+✔ global Save shortcut is gated while recovery is opening (0.426182ms)
+✔ migration CLI writes a distinct new copy and refuses overwrite (115.123704ms)
+✔ migrate studio-spec: deterministic, non-destructive, text overrides (6.910075ms)
+✔ migrate fframes: deterministic, non-destructive, text overrides (0.694765ms)
+✔ migrate fframes-clips: deterministic, non-destructive, text overrides (0.555528ms)
+✔ migrate html-film: deterministic, non-destructive, text overrides (1.006577ms)
+✔ migrate capture-manifest: deterministic, non-destructive, text overrides (0.552683ms)
+✔ migrate every actual library project on disposable copies (117.680536ms)
+ℹ Migrated 7 copied projects; originals unchanged
+✔ bridge compare-and-swap refuses external edit, preserves bytes, accepts matching base (2338.228852ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2510.877013
+{
+ "root": "/home/kvn/.hermes/profiles/clean/cache/scratch/ffs-acp-1tY1y6",
+ "security": {
+  "no_token": 401,
+  "bad_token": 401,
+  "foreign_origin": 403,
+  "rebinding_host": 403,
+  "ok": 200,
+  "path_escape": 400,
+  "symlink_read": 400,
+  "symlink_write_dangling": 400,
+  "symlink_write_dir": 400,
+  "symlink_mkdir_dir": 400,
+  "outside_untouched": true,
+  "inside_write": 200,
+  "ws_no_token": "refused",
+  "ws_bad_token": "refused"
+ },
+ "agents": {},
+ "available": [
+  "claude",
+  "codex",
+  "gemini",
+  "hermes",
+  "opencode"
+ ]
+}
+ok

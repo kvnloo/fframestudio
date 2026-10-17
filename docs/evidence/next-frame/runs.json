@@ -1,0 +1,53 @@
+[
+  {
+    "run": 1,
+    "exit": 1,
+    "cold": 144.5,
+    "cmdWorstMs": 8.899999976158142,
+    "nextFrameWorstMs": 16.900000035762787,
+    "scrubFps": 60.00300015000751,
+    "nodeWorst": 6.633737000000011,
+    "gzip": 26811,
+    "story": 7,
+    "timeline": 39,
+    "longtasks": 0,
+    "writes": 13,
+    "cpuWorstMs": 4.600000023841858,
+    "wallWorstMs": 5,
+    "frameMeanMs": 16.66583333333333
+  },
+  {
+    "run": 2,
+    "exit": 1,
+    "cold": 155.39999997615814,
+    "cmdWorstMs": 9,
+    "nextFrameWorstMs": 16.80000001192093,
+    "scrubFps": 60.00300015000751,
+    "nodeWorst": 6.4757120000000015,
+    "gzip": 26811,
+    "story": 7,
+    "timeline": 39,
+    "longtasks": 0,
+    "writes": 13,
+    "cpuWorstMs": 4.600000023841858,
+    "wallWorstMs": 4.800000011920929,
+    "frameMeanMs": 16.66583333333333
+  },
+  {
+    "run": 3,
+    "exit": 1,
+    "cold": 131.4000000357628,
+    "cmdWorstMs": 8.199999988079071,
+    "nextFrameWorstMs": 16.80000001192093,
+    "scrubFps": 60.003000150007495,
+    "nodeWorst": 6.420369999999991,
+    "gzip": 26811,
+    "story": 7,
+    "timeline": 39,
+    "longtasks": 0,
+    "writes": 13,
+    "cpuWorstMs": 4.599999964237213,
+    "wallWorstMs": 5,
+    "frameMeanMs": 16.665833333333335
+  }
+]

@@ -1,0 +1,62 @@
+npm notice run test:perf
+npm notice run node --test test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf
+{"editorGzipBytes":26902}
+{"commands":[{"command":"add","ms":3.240941999999997},{"command":"select","ms":0.05723700000000065},{"command":"move","ms":0.5518319999999974},{"command":"trim","ms":3.5500399999999956},{"command":"split","ms":0.6484899999999953},{"command":"replace","ms":0.6322629999999947},{"command":"edit-text","ms":0.5239229999999964},{"command":"duplicate","ms":0.47295700000000807},{"command":"group","ms":0.6163969999999921},{"command":"set-beat-lock","ms":0.38037699999999575},{"command":"retime","ms":4.338485000000006},{"command":"delete","ms":0.49711999999999534},{"command":"edit-style","ms":0.5769519999999915},{"command":"save-version","ms":2.7262599999999964},{"command":"restore-version","ms":6.420369999999991},{"command":"undo","ms":0.048032999999989556},{"command":"redo","ms":0.02086700000000974}]}
+✔ editor shipped JavaScript stays below 150 KiB gzip, excluding ACP (3.239302ms)
+✔ every document command stays under 16ms at 500 clips (CommandStore CPU, no paint) (93.6012ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 146.805334
+Disposable library: /home/kvn/.hermes/profiles/clean/cache/scratch/ffs-editor-i5QXgr
+{
+  "domStable": true,
+  "story": 7,
+  "timeline": 39,
+  "scrubLongtasks": [],
+  "coldOpenMs": 131.4000000357628,
+  "editorGzipBytes": 26811,
+  "autosave": {
+    "writes": 13,
+    "cpuWorstMs": 4.599999964237213,
+    "wallWorstMs": 5
+  },
+  "budgets": {
+    "coldOpen": true,
+    "commandPaintReady": true,
+    "commandNextFrame": false,
+    "scrubNoLongtasks": true,
+    "scrub60fps": true,
+    "gzip": true,
+    "virtualized": true,
+    "stableDOM": true,
+    "autosaveFrameWork": true
+  },
+  "summary": {
+    "cmdWorstMs": 8.199999988079071,
+    "nextFrameWorstMs": 16.80000001192093,
+    "scrubFps": 60.003000150007495
+  }
+}
+Traceback (most recent call last):
+  File "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-core/test/editor-perf.py", line 82, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/home/kvn/.local/share/uv/python/cpython-3.14.7-linux-x86_64-gnu/lib/python3.14/asyncio/runners.py", line 205, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/home/kvn/.local/share/uv/python/cpython-3.14.7-linux-x86_64-gnu/lib/python3.14/asyncio/runners.py", line 128, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/kvn/.local/share/uv/python/cpython-3.14.7-linux-x86_64-gnu/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/mnt/zer0models/workspace/zer0/products/fframestudio-wt-core/test/editor-perf.py", line 81, in main
+    await b.close();assert all(data['budgets'].values()),data['budgets']
+                           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'coldOpen': True, 'commandPaintReady': True, 'commandNextFrame': False, 'scrubNoLongtasks': True, 'scrub60fps': True, 'gzip': True, 'virtualized': True, 'stableDOM': True, 'autosaveFrameWork': True}
+Evidence: /mnt/zer0models/workspace/zer0/products/fframestudio-wt-core/docs/evidence/next-frame/run-3

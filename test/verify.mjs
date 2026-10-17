@@ -55,7 +55,7 @@ try {
     p.on('pageerror', (e) => report.console_errors.push(e.message));
     p.on('response', (r) => { if (r.status() >= 400 && !/\/me$|favicon/.test(r.url())) report.failed_requests.push(`${r.status()} ${r.url().replace(token, '<token>')}`); });
   });
-  const page = await ctx.newPage();
+  let page = await ctx.newPage();
   const shot = (n) => page.screenshot({ path: path.join(OUT, n + '.png') });
 
   await journey('gate: app refuses without the link', async () => {
@@ -106,6 +106,154 @@ try {
     assert(Math.abs(src.format.duration - 12) < 0.5, 'source changed');
     assert(sourceHash() === sourceBefore, 'source mp4 bytes changed');
     await shot('04-edited'); return { before, after, clip_id: clipId, source_sha256: sourceBefore };
+  });
+  await journey('recovery: unsaved title survives page close, undo and explicit save', async () => {
+    const filePath = path.join(HOME, 'fframestudio/projects/demo/project.json');
+    const disk = fs.readFileSync(filePath, 'utf8');
+    const field = page.locator('input[data-field="title"]');
+    const before = await field.inputValue(), recovered = before + ' (recovered)';
+    await field.fill(recovered); await field.press('Tab');
+    await page.waitForFunction(() => window.ffs?.journal?.persistedVersion === window.ffs.doc.revision);
+    await shot('06-recovery-edited');
+    const version = await page.evaluate(() => window.ffs.doc.revision);
+    assert(fs.readFileSync(filePath, 'utf8') === disk, 'autosave changed project.json');
+    await page.close();
+    page = await ctx.newPage();
+    await page.goto(base + '/#/p/demo');
+    await page.waitForSelector('[data-action="recover"]');
+    await shot('06-recovery-offer');
+    await page.click('[data-action="recover"]');
+    await page.waitForFunction((value) => document.querySelector('input[data-field="title"]').value === value, recovered);
+    assert(fs.readFileSync(filePath, 'utf8') === disk, 'recovery changed project.json before Save');
+    await page.click('[data-action="undo"]');
+    assert(await page.locator('input[data-field="title"]').inputValue() === before, 'recovery bypassed undo');
+    await page.click('[data-action="redo"]');
+    assert(await page.locator('input[data-field="title"]').inputValue() === recovered, 'recovered edit cannot be redone');
+    await shot('06-recovery-restored');
+    let expected;
+    await page.route('**/fs?path=projects%2Fdemo%2Fproject.json', async (route) => {
+      if (route.request().method() === 'PUT') expected = route.request().headers()['x-ffs-expected'];
+      await route.continue();
+    });
+    await page.click('[data-action="save"]');
+    await page.waitForFunction(() => document.querySelector('#save-status').textContent === 'Saved');
+    assert(expected === createHash('sha256').update(disk).digest('hex'), 'Save omitted expected disk hash');
+    assert(JSON.parse(fs.readFileSync(filePath, 'utf8')).videos[0].clips[0].textOverrides.title === recovered, 'explicit Save did not write recovered title');
+    await page.reload(); await page.waitForFunction(() => window.ffs?.journal);
+    assert(await page.locator('#recovery').isHidden(), 'saved journal offered again');
+    return { before, recovered, version, expected_hash: expected, disk_unchanged_before_save: true };
+  });
+  await journey('recovery: discard keeps disk title and clears the offer', async () => {
+    const before = await page.locator('input[data-field="title"]').inputValue();
+    await page.locator('input[data-field="title"]').fill('Discard this unsaved title');
+    await page.locator('input[data-field="title"]').press('Tab');
+    await page.waitForFunction(() => window.ffs?.journal?.persistedVersion === window.ffs.doc.revision);
+    await page.close(); page = await ctx.newPage(); await page.goto(base + '/#/p/demo');
+    await page.waitForSelector('[data-action="discard-recovery"]');
+    await page.click('[data-action="discard-recovery"]');
+    await page.waitForFunction(() => !document.querySelector('#recovery').open);
+    assert(await page.locator('input[data-field="title"]').inputValue() === before, 'Discard changed saved title');
+    await page.reload(); await page.waitForFunction(() => window.ffs?.journal);
+    assert(await page.locator('#recovery').isHidden(), 'discarded journal offered again');
+    return { saved_title: before };
+  });
+  await journey('recovery: edits during Save survive its journal checkpoint', async () => {
+    const filePath = path.join(HOME, 'fframestudio/projects/demo/project.json');
+    const field = page.locator('input[data-field="title"]');
+    const savingTitle = 'Captured for Save', laterTitle = 'Committed while Save was pending';
+    await field.fill(savingTitle); await field.press('Tab');
+    let release;
+    const blocked = new Promise((resolve) => { release = resolve; });
+    let captured;
+    const intercepted = new Promise((resolve) => { captured = resolve; });
+    await page.route('**/fs?path=projects%2Fdemo%2Fproject.json', async (route) => {
+      if (route.request().method() === 'PUT') { captured(); await blocked; }
+      await route.continue();
+    }, { times: 1 });
+    await page.click('[data-action="save"]'); await intercepted;
+    await field.fill(laterTitle); await field.press('Tab'); release();
+    await page.waitForFunction(() => !window.ffs.saving && window.ffs.dirty && window.ffs.journal.persistedVersion === window.ffs.doc.revision);
+    assert(JSON.parse(fs.readFileSync(filePath, 'utf8')).videos[0].clips[0].textOverrides.title === savingTitle, 'Save did not use captured document');
+    await page.close(); page = await ctx.newPage(); await page.goto(base + '/#/p/demo');
+    await page.waitForSelector('[data-action="recover"]'); await page.click('[data-action="recover"]');
+    await page.waitForFunction((value) => document.querySelector('input[data-field="title"]').value === value, laterTitle);
+    await page.click('[data-action="undo"]');
+    assert(await page.locator('input[data-field="title"]').inputValue() === savingTitle, 'checkpoint replay lost undo baseline');
+    await page.click('[data-action="redo"]');
+    await page.click('[data-action="save"]');
+    await page.waitForFunction(() => document.querySelector('#save-status').textContent === 'Saved');
+    return { saved_snapshot: savingTitle, recovered_edit: laterTitle };
+  });
+  await journey('recovery: undo across Save recovers without prior history', async () => {
+    const originalTitle = await page.locator('input[data-field="title"]').inputValue();
+    const savedTitle = 'Saved before undo';
+    await page.locator('input[data-field="title"]').fill(savedTitle);
+    await page.locator('input[data-field="title"]').press('Tab');
+    await page.click('[data-action="save"]');
+    await page.waitForFunction(() => document.querySelector('#save-status').textContent === 'Saved');
+    const filePath = path.join(HOME, 'fframestudio/projects/demo/project.json'), disk = fs.readFileSync(filePath, 'utf8');
+    await page.click('[data-action="undo"]');
+    assert(await page.locator('input[data-field="title"]').inputValue() === originalTitle, 'Undo across Save failed');
+    await page.waitForFunction(() => window.ffs.journal.persistedVersion === window.ffs.doc.revision);
+    await page.close(); page = await ctx.newPage(); await page.goto(base + '/#/p/demo');
+    await page.waitForSelector('[data-action="recover"]'); await page.click('[data-action="recover"]');
+    await page.waitForFunction((value) => document.querySelector('input[data-field="title"]').value === value, originalTitle);
+    assert(fs.readFileSync(filePath, 'utf8') === disk, 'recovering Undo wrote to disk');
+    await page.click('[data-action="undo"]');
+    assert(await page.locator('input[data-field="title"]').inputValue() === savedTitle, 'recovered Undo is not undoable');
+    await page.click('[data-action="save"]');
+    await page.waitForFunction(() => document.querySelector('#save-status').textContent === 'Saved');
+    return { saved_title: savedTitle, recovered_undo: originalTitle };
+  });
+  await journey('recovery: Save on disk before acknowledgement preserves later edits', async () => {
+    const filePath = path.join(HOME, 'fframestudio/projects/demo/project.json');
+    const savedTitle = 'Saved before acknowledgement', laterTitle = 'Durable edit after captured Save';
+    const field = page.locator('input[data-field="title"]');
+    await field.fill(savedTitle); await field.press('Tab');
+    let releasePut, releaseRead, putStarted, readStarted;
+    const holdPut = new Promise((resolve) => { releasePut = resolve; });
+    const holdRead = new Promise((resolve) => { releaseRead = resolve; });
+    const put = new Promise((resolve) => { putStarted = resolve; });
+    const read = new Promise((resolve) => { readStarted = resolve; });
+    await page.route('**/fs?path=projects%2Fdemo%2Fproject.json', async (route) => {
+      if (route.request().method() === 'PUT') { putStarted(); await holdPut; }
+      else { readStarted(); await holdRead; }
+      try { await route.continue(); } catch { /* Closing the page cancels the held acknowledgement. */ }
+    });
+    await page.click('[data-action="save"]'); await put;
+    await field.fill(laterTitle); await field.press('Tab');
+    await page.waitForFunction(() => window.ffs.journal.persistedVersion === window.ffs.doc.revision);
+    releasePut(); await read;
+    assert(JSON.parse(fs.readFileSync(filePath, 'utf8')).videos[0].clips[0].textOverrides.title === savedTitle, 'captured Save did not reach disk');
+    await page.close(); releaseRead(); page = await ctx.newPage(); await page.goto(base + '/#/p/demo');
+    await page.waitForSelector('[data-action="recover"]'); await page.click('[data-action="recover"]');
+    await page.waitForFunction((value) => document.querySelector('input[data-field="title"]').value === value, laterTitle);
+    assert(JSON.parse(fs.readFileSync(filePath, 'utf8')).videos[0].clips[0].textOverrides.title === savedTitle, 'recovery saved the later edit');
+    await page.click('[data-action="save"]');
+    await page.waitForFunction(() => document.querySelector('#save-status').textContent === 'Saved');
+    return { saved_snapshot: savedTitle, recovered_edit: laterTitle };
+  });
+  await journey('recovery: external change preserves the pending recovery choice', async () => {
+    const field = page.locator('input[data-field="title"]'), local = 'Pending recovery during external change';
+    await field.fill(local); await field.press('Tab');
+    await page.waitForFunction(() => window.ffs.journal.persistedVersion === window.ffs.doc.revision);
+    await page.close(); page = await ctx.newPage(); await page.goto(base + '/#/p/demo');
+    await page.waitForSelector('[data-action="recover"]');
+    const filePath = path.join(HOME, 'fframestudio/projects/demo/project.json');
+    const external = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    external.title = 'External change while recovery was pending';
+    const disk = JSON.stringify(external);
+    await page.request.put(base + '/fs?path=projects/demo/project.json', { data: disk });
+    await page.waitForFunction(() => window.ffs.conflict);
+    await page.click('[data-action="recover"]');
+    await page.waitForFunction((value) => document.querySelector('input[data-field="title"]').value === value, local);
+    assert(fs.readFileSync(filePath, 'utf8') === disk, 'recover overwrote external file');
+    assert(await page.evaluate(() => window.ffs.save()) === false, 'Save ignored external conflict');
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.click('[data-action="reload-external"]');
+    await page.waitForFunction(() => !window.ffs.conflict && !window.ffs.loading);
+    assert(await page.locator('.ph-title h1').textContent() === external.title, 'could not resolve external recovery conflict');
+    return { recovered_title: local, external_title: external.title };
   });
   await journey('assistant: agents listed, unavailable ones disabled', async () => {
     const pills = await page.$$eval('[data-agent]', (e) => e.map((b) => ({ id: b.dataset.agent, disabled: b.disabled })));

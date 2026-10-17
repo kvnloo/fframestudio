@@ -1,0 +1,26 @@
+{
+  "baseCommit": "f6f3030713c21c9cb77d4ac8fe4a6eef538db570",
+  "measuredWorkingTree": true,
+  "node": "v26.5.0",
+  "chromium": "Chromium 153.0.8010.52 Arch Linux",
+  "kernel": "Linux 7.2.9-1-cachyos",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "tracing": false,
+  "sourceSha256": {
+    "web/app.js": "b86f9166f8e125922c94245c2683ed7bb089ba7ea84eacb694b39e069ef03307",
+    "web/src/doc/commands.js": "fce0df805e9a07c047558e0c9a87fec426062e5a253b2dbff882cbc706b779d3",
+    "web/src/doc/journal.js": "e051bcd5a3949986a34545f41603169d8f6b3c7fdabfd60d7dd7fdc531b289a5",
+    "web/src/doc/project.js": "3f37727912fa49f0e2eedd7e267c5d475a28a0449e36f03590fb36edc6e1c66b",
+    "web/src/doc/worker.js": "319b0148fb45d730775a58bcc3c697121ab9d04cf79ca31709439583665e9ae9",
+    "web/src/editor.js": "5a152006b143bc440277cc00711a6bc53274aae65df3cf2b1b2583eb8caafbd5",
+    "web/src/thumb-worker.js": "2e0f05e592fe1997cdf7690520279efd32ec11c4d197a187850da0711714f8e5",
+    "test/editor-perf.py": "47f85a1c65a0a8d4ff14f1313cf88fead7c8116cfe91baadb901da74e44d4ab5",
+    "test/perf/budgets.test.mjs": "b13ab98468554c4372c122815bc8945306ffed3e001871dc522ca3a1760e849a",
+    "test/verify.mjs": "8c8f019d8a7c3211ad7ef6e00490310d78573392cd1d03986b9ee3eeccad972d",
+    "tools/verify-editor.mjs": "33e4b7576eecdc8797341a7d9fe37c651c6eca56c6be983d2d54dc5bbbc8e115",
+    "package-lock.json": "309b53d7b67d963f50e09e4b7a118c1a65d7632bbac0c19bd2a9643cacece189"
+  }
+}

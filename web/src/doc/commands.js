@@ -75,8 +75,9 @@ const safeKey = (k) =>
   !['__proto__', 'constructor', 'prototype'].includes(k);
 function mutate(d, c, depth = 0) {
   need(depth < 10, 'Batch nesting too deep');
-  if (c.type === 'restore-document') {
-    const restored = clone(validate(c.document));
+  if (c.type === 'restore-document' || c.type === 'restore-patches') {
+    const restored = clone(validate(c.type === 'restore-document'
+      ? c.document : applyPatches(d, c.patches)));
     need(restored.id === d.id, 'Inverse belongs to another project');
     for (const k of Object.keys(d)) delete d[k];
     Object.assign(d, restored);
@@ -431,6 +432,30 @@ export class CommandStore {
     this.doc = { ...x.after, revision: this.doc.revision + 1 };
     return true;
   }
+  commit(command) {
+    const before = this.doc;
+    let receipt;
+    if (command.type === 'undo' || command.type === 'redo') this[command.type]();
+    else receipt = this.apply(command);
+    return {
+      patches: receipt
+        ? [...receipt.diff, ...(this.doc !== before ? [{
+            path: '/revision', before: before.revision, after: this.doc.revision,
+          }] : [])]
+        : diff(before, this.doc),
+      undo: this.past.length,
+      redo: this.future.length,
+    };
+  }
+}
+export function recoveryCommand(entry) {
+  const type = entry.command.type;
+  // History can predate the saved file. Persisted history actions carry their
+  // result so recovery can apply each as a normal, independently undoable edit.
+  if ((type === 'undo' || type === 'redo') && entry.patches) {
+    return { type: 'restore-patches', patches: entry.patches };
+  }
+  return entry.command;
 }
 export function proposalCommand(p, doc) {
   need(

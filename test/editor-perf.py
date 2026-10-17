@@ -22,7 +22,7 @@ async def main():
         if trace:
             await page.evaluate('''()=>{
               const e=window.ffs;let serial=0;
-              for(const name of ['rpc','refresh','measure','renderStory','renderTimeline','renderInspector','renderVersions','patchViews','updatePreview']){
+              for(const name of ['run','rpc','refresh','measure','renderStory','renderTimeline','renderInspector','renderVersions','patchViews','updatePreview']){
                 const original=e[name];e[name]=function(...args){
                   const start=`${name}:${++serial}`;performance.mark(start);
                   const end=()=>performance.measure(name,{start,end:performance.now()});
@@ -55,13 +55,16 @@ async def main():
           const story=document.querySelectorAll('.story-card').length,timeline=document.querySelectorAll('.timeline-clip').length;
           longtasks.length=0;const frames=[];let last=performance.now();e.rate=1;
           await new Promise(resolve=>{const start=performance.now();function sample(t){frames.push(t-last);last=t;if(t-start<2000)requestAnimationFrame(sample);else resolve();}requestAnimationFrame(sample);});e.rate=0;observer.disconnect();
-          return {measures:performance.getEntriesByType('measure').map(m=>({name:m.name,start:m.startTime,ms:m.duration})),latencies,domStable,story,timeline,scrubLongtasks:longtasks,frameIntervals:frames.slice(1)};
+          await e.journal.flush();
+          return {measures:performance.getEntriesByType('measure').map(m=>({name:m.name,start:m.startTime,ms:m.duration,detail:m.detail})),latencies,domStable,story,timeline,scrubLongtasks:longtasks,frameIntervals:frames.slice(1)};
         }''')
         files=[pathlib.Path('web/app.js')]+list(pathlib.Path('web/src').rglob('*.js'))
         # All shipped ES editor modules; ACP and its source dependency graph excluded explicitly.
         shipped=sum(len(gzip.compress(f.read_bytes(),mtime=0)) for f in files)
         data.update(coldOpenMs=cold_ms,coldDetails=cold_details,editorGzipBytes=shipped)
-        data['budgets']={'coldOpen':cold_ms<300,'commandPaintReady':max(x['ready'] for x in data['latencies'])<16,'commandNextFrame':max(x['present'] for x in data['latencies'])<16,'scrubNoLongtasks':not data['scrubLongtasks'],'scrub60fps':sum(data['frameIntervals'])/len(data['frameIntervals'])<17.5,'gzip':shipped<150*1024,'virtualized':data['story']<20 and data['timeline']<100,'stableDOM':data['domStable']}
+        writes=[m for m in data['measures'] if m['name']=='recovery-write']
+        data['autosave']={'writes':len(writes),'cpuWorstMs':max((m['detail']['cpuMs'] for m in writes),default=0),'wallWorstMs':max((m['ms'] for m in writes),default=0)}
+        data['budgets']={'coldOpen':cold_ms<300,'commandPaintReady':max(x['ready'] for x in data['latencies'])<16,'commandNextFrame':max(x['present'] for x in data['latencies'])<16,'scrubNoLongtasks':not data['scrubLongtasks'],'scrub60fps':sum(data['frameIntervals'])/len(data['frameIntervals'])<17.5,'gzip':shipped<150*1024,'virtualized':data['story']<20 and data['timeline']<100,'stableDOM':data['domStable'],'autosaveFrameWork':bool(writes) and data['autosave']['cpuWorstMs']<16}
         data['summary']={'cmdWorstMs':max(x['ready'] for x in data['latencies']),'nextFrameWorstMs':max(x['present'] for x in data['latencies']),'scrubFps':1000/(sum(data['frameIntervals'])/len(data['frameIntervals']))}
         (out/'perf.json').write_text(json.dumps(data,indent=2));print(json.dumps({k:v for k,v in data.items() if k not in ['frameIntervals','latencies','measures','coldDetails']},indent=2))
         if trace:

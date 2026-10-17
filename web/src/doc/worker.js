@@ -1,48 +1,28 @@
 import { fromV0 } from './project.js';
-import { CommandStore, diff, proposalCommand } from './commands.js';
-let store;
+import { CommandStore, diff, proposalCommand, recoveryCommand } from './commands.js';
+
+// Background operations take explicit snapshots. The main-thread CommandStore is
+// the only live document; worker results never replace it after a command.
 self.onmessage = ({ data: { id, type, value } }) => {
   try {
     let result;
     if (type === 'open') {
-      store = new CommandStore(
-        fromV0(typeof value === 'string' ? JSON.parse(value) : value),
-      );
-      result = { doc: store.doc, patches: [] };
+      result = { doc: fromV0(typeof value === 'string' ? JSON.parse(value) : value) };
     } else if (type === 'compare') result = diff(value[0], value[1]);
-    else if (type === 'proposal') {
-      const p = store.preview(proposalCommand(value, store.doc));
+    else if (type === 'serialize') result = JSON.stringify(value, null, 1);
+    else if (type === 'replay') {
+      const store = new CommandStore(value.document);
+      for (const entry of value.entries) {
+        store.commit(recoveryCommand(entry));
+        if (store.doc.revision !== entry.version) throw Error('Recovery version mismatch');
+      }
+      result = { doc: store.doc, undo: store.past.length, redo: store.future.length };
+    } else if (type === 'preview' || type === 'proposal') {
+      const store = new CommandStore(value.document);
+      const command = type === 'proposal' ? proposalCommand(value.command, store.doc) : value.command;
+      const p = store.preview(command);
       result = { scope: p.scope, diff: p.diff };
-    } else if (type === 'preview') {
-      const p = store.preview(value);
-      result = { scope: p.scope, diff: p.diff };
-    } else if (type === 'select') {
-      const p = store.apply(value);
-      result = { scope: p.scope, inverse: p.inverse };
-    } else {
-      const before = store.doc;
-      let receipt;
-      if (type === 'undo') store.undo();
-      else if (type === 'redo') store.redo();
-      else
-        receipt = store.apply(
-          type === 'apply-proposal' ? proposalCommand(value, store.doc) : value,
-        );
-      result = {
-        patches: receipt
-          ? [
-              ...receipt.diff,
-              {
-                path: '/revision',
-                before: before.revision,
-                after: store.doc.revision,
-              },
-            ]
-          : diff(before, store.doc),
-        undo: store.past.length,
-        redo: store.future.length,
-      };
-    }
+    } else throw Error(`Unknown background operation: ${type}`);
     self.postMessage({ id, result });
   } catch (e) {
     self.postMessage({ id, error: e.message });

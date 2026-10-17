@@ -1,5 +1,6 @@
 import { fpsOf, textOf, uid, rational } from './doc/project.js';
-import { scope, COMMANDS, applyPatches } from './doc/commands.js';
+import { scope, COMMANDS, CommandStore, proposalCommand, recoveryCommand } from './doc/commands.js';
+import { RecoveryJournal, fileHash } from './doc/journal.js';
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
@@ -75,8 +76,6 @@ export class Editor {
       this.requests.delete(m.id);
       if (m.error) p?.reject(Error(m.error));
       else {
-        if (m.result?.patches && !m.result.doc && this.doc)
-          m.result.doc = applyPatches(this.doc, m.result.patches);
         p?.resolve(m.result);
       }
     };
@@ -118,6 +117,9 @@ export class Editor {
       this.worker.postMessage({ id, type, value });
     });
   }
+  get doc() {
+    return this.store?.doc;
+  }
   get video() {
     return (
       this.doc.videos.find((v) => v.id === this.videoId) || this.doc.videos[0]
@@ -140,23 +142,53 @@ export class Editor {
         ? `/file?path=${encodeURIComponent(p)}`
         : `/lib/${encodeURIComponent(this.doc.id)}/${p.split('/').map(encodeURIComponent).join('/')}`;
   }
-  async open(raw, absolute) {
+  open(raw, absolute) {
+    this.loading = true;
+    this.root.inert = true;
+    this.opening = this.load(raw, absolute).finally(() => {
+      this.loading = false;
+      this.root.inert = false;
+    });
+    return this.opening;
+  }
+  async load(raw, absolute) {
     this.metrics = { openStart: performance.now() };
     this.absolute = absolute;
-    this.opening = this.rpc('open', raw);
-    this.doc = (await this.opening).doc;
+    const opened = await this.rpc('open', raw);
+    if (this.dead) return this;
+    this.store = new CommandStore(opened.doc);
     this.metrics.workerDone = performance.now();
     this.baseRaw = raw;
     this.videoId = this.doc.videos[0].id;
     this.selection = this.video.clips[0]?.id || null;
     this.mount();
     this.onChange?.(this.doc);
+    await this.openJournal(raw);
     this.interactiveAt = performance.now();
     return this;
+  }
+  async openJournal(raw) {
+    this.journal?.close();
+    this.journal = null;
+    try {
+      const journal = await RecoveryJournal.open(this.absolute, raw, this.doc,
+        (error) => this.toast('Autosave failed: ' + error.message));
+      if (this.dead) { journal.close(); return; }
+      this.journal = journal;
+      if (journal.recovery.length) {
+        await this.rpc('replay', { document: this.doc, entries: journal.recovery });
+        $('#recovery').showModal();
+      }
+    } catch (error) {
+      this.journal?.close();
+      this.journal = null;
+      this.toast('Recovery unavailable: ' + error.message);
+    }
   }
   mount() {
     this.root.innerHTML = `<div class="ph-title"><h1>${esc(this.doc.title)}</h1><span class="cap">one video · many views</span></div>
   <div class="editor-tools"><select id="video-choice" aria-label="Video">${this.doc.videos.map((v) => `<option value="${esc(v.id)}">${esc(v.name)}</option>`).join('')}</select><span id="save-status" role="status">Loaded · document v1</span>${button('undo', 'Undo ↶')}${button('redo', 'Redo ↷')}${button('save', 'Save')}${button('palette', 'Commands ⌘K')}${button('settings', 'Workspace')}${button('export', 'Export video')}</div>
+  <dialog id="recovery" aria-labelledby="recovery-title"><h2 id="recovery-title">Recover unsaved changes?</h2><p>This project has local edits that were not saved to project.json.</p>${button('recover', 'Recover unsaved changes')}${button('discard-recovery', 'Discard')}</dialog>
   <div id="external" class="notice" hidden>File changed outside this editor. Your edits are preserved. ${button('reload-external', 'Load disk (discard local)')}${button('keep-local', 'Keep local / review overwrite')}</div>
   <div class="editor-grid"><section class="story-panel panel"><div class="panel-title">Story <span id="clip-count"></span>${button('toggle-story', 'Collapse')}</div><div id="story" tabindex="0" aria-label="Story clips"><div id="story-space"></div></div><div class="panel-foot">${button('add', 'Add clip')}${button('group', 'Group with next')}</div></section>
   <section class="canvas-panel panel"><div class="panel-title">Canvas <span id="selection-label"></span></div><div class="player" id="canvas"><video id="preview-video" muted playsinline preload="metadata"></video><canvas id="preview-still" width="960" height="540"></canvas><div id="preview-text"></div></div><div class="preview-label">Editorial preview · source proxy / thumbnail + text. Final compositing not available.</div><div class="transport">${button('reverse', 'J ◀')}${button('play', 'Space · Play')}${button('pause', 'K ■')}${button('forward', 'L ▶')}<output id="time">0 f</output><input id="seek" type="range" min="0" value="0" aria-label="Playhead frame"></div></section>
@@ -182,6 +214,7 @@ export class Editor {
         `<label>${k}<input data-binding="${k}" value="${esc(this.settings.keys?.[k] || v)}"></label>`,
     )
     .join('')}</div>${button('reset-settings', 'Reset workspace')}</dialog>`;
+    $('#recovery').oncancel = (e) => e.preventDefault();
     this.assistant?.($('#assistant-slot', this.root));
     this.root.onclick = (e) => {
       const action = e.target.closest('[data-action]')?.dataset.action;
@@ -657,16 +690,25 @@ export class Editor {
       $('#version-b').value = this.doc.versions.at(-1).id;
   }
   async run(cmd) {
+    if (this.loading) throw Error('Project is still opening');
     cmd = { videoId: this.videoId, ...cmd };
     const label = scope(cmd);
     if ($('#scope').textContent !== label) $('#scope').textContent = label;
-    const result = await this.rpc('apply', cmd);
-    this.doc = result.doc;
+    const before = this.doc;
+    const result = this.store.commit(cmd);
+    if (before === this.doc) return result;
     this.dirty = true;
     if ($('#save-status').textContent !== 'Unsaved changes')
       $('#save-status').textContent = 'Unsaved changes';
     this.patchViews(result);
     this.onChange?.(this.doc);
+    this.journal?.append(
+      cmd.type === 'undo' || cmd.type === 'redo' ? cmd : this.store.past.at(-1).cmd,
+      this.doc.revision,
+      cmd.type === 'undo' || cmd.type === 'redo'
+        ? result.patches.filter((p) => p.path !== '/revision').map(({ path, after }) => ({ path, after }))
+        : undefined,
+    );
     return result;
   }
   patchViews(result) {
@@ -685,11 +727,11 @@ export class Editor {
   async select(id) {
     if (!this.video.clips.some((c) => c.id === id)) return;
     this.selection = id;
-    this.rpc('select', {
+    this.store.commit({
       type: 'select',
       clipId: id,
       videoId: this.videoId,
-    }).catch(() => {});
+    });
     this.renderStory();
     this.renderTimeline();
     this.renderInspector();
@@ -756,30 +798,24 @@ export class Editor {
     }
   }
   async save() {
+    if (this.loading) return false;
     if (this.saving) return this.saving;
     if (this.conflict) {
       this.toast('Resolve the external change before saving');
       return false;
     }
     const captured = this.doc,
-      body = JSON.stringify(captured, null, 1),
       base = this.baseRaw;
     $('#save-status').textContent = 'Saving…';
     this.saving = (async () => {
       try {
+        const body = await this.rpc('serialize', captured);
+        await this.journal?.prepareSave(body, captured.revision).catch((error) => this.toast('Autosave failed: ' + error.message));
         const r = await fetch(`/fs?path=${encodeURIComponent(this.path())}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'X-FFS-Expected': Array.from(
-              new Uint8Array(
-                await crypto.subtle.digest(
-                  'SHA-256',
-                  new TextEncoder().encode(base),
-                ),
-              ),
-              (b) => b.toString(16).padStart(2, '0'),
-            ).join(''),
+            'X-FFS-Expected': await fileHash(base),
           },
           body,
         });
@@ -794,6 +830,7 @@ export class Editor {
           return false;
         }
         this.baseRaw = body;
+        await this.journal?.checkpoint(body, captured.revision).catch((error) => this.toast('Autosave failed: ' + error.message));
         this.dirty = this.doc !== captured;
         $('#save-status').textContent = this.dirty
           ? 'Unsaved changes'
@@ -824,12 +861,27 @@ export class Editor {
       }
       const r = await this.api.read(path);
       if (r.content === this.baseRaw) return;
-      if (this.dirty) {
+      if (this.dirty || this.journal?.recovery.length) {
         this.externalConflict();
         return;
       }
-      this.baseRaw = r.content;
-      this.doc = (await this.rpc('open', r.content)).doc;
+      const previous = this.store, current = this.doc;
+      const opened = await this.rpc('open', r.content);
+      if (this.dead) return;
+      if (this.store !== previous || this.doc !== current || this.dirty || this.journal?.recovery.length) {
+        this.externalConflict();
+        return;
+      }
+      this.loading = true;
+      this.root.inert = true;
+      try {
+        this.store = new CommandStore(opened.doc);
+        this.baseRaw = r.content;
+        await this.openJournal(r.content);
+      } finally {
+        this.loading = false;
+        this.root.inert = false;
+      }
       this.refresh();
       this.onChange?.(this.doc);
       this.toast('Loaded external changes');
@@ -854,7 +906,7 @@ export class Editor {
   }
   async inspectProposal() {
     try {
-      const result = await this.rpc('proposal', this.pendingProposal);
+      const result = await this.rpc('proposal', { document: this.doc, command: this.pendingProposal });
       $('#proposal-diff').textContent =
         result.scope + '\n' + JSON.stringify(result.diff, null, 2);
       this.proposalValid = true;
@@ -892,19 +944,33 @@ export class Editor {
       )
       .join('');
   }
+  async recover(discard) {
+    if (this.recovering) return;
+    this.recovering = true;
+    try {
+      if (discard) await this.journal.checkpoint(this.baseRaw, this.doc.revision, true);
+      else {
+        const entries = this.journal.recovery;
+        await this.rpc('replay', { document: this.doc, entries });
+        for (const entry of entries) await this.run(recoveryCommand(entry));
+        await this.journal.flush();
+        this.journal.recovery = [];
+      }
+      $('#recovery').close();
+    } finally {
+      this.recovering = false;
+    }
+  }
   async action(a) {
+    if (this.loading) return;
     const c = this.clip;
     if (a !== 'palette' && a !== 'close-palette' && $('#palette').open)
       $('#palette').close();
+    if (a === 'recover' || a === 'discard-recovery') return this.recover(a === 'discard-recovery');
+    if ($('#recovery').open) return;
     if (a === 'save') return this.save();
     if (a === 'undo' || a === 'redo') {
-      const r = await this.rpc(a);
-      this.doc = r.doc;
-      this.dirty = true;
-      $('#save-status').textContent = 'Unsaved changes';
-      this.refresh(r);
-      this.onChange?.(this.doc);
-      return;
+      return this.run({ type: a });
     }
     if (a === 'play') {
       this.rate = this.rate ? 0 : 1;
@@ -975,8 +1041,10 @@ export class Editor {
     if (a === 'reload-external') {
       if (!confirm('Discard local edits and load the disk version?')) return;
       const r = await this.api.read(this.path());
-      this.doc = (await this.rpc('open', r.content)).doc;
+      this.store = new CommandStore((await this.rpc('open', r.content)).doc);
       this.baseRaw = r.content;
+      await this.journal?.checkpoint(r.content, this.doc.revision, true);
+      await this.openJournal(r.content);
       this.dirty = false;
       this.conflict = false;
       $('#external').hidden = true;
@@ -1009,12 +1077,7 @@ export class Editor {
       return;
     }
     if (a === 'apply-proposal') {
-      const r = await this.rpc('apply-proposal', this.pendingProposal);
-      this.doc = r.doc;
-      this.dirty = true;
-      $('#save-status').textContent = 'Unsaved changes';
-      this.refresh(r);
-      this.onChange?.(this.doc);
+      await this.run(proposalCommand(this.pendingProposal, this.doc));
       $('#proposals').textContent = 'Applied · one undo step';
       this.pendingProposal = null;
       return;
@@ -1121,7 +1184,7 @@ export class Editor {
     const bindings = { ...defaults, ...this.settings.keys };
     const action = Object.keys(bindings).find((a) => bindings[a] === key);
     if (!action || (typing && !mod)) return;
-    if ($('#settings')?.open) return;
+    if ($('#settings')?.open || $('#recovery')?.open) return;
     e.preventDefault();
     this.action(action).catch((err) => this.toast(err.message));
   }
@@ -1129,6 +1192,7 @@ export class Editor {
     this.dead = true;
     cancelAnimationFrame(this.raf);
     clearInterval(this.previewTimer);
+    this.journal?.close();
     this.worker.terminate();
     this.thumbs.terminate();
     this.observer.disconnect();

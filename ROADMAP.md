@@ -13,7 +13,7 @@ This file compares fframestudio against CapCut, Descript, DaVinci Resolve, Premi
 | Undoable commands with labelled history | CapCut, Descript, Resolve, Premiere, Kdenlive, Clipchamp | in progress | M1 | Pointer, menu and assistant use one command contract. |
 | Story, Timeline and Inspector views | Descript, Resolve, Premiere | in progress | M1 | One document, several views (DESIGN §1). |
 | Versions (whole-film alternatives) | Descript | in progress | M2 | Comparison between alternatives; takes mean performances (05 §3). |
-| Crash recovery and autosave | Kdenlive, Resolve, Premiere | planned | M1 | Durable local saves before feature breadth (01 §G). |
+| Crash recovery and autosave | Kdenlive, Resolve, Premiere | shipped | M1 | Debounced local command journal, recover/discard and undoable replay; explicit Save keeps expected-hash protection. |
 | Trimming: ripple, roll, slip, slide | Resolve, Premiere, Kdenlive | planned | M2 | Visible duration and handle rules; undo restores state. |
 | Insert, overwrite and three-point editing | Resolve, Premiere, Kdenlive | planned | M3 | Explicit verbs with visible collision results. |
 | Nested sequences and compound clips | Resolve, Premiere, Kdenlive | planned | M3 | Reusable groups with open-in-place and cycle checks. |
