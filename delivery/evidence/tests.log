@@ -1,0 +1,44 @@
+{"platform": "x", "content": "fixture", "variant": "naive", "vmaf": {"mean": 94.8203276, "p5": 93.47349894999999}, "neg": {"mean": 93.18551003333333, "p5": 91.95688704999999}, "sec_per_min": 2.5203667825553566}
+{"platform": "x", "content": "fixture", "variant": "software", "vmaf": {"mean": 98.71734363333333, "p5": 97.03236995}, "neg": {"mean": 94.36601436666666, "p5": 93.0877475}, "sec_per_min": 3.5075256612617522}
+2 verified rows in /workspace/hermes-home/profiles/clean/cache/scratch/tmp90yuf4pk/results.json
+{"platform": "x", "content": "fixture", "variant": "software", "vmaf": {"mean": 98.46648736666667, "p5": 97.42845115}, "neg": {"mean": 93.9055994, "p5": 92.76138544999999}, "sec_per_min": 3.533438639715314}
+3 verified rows in /workspace/hermes-home/profiles/clean/cache/scratch/tmp90yuf4pk/results.json
+{"platform": "x", "content": "fixture", "variant": "naive", "vmaf": {"mean": 94.8203276, "p5": 93.47349894999999}, "neg": {"mean": 93.18551003333333, "p5": 91.95688704999999}, "sec_per_min": 2.599336977582425}
+{"platform": "x", "content": "fixture", "variant": "software", "vmaf": {"mean": 98.71734363333333, "p5": 97.03236995}, "neg": {"mean": 94.36601436666666, "p5": 93.0877475}, "sec_per_min": 3.6201205803081393}
+2 verified rows in /workspace/hermes-home/profiles/clean/cache/scratch/tmphm22b5j4/results.json
+{"mode": "decimate", "fps": 30, "temporal_vs_box": {"mean_delta_error_8bit": 1.24963122605364, "max_delta_error_8bit": 1.334375}, "export_seconds_per_minute": 3.165083461208269}
+{"mode": "blend", "fps": 30, "temporal_vs_box": {"mean_delta_error_8bit": 0.5427729885057472, "max_delta_error_8bit": 0.6121527777777778}, "export_seconds_per_minute": 3.45961170271039}
+{"mode": "interpolate", "fps": 30, "temporal_vs_box": {"mean_delta_error_8bit": 1.2242840038314176, "max_delta_error_8bit": 2.0975}, "export_seconds_per_minute": 33.24185676290654}
+{"output": "/home/kvn/.hermes/profiles/clean/cache/scratch/tmpe47ahdya/output.mp4", "wall_seconds": 0.02866528503363952}
+{"content": "fixture", "height": 120, "variant": "naive", "vmaf": {"mean": 37.9866905, "p5": 36.71364735}, "neg": {"mean": 33.997444566666665, "p5": 32.7554036}}
+{"content": "fixture", "height": 120, "variant": "matched_bicubic", "vmaf": {"mean": 38.7476318, "p5": 37.3846523}, "neg": {"mean": 34.56882543333333, "p5": 32.95556585}}
+{"content": "fixture", "height": 120, "variant": "lanczos_cas", "vmaf": {"mean": 44.2144495, "p5": 42.7006565}, "neg": {"mean": 39.134601833333335, "p5": 37.541395449999996}}
+{"content": "fixture", "height": 120, "variant": "linear_cas", "vmaf": {"mean": 40.46118396666667, "p5": 39.13184845}, "neg": {"mean": 36.22504026666667, "p5": 34.65723285}}
+{"platform": "x", "encoder": "libx264", "repeat": 0, "frames": 30, "end_to_end_seconds_per_minute": 5.046796139795333}
+{"frames": 30, "wall_seconds": 0.1089611750212498, "psnr_y": {"mean": 39.8375657, "p5": 38.85380935}, "psnr_cb": {"mean": 39.8929642, "p5": 39.307161650000005}, "psnr_cr": {"mean": 40.220937, "p5": 39.582389549999995}, "integer_adm2": {"mean": 0.9917646999999999, "p5": 0.98800265}, "integer_aim": {"mean": 0.009365266666666667, "p5": 0.0059308}, "integer_adm3": {"mean": 0.9911997333333333, "p5": 0.9880242}, "integer_adm_scale0": {"mean": 0.9792639333333333, "p5": 0.9757673}, "integer_adm_scale1": {"mean": 0.9878562, "p5": 0.98240345}, "integer_adm_scale2": {"mean": 0.9888139333333333, "p5": 0.9848044}, "integer_adm_scale3": {"mean": 0.9983779666666667, "p5": 0.99366305}, "VMAF_integer_feature_motion_sad_score": {"mean": 2.2103598333333334, "p5": 1.8391708}, "integer_vif_scale0": {"mean": 0.8456412, "p5": 0.8322861}, "integer_vif_scale1": {"mean": 0.9713359, "p5": 0.9670254500000001}, "integer_vif_scale2": {"mean": 0.9847314666666667, "p5": 0.98131935}, "integer_vif_scale3": {"mean": 0.9901894666666666, "p5": 0.9870898}, "integer_adm2_egl_1": {"mean": 0.9868694666666666, "p5": 0.984274}, "integer_aim_egl_1": {"mean": 0.009453033333333333, "p5": 0.00598975}, "integer_adm3_egl_1": {"mean": 0.9887082333333334, "p5": 0.98615285}, "integer_adm_scale0_egl_1": {"mean": 0.9748942666666667, "p5": 0.97135545}, "integer_adm_scale1_egl_1": {"mean": 0.9827532333333333, "p5": 0.9780170499999999}, "integer_adm_scale2_egl_1": {"mean": 0.9848219333333333, "p5": 0.98144735}, "integer_adm_scale3_egl_1": {"mean": 0.9928271666666667, "p5": 0.98994185}, "integer_vif_scale0_egl_1": {"mean": 0.8439533, "p5": 0.83089385}, "integer_vif_scale1_egl_1": {"mean": 0.9686714666666667, "p5": 0.9640843}, "integer_vif_scale2_egl_1": {"mean": 0.9821118666666666, "p5": 0.97869735}, "integer_vif_scale3_egl_1": {"mean": 0.9876846333333333, "p5": 0.98455285}, "float_ssim": {"mean": 0.9912325666666667, "p5": 0.98951355}, "cambi": {"mean": 0.9991217666666666, "p5": 0.8322022}, "integer_motion2": {"mean": 2.094784033333333, "p5": 1.787239}, "integer_motion3": {"mean": 2.1641524666666667, "p5": 1.8391708}, "vmaf": {"mean": 96.8017515, "p5": 95.23242625}, "vmaf_neg": {"mean": 95.40699596666667, "p5": 93.8682198}}
+{"mode": "decimate", "fps": 30, "temporal_vs_box": {"mean_delta_error_8bit": 2.799147509578544, "max_delta_error_8bit": 5.379513888888889}, "export_seconds_per_minute": 3.476663399487734}
+{"mode": "blend", "fps": 30, "temporal_vs_box": {"mean_delta_error_8bit": 0.7752897509578544, "max_delta_error_8bit": 0.9559027777777778}, "export_seconds_per_minute": 3.940805521560833}
+{"mode": "interpolate", "fps": 30, "temporal_vs_box": {"mean_delta_error_8bit": 3.1811206896551725, "max_delta_error_8bit": 6.4963194444444445}, "export_seconds_per_minute": 33.80630747764371}
+test_aggregation_rejects_incomplete_cohort (test_delivery.DeliveryTest.test_aggregation_rejects_incomplete_cohort) ... ok
+test_audio_two_pass (test_delivery.DeliveryTest.test_audio_two_pass) ... ok
+test_av1_simulator (test_delivery.DeliveryTest.test_av1_simulator) ... ok
+test_benchmark_preserves_prior_recipe_artifacts (test_delivery.DeliveryTest.test_benchmark_preserves_prior_recipe_artifacts) ... ok
+test_benchmark_smoke (test_delivery.DeliveryTest.test_benchmark_smoke) ... ok
+test_custom_high_output_rate (test_delivery.DeliveryTest.test_custom_high_output_rate) ... ok
+test_experiments_smoke (test_delivery.DeliveryTest.test_experiments_smoke) ... ok
+test_export_real_video (test_delivery.DeliveryTest.test_export_real_video) ... ok
+test_jpeg_reference_converts_601_to_709 (test_delivery.DeliveryTest.test_jpeg_reference_converts_601_to_709) ... ok
+test_low_resolution_smoke (test_delivery.DeliveryTest.test_low_resolution_smoke) ... ok
+test_measured_upload_limit_rejects_overshoot (test_delivery.DeliveryTest.test_measured_upload_limit_rejects_overshoot) ... ok
+test_metric_path_and_alignment (test_delivery.DeliveryTest.test_metric_path_and_alignment) ... ok
+test_nvenc_fixed_gop_real_gradient (test_delivery.DeliveryTest.test_nvenc_fixed_gop_real_gradient) ... ok
+test_performance_real_export (test_delivery.DeliveryTest.test_performance_real_export) ... ok
+test_public_cli_simulate_measure_and_invalid_geometry (test_delivery.DeliveryTest.test_public_cli_simulate_measure_and_invalid_geometry) ... ok
+test_simulator_metrics_real_frames (test_delivery.DeliveryTest.test_simulator_metrics_real_frames) ... ok
+test_temporal_pan_fixture (test_delivery.DeliveryTest.test_temporal_pan_fixture) ... ok
+test_treatments_and_temporal_conform (test_delivery.DeliveryTest.test_treatments_and_temporal_conform) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 13.822s
+
+OK

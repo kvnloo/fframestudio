@@ -1,0 +1,581 @@
+{
+  "sources": {
+    "ui": {
+      "path": "/mnt/zer0models/hermes-wt/render-lab/demo/one-take/out/one-take-master.mkv",
+      "start": 8
+    },
+    "gradient": {
+      "path": "/mnt/zer0models/z0-wt/salvage/theme-gallery-demo/v3/video/out/master.mkv",
+      "start": 14
+    },
+    "satellite": {
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/%04d.jpg",
+      "start": 0,
+      "sequence": true
+    },
+    "motion": {
+      "path": "/mnt/zer0models/hermes-wt/render-lab/out/film/realtime-540fps-4k.mp4",
+      "start": 8
+    }
+  },
+  "files": [
+    {
+      "content": "ui",
+      "path": "/mnt/zer0models/hermes-wt/render-lab/demo/one-take/out/one-take-master.mkv",
+      "bytes": 170194947,
+      "sha256": "c385ea61a6dfc25983124ae709730683b5584e74e4605e6521db7264542cf559"
+    },
+    {
+      "content": "gradient",
+      "path": "/mnt/zer0models/z0-wt/salvage/theme-gallery-demo/v3/video/out/master.mkv",
+      "bytes": 2170753385,
+      "sha256": "4802ba6ec6f458ac8d90e965736088a0240112ceacf75b771e39a751b21c9767"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0000.jpg",
+      "bytes": 651191,
+      "sha256": "f003e44dbb03480fdea056980151933e8c97a77be831b047bd0d61dc7b7177d8"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0001.jpg",
+      "bytes": 651558,
+      "sha256": "0a8fa3c0ed29a3dac7627228a5cd6cf49ceb0768d7ec6fc93f817fae899139bd"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0002.jpg",
+      "bytes": 652263,
+      "sha256": "06646467afa5dc34e377533d8bed6f1597a289ff540905eea78966b966ea3c7f"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0003.jpg",
+      "bytes": 652230,
+      "sha256": "55179f38037094c0666c7650a1e23ca2b5b86aef68ed3b3e6ed3bfa6742e0f32"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0004.jpg",
+      "bytes": 653052,
+      "sha256": "719f06414f20c8e3439babec4a5a227374be63bd3409669d3b7f82abd1621246"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0005.jpg",
+      "bytes": 653969,
+      "sha256": "2ff0cbfc47383b25ccb04bb4519c9c0f46f6ad1cc5636da0c4925a9c2adaae93"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0006.jpg",
+      "bytes": 653951,
+      "sha256": "96e14f1fb1ac7aeb628a48784cdb9d2b1b4dc8269be2c00ee4411817f99a6105"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0007.jpg",
+      "bytes": 654597,
+      "sha256": "7814af33cf13272699ca5834f7e6fe37111b274e4b5a4d8dc301117a7a4c08ce"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0008.jpg",
+      "bytes": 654952,
+      "sha256": "ba78131681eeb3963afeac5d5c9efb043d10be2c94a9e0491b3da20890767fda"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0009.jpg",
+      "bytes": 656138,
+      "sha256": "37eee0a9ef22062d584725d6f53bbfb53317189216c71bada819f70878c252cc"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0010.jpg",
+      "bytes": 656233,
+      "sha256": "6b8feaf978b3a33b81d8e3e33b19e63320315b07628a7727e275135deb562c55"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0011.jpg",
+      "bytes": 656680,
+      "sha256": "6882fcebbc8dec988c5d777df90f627490f7f630d71b91afb6be19a945a8e3b4"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0012.jpg",
+      "bytes": 657306,
+      "sha256": "09015513a50155a952094f038945e0f5e29a1dbbfb6150853bc0c71141feb9e2"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0013.jpg",
+      "bytes": 657373,
+      "sha256": "5bf6624da5e03e3189fef1544d4f2c394a411d215534e4f4a596746792d5d258"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0014.jpg",
+      "bytes": 657976,
+      "sha256": "a136057f42b7d937563f6549ea529b06959e5f5a7087b2f19a4c153b494bb5a8"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0015.jpg",
+      "bytes": 658293,
+      "sha256": "76179632538b72b5e4753b6298e20d3733940d05fc01c8b6a79fc5b6e9273f6b"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0016.jpg",
+      "bytes": 658744,
+      "sha256": "b3e8cc09482a646a6f03b2f426616bcb46c5a79444f9dd314c70dc83201bb897"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0017.jpg",
+      "bytes": 659066,
+      "sha256": "c3003ea4bbc363fd2688f1079f2fd4a5b2a9cd54354247af9d3db4338b717026"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0018.jpg",
+      "bytes": 659523,
+      "sha256": "1204f781729528bdfaf53c416841ca9b2e7df00440a807e7f56c4deda36f7515"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0019.jpg",
+      "bytes": 659821,
+      "sha256": "9ca5034f87126f076dddf29be92b2bc8d7954387983e89a4a3604389ab0aa8b2"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0020.jpg",
+      "bytes": 660161,
+      "sha256": "4a76163583c71d09cd8b9dd8b9adce7d3fea1eeab0ae4980863bbdefdaf12557"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0021.jpg",
+      "bytes": 660724,
+      "sha256": "9c734173e8e99837f306e1ca379d4afd6af96d69d7b16f6e7d65f0e8b1896144"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0022.jpg",
+      "bytes": 660739,
+      "sha256": "226cb8f1b338578fb81ea3eba1f8f3771d328a43ee7c0751c9d45fb0e2f777b9"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0023.jpg",
+      "bytes": 661576,
+      "sha256": "1d258c74795ce78d858ae6f468f7b723adcf8922b40cfa7e568e096d79aef18e"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0024.jpg",
+      "bytes": 664033,
+      "sha256": "319723c6b9a865d40c5a96231da5d27bc573d737b935c1db1689d68c41419474"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0025.jpg",
+      "bytes": 664466,
+      "sha256": "ec5eba2b9de31eb09565187cbd0c8b75c14d8d3dbee1d024cfd46a93f2561b57"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0026.jpg",
+      "bytes": 665097,
+      "sha256": "98099fc8bbb500e3f0299162b5f331c58dbd30deb08545d92513a64b13976abc"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0027.jpg",
+      "bytes": 665071,
+      "sha256": "d3a18748c54a5b15a61a0abf96e386a4d54fa76db2ea8bda5e372d962175fce5"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0028.jpg",
+      "bytes": 664961,
+      "sha256": "5e76cd718808df2cc81aa2cbaaa557f4d2af7bd248a2af81d49e1c69b12c305f"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0029.jpg",
+      "bytes": 665868,
+      "sha256": "0fea11fabb876100632bb30fee2b6179159f7e6957bdcb0112bb5d2800fec3bc"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0030.jpg",
+      "bytes": 665753,
+      "sha256": "5026a6c205e8cab5d9c024b7decba7a76f66f7cbfd033c1308ddb285b1cb1631"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0031.jpg",
+      "bytes": 665316,
+      "sha256": "e36bdb591e6ef357099b7ed5b540cbbc8ab0c1576d6bae8922d8033994d59b34"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0032.jpg",
+      "bytes": 665947,
+      "sha256": "324dffc30c0b6396c61f3d4c97630592ca997a9c201fa110c6223e4d9c5c56b6"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0033.jpg",
+      "bytes": 666584,
+      "sha256": "bdcb6c2a1912f975883d921d7125e62e55fed8eaca1c9a5419d1b4c062bf3ece"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0034.jpg",
+      "bytes": 665826,
+      "sha256": "e94a10fcea99c0fe74e420d781120c9b3e756928b14331d4a08fd1ba60ae05c7"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0035.jpg",
+      "bytes": 666388,
+      "sha256": "81b910af473bdfcd4839b4b7776a3b1ab528f86fe886f40ed26228f790e73e1c"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0036.jpg",
+      "bytes": 666251,
+      "sha256": "a7b6b06cf828685c79339e80f8125133906a4d21bd92e7222255890f1b2cf896"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0037.jpg",
+      "bytes": 666458,
+      "sha256": "072e70cff77fd17c4ff2b169ee32ad0e41f221dcd1b364dedad86524b617d7d4"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0038.jpg",
+      "bytes": 666505,
+      "sha256": "dda0f40a6ed0f71d969c2c320805621e9c1fd34e33b8ec9ade186ae07cfa3b0f"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0039.jpg",
+      "bytes": 666609,
+      "sha256": "60712d6b674311c5d1b6b6698df8842a870ce2a117383140c02024ae283fc06f"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0040.jpg",
+      "bytes": 666831,
+      "sha256": "4601e61f07924a9f70b827de4e649a4803e34b7255eda202e307e6fcc56f1b22"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0041.jpg",
+      "bytes": 666415,
+      "sha256": "86e798720b906fd0623d1059c27d2e22ecc90f9ca54f20089d2138a238f72c97"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0042.jpg",
+      "bytes": 666395,
+      "sha256": "9aa06ccc819e38301d8c61e1a4c0b6aa1c58d280a7c087a836311c1b96496237"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0043.jpg",
+      "bytes": 666628,
+      "sha256": "ee5a70aa6b59228e4e0adb6f1ccf851951ae61b1ce48cd9c6a886b64dd516860"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0044.jpg",
+      "bytes": 666611,
+      "sha256": "0490366a00347e14dae1cdd74661b9a22e67ecad0dd6ceafb8b2317ab6db78dd"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0045.jpg",
+      "bytes": 666895,
+      "sha256": "c52ff05041b2093aa3d29613dc6eced0bfd64456425695e08525fa405741ad82"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0046.jpg",
+      "bytes": 666762,
+      "sha256": "8d43aa53e2d58009dce8bf71f2c2f377e6e40334c5cc9964ba6e19d4d13f74b0"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0047.jpg",
+      "bytes": 667269,
+      "sha256": "7b532173ae7c794e05500890f5e05714c3a07521ed676b244b46bce6290b951a"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0048.jpg",
+      "bytes": 667209,
+      "sha256": "87612d969e555df2a0ee34a822fa55081bb6309cdeda69b66df133315ec9cb0d"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0049.jpg",
+      "bytes": 667579,
+      "sha256": "af232933a49d74864191f4418842fb87bc8c9136ebad6b08e2d32802ffde1afe"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0050.jpg",
+      "bytes": 667921,
+      "sha256": "be4f48443466e00030acc3a44b1e575ea595aa09c9c4804bed6546ea7f0b0520"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0051.jpg",
+      "bytes": 667990,
+      "sha256": "5a20170eb553ebb2bc6737658436f842f3f11eefaac4c7059e2005bf12fbcf97"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0052.jpg",
+      "bytes": 667979,
+      "sha256": "14c37dd3db2aac608e1981a73b9cf8aa0e9154a48bd897ee2e819fc38ab0c802"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0053.jpg",
+      "bytes": 668795,
+      "sha256": "24bd1cb2d455e18dc338464a30b21aef65e400acacd8e215135762272736f017"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0054.jpg",
+      "bytes": 668533,
+      "sha256": "595b2b2a142b77fda46f065b3229c9fb6c73f0a5b2b48797c0cff1d44adae87a"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0055.jpg",
+      "bytes": 668362,
+      "sha256": "0f90bdf6843b457e266927b5324c8ac2fe3a59fe784f17cf78b01baf63f055f3"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0056.jpg",
+      "bytes": 668119,
+      "sha256": "b96f203817b2c1fe025800a3da0044e325d97f78a4847f1ded082c859a764854"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0057.jpg",
+      "bytes": 668456,
+      "sha256": "446ff3e6e73b7fa655d0420e0bbbba4eab0830822dc05d69802706291e55a01a"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0058.jpg",
+      "bytes": 668650,
+      "sha256": "b51a51108312fdc9159894573a721be61a819facf04619106b89ee2246441d44"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0059.jpg",
+      "bytes": 668520,
+      "sha256": "9802364772678c637627b9096fbba2a5ff142222f789c4b56cc67ddee2f01724"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0060.jpg",
+      "bytes": 667971,
+      "sha256": "bcd6194a922f11c3a454e2738688b356bb2544ea7fd365a3feaa96303d652de6"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0061.jpg",
+      "bytes": 668650,
+      "sha256": "21e9ec26eec0c07a396e466871def3530a2d85e734ab96eb4b0950d438f92345"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0062.jpg",
+      "bytes": 668387,
+      "sha256": "ffd8c9ec9f48a627d9e36ec4e0b2913e356ccad3b7a1482780a2748f30a1a1e3"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0063.jpg",
+      "bytes": 668355,
+      "sha256": "f64ae8ebd5dbb2cca9ac24752a564f8824f2f3a0d1da383be320c1563b5ac062"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0064.jpg",
+      "bytes": 668785,
+      "sha256": "17a725418af821565fa4836c34b08bb2de70c2c6e3c96a6cad5d70c21ea2a3e4"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0065.jpg",
+      "bytes": 668037,
+      "sha256": "2b5318b6d37dcf80f695f9a5b1230b62f0d598ed775248441ff0ed7375f61e1e"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0066.jpg",
+      "bytes": 668233,
+      "sha256": "1e7cb59633244dfdc96351adf8af8e73e88c878f97e745a72c40131793ad5a1c"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0067.jpg",
+      "bytes": 667976,
+      "sha256": "9e30b6afe6ecae443eed3a497e73af50dbe721259df932a929a1344aa1fdbcc5"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0068.jpg",
+      "bytes": 668019,
+      "sha256": "fced1a411bfa6e5381603f496e0bf0e9de855ad34c509b992a77d783301581c4"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0069.jpg",
+      "bytes": 673330,
+      "sha256": "323cd236e0acf2ce1086ac7637f9f82d05a11cbb9ec265b832b7e8ccdf7f1766"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0070.jpg",
+      "bytes": 673290,
+      "sha256": "284d9915e9022d0734effa3b25f1c770cd9d18d83e5147605108c91ee1db1803"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0071.jpg",
+      "bytes": 673262,
+      "sha256": "1849e98fade38d52f56beeb4d1b3f96016ae78649ab4e7b15d4220907b2f93ba"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0072.jpg",
+      "bytes": 673980,
+      "sha256": "a8d1ebf75cd5bc4a409b744c8fee786994d1e6ebabab18264ab999391c96df9d"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0073.jpg",
+      "bytes": 673704,
+      "sha256": "c22c4ea870053843230ec659ad08949100ac50268da4deae199116384191f465"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0074.jpg",
+      "bytes": 674217,
+      "sha256": "22a4912f9a48f638e698eab62a6e766915eecb71833228f92f14363510bba89d"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0075.jpg",
+      "bytes": 673968,
+      "sha256": "89b47811916a27555121159294ab2ec0851cd5aac987f1f6a11cc4e4e0a7f150"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0076.jpg",
+      "bytes": 673974,
+      "sha256": "9b3ce8f178be62841b26bc57a8549ac59e05f2e8cbc1e3531220abde8baaa345"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0077.jpg",
+      "bytes": 674027,
+      "sha256": "0cb36956c5a02a8ea09860cbfe69f8c1ff5b1fe110c599ec6dfde7dedc60d363"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0078.jpg",
+      "bytes": 673784,
+      "sha256": "e636b8ce5fa1ac91c941038950148d425c96c67ecae286f234a5053cd5fcf18d"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0079.jpg",
+      "bytes": 673723,
+      "sha256": "cd21f8b2b44e9d072227edad27fd29d6be1dbad450defb2ca01f9b5ac6205776"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0080.jpg",
+      "bytes": 673971,
+      "sha256": "0327d496000af92d25c87513a829a003cbfb6aad02f916bb9f1f4f3fd4c55390"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0081.jpg",
+      "bytes": 674638,
+      "sha256": "f6e112965e2efd2861afae21a148cc9a060cd4a9812963630367f7baac2cdaef"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0082.jpg",
+      "bytes": 674607,
+      "sha256": "8d36304dcc489b74ec26e6ea87132fce3bf3370c4d123a88832e26be24000a68"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0083.jpg",
+      "bytes": 674611,
+      "sha256": "5355cf2c8f1338508724c96e2133bea914556571f4daf27faad972b9a22694e7"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0084.jpg",
+      "bytes": 673833,
+      "sha256": "a1e3d6fd25389fecc8ed9bd6346a9e73cddc4fbde027a3cfdbbb9a9f104baedb"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0085.jpg",
+      "bytes": 674144,
+      "sha256": "deca085b733f64a628d963a3fc17530ad82b1931436f9e9f4036300a8e4a760c"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0086.jpg",
+      "bytes": 673902,
+      "sha256": "4549540c58854febeced833b5a506304913ea0f67be64ef4e8ce584a2c0bccc9"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0087.jpg",
+      "bytes": 673714,
+      "sha256": "74261fad94c74016a77bb765c9c12f6d32c2b6de2eb3671a502e0eca8fb8fe73"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0088.jpg",
+      "bytes": 674620,
+      "sha256": "f1da3a66f984ae94b618dd040a4b7936a47dd8d166b5a63d4e226e9d6e06916a"
+    },
+    {
+      "content": "satellite",
+      "path": "/mnt/zer0models/workspace/zer0/products/traffic-vision/expresslane-pretotypes/storyboard/raw-moves/01-2/0089.jpg",
+      "bytes": 674245,
+      "sha256": "ed268846335bed8a7507a0761f4f6b15f5bb4212a8c5da4073d60147d25c2805"
+    },
+    {
+      "content": "motion",
+      "path": "/mnt/zer0models/hermes-wt/render-lab/out/film/realtime-540fps-4k.mp4",
+      "bytes": 352337108,
+      "sha256": "a7767342f160c86433c52060ddca1e06f64ecb67c58e8be7fb3c73921a81dd13"
+    }
+  ]
+}

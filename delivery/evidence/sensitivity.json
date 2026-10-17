@@ -1,0 +1,938 @@
+[
+  {
+    "platform": "youtube",
+    "variant": "naive",
+    "content": "gradient",
+    "multiplier": 0.6,
+    "simulator": {
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "codec": "libvpx-vp9",
+      "bitrate_kbps": 3000,
+      "crf": 31,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "metrics": {
+      "frames": 90,
+      "wall_seconds": 7.418812755960971,
+      "psnr_y": {
+        "mean": 36.31174771111111,
+        "p5": 32.184000600000005
+      },
+      "psnr_cb": {
+        "mean": 44.35904046666667,
+        "p5": 40.5680118
+      },
+      "psnr_cr": {
+        "mean": 43.56189772222222,
+        "p5": 40.2398247
+      },
+      "integer_adm2": {
+        "mean": 0.9563839666666667,
+        "p5": 0.9079632999999999
+      },
+      "integer_aim": {
+        "mean": 0.03658245555555555,
+        "p5": 0.0127959
+      },
+      "integer_adm3": {
+        "mean": 0.9599007,
+        "p5": 0.91580305
+      },
+      "integer_adm_scale0": {
+        "mean": 0.9191874,
+        "p5": 0.8425806
+      },
+      "integer_adm_scale1": {
+        "mean": 0.9420516888888889,
+        "p5": 0.8816121
+      },
+      "integer_adm_scale2": {
+        "mean": 0.9593446333333333,
+        "p5": 0.90959755
+      },
+      "integer_adm_scale3": {
+        "mean": 0.9773119222222222,
+        "p5": 0.9383924499999999
+      },
+      "VMAF_integer_feature_motion_sad_score": {
+        "mean": 4.242565788888889,
+        "p5": 1.1368992
+      },
+      "integer_vif_scale0": {
+        "mean": 0.2661105777777778,
+        "p5": 0.2009603
+      },
+      "integer_vif_scale1": {
+        "mean": 0.8908233777777778,
+        "p5": 0.7560163999999999
+      },
+      "integer_vif_scale2": {
+        "mean": 0.9298716222222222,
+        "p5": 0.80937645
+      },
+      "integer_vif_scale3": {
+        "mean": 0.9498416444444444,
+        "p5": 0.8468663
+      },
+      "integer_adm2_egl_1": {
+        "mean": 0.9479813888888889,
+        "p5": 0.89827125
+      },
+      "integer_aim_egl_1": {
+        "mean": 0.037154266666666665,
+        "p5": 0.01302725
+      },
+      "integer_adm3_egl_1": {
+        "mean": 0.9554135888888888,
+        "p5": 0.9097012
+      },
+      "integer_adm_scale0_egl_1": {
+        "mean": 0.9151673888888889,
+        "p5": 0.83774985
+      },
+      "integer_adm_scale1_egl_1": {
+        "mean": 0.9337374666666667,
+        "p5": 0.87187755
+      },
+      "integer_adm_scale2_egl_1": {
+        "mean": 0.9497302,
+        "p5": 0.8985331
+      },
+      "integer_adm_scale3_egl_1": {
+        "mean": 0.9680142888888889,
+        "p5": 0.9252115000000001
+      },
+      "integer_vif_scale0_egl_1": {
+        "mean": 0.2652859777777778,
+        "p5": 0.19909369999999998
+      },
+      "integer_vif_scale1_egl_1": {
+        "mean": 0.8843168555555555,
+        "p5": 0.7369178
+      },
+      "integer_vif_scale2_egl_1": {
+        "mean": 0.9226235111111111,
+        "p5": 0.7926514
+      },
+      "integer_vif_scale3_egl_1": {
+        "mean": 0.9421231111111111,
+        "p5": 0.8296504
+      },
+      "float_ssim": {
+        "mean": 0.9834918666666667,
+        "p5": 0.96724815
+      },
+      "cambi": {
+        "mean": 10.085329933333334,
+        "p5": 5.4819837
+      },
+      "integer_motion2": {
+        "mean": 2.8824673888888888,
+        "p5": 1.1273165
+      },
+      "integer_motion3": {
+        "mean": 2.895095122222222,
+        "p5": 1.1322126
+      },
+      "vmaf": {
+        "mean": 85.49347127777777,
+        "p5": 66.853467
+      },
+      "vmaf_neg": {
+        "mean": 82.96020075555556,
+        "p5": 64.046762
+      }
+    },
+    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/sensitivity/youtube-libvpx-vp9-0.6-naive-playback.mp4",
+    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-naive-1-upload.mp4",
+    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1920x1080.mkv"
+  },
+  {
+    "platform": "youtube",
+    "variant": "fast",
+    "content": "gradient",
+    "multiplier": 0.6,
+    "simulator": {
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "codec": "libvpx-vp9",
+      "bitrate_kbps": 3000,
+      "crf": 31,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "metrics": {
+      "frames": 90,
+      "wall_seconds": 8.857442371023353,
+      "psnr_y": {
+        "mean": 36.58214987777778,
+        "p5": 32.21312625
+      },
+      "psnr_cb": {
+        "mean": 44.69144668888889,
+        "p5": 40.48592955
+      },
+      "psnr_cr": {
+        "mean": 44.14902488888889,
+        "p5": 40.243995
+      },
+      "integer_adm2": {
+        "mean": 0.9592693444444444,
+        "p5": 0.9112674
+      },
+      "integer_aim": {
+        "mean": 0.034583833333333334,
+        "p5": 0.01090655
+      },
+      "integer_adm3": {
+        "mean": 0.9623427222222223,
+        "p5": 0.9176408500000001
+      },
+      "integer_adm_scale0": {
+        "mean": 0.9253443888888889,
+        "p5": 0.8432636
+      },
+      "integer_adm_scale1": {
+        "mean": 0.9456586555555555,
+        "p5": 0.88539
+      },
+      "integer_adm_scale2": {
+        "mean": 0.9625061333333333,
+        "p5": 0.91425155
+      },
+      "integer_adm_scale3": {
+        "mean": 0.9785968888888888,
+        "p5": 0.9425065
+      },
+      "VMAF_integer_feature_motion_sad_score": {
+        "mean": 4.242565788888889,
+        "p5": 1.1368992
+      },
+      "integer_vif_scale0": {
+        "mean": 0.27489538888888887,
+        "p5": 0.20153669999999999
+      },
+      "integer_vif_scale1": {
+        "mean": 0.8969963444444444,
+        "p5": 0.76889285
+      },
+      "integer_vif_scale2": {
+        "mean": 0.9343472888888888,
+        "p5": 0.82208225
+      },
+      "integer_vif_scale3": {
+        "mean": 0.9532083222222222,
+        "p5": 0.857069
+      },
+      "integer_adm2_egl_1": {
+        "mean": 0.9518863444444444,
+        "p5": 0.89796805
+      },
+      "integer_aim_egl_1": {
+        "mean": 0.035025766666666666,
+        "p5": 0.01102275
+      },
+      "integer_adm3_egl_1": {
+        "mean": 0.9584303222222222,
+        "p5": 0.9117216
+      },
+      "integer_adm_scale0_egl_1": {
+        "mean": 0.9215498333333333,
+        "p5": 0.83867025
+      },
+      "integer_adm_scale1_egl_1": {
+        "mean": 0.9382363555555555,
+        "p5": 0.87542045
+      },
+      "integer_adm_scale2_egl_1": {
+        "mean": 0.9537899555555556,
+        "p5": 0.9029201
+      },
+      "integer_adm_scale3_egl_1": {
+        "mean": 0.9707276333333333,
+        "p5": 0.92850885
+      },
+      "integer_vif_scale0_egl_1": {
+        "mean": 0.27422742222222224,
+        "p5": 0.199927
+      },
+      "integer_vif_scale1_egl_1": {
+        "mean": 0.8911260444444444,
+        "p5": 0.7467477
+      },
+      "integer_vif_scale2_egl_1": {
+        "mean": 0.9278117777777778,
+        "p5": 0.8016035
+      },
+      "integer_vif_scale3_egl_1": {
+        "mean": 0.9462133222222222,
+        "p5": 0.8380929
+      },
+      "float_ssim": {
+        "mean": 0.9839678444444444,
+        "p5": 0.9687136
+      },
+      "cambi": {
+        "mean": 10.156486588888889,
+        "p5": 5.7385849
+      },
+      "integer_motion2": {
+        "mean": 2.8824673888888888,
+        "p5": 1.1273165
+      },
+      "integer_motion3": {
+        "mean": 2.895095122222222,
+        "p5": 1.1322126
+      },
+      "vmaf": {
+        "mean": 86.48802055555555,
+        "p5": 68.92403505
+      },
+      "vmaf_neg": {
+        "mean": 84.23385333333333,
+        "p5": 65.55966365
+      }
+    },
+    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/sensitivity/youtube-libvpx-vp9-0.6-fast-playback.mp4",
+    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-fast-1-fixed-upload.mp4",
+    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1920x1080.mkv"
+  },
+  {
+    "platform": "youtube",
+    "variant": "naive",
+    "content": "gradient",
+    "multiplier": 1.5,
+    "simulator": {
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "codec": "libvpx-vp9",
+      "bitrate_kbps": 3000,
+      "crf": 31,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "metrics": {
+      "frames": 90,
+      "wall_seconds": 8.331406673009042,
+      "psnr_y": {
+        "mean": 37.3722131,
+        "p5": 34.2653529
+      },
+      "psnr_cb": {
+        "mean": 45.52826547777778,
+        "p5": 42.04081565
+      },
+      "psnr_cr": {
+        "mean": 44.7063578,
+        "p5": 41.47973315
+      },
+      "integer_adm2": {
+        "mean": 0.9687142666666667,
+        "p5": 0.94318265
+      },
+      "integer_aim": {
+        "mean": 0.026859533333333335,
+        "p5": 0.0152179
+      },
+      "integer_adm3": {
+        "mean": 0.9709274111111111,
+        "p5": 0.9477195
+      },
+      "integer_adm_scale0": {
+        "mean": 0.9405651777777778,
+        "p5": 0.90612615
+      },
+      "integer_adm_scale1": {
+        "mean": 0.9563301444444444,
+        "p5": 0.92297145
+      },
+      "integer_adm_scale2": {
+        "mean": 0.9710409,
+        "p5": 0.94540555
+      },
+      "integer_adm_scale3": {
+        "mean": 0.9850815777777778,
+        "p5": 0.96736935
+      },
+      "VMAF_integer_feature_motion_sad_score": {
+        "mean": 4.242565788888889,
+        "p5": 1.1368992
+      },
+      "integer_vif_scale0": {
+        "mean": 0.28804202222222225,
+        "p5": 0.2357592
+      },
+      "integer_vif_scale1": {
+        "mean": 0.9171671333333333,
+        "p5": 0.83459175
+      },
+      "integer_vif_scale2": {
+        "mean": 0.9525543222222222,
+        "p5": 0.8913889
+      },
+      "integer_vif_scale3": {
+        "mean": 0.9689879555555556,
+        "p5": 0.92286465
+      },
+      "integer_adm2_egl_1": {
+        "mean": 0.961141,
+        "p5": 0.93472375
+      },
+      "integer_aim_egl_1": {
+        "mean": 0.02719341111111111,
+        "p5": 0.01532825
+      },
+      "integer_adm3_egl_1": {
+        "mean": 0.9669738222222223,
+        "p5": 0.9439761
+      },
+      "integer_adm_scale0_egl_1": {
+        "mean": 0.9368517333333334,
+        "p5": 0.89986915
+      },
+      "integer_adm_scale1_egl_1": {
+        "mean": 0.9488819888888889,
+        "p5": 0.9147062
+      },
+      "integer_adm_scale2_egl_1": {
+        "mean": 0.9626008777777778,
+        "p5": 0.9354352
+      },
+      "integer_adm_scale3_egl_1": {
+        "mean": 0.9765940111111111,
+        "p5": 0.9580688500000001
+      },
+      "integer_vif_scale0_egl_1": {
+        "mean": 0.28748225555555557,
+        "p5": 0.23538805
+      },
+      "integer_vif_scale1_egl_1": {
+        "mean": 0.9119612333333333,
+        "p5": 0.8226415
+      },
+      "integer_vif_scale2_egl_1": {
+        "mean": 0.9466872888888889,
+        "p5": 0.87875265
+      },
+      "integer_vif_scale3_egl_1": {
+        "mean": 0.9626326888888889,
+        "p5": 0.91053415
+      },
+      "float_ssim": {
+        "mean": 0.9865576555555555,
+        "p5": 0.98028455
+      },
+      "cambi": {
+        "mean": 9.140312622222222,
+        "p5": 4.1820994
+      },
+      "integer_motion2": {
+        "mean": 2.8824673888888888,
+        "p5": 1.1273165
+      },
+      "integer_motion3": {
+        "mean": 2.895095122222222,
+        "p5": 1.1322126
+      },
+      "vmaf": {
+        "mean": 90.18411174444445,
+        "p5": 81.48758725
+      },
+      "vmaf_neg": {
+        "mean": 87.90633085555555,
+        "p5": 79.1469455
+      }
+    },
+    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/sensitivity/youtube-libvpx-vp9-1.5-naive-playback.mp4",
+    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-naive-1-upload.mp4",
+    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1920x1080.mkv"
+  },
+  {
+    "platform": "youtube",
+    "variant": "fast",
+    "content": "gradient",
+    "multiplier": 1.5,
+    "simulator": {
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "codec": "libvpx-vp9",
+      "bitrate_kbps": 3000,
+      "crf": 31,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "metrics": {
+      "frames": 90,
+      "wall_seconds": 5.7686960400315,
+      "psnr_y": {
+        "mean": 37.80626537777778,
+        "p5": 34.58727525
+      },
+      "psnr_cb": {
+        "mean": 46.22677374444444,
+        "p5": 42.177625
+      },
+      "psnr_cr": {
+        "mean": 45.57206007777778,
+        "p5": 41.6343941
+      },
+      "integer_adm2": {
+        "mean": 0.9719756888888889,
+        "p5": 0.9444124
+      },
+      "integer_aim": {
+        "mean": 0.0234468,
+        "p5": 0.01045195
+      },
+      "integer_adm3": {
+        "mean": 0.9742643888888889,
+        "p5": 0.9504388500000001
+      },
+      "integer_adm_scale0": {
+        "mean": 0.9478989555555556,
+        "p5": 0.9047678
+      },
+      "integer_adm_scale1": {
+        "mean": 0.9608797777777778,
+        "p5": 0.92496885
+      },
+      "integer_adm_scale2": {
+        "mean": 0.9740997444444445,
+        "p5": 0.9462977
+      },
+      "integer_adm_scale3": {
+        "mean": 0.9864559111111111,
+        "p5": 0.9694337
+      },
+      "VMAF_integer_feature_motion_sad_score": {
+        "mean": 4.242565788888889,
+        "p5": 1.1368992
+      },
+      "integer_vif_scale0": {
+        "mean": 0.3026596888888889,
+        "p5": 0.2401018
+      },
+      "integer_vif_scale1": {
+        "mean": 0.9248390111111111,
+        "p5": 0.8455322000000001
+      },
+      "integer_vif_scale2": {
+        "mean": 0.9575756777777777,
+        "p5": 0.8980735
+      },
+      "integer_vif_scale3": {
+        "mean": 0.9722158888888889,
+        "p5": 0.92606245
+      },
+      "integer_adm2_egl_1": {
+        "mean": 0.9654569333333334,
+        "p5": 0.93669375
+      },
+      "integer_aim_egl_1": {
+        "mean": 0.023699133333333334,
+        "p5": 0.010546400000000001
+      },
+      "integer_adm3_egl_1": {
+        "mean": 0.9708788333333334,
+        "p5": 0.94631665
+      },
+      "integer_adm_scale0_egl_1": {
+        "mean": 0.9445585555555556,
+        "p5": 0.9008630000000001
+      },
+      "integer_adm_scale1_egl_1": {
+        "mean": 0.9543667222222222,
+        "p5": 0.9170118500000001
+      },
+      "integer_adm_scale2_egl_1": {
+        "mean": 0.9665695111111111,
+        "p5": 0.93921385
+      },
+      "integer_adm_scale3_egl_1": {
+        "mean": 0.9793772444444444,
+        "p5": 0.9594173500000001
+      },
+      "integer_vif_scale0_egl_1": {
+        "mean": 0.30223602222222223,
+        "p5": 0.2397676
+      },
+      "integer_vif_scale1_egl_1": {
+        "mean": 0.9203226888888889,
+        "p5": 0.8313589
+      },
+      "integer_vif_scale2_egl_1": {
+        "mean": 0.9524623111111111,
+        "p5": 0.88590095
+      },
+      "integer_vif_scale3_egl_1": {
+        "mean": 0.9667414555555556,
+        "p5": 0.9166831
+      },
+      "float_ssim": {
+        "mean": 0.9874026555555555,
+        "p5": 0.9818593
+      },
+      "cambi": {
+        "mean": 9.537329111111111,
+        "p5": 4.40871015
+      },
+      "integer_motion2": {
+        "mean": 2.8824673888888888,
+        "p5": 1.1273165
+      },
+      "integer_motion3": {
+        "mean": 2.895095122222222,
+        "p5": 1.1322126
+      },
+      "vmaf": {
+        "mean": 91.27754486666667,
+        "p5": 81.9402947
+      },
+      "vmaf_neg": {
+        "mean": 89.3112624,
+        "p5": 79.50929695
+      }
+    },
+    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/sensitivity/youtube-libvpx-vp9-1.5-fast-playback.mp4",
+    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-fast-1-fixed-upload.mp4",
+    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1920x1080.mkv"
+  },
+  {
+    "platform": "reels",
+    "variant": "naive",
+    "content": "gradient",
+    "multiplier": 1.0,
+    "simulator": {
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "codec": "libsvtav1",
+      "bitrate_kbps": 2000,
+      "crf": 30,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "metrics": {
+      "frames": 90,
+      "wall_seconds": 11.147617803013418,
+      "psnr_y": {
+        "mean": 38.59594605555556,
+        "p5": 35.65420175
+      },
+      "psnr_cb": {
+        "mean": 46.56423783333334,
+        "p5": 43.96348095
+      },
+      "psnr_cr": {
+        "mean": 45.795449222222224,
+        "p5": 42.02278275
+      },
+      "integer_adm2": {
+        "mean": 0.9663871888888889,
+        "p5": 0.93461035
+      },
+      "integer_aim": {
+        "mean": 0.029492844444444444,
+        "p5": 0.0156966
+      },
+      "integer_adm3": {
+        "mean": 0.9684471666666666,
+        "p5": 0.9415051999999999
+      },
+      "integer_adm_scale0": {
+        "mean": 0.9549794444444445,
+        "p5": 0.91883675
+      },
+      "integer_adm_scale1": {
+        "mean": 0.9306651888888889,
+        "p5": 0.8770314
+      },
+      "integer_adm_scale2": {
+        "mean": 0.9720499222222222,
+        "p5": 0.94806795
+      },
+      "integer_adm_scale3": {
+        "mean": 0.9845776,
+        "p5": 0.9670655
+      },
+      "VMAF_integer_feature_motion_sad_score": {
+        "mean": 4.840390377777778,
+        "p5": 1.6645755500000001
+      },
+      "integer_vif_scale0": {
+        "mean": 0.2509426888888889,
+        "p5": 0.18020160000000002
+      },
+      "integer_vif_scale1": {
+        "mean": 0.8791269555555555,
+        "p5": 0.79349235
+      },
+      "integer_vif_scale2": {
+        "mean": 0.9378170777777778,
+        "p5": 0.88547625
+      },
+      "integer_vif_scale3": {
+        "mean": 0.9611301777777778,
+        "p5": 0.92552875
+      },
+      "integer_adm2_egl_1": {
+        "mean": 0.9587232555555556,
+        "p5": 0.9252235
+      },
+      "integer_aim_egl_1": {
+        "mean": 0.029787011111111112,
+        "p5": 0.0158586
+      },
+      "integer_adm3_egl_1": {
+        "mean": 0.9644681222222222,
+        "p5": 0.9369582
+      },
+      "integer_adm_scale0_egl_1": {
+        "mean": 0.9520208666666666,
+        "p5": 0.91613775
+      },
+      "integer_adm_scale1_egl_1": {
+        "mean": 0.9247656333333333,
+        "p5": 0.87092735
+      },
+      "integer_adm_scale2_egl_1": {
+        "mean": 0.9631298,
+        "p5": 0.9363538
+      },
+      "integer_adm_scale3_egl_1": {
+        "mean": 0.9753506888888889,
+        "p5": 0.955541
+      },
+      "integer_vif_scale0_egl_1": {
+        "mean": 0.2504923666666667,
+        "p5": 0.179832
+      },
+      "integer_vif_scale1_egl_1": {
+        "mean": 0.8750162333333333,
+        "p5": 0.7861872
+      },
+      "integer_vif_scale2_egl_1": {
+        "mean": 0.9321541333333333,
+        "p5": 0.87401875
+      },
+      "integer_vif_scale3_egl_1": {
+        "mean": 0.9550947333333334,
+        "p5": 0.9130228
+      },
+      "float_ssim": {
+        "mean": 0.9745313222222223,
+        "p5": 0.96945515
+      },
+      "cambi": {
+        "mean": 7.097887377777778,
+        "p5": 1.1212676
+      },
+      "integer_motion2": {
+        "mean": 3.3958087,
+        "p5": 1.66053515
+      },
+      "integer_motion3": {
+        "mean": 3.414289588888889,
+        "p5": 1.662332
+      },
+      "vmaf": {
+        "mean": 89.21496363333333,
+        "p5": 78.3058358
+      },
+      "vmaf_neg": {
+        "mean": 86.96350764444445,
+        "p5": 75.3700391
+      }
+    },
+    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/sensitivity/reels-libsvtav1-1.0-naive-playback.mp4",
+    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-gradient-naive-1-upload.mp4",
+    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1080x1920.mkv"
+  },
+  {
+    "platform": "reels",
+    "variant": "fast",
+    "content": "gradient",
+    "multiplier": 1.0,
+    "simulator": {
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "codec": "libsvtav1",
+      "bitrate_kbps": 2000,
+      "crf": 30,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "metrics": {
+      "frames": 90,
+      "wall_seconds": 10.058635825000238,
+      "psnr_y": {
+        "mean": 39.017245700000004,
+        "p5": 35.7043897
+      },
+      "psnr_cb": {
+        "mean": 47.136150533333335,
+        "p5": 44.4728404
+      },
+      "psnr_cr": {
+        "mean": 46.47124322222222,
+        "p5": 43.038243449999996
+      },
+      "integer_adm2": {
+        "mean": 0.9713440555555556,
+        "p5": 0.9392035000000001
+      },
+      "integer_aim": {
+        "mean": 0.02823871111111111,
+        "p5": 0.0155195
+      },
+      "integer_adm3": {
+        "mean": 0.9715526222222223,
+        "p5": 0.94280295
+      },
+      "integer_adm_scale0": {
+        "mean": 0.9607378333333333,
+        "p5": 0.9184918
+      },
+      "integer_adm_scale1": {
+        "mean": 0.9442194888888888,
+        "p5": 0.8770553
+      },
+      "integer_adm_scale2": {
+        "mean": 0.9758916666666667,
+        "p5": 0.94972525
+      },
+      "integer_adm_scale3": {
+        "mean": 0.9859641222222222,
+        "p5": 0.971072
+      },
+      "VMAF_integer_feature_motion_sad_score": {
+        "mean": 4.840390377777778,
+        "p5": 1.6645755500000001
+      },
+      "integer_vif_scale0": {
+        "mean": 0.26684955555555556,
+        "p5": 0.19427195
+      },
+      "integer_vif_scale1": {
+        "mean": 0.8867972111111111,
+        "p5": 0.8118274
+      },
+      "integer_vif_scale2": {
+        "mean": 0.9422488111111111,
+        "p5": 0.8969040500000001
+      },
+      "integer_vif_scale3": {
+        "mean": 0.9633066222222222,
+        "p5": 0.9335131
+      },
+      "integer_adm2_egl_1": {
+        "mean": 0.9645000333333333,
+        "p5": 0.93255605
+      },
+      "integer_aim_egl_1": {
+        "mean": 0.028466333333333333,
+        "p5": 0.015557300000000001
+      },
+      "integer_adm3_egl_1": {
+        "mean": 0.9680168333333333,
+        "p5": 0.93932575
+      },
+      "integer_adm_scale0_egl_1": {
+        "mean": 0.9586786444444444,
+        "p5": 0.9168143
+      },
+      "integer_adm_scale1_egl_1": {
+        "mean": 0.9386456777777777,
+        "p5": 0.8718746500000001
+      },
+      "integer_adm_scale2_egl_1": {
+        "mean": 0.9677364777777778,
+        "p5": 0.94141685
+      },
+      "integer_adm_scale3_egl_1": {
+        "mean": 0.9777908555555556,
+        "p5": 0.96155625
+      },
+      "integer_vif_scale0_egl_1": {
+        "mean": 0.2664371222222222,
+        "p5": 0.19405375
+      },
+      "integer_vif_scale1_egl_1": {
+        "mean": 0.8831488666666667,
+        "p5": 0.80607345
+      },
+      "integer_vif_scale2_egl_1": {
+        "mean": 0.9372132666666667,
+        "p5": 0.88957215
+      },
+      "integer_vif_scale3_egl_1": {
+        "mean": 0.9579375777777778,
+        "p5": 0.9246990500000001
+      },
+      "float_ssim": {
+        "mean": 0.9753805777777778,
+        "p5": 0.96903355
+      },
+      "cambi": {
+        "mean": 6.582427,
+        "p5": 1.0474689
+      },
+      "integer_motion2": {
+        "mean": 3.3958087,
+        "p5": 1.66053515
+      },
+      "integer_motion3": {
+        "mean": 3.414289588888889,
+        "p5": 1.662332
+      },
+      "vmaf": {
+        "mean": 90.59391118888888,
+        "p5": 79.81180925
+      },
+      "vmaf_neg": {
+        "mean": 88.62196477777778,
+        "p5": 77.36129615
+      }
+    },
+    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/sensitivity/reels-libsvtav1-1.0-fast-playback.mp4",
+    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-gradient-fast-bounded-upload.mp4",
+    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1080x1920.mkv"
+  }
+]

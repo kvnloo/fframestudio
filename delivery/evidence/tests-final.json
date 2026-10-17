@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-17T04:24:39.533998-05:00",
+  "command": "DELIVERY_TEST_NVENC=1 python -m unittest discover -s delivery -v",
+  "DELIVERY_TEST_NVENC": "1",
+  "returncode": 0,
+  "wall_seconds": 14.032829236006364,
+  "tests_run": 18,
+  "log": "delivery/evidence/tests-final.log"
+}

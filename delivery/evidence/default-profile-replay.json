@@ -1,0 +1,402 @@
+[
+  {
+    "platform": "youtube",
+    "content": "ui",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1920x1080.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/youtube-ui.mp4",
+      "--platform",
+      "youtube",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-ui-fast-1-fixed-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/youtube-ui.mp4",
+    "expected_decoded_sha256": "SHA256=f058130855730cc7341565c1b8c55bb9cd276b1862225cb451b74c2ebf0ec594",
+    "actual_decoded_sha256": "SHA256=f058130855730cc7341565c1b8c55bb9cd276b1862225cb451b74c2ebf0ec594",
+    "equal": true
+  },
+  {
+    "platform": "youtube",
+    "content": "gradient",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1920x1080.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/youtube-gradient.mp4",
+      "--platform",
+      "youtube",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-gradient-fast-1-fixed-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/youtube-gradient.mp4",
+    "expected_decoded_sha256": "SHA256=d360d6f1214812a888ce098c2b12b48e40c9642c6a2273e5a1cd33afae4b395d",
+    "actual_decoded_sha256": "SHA256=d360d6f1214812a888ce098c2b12b48e40c9642c6a2273e5a1cd33afae4b395d",
+    "equal": true
+  },
+  {
+    "platform": "youtube",
+    "content": "satellite",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1920x1080-bt709.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/youtube-satellite.mp4",
+      "--platform",
+      "youtube",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-satellite-fast-color-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/youtube-satellite.mp4",
+    "expected_decoded_sha256": "SHA256=7c2aa8389a9e8af74c6fa178319bacf85f72bfa892f960fddaa4ca9486c28eac",
+    "actual_decoded_sha256": "SHA256=7c2aa8389a9e8af74c6fa178319bacf85f72bfa892f960fddaa4ca9486c28eac",
+    "equal": true
+  },
+  {
+    "platform": "youtube",
+    "content": "motion",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-motion-1920x1080.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/youtube-motion.mp4",
+      "--platform",
+      "youtube",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/youtube-motion-fast-1-fixed-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/youtube-motion.mp4",
+    "expected_decoded_sha256": "SHA256=1f1b7c3dc1867017ea959efc1b2a732f5ce5ed94f22f3fb7a2732e9700dcc809",
+    "actual_decoded_sha256": "SHA256=1f1b7c3dc1867017ea959efc1b2a732f5ce5ed94f22f3fb7a2732e9700dcc809",
+    "equal": true
+  },
+  {
+    "platform": "shorts",
+    "content": "ui",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1080x1920.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/shorts-ui.mp4",
+      "--platform",
+      "shorts",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-ui-fast-1-fixed-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/shorts-ui.mp4",
+    "expected_decoded_sha256": "SHA256=ffce9c3410b656810f73a3e9ce50ee7cc9b0ff2b3122e09d279186ab84ee440f",
+    "actual_decoded_sha256": "SHA256=ffce9c3410b656810f73a3e9ce50ee7cc9b0ff2b3122e09d279186ab84ee440f",
+    "equal": true
+  },
+  {
+    "platform": "shorts",
+    "content": "gradient",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1080x1920.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/shorts-gradient.mp4",
+      "--platform",
+      "shorts",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-gradient-fast-1-fixed-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/shorts-gradient.mp4",
+    "expected_decoded_sha256": "SHA256=d14f45fd1be03a225f374b845b4582d721f15f6f176f433063386d53b1bc1254",
+    "actual_decoded_sha256": "SHA256=d14f45fd1be03a225f374b845b4582d721f15f6f176f433063386d53b1bc1254",
+    "equal": true
+  },
+  {
+    "platform": "shorts",
+    "content": "satellite",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1080x1920-bt709.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/shorts-satellite.mp4",
+      "--platform",
+      "shorts",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-satellite-fast-color-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/shorts-satellite.mp4",
+    "expected_decoded_sha256": "SHA256=7ac82b9542dca7508dee8e873a13cf4c8ce316881e5241be929a8e5e1087fce1",
+    "actual_decoded_sha256": "SHA256=7ac82b9542dca7508dee8e873a13cf4c8ce316881e5241be929a8e5e1087fce1",
+    "equal": true
+  },
+  {
+    "platform": "shorts",
+    "content": "motion",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-motion-1080x1920.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/shorts-motion.mp4",
+      "--platform",
+      "shorts",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/shorts-motion-fast-1-fixed-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/shorts-motion.mp4",
+    "expected_decoded_sha256": "SHA256=3408aee6206bc6fb27b507284d524c592e115a431429a569db7bb857660a3acb",
+    "actual_decoded_sha256": "SHA256=3408aee6206bc6fb27b507284d524c592e115a431429a569db7bb857660a3acb",
+    "equal": true
+  },
+  {
+    "platform": "tiktok",
+    "content": "ui",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1080x1920.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/tiktok-ui.mp4",
+      "--platform",
+      "tiktok",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-ui-fast-1-fixed-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/tiktok-ui.mp4",
+    "expected_decoded_sha256": "SHA256=b15649df1901f9bd046497d6c225b7cd603ff36f1bc589d7e1365e5d48fa453a",
+    "actual_decoded_sha256": "SHA256=b15649df1901f9bd046497d6c225b7cd603ff36f1bc589d7e1365e5d48fa453a",
+    "equal": true
+  },
+  {
+    "platform": "tiktok",
+    "content": "gradient",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1080x1920.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/tiktok-gradient.mp4",
+      "--platform",
+      "tiktok",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-gradient-fast-1-fixed-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/tiktok-gradient.mp4",
+    "expected_decoded_sha256": "SHA256=cdbec6868e1ff0ab66c0b8edb757be9bd9d376e5dc59b68e457cf9cd26d5389f",
+    "actual_decoded_sha256": "SHA256=cdbec6868e1ff0ab66c0b8edb757be9bd9d376e5dc59b68e457cf9cd26d5389f",
+    "equal": true
+  },
+  {
+    "platform": "tiktok",
+    "content": "satellite",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1080x1920-bt709.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/tiktok-satellite.mp4",
+      "--platform",
+      "tiktok",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-satellite-fast-color-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/tiktok-satellite.mp4",
+    "expected_decoded_sha256": "SHA256=8d310100cb028ec8d59cc4b563535b4cba5e7c7bbbf84b8f2094f7744b0fcb50",
+    "actual_decoded_sha256": "SHA256=8d310100cb028ec8d59cc4b563535b4cba5e7c7bbbf84b8f2094f7744b0fcb50",
+    "equal": true
+  },
+  {
+    "platform": "tiktok",
+    "content": "motion",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-motion-1080x1920.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/tiktok-motion.mp4",
+      "--platform",
+      "tiktok",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/tiktok-motion-fast-1-fixed-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/tiktok-motion.mp4",
+    "expected_decoded_sha256": "SHA256=7e8cb68b630f36eb7b733a639466c7515cd99e8c90bb9aef5f3b0c26f3b850b4",
+    "actual_decoded_sha256": "SHA256=7e8cb68b630f36eb7b733a639466c7515cd99e8c90bb9aef5f3b0c26f3b850b4",
+    "equal": true
+  },
+  {
+    "platform": "reels",
+    "content": "ui",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1080x1920.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/reels-ui.mp4",
+      "--platform",
+      "reels",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-ui-fast-bounded-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/reels-ui.mp4",
+    "expected_decoded_sha256": "SHA256=6103feb760b00df6f3afb99c1f8243c4cc1234a8d0877f26cc85e4616bef8d13",
+    "actual_decoded_sha256": "SHA256=6103feb760b00df6f3afb99c1f8243c4cc1234a8d0877f26cc85e4616bef8d13",
+    "equal": true
+  },
+  {
+    "platform": "reels",
+    "content": "gradient",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1080x1920.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/reels-gradient.mp4",
+      "--platform",
+      "reels",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-gradient-fast-bounded-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/reels-gradient.mp4",
+    "expected_decoded_sha256": "SHA256=c8956756702f2354fe3542be5d2e41234d31d892af3a957ec6d9b1f0b1fa67b3",
+    "actual_decoded_sha256": "SHA256=c8956756702f2354fe3542be5d2e41234d31d892af3a957ec6d9b1f0b1fa67b3",
+    "equal": true
+  },
+  {
+    "platform": "reels",
+    "content": "satellite",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1080x1920-bt709.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/reels-satellite.mp4",
+      "--platform",
+      "reels",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-satellite-fast-color-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/reels-satellite.mp4",
+    "expected_decoded_sha256": "SHA256=2bfc095205fda3cef89baa508ca615fc57dc8740251de6697e03256284dda7c4",
+    "actual_decoded_sha256": "SHA256=2bfc095205fda3cef89baa508ca615fc57dc8740251de6697e03256284dda7c4",
+    "equal": true
+  },
+  {
+    "platform": "reels",
+    "content": "motion",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-motion-1080x1920.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/reels-motion.mp4",
+      "--platform",
+      "reels",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/reels-motion-fast-bounded-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/reels-motion.mp4",
+    "expected_decoded_sha256": "SHA256=15bc9cf52548495ab6889555e9186a706cfb50748aa98e91588333edfa2f77ff",
+    "actual_decoded_sha256": "SHA256=15bc9cf52548495ab6889555e9186a706cfb50748aa98e91588333edfa2f77ff",
+    "equal": true
+  },
+  {
+    "platform": "x",
+    "content": "ui",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-ui-1280x720.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/x-ui.mp4",
+      "--platform",
+      "x",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-ui-cas-1-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/x-ui.mp4",
+    "expected_decoded_sha256": "SHA256=2fdf9d243501f5439b5aac0f84bac1db271a11364aa2f1b10d81c820f8c53961",
+    "actual_decoded_sha256": "SHA256=2fdf9d243501f5439b5aac0f84bac1db271a11364aa2f1b10d81c820f8c53961",
+    "equal": true
+  },
+  {
+    "platform": "x",
+    "content": "gradient",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-gradient-1280x720.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/x-gradient.mp4",
+      "--platform",
+      "x",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-gradient-cas-1-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/x-gradient.mp4",
+    "expected_decoded_sha256": "SHA256=a6348d2c91e957bc629155a618eea16debc0dfa0001b307837c561c88462c02c",
+    "actual_decoded_sha256": "SHA256=a6348d2c91e957bc629155a618eea16debc0dfa0001b307837c561c88462c02c",
+    "equal": true
+  },
+  {
+    "platform": "x",
+    "content": "satellite",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-satellite-1280x720-bt709.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/x-satellite.mp4",
+      "--platform",
+      "x",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-satellite-cas-color-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/x-satellite.mp4",
+    "expected_decoded_sha256": "SHA256=0a755e3bd6b776b5b219f218f6b65287d9b228d05f12a1123d55220ac2b5ea06",
+    "actual_decoded_sha256": "SHA256=0a755e3bd6b776b5b219f218f6b65287d9b228d05f12a1123d55220ac2b5ea06",
+    "equal": true
+  },
+  {
+    "platform": "x",
+    "content": "motion",
+    "command": [
+      "/home/kvn/.hermes/tools/python-3.14.7+20260901-linux-x64/bin/python3",
+      "delivery/deliver.py",
+      "export",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/ref-motion-1280x720.mkv",
+      "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/x-motion.mp4",
+      "--platform",
+      "x",
+      "--duration",
+      "3"
+    ],
+    "qualified_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/main/x-motion-cas-1-upload.mp4",
+    "replayed_upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/default-profile-replay/x-motion.mp4",
+    "expected_decoded_sha256": "SHA256=d3f5418336ae976bade29ee9cb92cb70f6c883646924205b8f7c9ab84d226f80",
+    "actual_decoded_sha256": "SHA256=d3f5418336ae976bade29ee9cb92cb70f6c883646924205b8f7c9ab84d226f80",
+    "equal": true
+  }
+]

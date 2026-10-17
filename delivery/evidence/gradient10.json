@@ -1,0 +1,1046 @@
+[
+  {
+    "platform": "youtube",
+    "variant": "naive",
+    "source": "procedural 10-bit blue ramp, not captured sky footage",
+    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/synthetic-blue-ramp-1920x1080.mkv",
+    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/youtube-naive-upload.mp4",
+    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/youtube-naive-playback.mp4",
+    "profile": {
+      "platform": "youtube",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "conform": "decimate",
+      "scale": "bicubic",
+      "fit": "crop",
+      "prefilter": "none",
+      "encoder": "libx264",
+      "quality": 23,
+      "maxrate_kbps": 25000,
+      "gop_seconds": 0.5,
+      "audio_lufs": -14,
+      "audio_true_peak": -1.5,
+      "audio_kbps": 192,
+      "qualification": "Measured on four 3-second SDR clips, 2026-10-17. Simulator only; see REPORT.md."
+    },
+    "simulator": {
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "codec": "libvpx-vp9",
+      "bitrate_kbps": 3000,
+      "crf": 31,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "metrics": {
+      "frames": 90,
+      "wall_seconds": 8.393753236043267,
+      "psnr_y": {
+        "mean": 53.809056777777776,
+        "p5": 53.5223692
+      },
+      "psnr_cb": {
+        "mean": 53.680849566666666,
+        "p5": 53.404114
+      },
+      "psnr_cr": {
+        "mean": 54.379015522222225,
+        "p5": 54.087536
+      },
+      "integer_adm2": {
+        "mean": 1.0088376000000001,
+        "p5": 1.00734695
+      },
+      "integer_aim": {
+        "mean": 0.0367243,
+        "p5": 0.03148845
+      },
+      "integer_adm3": {
+        "mean": 0.9860566666666667,
+        "p5": 0.9783918
+      },
+      "integer_adm_scale0": {
+        "mean": 0.9842446555555555,
+        "p5": 0.9834299000000001
+      },
+      "integer_adm_scale1": {
+        "mean": 1.008123411111111,
+        "p5": 1.00653725
+      },
+      "integer_adm_scale2": {
+        "mean": 1.0398671222222222,
+        "p5": 1.033128
+      },
+      "integer_adm_scale3": {
+        "mean": 1.0583681666666667,
+        "p5": 1.04459755
+      },
+      "VMAF_integer_feature_motion_sad_score": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "integer_vif_scale0": {
+        "mean": 0.99999,
+        "p5": 0.99999
+      },
+      "integer_vif_scale1": {
+        "mean": 0.9999899888888889,
+        "p5": 0.999987
+      },
+      "integer_vif_scale2": {
+        "mean": 0.9999894444444445,
+        "p5": 0.999987
+      },
+      "integer_vif_scale3": {
+        "mean": 0.9999888777777778,
+        "p5": 0.999988
+      },
+      "integer_adm2_egl_1": {
+        "mean": 0.9883162333333333,
+        "p5": 0.98734945
+      },
+      "integer_aim_egl_1": {
+        "mean": 0.04315744444444444,
+        "p5": 0.038106049999999995
+      },
+      "integer_adm3_egl_1": {
+        "mean": 0.9725793555555555,
+        "p5": 0.965562
+      },
+      "integer_adm_scale0_egl_1": {
+        "mean": 0.9841752,
+        "p5": 0.9834299000000001
+      },
+      "integer_adm_scale1_egl_1": {
+        "mean": 0.9951968888888889,
+        "p5": 0.99446585
+      },
+      "integer_adm_scale2_egl_1": {
+        "mean": 0.9906215666666667,
+        "p5": 0.9889848
+      },
+      "integer_adm_scale3_egl_1": {
+        "mean": 0.9841062222222222,
+        "p5": 0.97683
+      },
+      "integer_vif_scale0_egl_1": {
+        "mean": 0.99999,
+        "p5": 0.99999
+      },
+      "integer_vif_scale1_egl_1": {
+        "mean": 0.9999899888888889,
+        "p5": 0.999987
+      },
+      "integer_vif_scale2_egl_1": {
+        "mean": 0.9999894444444445,
+        "p5": 0.999987
+      },
+      "integer_vif_scale3_egl_1": {
+        "mean": 0.9999888777777778,
+        "p5": 0.999988
+      },
+      "float_ssim": {
+        "mean": 0.9991622666666666,
+        "p5": 0.9989289
+      },
+      "cambi": {
+        "mean": 17.265035511111112,
+        "p5": 16.7844033
+      },
+      "integer_motion2": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "integer_motion3": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "vmaf": {
+        "mean": 99.35385012222223,
+        "p5": 99.0284465
+      },
+      "vmaf_neg": {
+        "mean": 94.882902,
+        "p5": 94.67257365
+      }
+    }
+  },
+  {
+    "platform": "youtube",
+    "variant": "fast",
+    "source": "procedural 10-bit blue ramp, not captured sky footage",
+    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/synthetic-blue-ramp-1920x1080.mkv",
+    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/youtube-fast-upload.mp4",
+    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/youtube-fast-playback.mp4",
+    "profile": {
+      "platform": "youtube",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "conform": "decimate",
+      "scale": "lanczos",
+      "fit": "crop",
+      "prefilter": "none",
+      "encoder": "h264_nvenc",
+      "quality": 14,
+      "maxrate_kbps": 25000,
+      "gop_seconds": 0.5,
+      "audio_lufs": -14,
+      "audio_true_peak": -1.5,
+      "audio_kbps": 192,
+      "qualification": "Measured on four 3-second SDR clips, 2026-10-17. Simulator only; see REPORT.md."
+    },
+    "simulator": {
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "codec": "libvpx-vp9",
+      "bitrate_kbps": 3000,
+      "crf": 31,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "metrics": {
+      "frames": 90,
+      "wall_seconds": 8.207228635030333,
+      "psnr_y": {
+        "mean": 56.47030697777778,
+        "p5": 53.674567350000004
+      },
+      "psnr_cb": {
+        "mean": 53.692773144444445,
+        "p5": 52.769668
+      },
+      "psnr_cr": {
+        "mean": 53.55252866666667,
+        "p5": 53.227576
+      },
+      "integer_adm2": {
+        "mean": 1.0061866333333334,
+        "p5": 0.999512
+      },
+      "integer_aim": {
+        "mean": 0.024322,
+        "p5": 0.016031
+      },
+      "integer_adm3": {
+        "mean": 0.9909322777777778,
+        "p5": 0.98595475
+      },
+      "integer_adm_scale0": {
+        "mean": 0.9914449888888889,
+        "p5": 0.9839803500000001
+      },
+      "integer_adm_scale1": {
+        "mean": 1.0051833555555556,
+        "p5": 0.999017
+      },
+      "integer_adm_scale2": {
+        "mean": 1.025057911111111,
+        "p5": 1.002514
+      },
+      "integer_adm_scale3": {
+        "mean": 1.0368589555555556,
+        "p5": 1.0034641499999999
+      },
+      "VMAF_integer_feature_motion_sad_score": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "integer_vif_scale0": {
+        "mean": 0.9999885666666667,
+        "p5": 0.999987
+      },
+      "integer_vif_scale1": {
+        "mean": 0.9999921111111112,
+        "p5": 0.99999
+      },
+      "integer_vif_scale2": {
+        "mean": 0.9999904333333334,
+        "p5": 0.999988
+      },
+      "integer_vif_scale3": {
+        "mean": 0.9999893444444444,
+        "p5": 0.999988
+      },
+      "integer_adm2_egl_1": {
+        "mean": 0.9929155111111111,
+        "p5": 0.9882559
+      },
+      "integer_aim_egl_1": {
+        "mean": 0.029054666666666666,
+        "p5": 0.017768
+      },
+      "integer_adm3_egl_1": {
+        "mean": 0.9819304777777778,
+        "p5": 0.97260345
+      },
+      "integer_adm_scale0_egl_1": {
+        "mean": 0.9913432777777778,
+        "p5": 0.9839803500000001
+      },
+      "integer_adm_scale1_egl_1": {
+        "mean": 0.9966630888888889,
+        "p5": 0.9946022
+      },
+      "integer_adm_scale2_egl_1": {
+        "mean": 0.9930981,
+        "p5": 0.9885964500000001
+      },
+      "integer_adm_scale3_egl_1": {
+        "mean": 0.9896213222222222,
+        "p5": 0.98650905
+      },
+      "integer_vif_scale0_egl_1": {
+        "mean": 0.9999885666666667,
+        "p5": 0.999987
+      },
+      "integer_vif_scale1_egl_1": {
+        "mean": 0.9999921111111112,
+        "p5": 0.99999
+      },
+      "integer_vif_scale2_egl_1": {
+        "mean": 0.9999904333333334,
+        "p5": 0.999988
+      },
+      "integer_vif_scale3_egl_1": {
+        "mean": 0.9999893444444444,
+        "p5": 0.999988
+      },
+      "float_ssim": {
+        "mean": 0.9994319333333334,
+        "p5": 0.9988667499999999
+      },
+      "cambi": {
+        "mean": 12.446265222222221,
+        "p5": 6.2261506
+      },
+      "integer_motion2": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "integer_motion3": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "vmaf": {
+        "mean": 98.77301964444445,
+        "p5": 97.32058
+      },
+      "vmaf_neg": {
+        "mean": 95.88394915555556,
+        "p5": 94.86968734999999
+      }
+    }
+  },
+  {
+    "platform": "youtube",
+    "variant": "hevc10",
+    "source": "procedural 10-bit blue ramp, not captured sky footage",
+    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/synthetic-blue-ramp-1920x1080.mkv",
+    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/youtube-hevc10-upload.mp4",
+    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/youtube-hevc10-playback.mp4",
+    "profile": {
+      "platform": "youtube",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "conform": "decimate",
+      "scale": "lanczos",
+      "fit": "crop",
+      "prefilter": "none",
+      "encoder": "hevc_nvenc",
+      "quality": 14,
+      "maxrate_kbps": 25000,
+      "gop_seconds": 0.5,
+      "audio_lufs": -14,
+      "audio_true_peak": -1.5,
+      "audio_kbps": 192,
+      "qualification": "Measured on four 3-second SDR clips, 2026-10-17. Simulator only; see REPORT.md."
+    },
+    "simulator": {
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "codec": "libvpx-vp9",
+      "bitrate_kbps": 3000,
+      "crf": 31,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "metrics": {
+      "frames": 90,
+      "wall_seconds": 8.692010222992394,
+      "psnr_y": {
+        "mean": 54.352603522222225,
+        "p5": 53.6571224
+      },
+      "psnr_cb": {
+        "mean": 53.54666972222222,
+        "p5": 52.74670255
+      },
+      "psnr_cr": {
+        "mean": 53.1359011,
+        "p5": 52.066372
+      },
+      "integer_adm2": {
+        "mean": 1.0076605555555556,
+        "p5": 1.003259
+      },
+      "integer_aim": {
+        "mean": 0.03141921111111111,
+        "p5": 0.02478205
+      },
+      "integer_adm3": {
+        "mean": 0.9881206333333333,
+        "p5": 0.98418575
+      },
+      "integer_adm_scale0": {
+        "mean": 0.9883395222222222,
+        "p5": 0.98434
+      },
+      "integer_adm_scale1": {
+        "mean": 1.0070349,
+        "p5": 1.001716
+      },
+      "integer_adm_scale2": {
+        "mean": 1.028948211111111,
+        "p5": 1.014882
+      },
+      "integer_adm_scale3": {
+        "mean": 1.0515153777777777,
+        "p5": 1.043867
+      },
+      "VMAF_integer_feature_motion_sad_score": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "integer_vif_scale0": {
+        "mean": 0.9999900777777778,
+        "p5": 0.999989
+      },
+      "integer_vif_scale1": {
+        "mean": 0.9999919222222222,
+        "p5": 0.99999
+      },
+      "integer_vif_scale2": {
+        "mean": 0.9999905222222222,
+        "p5": 0.999989
+      },
+      "integer_vif_scale3": {
+        "mean": 0.9999883333333334,
+        "p5": 0.999988
+      },
+      "integer_adm2_egl_1": {
+        "mean": 0.9902822333333333,
+        "p5": 0.98750665
+      },
+      "integer_aim_egl_1": {
+        "mean": 0.03746488888888889,
+        "p5": 0.0308856
+      },
+      "integer_adm3_egl_1": {
+        "mean": 0.9764086777777777,
+        "p5": 0.97126645
+      },
+      "integer_adm_scale0_egl_1": {
+        "mean": 0.9875305444444444,
+        "p5": 0.98427245
+      },
+      "integer_adm_scale1_egl_1": {
+        "mean": 0.9950856,
+        "p5": 0.994107
+      },
+      "integer_adm_scale2_egl_1": {
+        "mean": 0.9920961666666667,
+        "p5": 0.9899249
+      },
+      "integer_adm_scale3_egl_1": {
+        "mean": 0.9864854777777777,
+        "p5": 0.97622985
+      },
+      "integer_vif_scale0_egl_1": {
+        "mean": 0.9999900777777778,
+        "p5": 0.999989
+      },
+      "integer_vif_scale1_egl_1": {
+        "mean": 0.9999919222222222,
+        "p5": 0.99999
+      },
+      "integer_vif_scale2_egl_1": {
+        "mean": 0.9999905222222222,
+        "p5": 0.999989
+      },
+      "integer_vif_scale3_egl_1": {
+        "mean": 0.9999883333333334,
+        "p5": 0.999988
+      },
+      "float_ssim": {
+        "mean": 0.9993224444444444,
+        "p5": 0.99897335
+      },
+      "cambi": {
+        "mean": 15.7064953,
+        "p5": 12.96152115
+      },
+      "integer_motion2": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "integer_motion3": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "vmaf": {
+        "mean": 99.0972069,
+        "p5": 98.137123
+      },
+      "vmaf_neg": {
+        "mean": 95.31069137777777,
+        "p5": 94.7067804
+      }
+    }
+  },
+  {
+    "platform": "reels",
+    "variant": "naive",
+    "source": "procedural 10-bit blue ramp, not captured sky footage",
+    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/synthetic-blue-ramp-1080x1920.mkv",
+    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/reels-naive-upload.mp4",
+    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/reels-naive-playback.mp4",
+    "profile": {
+      "platform": "reels",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "conform": "decimate",
+      "scale": "bicubic",
+      "fit": "crop",
+      "prefilter": "none",
+      "encoder": "libx264",
+      "quality": 23,
+      "maxrate_kbps": 20000,
+      "bufsize_kbits": 10000,
+      "max_upload_bitrate_kbps": 25000,
+      "gop_seconds": 2,
+      "audio_lufs": -14,
+      "audio_true_peak": -1.5,
+      "audio_kbps": 128,
+      "qualification": "Measured on four 3-second SDR clips, 2026-10-17. Simulator only; see REPORT.md."
+    },
+    "simulator": {
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "codec": "libx264",
+      "bitrate_kbps": 3000,
+      "crf": 25,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "metrics": {
+      "frames": 90,
+      "wall_seconds": 9.171844196971506,
+      "psnr_y": {
+        "mean": 53.8667411,
+        "p5": 53.6991951
+      },
+      "psnr_cb": {
+        "mean": 53.759355488888886,
+        "p5": 53.670068
+      },
+      "psnr_cr": {
+        "mean": 54.19657636666667,
+        "p5": 54.0937414
+      },
+      "integer_adm2": {
+        "mean": 1.0090543666666667,
+        "p5": 1.0073428
+      },
+      "integer_aim": {
+        "mean": 0.041407733333333335,
+        "p5": 0.03712
+      },
+      "integer_adm3": {
+        "mean": 0.9838233333333334,
+        "p5": 0.9808681
+      },
+      "integer_adm_scale0": {
+        "mean": 0.9849479555555556,
+        "p5": 0.984279
+      },
+      "integer_adm_scale1": {
+        "mean": 1.0063585777777777,
+        "p5": 1.0057519499999998
+      },
+      "integer_adm_scale2": {
+        "mean": 1.0322808333333333,
+        "p5": 1.02887365
+      },
+      "integer_adm_scale3": {
+        "mean": 1.073853988888889,
+        "p5": 1.0617347000000001
+      },
+      "VMAF_integer_feature_motion_sad_score": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "integer_vif_scale0": {
+        "mean": 0.999994,
+        "p5": 0.999994
+      },
+      "integer_vif_scale1": {
+        "mean": 0.9999920444444445,
+        "p5": 0.999991
+      },
+      "integer_vif_scale2": {
+        "mean": 0.9999929333333334,
+        "p5": 0.999992
+      },
+      "integer_vif_scale3": {
+        "mean": 0.9999925444444444,
+        "p5": 0.999992
+      },
+      "integer_adm2_egl_1": {
+        "mean": 0.9889576222222223,
+        "p5": 0.988851
+      },
+      "integer_aim_egl_1": {
+        "mean": 0.0491008,
+        "p5": 0.045777899999999996
+      },
+      "integer_adm3_egl_1": {
+        "mean": 0.9699284666666667,
+        "p5": 0.9684844
+      },
+      "integer_adm_scale0_egl_1": {
+        "mean": 0.9846615111111111,
+        "p5": 0.983959
+      },
+      "integer_adm_scale1_egl_1": {
+        "mean": 0.9949355666666667,
+        "p5": 0.99469
+      },
+      "integer_adm_scale2_egl_1": {
+        "mean": 0.9934597555555555,
+        "p5": 0.9927047499999999
+      },
+      "integer_adm_scale3_egl_1": {
+        "mean": 0.9841492555555555,
+        "p5": 0.98258545
+      },
+      "integer_vif_scale0_egl_1": {
+        "mean": 0.999994,
+        "p5": 0.999994
+      },
+      "integer_vif_scale1_egl_1": {
+        "mean": 0.9999920444444445,
+        "p5": 0.999991
+      },
+      "integer_vif_scale2_egl_1": {
+        "mean": 0.9999929333333334,
+        "p5": 0.999992
+      },
+      "integer_vif_scale3_egl_1": {
+        "mean": 0.9999925444444444,
+        "p5": 0.999992
+      },
+      "float_ssim": {
+        "mean": 0.9993619888888888,
+        "p5": 0.9993279
+      },
+      "cambi": {
+        "mean": 20.851705433333333,
+        "p5": 20.5429786
+      },
+      "integer_motion2": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "integer_motion3": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "vmaf": {
+        "mean": 99.40163084444444,
+        "p5": 99.02822965
+      },
+      "vmaf_neg": {
+        "mean": 95.02290187777778,
+        "p5": 94.999789
+      }
+    }
+  },
+  {
+    "platform": "reels",
+    "variant": "fast",
+    "source": "procedural 10-bit blue ramp, not captured sky footage",
+    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/synthetic-blue-ramp-1080x1920.mkv",
+    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/reels-fast-upload.mp4",
+    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/reels-fast-playback.mp4",
+    "profile": {
+      "platform": "reels",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "conform": "decimate",
+      "scale": "lanczos",
+      "fit": "crop",
+      "prefilter": "none",
+      "encoder": "h264_nvenc",
+      "quality": 14,
+      "maxrate_kbps": 20000,
+      "bufsize_kbits": 10000,
+      "max_upload_bitrate_kbps": 25000,
+      "gop_seconds": 2,
+      "audio_lufs": -14,
+      "audio_true_peak": -1.5,
+      "audio_kbps": 128,
+      "qualification": "Measured on four 3-second SDR clips, 2026-10-17. Simulator only; see REPORT.md."
+    },
+    "simulator": {
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "codec": "libx264",
+      "bitrate_kbps": 3000,
+      "crf": 25,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "metrics": {
+      "frames": 90,
+      "wall_seconds": 8.066569657006767,
+      "psnr_y": {
+        "mean": 53.94259191111111,
+        "p5": 53.8742248
+      },
+      "psnr_cb": {
+        "mean": 52.28964173333333,
+        "p5": 51.889105300000004
+      },
+      "psnr_cr": {
+        "mean": 52.78626407777778,
+        "p5": 52.54652135
+      },
+      "integer_adm2": {
+        "mean": 1.0069627666666667,
+        "p5": 1.0057573
+      },
+      "integer_aim": {
+        "mean": 0.0395891,
+        "p5": 0.027493
+      },
+      "integer_adm3": {
+        "mean": 0.9836865333333333,
+        "p5": 0.9798762
+      },
+      "integer_adm_scale0": {
+        "mean": 0.9852272,
+        "p5": 0.983546
+      },
+      "integer_adm_scale1": {
+        "mean": 1.0066241555555555,
+        "p5": 1.005975
+      },
+      "integer_adm_scale2": {
+        "mean": 1.0218394222222222,
+        "p5": 1.0174901
+      },
+      "integer_adm_scale3": {
+        "mean": 1.0696662333333333,
+        "p5": 1.06367735
+      },
+      "VMAF_integer_feature_motion_sad_score": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "integer_vif_scale0": {
+        "mean": 0.999994,
+        "p5": 0.999994
+      },
+      "integer_vif_scale1": {
+        "mean": 0.999992,
+        "p5": 0.99999
+      },
+      "integer_vif_scale2": {
+        "mean": 0.999994,
+        "p5": 0.999994
+      },
+      "integer_vif_scale3": {
+        "mean": 0.9999906777777778,
+        "p5": 0.99999
+      },
+      "integer_adm2_egl_1": {
+        "mean": 0.9887821,
+        "p5": 0.988043
+      },
+      "integer_aim_egl_1": {
+        "mean": 0.04572331111111111,
+        "p5": 0.036113
+      },
+      "integer_adm3_egl_1": {
+        "mean": 0.9715297111111111,
+        "p5": 0.9690534
+      },
+      "integer_adm_scale0_egl_1": {
+        "mean": 0.9846387999999999,
+        "p5": 0.983546
+      },
+      "integer_adm_scale1_egl_1": {
+        "mean": 0.9953634222222222,
+        "p5": 0.9952933
+      },
+      "integer_adm_scale2_egl_1": {
+        "mean": 0.9916670000000001,
+        "p5": 0.990209
+      },
+      "integer_adm_scale3_egl_1": {
+        "mean": 0.9844041,
+        "p5": 0.98340415
+      },
+      "integer_vif_scale0_egl_1": {
+        "mean": 0.999994,
+        "p5": 0.999994
+      },
+      "integer_vif_scale1_egl_1": {
+        "mean": 0.999992,
+        "p5": 0.99999
+      },
+      "integer_vif_scale2_egl_1": {
+        "mean": 0.999994,
+        "p5": 0.999994
+      },
+      "integer_vif_scale3_egl_1": {
+        "mean": 0.9999906777777778,
+        "p5": 0.99999
+      },
+      "float_ssim": {
+        "mean": 0.999426288888889,
+        "p5": 0.999404
+      },
+      "cambi": {
+        "mean": 21.02990091111111,
+        "p5": 20.99349205
+      },
+      "integer_motion2": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "integer_motion3": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "vmaf": {
+        "mean": 98.94522653333334,
+        "p5": 98.68217875
+      },
+      "vmaf_neg": {
+        "mean": 94.98459423333334,
+        "p5": 94.823933
+      }
+    }
+  },
+  {
+    "platform": "reels",
+    "variant": "hevc10",
+    "source": "procedural 10-bit blue ramp, not captured sky footage",
+    "reference": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/synthetic-blue-ramp-1080x1920.mkv",
+    "upload": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/reels-hevc10-upload.mp4",
+    "playback": "/mnt/zer0models/project-artifacts/fframestudio/delivery/gradient10/reels-hevc10-playback.mp4",
+    "profile": {
+      "platform": "reels",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "conform": "decimate",
+      "scale": "lanczos",
+      "fit": "crop",
+      "prefilter": "none",
+      "encoder": "hevc_nvenc",
+      "quality": 14,
+      "maxrate_kbps": 20000,
+      "bufsize_kbits": 10000,
+      "max_upload_bitrate_kbps": 25000,
+      "gop_seconds": 2,
+      "audio_lufs": -14,
+      "audio_true_peak": -1.5,
+      "audio_kbps": 128,
+      "qualification": "Measured on four 3-second SDR clips, 2026-10-17. Simulator only; see REPORT.md."
+    },
+    "simulator": {
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "codec": "libx264",
+      "bitrate_kbps": 3000,
+      "crf": 25,
+      "gop_seconds": 2,
+      "status": "UNVERIFIED playback approximation; not a service replica",
+      "ladder_multipliers": [
+        0.6,
+        1.0,
+        1.5
+      ]
+    },
+    "metrics": {
+      "frames": 90,
+      "wall_seconds": 7.622103102039546,
+      "psnr_y": {
+        "mean": 53.97410823333333,
+        "p5": 53.90526715
+      },
+      "psnr_cb": {
+        "mean": 52.86144784444444,
+        "p5": 52.622813
+      },
+      "psnr_cr": {
+        "mean": 53.65019143333333,
+        "p5": 53.438551
+      },
+      "integer_adm2": {
+        "mean": 1.0071742,
+        "p5": 1.006082
+      },
+      "integer_aim": {
+        "mean": 0.03717326666666667,
+        "p5": 0.020597
+      },
+      "integer_adm3": {
+        "mean": 0.9850004666666666,
+        "p5": 0.980324
+      },
+      "integer_adm_scale0": {
+        "mean": 0.9850551888888889,
+        "p5": 0.983291
+      },
+      "integer_adm_scale1": {
+        "mean": 1.0067033222222221,
+        "p5": 1.006068
+      },
+      "integer_adm_scale2": {
+        "mean": 1.0230699444444444,
+        "p5": 1.019139
+      },
+      "integer_adm_scale3": {
+        "mean": 1.0701213555555555,
+        "p5": 1.064599
+      },
+      "VMAF_integer_feature_motion_sad_score": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "integer_vif_scale0": {
+        "mean": 0.999994,
+        "p5": 0.999994
+      },
+      "integer_vif_scale1": {
+        "mean": 0.999992,
+        "p5": 0.99999
+      },
+      "integer_vif_scale2": {
+        "mean": 0.9999943333333333,
+        "p5": 0.999994
+      },
+      "integer_vif_scale3": {
+        "mean": 0.9999913333333333,
+        "p5": 0.999991
+      },
+      "integer_adm2_egl_1": {
+        "mean": 0.9884811111111111,
+        "p5": 0.987942
+      },
+      "integer_aim_egl_1": {
+        "mean": 0.043362988888888884,
+        "p5": 0.029424
+      },
+      "integer_adm3_egl_1": {
+        "mean": 0.9725593888888889,
+        "p5": 0.969222
+      },
+      "integer_adm_scale0_egl_1": {
+        "mean": 0.984505988888889,
+        "p5": 0.983291
+      },
+      "integer_adm_scale1_egl_1": {
+        "mean": 0.9953255555555556,
+        "p5": 0.995238
+      },
+      "integer_adm_scale2_egl_1": {
+        "mean": 0.9898087888888889,
+        "p5": 0.989586
+      },
+      "integer_adm_scale3_egl_1": {
+        "mean": 0.9852186666666667,
+        "p5": 0.98404
+      },
+      "integer_vif_scale0_egl_1": {
+        "mean": 0.999994,
+        "p5": 0.999994
+      },
+      "integer_vif_scale1_egl_1": {
+        "mean": 0.999992,
+        "p5": 0.99999
+      },
+      "integer_vif_scale2_egl_1": {
+        "mean": 0.9999943333333333,
+        "p5": 0.999994
+      },
+      "integer_vif_scale3_egl_1": {
+        "mean": 0.9999913333333333,
+        "p5": 0.999991
+      },
+      "float_ssim": {
+        "mean": 0.9994122555555556,
+        "p5": 0.999412
+      },
+      "cambi": {
+        "mean": 21.194500866666665,
+        "p5": 21.166306
+      },
+      "integer_motion2": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "integer_motion3": {
+        "mean": 0.0,
+        "p5": 0.0
+      },
+      "vmaf": {
+        "mean": 98.99137542222222,
+        "p5": 98.753101
+      },
+      "vmaf_neg": {
+        "mean": 94.91925069999999,
+        "p5": 94.802128
+      }
+    }
+  }
+]
