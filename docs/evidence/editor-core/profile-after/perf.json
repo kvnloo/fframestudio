@@ -1,0 +1,2157 @@
+{
+  "measures": [
+    {
+      "name": "rpc",
+      "start": 858,
+      "ms": 3.399999976158142
+    },
+    {
+      "name": "patchViews",
+      "start": 861.5999999642372,
+      "ms": 0.6000000238418579
+    },
+    {
+      "name": "renderStory",
+      "start": 861.6999999880791,
+      "ms": 0.30000001192092896
+    },
+    {
+      "name": "renderInspector",
+      "start": 862,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 862.0999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 870.5,
+      "ms": 2.5
+    },
+    {
+      "name": "patchViews",
+      "start": 873,
+      "ms": 0.5
+    },
+    {
+      "name": "renderStory",
+      "start": 873.0999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderInspector",
+      "start": 873.1999999880791,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 873.3999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 887.0999999642372,
+      "ms": 2.199999988079071
+    },
+    {
+      "name": "patchViews",
+      "start": 889.2999999523163,
+      "ms": 0.6000000238418579
+    },
+    {
+      "name": "renderStory",
+      "start": 889.3999999761581,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "renderInspector",
+      "start": 889.5999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 889.6999999880791,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 903.8999999761581,
+      "ms": 3.600000023841858
+    },
+    {
+      "name": "patchViews",
+      "start": 907.5999999642372,
+      "ms": 0.9000000357627869
+    },
+    {
+      "name": "renderStory",
+      "start": 907.6999999880791,
+      "ms": 0.30000001192092896
+    },
+    {
+      "name": "renderInspector",
+      "start": 908.0999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 908.2999999523163,
+      "ms": 0.20000004768371582
+    },
+    {
+      "name": "rpc",
+      "start": 920.5999999642372,
+      "ms": 2.400000035762787
+    },
+    {
+      "name": "patchViews",
+      "start": 923.0999999642372,
+      "ms": 0.6000000238418579
+    },
+    {
+      "name": "renderStory",
+      "start": 923.1999999880791,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderInspector",
+      "start": 923.3999999761581,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "updatePreview",
+      "start": 923.5999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 937,
+      "ms": 2.199999988079071
+    },
+    {
+      "name": "patchViews",
+      "start": 939.1999999880791,
+      "ms": 0.3999999761581421
+    },
+    {
+      "name": "renderStory",
+      "start": 939.2999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderInspector",
+      "start": 939.3999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 939.5,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 953.6999999880791,
+      "ms": 2.099999964237213
+    },
+    {
+      "name": "patchViews",
+      "start": 955.7999999523163,
+      "ms": 0.40000003576278687
+    },
+    {
+      "name": "renderStory",
+      "start": 955.8999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderInspector",
+      "start": 956,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 956.0999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 957,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 983.2999999523163,
+      "ms": 2.100000023841858
+    },
+    {
+      "name": "patchViews",
+      "start": 985.3999999761581,
+      "ms": 0.5
+    },
+    {
+      "name": "renderStory",
+      "start": 985.5,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderInspector",
+      "start": 985.6999999880791,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 985.8999999761581,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 987.1999999880791,
+      "ms": 1.800000011920929
+    },
+    {
+      "name": "patchViews",
+      "start": 989,
+      "ms": 0.3999999761581421
+    },
+    {
+      "name": "renderStory",
+      "start": 989.0999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderInspector",
+      "start": 989.1999999880791,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 989.2999999523163,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1003.7999999523163,
+      "ms": 2.5
+    },
+    {
+      "name": "patchViews",
+      "start": 1006.3999999761581,
+      "ms": 0.6000000238418579
+    },
+    {
+      "name": "renderStory",
+      "start": 1006.5,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "renderInspector",
+      "start": 1006.6999999880791,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 1006.7999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 1020.3999999761581,
+      "ms": 2.100000023841858
+    },
+    {
+      "name": "renderStory",
+      "start": 1022.5999999642372,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "patchViews",
+      "start": 1022.5999999642372,
+      "ms": 0.40000003576278687
+    },
+    {
+      "name": "renderInspector",
+      "start": 1022.7999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 1022.8999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 1037.0999999642372,
+      "ms": 2
+    },
+    {
+      "name": "patchViews",
+      "start": 1039.0999999642372,
+      "ms": 0.5
+    },
+    {
+      "name": "renderStory",
+      "start": 1039.199999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderInspector",
+      "start": 1039.2999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 1039.3999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 1053.7999999523163,
+      "ms": 1.9000000357627869
+    },
+    {
+      "name": "renderStory",
+      "start": 1055.699999988079,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "patchViews",
+      "start": 1055.699999988079,
+      "ms": 0.5
+    },
+    {
+      "name": "renderInspector",
+      "start": 1056,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1056,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "updatePreview",
+      "start": 1056.7999999523163,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1070.5,
+      "ms": 2
+    },
+    {
+      "name": "renderStory",
+      "start": 1072.5,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "patchViews",
+      "start": 1072.5,
+      "ms": 0.2999999523162842
+    },
+    {
+      "name": "renderInspector",
+      "start": 1072.699999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 1072.7999999523163,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1087,
+      "ms": 1.699999988079071
+    },
+    {
+      "name": "patchViews",
+      "start": 1088.7999999523163,
+      "ms": 0.30000001192092896
+    },
+    {
+      "name": "renderStory",
+      "start": 1088.8999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderInspector",
+      "start": 1089,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 1089.0999999642372,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1103.699999988079,
+      "ms": 80.5
+    },
+    {
+      "name": "updatePreview",
+      "start": 1153.699999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderStory",
+      "start": 1184.199999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "patchViews",
+      "start": 1184.199999988079,
+      "ms": 0.30000001192092896
+    },
+    {
+      "name": "renderInspector",
+      "start": 1184.2999999523163,
+      "ms": 0.20000004768371582
+    },
+    {
+      "name": "updatePreview",
+      "start": 1184.5,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1186.8999999761581,
+      "ms": 1.800000011920929
+    },
+    {
+      "name": "renderStory",
+      "start": 1188.699999988079,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "patchViews",
+      "start": 1188.699999988079,
+      "ms": 0.3999999761581421
+    },
+    {
+      "name": "renderInspector",
+      "start": 1188.8999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 1189,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 1203.699999988079,
+      "ms": 2.399999976158142
+    },
+    {
+      "name": "patchViews",
+      "start": 1206.199999988079,
+      "ms": 0.5999999642372131
+    },
+    {
+      "name": "renderStory",
+      "start": 1206.2999999523163,
+      "ms": 0.30000001192092896
+    },
+    {
+      "name": "renderInspector",
+      "start": 1206.5999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 1206.699999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 1220.3999999761581,
+      "ms": 3.100000023841858
+    },
+    {
+      "name": "patchViews",
+      "start": 1223.5999999642372,
+      "ms": 0.5
+    },
+    {
+      "name": "renderStory",
+      "start": 1223.699999988079,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "renderInspector",
+      "start": 1223.8999999761581,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1224,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 1237.3999999761581,
+      "ms": 2.800000011920929
+    },
+    {
+      "name": "patchViews",
+      "start": 1240.199999988079,
+      "ms": 0.3999999761581421
+    },
+    {
+      "name": "renderStory",
+      "start": 1240.2999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderInspector",
+      "start": 1240.3999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 1240.5999999642372,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1253.699999988079,
+      "ms": 4.599999964237213
+    },
+    {
+      "name": "updatePreview",
+      "start": 1255.8999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "refresh",
+      "start": 1258.2999999523163,
+      "ms": 0.6000000238418579
+    },
+    {
+      "name": "patchViews",
+      "start": 1258.2999999523163,
+      "ms": 0.6000000238418579
+    },
+    {
+      "name": "renderStory",
+      "start": 1258.5,
+      "ms": 0
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1258.5,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "renderInspector",
+      "start": 1258.699999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderVersions",
+      "start": 1258.7999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 1258.8999999761581,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1270.8999999761581,
+      "ms": 6.699999988079071
+    },
+    {
+      "name": "refresh",
+      "start": 1277.699999988079,
+      "ms": 0.800000011920929
+    },
+    {
+      "name": "renderStory",
+      "start": 1277.8999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1278.0999999642372,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "renderInspector",
+      "start": 1278.2999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderVersions",
+      "start": 1278.3999999761581,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1278.3999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 1278.5999999642372,
+      "ms": 6
+    },
+    {
+      "name": "patchViews",
+      "start": 1284.699999988079,
+      "ms": 1.5999999642372131
+    },
+    {
+      "name": "refresh",
+      "start": 1284.7999999523163,
+      "ms": 1.5
+    },
+    {
+      "name": "renderStory",
+      "start": 1284.8999999761581,
+      "ms": 0.3999999761581421
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1285.3999999761581,
+      "ms": 0.5
+    },
+    {
+      "name": "renderInspector",
+      "start": 1286.0999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderVersions",
+      "start": 1286.199999988079,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1286.199999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 1288.5999999642372,
+      "ms": 9.199999988079071
+    },
+    {
+      "name": "refresh",
+      "start": 1298,
+      "ms": 2.099999964237213
+    },
+    {
+      "name": "renderStory",
+      "start": 1298.199999988079,
+      "ms": 0.5999999642372131
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1298.7999999523163,
+      "ms": 1.100000023841858
+    },
+    {
+      "name": "renderInspector",
+      "start": 1299.8999999761581,
+      "ms": 0
+    },
+    {
+      "name": "renderVersions",
+      "start": 1300,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1300,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 1300.199999988079,
+      "ms": 12.800000011920929
+    },
+    {
+      "name": "patchViews",
+      "start": 1313.0999999642372,
+      "ms": 2.5
+    },
+    {
+      "name": "refresh",
+      "start": 1313.2999999523163,
+      "ms": 2.300000011920929
+    },
+    {
+      "name": "renderStory",
+      "start": 1313.5999999642372,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1313.7999999523163,
+      "ms": 1.5
+    },
+    {
+      "name": "renderInspector",
+      "start": 1315.2999999523163,
+      "ms": 0.20000004768371582
+    },
+    {
+      "name": "renderVersions",
+      "start": 1315.5,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 1315.5999999642372,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1320.3999999761581,
+      "ms": 7.899999976158142
+    },
+    {
+      "name": "refresh",
+      "start": 1328.5,
+      "ms": 1.899999976158142
+    },
+    {
+      "name": "renderStory",
+      "start": 1328.5999999642372,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1328.7999999523163,
+      "ms": 1.2000000476837158
+    },
+    {
+      "name": "renderInspector",
+      "start": 1330,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderVersions",
+      "start": 1330.199999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 1330.2999999523163,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1330.3999999761581,
+      "ms": 6.600000023841858
+    },
+    {
+      "name": "patchViews",
+      "start": 1337.0999999642372,
+      "ms": 1.9000000357627869
+    },
+    {
+      "name": "refresh",
+      "start": 1337.199999988079,
+      "ms": 1.800000011920929
+    },
+    {
+      "name": "renderStory",
+      "start": 1337.5,
+      "ms": 0.5999999642372131
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1338.199999988079,
+      "ms": 0.5999999642372131
+    },
+    {
+      "name": "renderInspector",
+      "start": 1338.7999999523163,
+      "ms": 0
+    },
+    {
+      "name": "renderVersions",
+      "start": 1338.8999999761581,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1338.8999999761581,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1341.5999999642372,
+      "ms": 9.699999988079071
+    },
+    {
+      "name": "refresh",
+      "start": 1351.5999999642372,
+      "ms": 1.9000000357627869
+    },
+    {
+      "name": "renderStory",
+      "start": 1352,
+      "ms": 0.5
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1352.8999999761581,
+      "ms": 0.3999999761581421
+    },
+    {
+      "name": "renderInspector",
+      "start": 1353.2999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderVersions",
+      "start": 1353.3999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 1353.5,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1353.699999988079,
+      "ms": 0.8999999761581421
+    },
+    {
+      "name": "updatePreview",
+      "start": 1353.8999999761581,
+      "ms": 0
+    },
+    {
+      "name": "patchViews",
+      "start": 1354.5999999642372,
+      "ms": 0.30000001192092896
+    },
+    {
+      "name": "renderStory",
+      "start": 1354.699999988079,
+      "ms": 0
+    },
+    {
+      "name": "renderInspector",
+      "start": 1354.7999999523163,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1354.7999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 1357.0999999642372,
+      "ms": 2.5
+    },
+    {
+      "name": "refresh",
+      "start": 1359.699999988079,
+      "ms": 0.5
+    },
+    {
+      "name": "renderStory",
+      "start": 1359.8999999761581,
+      "ms": 0
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1359.8999999761581,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "renderInspector",
+      "start": 1360.0999999642372,
+      "ms": 0
+    },
+    {
+      "name": "renderVersions",
+      "start": 1360.0999999642372,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1360.0999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 1360.199999988079,
+      "ms": 4.599999964237213
+    },
+    {
+      "name": "refresh",
+      "start": 1364.7999999523163,
+      "ms": 1
+    },
+    {
+      "name": "patchViews",
+      "start": 1364.7999999523163,
+      "ms": 1
+    },
+    {
+      "name": "renderStory",
+      "start": 1364.8999999761581,
+      "ms": 0.30000001192092896
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1365.199999988079,
+      "ms": 0.5
+    },
+    {
+      "name": "renderInspector",
+      "start": 1365.699999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderVersions",
+      "start": 1365.7999999523163,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1365.7999999523163,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1370.3999999761581,
+      "ms": 6.5
+    },
+    {
+      "name": "refresh",
+      "start": 1377,
+      "ms": 1.5999999642372131
+    },
+    {
+      "name": "renderStory",
+      "start": 1377.199999988079,
+      "ms": 0.3999999761581421
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1377.5999999642372,
+      "ms": 0.800000011920929
+    },
+    {
+      "name": "renderInspector",
+      "start": 1378.3999999761581,
+      "ms": 0
+    },
+    {
+      "name": "renderVersions",
+      "start": 1378.3999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 1378.5,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 1378.5999999642372,
+      "ms": 1.800000011920929
+    },
+    {
+      "name": "refresh",
+      "start": 1380.3999999761581,
+      "ms": 0.6000000238418579
+    },
+    {
+      "name": "patchViews",
+      "start": 1380.3999999761581,
+      "ms": 0.6000000238418579
+    },
+    {
+      "name": "renderStory",
+      "start": 1380.5,
+      "ms": 0
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1380.5,
+      "ms": 0.3999999761581421
+    },
+    {
+      "name": "renderInspector",
+      "start": 1380.8999999761581,
+      "ms": 0
+    },
+    {
+      "name": "renderVersions",
+      "start": 1380.8999999761581,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1380.8999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 1387.0999999642372,
+      "ms": 2.900000035762787
+    },
+    {
+      "name": "refresh",
+      "start": 1390,
+      "ms": 0.5999999642372131
+    },
+    {
+      "name": "renderStory",
+      "start": 1390.0999999642372,
+      "ms": 0
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1390.199999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderInspector",
+      "start": 1390.2999999523163,
+      "ms": 0.20000004768371582
+    },
+    {
+      "name": "renderVersions",
+      "start": 1390.5,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1390.5,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1390.5999999642372,
+      "ms": 1
+    },
+    {
+      "name": "refresh",
+      "start": 1391.5999999642372,
+      "ms": 0.9000000357627869
+    },
+    {
+      "name": "patchViews",
+      "start": 1391.5999999642372,
+      "ms": 0.9000000357627869
+    },
+    {
+      "name": "renderStory",
+      "start": 1391.7999999523163,
+      "ms": 0
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1391.8999999761581,
+      "ms": 0.3999999761581421
+    },
+    {
+      "name": "renderInspector",
+      "start": 1392.2999999523163,
+      "ms": 0
+    },
+    {
+      "name": "renderVersions",
+      "start": 1392.2999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 1392.3999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 1403.8999999761581,
+      "ms": 2.399999976158142
+    },
+    {
+      "name": "refresh",
+      "start": 1406.5,
+      "ms": 1.0999999642372131
+    },
+    {
+      "name": "renderStory",
+      "start": 1406.7999999523163,
+      "ms": 0
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1406.7999999523163,
+      "ms": 0.5
+    },
+    {
+      "name": "renderInspector",
+      "start": 1407.2999999523163,
+      "ms": 0.20000004768371582
+    },
+    {
+      "name": "renderVersions",
+      "start": 1407.5,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1407.5,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1407.5999999642372,
+      "ms": 8.5
+    },
+    {
+      "name": "refresh",
+      "start": 1416.199999988079,
+      "ms": 1.399999976158142
+    },
+    {
+      "name": "patchViews",
+      "start": 1416.199999988079,
+      "ms": 1.5
+    },
+    {
+      "name": "renderStory",
+      "start": 1416.2999999523163,
+      "ms": 0.30000001192092896
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1416.5999999642372,
+      "ms": 0.699999988079071
+    },
+    {
+      "name": "renderInspector",
+      "start": 1417.2999999523163,
+      "ms": 0.20000004768371582
+    },
+    {
+      "name": "renderVersions",
+      "start": 1417.5,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1417.5,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 1420.7999999523163,
+      "ms": 7.5
+    },
+    {
+      "name": "refresh",
+      "start": 1428.5,
+      "ms": 2.299999952316284
+    },
+    {
+      "name": "renderStory",
+      "start": 1428.699999988079,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1429,
+      "ms": 1.399999976158142
+    },
+    {
+      "name": "renderInspector",
+      "start": 1430.3999999761581,
+      "ms": 0.30000001192092896
+    },
+    {
+      "name": "renderVersions",
+      "start": 1430.699999988079,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1430.699999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 1430.8999999761581,
+      "ms": 5.199999988079071
+    },
+    {
+      "name": "patchViews",
+      "start": 1436.0999999642372,
+      "ms": 2.199999988079071
+    },
+    {
+      "name": "refresh",
+      "start": 1436.199999988079,
+      "ms": 2.099999964237213
+    },
+    {
+      "name": "renderStory",
+      "start": 1436.2999999523163,
+      "ms": 0.7000000476837158
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1437.0999999642372,
+      "ms": 0.800000011920929
+    },
+    {
+      "name": "renderInspector",
+      "start": 1437.8999999761581,
+      "ms": 0.30000001192092896
+    },
+    {
+      "name": "renderVersions",
+      "start": 1438.199999988079,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1438.199999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 1440.3999999761581,
+      "ms": 5.899999976158142
+    },
+    {
+      "name": "refresh",
+      "start": 1446.3999999761581,
+      "ms": 2.899999976158142
+    },
+    {
+      "name": "renderStory",
+      "start": 1446.5999999642372,
+      "ms": 0.699999988079071
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1447.2999999523163,
+      "ms": 1.100000023841858
+    },
+    {
+      "name": "renderInspector",
+      "start": 1448.5,
+      "ms": 0.699999988079071
+    },
+    {
+      "name": "renderVersions",
+      "start": 1449.199999988079,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1449.2999999523163,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1449.3999999761581,
+      "ms": 5.199999988079071
+    },
+    {
+      "name": "refresh",
+      "start": 1454.699999988079,
+      "ms": 1
+    },
+    {
+      "name": "patchViews",
+      "start": 1454.699999988079,
+      "ms": 1
+    },
+    {
+      "name": "renderStory",
+      "start": 1455,
+      "ms": 0
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1455,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "renderInspector",
+      "start": 1455.199999988079,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "renderVersions",
+      "start": 1455.3999999761581,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1455.3999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 1456.699999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 1456.8999999761581,
+      "ms": 3.600000023841858
+    },
+    {
+      "name": "refresh",
+      "start": 1460.5,
+      "ms": 0.699999988079071
+    },
+    {
+      "name": "renderStory",
+      "start": 1460.5999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1460.699999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderInspector",
+      "start": 1460.7999999523163,
+      "ms": 0.20000004768371582
+    },
+    {
+      "name": "renderVersions",
+      "start": 1461,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1461,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "rpc",
+      "start": 1461.2999999523163,
+      "ms": 24.30000001192093
+    },
+    {
+      "name": "refresh",
+      "start": 1485.5999999642372,
+      "ms": 0.9000000357627869
+    },
+    {
+      "name": "patchViews",
+      "start": 1485.5999999642372,
+      "ms": 0.9000000357627869
+    },
+    {
+      "name": "renderStory",
+      "start": 1485.7999999523163,
+      "ms": 0
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1485.7999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderInspector",
+      "start": 1485.8999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderVersions",
+      "start": 1486,
+      "ms": 0.3999999761581421
+    },
+    {
+      "name": "updatePreview",
+      "start": 1486.5,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1488.0999999642372,
+      "ms": 4.699999988079071
+    },
+    {
+      "name": "renderStory",
+      "start": 1492.8999999761581,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "refresh",
+      "start": 1492.8999999761581,
+      "ms": 0.5
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1493,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderInspector",
+      "start": 1493.0999999642372,
+      "ms": 0
+    },
+    {
+      "name": "renderVersions",
+      "start": 1493.0999999642372,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "updatePreview",
+      "start": 1493.2999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 1493.3999999761581,
+      "ms": 5.100000023841858
+    },
+    {
+      "name": "patchViews",
+      "start": 1498.5,
+      "ms": 0.699999988079071
+    },
+    {
+      "name": "refresh",
+      "start": 1498.5999999642372,
+      "ms": 0.6000000238418579
+    },
+    {
+      "name": "renderStory",
+      "start": 1498.699999988079,
+      "ms": 0
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1498.699999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderInspector",
+      "start": 1498.8999999761581,
+      "ms": 0
+    },
+    {
+      "name": "renderVersions",
+      "start": 1498.8999999761581,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "updatePreview",
+      "start": 1499.0999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 1499.199999988079,
+      "ms": 93.19999998807907
+    },
+    {
+      "name": "updatePreview",
+      "start": 1553.699999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "patchViews",
+      "start": 1592.5,
+      "ms": 1.899999976158142
+    },
+    {
+      "name": "refresh",
+      "start": 1592.699999988079,
+      "ms": 1.699999988079071
+    },
+    {
+      "name": "renderStory",
+      "start": 1592.7999999523163,
+      "ms": 0.20000004768371582
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1593,
+      "ms": 1.0999999642372131
+    },
+    {
+      "name": "renderInspector",
+      "start": 1594.0999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderVersions",
+      "start": 1594.2999999523163,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1594.2999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 1594.5999999642372,
+      "ms": 18.400000035762787
+    },
+    {
+      "name": "patchViews",
+      "start": 1613.0999999642372,
+      "ms": 4.300000011920929
+    },
+    {
+      "name": "refresh",
+      "start": 1613.3999999761581,
+      "ms": 4
+    },
+    {
+      "name": "renderStory",
+      "start": 1613.5999999642372,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1613.8999999761581,
+      "ms": 3.199999988079071
+    },
+    {
+      "name": "renderInspector",
+      "start": 1617.199999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderVersions",
+      "start": 1617.3999999761581,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1617.3999999761581,
+      "ms": 0
+    },
+    {
+      "name": "rpc",
+      "start": 1620.5,
+      "ms": 10.699999988079071
+    },
+    {
+      "name": "refresh",
+      "start": 1631.2999999523163,
+      "ms": 1.600000023841858
+    },
+    {
+      "name": "renderStory",
+      "start": 1631.5,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1631.5999999642372,
+      "ms": 1
+    },
+    {
+      "name": "renderInspector",
+      "start": 1632.699999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderVersions",
+      "start": 1632.7999999523163,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1632.7999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "rpc",
+      "start": 1683.3999999761581,
+      "ms": 8.5
+    },
+    {
+      "name": "updatePreview",
+      "start": 1686,
+      "ms": 0
+    },
+    {
+      "name": "refresh",
+      "start": 1692.0999999642372,
+      "ms": 1.199999988079071
+    },
+    {
+      "name": "renderStory",
+      "start": 1692.199999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1692.2999999523163,
+      "ms": 0.7000000476837158
+    },
+    {
+      "name": "renderInspector",
+      "start": 1693.0999999642372,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "renderVersions",
+      "start": 1693.199999988079,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 1693.199999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "rpc",
+      "start": 1704,
+      "ms": 9.199999988079071
+    },
+    {
+      "name": "renderStory",
+      "start": 1704.199999988079,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "renderTimeline",
+      "start": 1704.3999999761581,
+      "ms": 0.5
+    },
+    {
+      "name": "renderInspector",
+      "start": 1704.8999999761581,
+      "ms": 0.5
+    },
+    {
+      "name": "updatePreview",
+      "start": 1705.5,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 1755.699999988079,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "updatePreview",
+      "start": 1855,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 1955.199999988079,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "updatePreview",
+      "start": 2055.899999976158,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "updatePreview",
+      "start": 2183.2999999523163,
+      "ms": 0
+    },
+    {
+      "name": "updatePreview",
+      "start": 2255.699999988079,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "updatePreview",
+      "start": 2355.699999988079,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "updatePreview",
+      "start": 2455.2999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 2553.699999988079,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "updatePreview",
+      "start": 2655.7999999523163,
+      "ms": 0.20000004768371582
+    },
+    {
+      "name": "updatePreview",
+      "start": 2755.2999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 2854.7999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 2983.899999976158,
+      "ms": 0.30000001192092896
+    },
+    {
+      "name": "updatePreview",
+      "start": 3053.7999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 3155.199999988079,
+      "ms": 0.19999998807907104
+    },
+    {
+      "name": "updatePreview",
+      "start": 3255,
+      "ms": 0.09999996423721313
+    },
+    {
+      "name": "updatePreview",
+      "start": 3354.7999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 3456.699999988079,
+      "ms": 0.3999999761581421
+    },
+    {
+      "name": "updatePreview",
+      "start": 3554.7999999523163,
+      "ms": 0.10000002384185791
+    },
+    {
+      "name": "updatePreview",
+      "start": 3654.7999999523163,
+      "ms": 0.20000004768371582
+    }
+  ],
+  "latencies": [
+    {
+      "command": "edit-text",
+      "ready": 5.899999976158142,
+      "present": 12.699999988079071
+    },
+    {
+      "command": "edit-text",
+      "ready": 3.699999988079071,
+      "present": 16.600000023841858
+    },
+    {
+      "command": "edit-text",
+      "ready": 3.599999964237213,
+      "present": 16.69999998807907
+    },
+    {
+      "command": "edit-text",
+      "ready": 5.800000011920929,
+      "present": 16.80000001192093
+    },
+    {
+      "command": "edit-text",
+      "ready": 4.100000023841858,
+      "present": 16.30000001192093
+    },
+    {
+      "command": "edit-text",
+      "ready": 3.600000023841858,
+      "present": 16.80000001192093
+    },
+    {
+      "command": "edit-text",
+      "ready": 3.199999988079071,
+      "present": 29.599999964237213
+    },
+    {
+      "command": "edit-text",
+      "ready": 3.200000047683716,
+      "present": 3.900000035762787
+    },
+    {
+      "command": "edit-text",
+      "ready": 2.800000011920929,
+      "present": 16.5
+    },
+    {
+      "command": "edit-text",
+      "ready": 4.099999964237213,
+      "present": 16.69999998807907
+    },
+    {
+      "command": "edit-text",
+      "ready": 3.300000011920929,
+      "present": 16.69999998807907
+    },
+    {
+      "command": "edit-text",
+      "ready": 3.100000023841858,
+      "present": 16.600000023841858
+    },
+    {
+      "command": "edit-text",
+      "ready": 3.099999964237213,
+      "present": 16.80000001192093
+    },
+    {
+      "command": "edit-text",
+      "ready": 2.899999976158142,
+      "present": 16.5
+    },
+    {
+      "command": "edit-text",
+      "ready": 2.699999988079071,
+      "present": 16.69999998807907
+    },
+    {
+      "command": "edit-text",
+      "ready": 81.39999997615814,
+      "present": 83.19999998807907
+    },
+    {
+      "command": "edit-text",
+      "ready": 2.800000011920929,
+      "present": 16.80000001192093
+    },
+    {
+      "command": "edit-text",
+      "ready": 4,
+      "present": 16.599999964237213
+    },
+    {
+      "command": "edit-text",
+      "ready": 4.300000011920929,
+      "present": 17
+    },
+    {
+      "command": "edit-text",
+      "ready": 4,
+      "present": 16.30000001192093
+    },
+    {
+      "command": "add",
+      "ready": 5.699999988079071,
+      "present": 16.69999998807907
+    },
+    {
+      "command": "move",
+      "ready": 9.899999976158142,
+      "present": 10.099999964237213
+    },
+    {
+      "command": "trim",
+      "ready": 17.5,
+      "present": 20.19999998807907
+    },
+    {
+      "command": "split",
+      "ready": 10.899999976158142,
+      "present": 11.199999988079071
+    },
+    {
+      "command": "replace",
+      "ready": 3.300000011920929,
+      "present": 3.5
+    },
+    {
+      "command": "duplicate",
+      "ready": 6.899999976158142,
+      "present": 10.099999964237213
+    },
+    {
+      "command": "group",
+      "ready": 4.100000023841858,
+      "present": 8.400000035762787
+    },
+    {
+      "command": "set-beat-lock",
+      "ready": 4.300000011920929,
+      "present": 13.300000011920929
+    },
+    {
+      "command": "retime",
+      "ready": 11.600000023841858,
+      "present": 13.100000023841858
+    },
+    {
+      "command": "delete",
+      "ready": 9.400000035762787,
+      "present": 9.600000023841858
+    },
+    {
+      "command": "edit-style",
+      "ready": 7.199999988079071,
+      "present": 7.5
+    },
+    {
+      "command": "save-version",
+      "ready": 26.5,
+      "present": 26.899999976158142
+    },
+    {
+      "command": "restore-version",
+      "ready": 24.19999998807907,
+      "present": 25.899999976158142
+    },
+    {
+      "command": "undo",
+      "ready": 14.399999976158142,
+      "present": 62.89999997615814
+    },
+    {
+      "command": "redo",
+      "ready": 11.5,
+      "present": 20.5
+    },
+    {
+      "command": "select",
+      "ready": 3.400000035762787,
+      "present": 17.100000023841858
+    }
+  ],
+  "domStable": true,
+  "story": 7,
+  "timeline": 39,
+  "scrubLongtasks": [],
+  "frameIntervals": [
+    16.700000000000045,
+    16.699999999999818,
+    16.600000000000136,
+    16.59999999999991,
+    16.700000000000045,
+    16.700000000000045,
+    16.700000000000045,
+    16.59999999999991,
+    16.700000000000045,
+    16.59999999999991,
+    16.700000000000045,
+    16.59999999999991,
+    16.800000000000182,
+    16.59999999999991,
+    16.59999999999991,
+    16.800000000000182,
+    16.699999999999818,
+    16.600000000000136,
+    16.700000000000045,
+    16.59999999999991,
+    16.59999999999991,
+    100,
+    16.800000000000182,
+    16.59999999999991,
+    16.699999999999818,
+    16.600000000000364,
+    16.699999999999818,
+    16.59999999999991,
+    16.800000000000182,
+    16.59999999999991,
+    16.699999999999818,
+    16.700000000000273,
+    16.59999999999991,
+    16.699999999999818,
+    16.600000000000364,
+    16.699999999999818,
+    16.699999999999818,
+    16.600000000000364,
+    16.699999999999818,
+    16.699999999999818,
+    16.700000000000273,
+    16.59999999999991,
+    16.699999999999818,
+    33.30000000000018,
+    16.59999999999991,
+    16.700000000000273,
+    16.699999999999818,
+    16.59999999999991,
+    16.700000000000273,
+    16.699999999999818,
+    16.59999999999991,
+    16.700000000000273,
+    16.699999999999818,
+    16.699999999999818,
+    16.700000000000273,
+    16.5,
+    16.699999999999818,
+    16.800000000000182,
+    16.59999999999991,
+    16.59999999999991,
+    16.700000000000273,
+    16.699999999999818,
+    16.699999999999818,
+    16.600000000000364,
+    16.699999999999818,
+    16.59999999999991,
+    33.30000000000018,
+    16.699999999999818,
+    16.700000000000273,
+    66.59999999999991,
+    16.799999999999727,
+    16.600000000000364,
+    16.699999999999818,
+    16.59999999999991,
+    16.59999999999991,
+    16.700000000000273,
+    16.699999999999818,
+    16.700000000000273,
+    16.699999999999818,
+    16.59999999999991,
+    16.700000000000273,
+    16.59999999999991,
+    16.699999999999818,
+    16.700000000000273,
+    16.699999999999818,
+    16.59999999999991,
+    16.59999999999991,
+    16.700000000000273,
+    16.699999999999818,
+    16.700000000000273,
+    16.59999999999991,
+    16.799999999999727,
+    16.600000000000364,
+    16.59999999999991,
+    16.699999999999818,
+    16.700000000000273,
+    16.59999999999991,
+    16.699999999999818,
+    16.700000000000273,
+    16.59999999999991,
+    16.699999999999818,
+    16.700000000000273,
+    16.59999999999991,
+    16.699999999999818,
+    16.700000000000273,
+    16.59999999999991,
+    16.799999999999727,
+    16.600000000000364,
+    16.59999999999991,
+    16.699999999999818
+  ],
+  "coldOpenMs": 126,
+  "coldDetails": {
+    "metrics": {
+      "openStart": 57.10000002384186,
+      "workerDone": 85.10000002384186
+    },
+    "resources": [
+      {
+        "name": "http://127.0.0.1:7879/app/app.css",
+        "start": 9.5,
+        "duration": 2.199999988079071
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/editor.css",
+        "start": 9.699999988079071,
+        "duration": 2.400000035762787
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/src/editor.js",
+        "start": 9.899999976158142,
+        "duration": 4.200000047683716
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/src/doc/project.js",
+        "start": 10.100000023841858,
+        "duration": 4.5
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/src/doc/commands.js",
+        "start": 10.100000023841858,
+        "duration": 4.199999988079071
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/app.js",
+        "start": 10.199999988079071,
+        "duration": 4.100000023841858
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/fonts/IBMPlexMono-SemiBold.ttf",
+        "start": 30.100000023841858,
+        "duration": 7.199999988079071
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/fonts/IBMPlexMono-Regular.ttf",
+        "start": 30.399999976158142,
+        "duration": 7.200000047683716
+      },
+      {
+        "name": "http://127.0.0.1:7879/me",
+        "start": 43.39999997615814,
+        "duration": 1.7000000476837158
+      },
+      {
+        "name": "http://127.0.0.1:7879/agents",
+        "start": 48.10000002384186,
+        "duration": 2.099999964237213
+      },
+      {
+        "name": "http://127.0.0.1:7879/lib/library.json",
+        "start": 48.39999997615814,
+        "duration": 4.400000035762787
+      },
+      {
+        "name": "http://127.0.0.1:7879/fs?path=projects%2Fexpresslane-i880%2Fproject.json",
+        "start": 49,
+        "duration": 3.600000023841858
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/src/doc/worker.js",
+        "start": 73,
+        "duration": -12.699999988079071
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/src/thumb-worker.js",
+        "start": 73,
+        "duration": -12.5
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/src/doc/project.js",
+        "start": 76.89999997615814,
+        "duration": 2.5
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/src/doc/commands.js",
+        "start": 77,
+        "duration": 2.399999976158142
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/fonts/InstrumentSans-Regular.ttf",
+        "start": 93.60000002384186,
+        "duration": 1.5
+      },
+      {
+        "name": "http://127.0.0.1:7879/app/fonts/InstrumentSans-Bold.ttf",
+        "start": 98.19999998807907,
+        "duration": 1.4000000357627869
+      }
+    ]
+  },
+  "editorGzipBytes": 21791,
+  "budgets": {
+    "coldOpen": true,
+    "commandPaintReady": false,
+    "commandNextFrame": false,
+    "scrubNoLongtasks": true,
+    "scrub60fps": false,
+    "gzip": true,
+    "virtualized": true,
+    "stableDOM": true
+  },
+  "summary": {
+    "cmdWorstMs": 81.39999997615814,
+    "nextFrameWorstMs": 83.19999998807907,
+    "scrubFps": 55.00275013750688
+  }
+}

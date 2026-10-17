@@ -1,0 +1,154 @@
+[
+  {
+    "directory": "docs/evidence/editor-core/profile-before",
+    "coldOpenMs": 176.5,
+    "cmdWorstMs": 12.100000023841858,
+    "nextFrameWorstMs": 16.80000001192093,
+    "scrubFps": 60.00300015000751,
+    "methods": {
+      "measure": {
+        "calls": 28,
+        "totalMs": 13.099999845027924,
+        "maxMs": 1.399999976158142,
+        "layoutsInside": 21,
+        "layoutMs": 6.463
+      },
+      "refresh": {
+        "calls": 28,
+        "totalMs": 57.200000166893005,
+        "maxMs": 4.100000023841858,
+        "layoutsInside": 72,
+        "layoutMs": 19.317
+      },
+      "renderStory": {
+        "calls": 50,
+        "totalMs": 22.600000381469727,
+        "maxMs": 1.5,
+        "layoutsInside": 45,
+        "layoutMs": 8.29
+      },
+      "renderTimeline": {
+        "calls": 29,
+        "totalMs": 20.099999964237213,
+        "maxMs": 1.5999999642372131,
+        "layoutsInside": 16,
+        "layoutMs": 5.218
+      },
+      "rpc": {
+        "calls": 50,
+        "totalMs": 183.09999960660934,
+        "maxMs": 9.5,
+        "layoutsInside": 25,
+        "layoutMs": 5.679
+      }
+    },
+    "workerQueueWorst": [
+      {
+        "startMs": 1146.856,
+        "queueMs": 0.033,
+        "handlerWallMs": 3.892,
+        "handlerCpuMs": 1.091
+      },
+      {
+        "startMs": 1105.393,
+        "queueMs": 0.032,
+        "handlerWallMs": 2.108,
+        "handlerCpuMs": 1.801
+      },
+      {
+        "startMs": 1551.034,
+        "queueMs": 0.026,
+        "handlerWallMs": 0.835,
+        "handlerCpuMs": 0.708
+      },
+      {
+        "startMs": 1630.06,
+        "queueMs": 0.022,
+        "handlerWallMs": 3.305,
+        "handlerCpuMs": 3.217
+      },
+      {
+        "startMs": 1263.515,
+        "queueMs": 0.02,
+        "handlerWallMs": 0.457,
+        "handlerCpuMs": 0.436
+      }
+    ]
+  },
+  {
+    "directory": "docs/evidence/editor-core/profile-after",
+    "coldOpenMs": 126,
+    "cmdWorstMs": 81.39999997615814,
+    "nextFrameWorstMs": 83.19999998807907,
+    "scrubFps": 55.00275013750688,
+    "methods": {
+      "measure": {
+        "calls": 0,
+        "totalMs": 0,
+        "maxMs": 0,
+        "layoutsInside": 0,
+        "layoutMs": 0.0
+      },
+      "refresh": {
+        "calls": 28,
+        "totalMs": 40.09999990463257,
+        "maxMs": 4,
+        "layoutsInside": 0,
+        "layoutMs": 0.0
+      },
+      "renderStory": {
+        "calls": 50,
+        "totalMs": 9.399999856948853,
+        "maxMs": 0.7000000476837158,
+        "layoutsInside": 0,
+        "layoutMs": 0.0
+      },
+      "renderTimeline": {
+        "calls": 29,
+        "totalMs": 19.699999809265137,
+        "maxMs": 3.199999988079071,
+        "layoutsInside": 0,
+        "layoutMs": 0.0
+      },
+      "rpc": {
+        "calls": 50,
+        "totalMs": 421.19999998807907,
+        "maxMs": 93.19999998807907,
+        "layoutsInside": 8,
+        "layoutMs": 6.279
+      }
+    },
+    "workerQueueWorst": [
+      {
+        "startMs": 1499.325,
+        "queueMs": 83.856,
+        "handlerWallMs": 5.04,
+        "handlerCpuMs": 4.952
+      },
+      {
+        "startMs": 1103.843,
+        "queueMs": 79.677,
+        "handlerWallMs": 0.56,
+        "handlerCpuMs": 0.558
+      },
+      {
+        "startMs": 1431.006,
+        "queueMs": 0.13,
+        "handlerWallMs": 2.604,
+        "handlerCpuMs": 2.562
+      },
+      {
+        "startMs": 1683.474,
+        "queueMs": 0.116,
+        "handlerWallMs": 5.577,
+        "handlerCpuMs": 5.36
+      },
+      {
+        "startMs": 858.134,
+        "queueMs": 0.058,
+        "handlerWallMs": 2.912,
+        "handlerCpuMs": 2.196
+      }
+    ]
+  }
+]

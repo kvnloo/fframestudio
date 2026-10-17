@@ -74,7 +74,7 @@ export class CommandStore {
  preview(cmd){
    if(cmd.type==='select'){need(cmd.clipId===null||this.doc.videos.some(v=>v.clips.some(c=>c.id===cmd.clipId)),'Unknown selection');return {scope:scope(cmd),diff:[],after:this.doc};}
    const vi=cmd.videoId?this.doc.videos.findIndex(v=>v.id===cmd.videoId):0;need(vi>=0,'Unknown video');
-   const old=this.doc.videos[vi],local=['edit-text','set-beat-lock','replace','edit-style'].includes(cmd.type);
+   const old=this.doc.videos[vi],local=['edit-text','set-beat-lock','replace','edit-style','group','save-version','restore-version'].includes(cmd.type);
    // Structural sharing: source media, provenance and immutable version snapshots are never copied per edit.
    const video={...old,clips:local?[...old.clips]:old.clips.map(c=>({...c,attached:c.attached.map(a=>({...a})),textOverrides:{...c.textOverrides}})),scenes:old.scenes.map(s=>({...s,clipIds:[...s.clipIds]})),styles:clone(old.styles)};
    if(local){const ci=video.clips.findIndex(c=>c.id===cmd.clipId);if(ci>=0)video.clips[ci]=clone(video.clips[ci]);}

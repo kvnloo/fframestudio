@@ -1,11 +1,16 @@
-import asyncio,json,os,pathlib,gzip
+import asyncio,json,os,pathlib,gzip,base64
 from playwright.async_api import async_playwright
 async def main():
     out=pathlib.Path(os.environ['FFS_EVIDENCE']);out.mkdir(parents=True,exist_ok=True)
     async with async_playwright() as p:
         b=await p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
         context=await b.new_context(viewport={'width':1440,'height':1000})
-        page=await context.new_page();await page.goto(os.environ['FFS_URL'])
+        page=await context.new_page()
+        trace=None
+        if os.environ.get('FFS_PERF_TRACE'):
+            trace=await context.new_cdp_session(page)
+            await trace.send('Tracing.start',{'transferMode':'ReturnAsStream','categories':'devtools.timeline,blink.user_timing,disabled-by-default-devtools.timeline,disabled-by-default-v8.cpu_profiler'})
+        await page.goto(os.environ['FFS_URL'])
         base=page.url.split('#')[0]
         # New page and disabled cache: navigation-to-editor-interactive, includes worker migration.
         cold=await context.new_page();cdp=await context.new_cdp_session(cold);await cdp.send('Network.enable');await cdp.send('Network.setCacheDisabled',{'cacheDisabled':True})
@@ -14,6 +19,18 @@ async def main():
         cold_details=await cold.evaluate('({metrics:window.ffs.metrics,resources:performance.getEntriesByType("resource").map(r=>({name:r.name,start:r.startTime,duration:r.duration}))})')
         await cold.close();await page.goto(base+'#/p/perf-500');await page.wait_for_function('window.ffs?.doc.id==="perf-500"')
         await page.wait_for_timeout(500)
+        if trace:
+            await page.evaluate('''()=>{
+              const e=window.ffs;let serial=0;
+              for(const name of ['rpc','refresh','measure','renderStory','renderTimeline','renderInspector','renderVersions','patchViews','updatePreview']){
+                const original=e[name];e[name]=function(...args){
+                  const start=`${name}:${++serial}`;performance.mark(start);
+                  const end=()=>performance.measure(name,{start,end:performance.now()});
+                  try{const result=original.apply(this,args);if(result?.then)return result.finally(end);end();return result;}
+                  catch(error){end();throw error;}
+                };
+              }
+            }''')
         data=await page.evaluate('''async()=>{
           const e=window.ffs,latencies=[],longtasks=[];const observer=new PerformanceObserver(list=>longtasks.push(...list.getEntries().map(x=>x.duration)));observer.observe({type:'longtask'});
           const unchanged=document.querySelector('.canvas-panel'),input=document.querySelector('#duration');
@@ -21,7 +38,7 @@ async def main():
             const start=performance.now();await e.run({type:'edit-text',clipId:'clip-0',field:'title',value:'Measured '+i});
             // Flush pending style/layout: CPU work to paint-ready; presentation latency recorded separately.
             document.querySelector('#preview-text').getBoundingClientRect();const ready=performance.now()-start;
-            await new Promise(requestAnimationFrame);latencies.push({ready,present:performance.now()-start});
+            await new Promise(requestAnimationFrame);latencies.push({command:'edit-text',ready,present:performance.now()-start});
           }
           const inspectorStable=input===document.querySelector('#duration');
           for(const cmd of [
@@ -38,13 +55,25 @@ async def main():
           const story=document.querySelectorAll('.story-card').length,timeline=document.querySelectorAll('.timeline-clip').length;
           longtasks.length=0;const frames=[];let last=performance.now();e.rate=1;
           await new Promise(resolve=>{const start=performance.now();function sample(t){frames.push(t-last);last=t;if(t-start<2000)requestAnimationFrame(sample);else resolve();}requestAnimationFrame(sample);});e.rate=0;observer.disconnect();
-          return {latencies,domStable,story,timeline,scrubLongtasks:longtasks,frameIntervals:frames.slice(1)};
+          return {measures:performance.getEntriesByType('measure').map(m=>({name:m.name,start:m.startTime,ms:m.duration})),latencies,domStable,story,timeline,scrubLongtasks:longtasks,frameIntervals:frames.slice(1)};
         }''')
         files=[pathlib.Path('web/app.js')]+list(pathlib.Path('web/src').rglob('*.js'))
         # All shipped ES editor modules; ACP and its source dependency graph excluded explicitly.
         shipped=sum(len(gzip.compress(f.read_bytes(),mtime=0)) for f in files)
         data.update(coldOpenMs=cold_ms,coldDetails=cold_details,editorGzipBytes=shipped)
         data['budgets']={'coldOpen':cold_ms<300,'commandPaintReady':max(x['ready'] for x in data['latencies'])<16,'commandNextFrame':max(x['present'] for x in data['latencies'])<16,'scrubNoLongtasks':not data['scrubLongtasks'],'scrub60fps':sum(data['frameIntervals'])/len(data['frameIntervals'])<17.5,'gzip':shipped<150*1024,'virtualized':data['story']<20 and data['timeline']<100,'stableDOM':data['domStable']}
-        (out/'perf.json').write_text(json.dumps(data,indent=2));print(json.dumps({k:v for k,v in data.items() if k not in ['frameIntervals','latencies']},indent=2))
+        data['summary']={'cmdWorstMs':max(x['ready'] for x in data['latencies']),'nextFrameWorstMs':max(x['present'] for x in data['latencies']),'scrubFps':1000/(sum(data['frameIntervals'])/len(data['frameIntervals']))}
+        (out/'perf.json').write_text(json.dumps(data,indent=2));print(json.dumps({k:v for k,v in data.items() if k not in ['frameIntervals','latencies','measures','coldDetails']},indent=2))
+        if trace:
+            complete=asyncio.get_running_loop().create_future()
+            trace.once('Tracing.tracingComplete',lambda event:complete.set_result(event))
+            await trace.send('Tracing.end')
+            stream=(await complete)['stream'];chunks=[]
+            while True:
+                part=await trace.send('IO.read',{'handle':stream})
+                chunks.append(base64.b64decode(part['data']) if part.get('base64Encoded') else part['data'].encode())
+                if part['eof']:break
+            await trace.send('IO.close',{'handle':stream})
+            (out/'trace.json.gz').write_bytes(gzip.compress(b''.join(chunks),mtime=0))
         await b.close();assert all(data['budgets'].values()),data['budgets']
 asyncio.run(main())

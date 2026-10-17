@@ -46,6 +46,19 @@ test('versions restore through history and compare exact content',()=>{
  const s=new CommandStore(fixture());s.apply({type:'save-version',id:'v1',name:'Original'});s.apply({type:'trim',clipId:'a',duration:30});s.apply({type:'save-version',id:'v2',name:'Short'});
  const [a,b]=s.doc.versions;assert.ok(diff(a.video,b.video).length);s.apply({type:'restore-version',id:'v1'});assert.equal(s.doc.videos[0].clips[0].duration,120);s.undo();assert.equal(s.doc.videos[0].clips[0].duration,30);
 });
+test('grouping and version saves share unchanged clips without sharing mutable snapshots',()=>{
+ const s=new CommandStore(fixture()),before=clone(s.doc),first=s.doc.videos[0].clips[0];
+ s.apply({type:'group',clipIds:['a','b'],id:'scene'});
+ assert.equal(s.doc.videos[0].clips[0],first);
+ s.apply({type:'save-version',id:'v1'});
+ assert.equal(s.doc.videos[0].clips[0],first);
+ s.apply({type:'trim',clipId:'a',duration:30});
+ assert.deepEqual(s.doc.versions[0].video.clips,before.videos[0].clips);
+ assert.deepEqual(first,before.videos[0].clips[0]);
+ s.apply({type:'restore-version',id:'v1'});
+ s.apply({type:'edit-text',clipId:'a',field:'title',value:'Later'});
+ assert.equal(textOf(s.doc.versions[0].video.clips[0]).title,'Hello');
+});
 test('object-creating commands require explicit IDs so preview and apply cannot drift',()=>{const s=new CommandStore(fixture());for(const cmd of [{type:'add',clip:{duration:30}},{type:'duplicate',clipId:'a'},{type:'split',clipId:'a',at:30},{type:'group',clipIds:['a']},{type:'save-version'}])assert.throws(()=>s.preview(cmd),/ID/);});
 test('returned inverse executes through the command system',()=>{const s=new CommandStore(fixture()),before=clone(s.doc);const r=s.apply({type:'trim',clipId:'a',duration:60});s.apply(r.inverse);assert.deepEqual(content(s.doc),content(before));});
 test('beat lock rejects ripple displacement and mutation rolls back',()=>{const s=new CommandStore(fixture());s.apply({type:'set-beat-lock',clipId:'b',value:true});const before=clone(s.doc);assert.throws(()=>s.apply({type:'trim',clipId:'a',duration:30}),/beat-locked/);assert.deepEqual(s.doc,before);});

@@ -1,0 +1,59 @@
+[
+  {
+    "run": 1,
+    "exit": 1,
+    "coldOpenMs": 91.80000001192093,
+    "cmdWorstMs": 12.199999988079071,
+    "nextFrameWorstMs": 18.19999998807907,
+    "scrubFps": 60.00000000000001,
+    "cpuWorstMs": 7.110951,
+    "budgets": {
+      "coldOpen": true,
+      "commandPaintReady": true,
+      "commandNextFrame": false,
+      "scrubNoLongtasks": true,
+      "scrub60fps": true,
+      "gzip": true,
+      "virtualized": true,
+      "stableDOM": true
+    }
+  },
+  {
+    "run": 2,
+    "exit": 1,
+    "coldOpenMs": 107.89999997615814,
+    "cmdWorstMs": 11,
+    "nextFrameWorstMs": 19.100000023841858,
+    "scrubFps": 60.00000000000001,
+    "cpuWorstMs": 6.410015000000016,
+    "budgets": {
+      "coldOpen": true,
+      "commandPaintReady": true,
+      "commandNextFrame": false,
+      "scrubNoLongtasks": true,
+      "scrub60fps": true,
+      "gzip": true,
+      "virtualized": true,
+      "stableDOM": true
+    }
+  },
+  {
+    "run": 3,
+    "exit": 1,
+    "coldOpenMs": 98.19999998807907,
+    "cmdWorstMs": 11.600000023841858,
+    "nextFrameWorstMs": 19.600000023841858,
+    "scrubFps": 59.99999999999999,
+    "cpuWorstMs": 6.878464000000008,
+    "budgets": {
+      "coldOpen": true,
+      "commandPaintReady": true,
+      "commandNextFrame": false,
+      "scrubNoLongtasks": true,
+      "scrub60fps": true,
+      "gzip": true,
+      "virtualized": true,
+      "stableDOM": true
+    }
+  }
+]
