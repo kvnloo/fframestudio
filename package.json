@@ -1,0 +1,18 @@
+{
+  "name": "fframestudio",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "bridge"
+  ],
+  "scripts": {
+    "bridge": "node bridge/bridge.mjs",
+    "build:acp": "esbuild web/src/acp-client.mjs --bundle --format=esm --target=es2022 --minify --outfile=web/dist/acp-client.js",
+    "test:acp": "node test/acp-e2e.mjs"
+  },
+  "devDependencies": {
+    "@agentclientprotocol/sdk": "1.9.0",
+    "esbuild": "^0.25.0"
+  },
+  "license": "Apache-2.0"
+}

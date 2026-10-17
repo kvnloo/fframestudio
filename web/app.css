@@ -1,0 +1,68 @@
+@font-face{font-family:"Plex Mono";src:url(/app/fonts/IBMPlexMono-Regular.ttf) format("truetype");font-weight:400}
+@font-face{font-family:"Plex Mono";src:url(/app/fonts/IBMPlexMono-SemiBold.ttf) format("truetype");font-weight:600}
+@font-face{font-family:"Instrument Sans";src:url(/app/fonts/InstrumentSans-Regular.ttf) format("truetype");font-weight:400}
+@font-face{font-family:"Instrument Sans";src:url(/app/fonts/InstrumentSans-Bold.ttf) format("truetype");font-weight:600}
+@font-face{font-family:"Instrument Serif";font-style:italic;src:url(/app/fonts/InstrumentSerif-Italic.ttf) format("truetype")}
+:root{--bg:#0a0a0b;--bg2:#101012;--ink:#ecebe7;--mute:#8b8a85;--faint:#55544f;--line:#232327;--line2:#36363b;--acc:#7fd49a;--warn:#e2b25c;--bad:#ef7b6b}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 "Instrument Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit}button,input,textarea,select{font:inherit;color:inherit}button{background:none;border:0;cursor:pointer;padding:0}
+.cap{font:10.5px/1.4 "Plex Mono",monospace;letter-spacing:.15em;text-transform:uppercase;color:var(--mute)}
+.pill{border:1px solid var(--line2);border-radius:999px;padding:5px 12px;font:11px "Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);min-height:30px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.pill:hover{color:var(--ink);border-color:var(--faint)}.pill.on{color:var(--acc);border-color:color-mix(in oklab,var(--acc) 60%,transparent)}
+header{display:flex;align-items:center;gap:16px;padding:0 22px;height:52px;border-bottom:1px solid var(--line);position:sticky;top:0;background:color-mix(in oklab,var(--bg) 92%,transparent);backdrop-filter:blur(8px);z-index:5}
+header .logo{display:flex;align-items:center;gap:9px;font:600 14px "Plex Mono",monospace;text-decoration:none}header .logo svg{width:18px;height:18px}
+header nav{font:12px "Plex Mono",monospace;color:var(--mute);display:flex;gap:8px}header nav a{text-decoration:none}header nav a:hover{color:var(--ink)}
+header .right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--faint);margin-right:6px;vertical-align:1px}.dot.ok{background:var(--acc)}.dot.bad{background:var(--bad)}
+main{padding:24px 22px 60px}
+/* library */
+.libhead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+.libhead h1{margin:0;font:600 26px "Instrument Sans";letter-spacing:-.01em}.libhead h1 em{font:400 28px "Instrument Serif";color:var(--acc)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.card{position:relative;display:flex;flex-direction:column;text-decoration:none;border-radius:12px;outline:1px solid var(--line);background:var(--bg2);overflow:hidden;transition:outline-color .15s,transform .15s}
+.card:hover{outline-color:var(--line2);transform:translateY(-1px)}
+.card .pv{aspect-ratio:16/9;background:#000;position:relative;overflow:hidden}.card .pv img{width:100%;height:100%;object-fit:cover;display:block}
+.card .pv .rt{position:absolute;right:8px;bottom:8px;font:600 11px "Plex Mono",monospace;background:rgba(0,0,0,.65);padding:2px 7px;border-radius:4px}
+.card .pv .none{position:absolute;inset:0;display:grid;place-items:center;color:var(--faint);font:11px "Plex Mono",monospace}
+.card .tx{padding:11px 13px 13px}.card .t{font-weight:600;font-size:15px}.card .m{display:flex;gap:10px;margin-top:4px;font:10.5px "Plex Mono",monospace;color:var(--faint);flex-wrap:wrap}
+.card .strip{display:flex;height:4px;gap:1px;margin-top:9px}.card .strip i{flex:1;background:var(--line2);border-radius:1px}
+.brk::before,.brk::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none;border-color:var(--ink);opacity:.0;transition:opacity .15s}
+.card.brk::before{left:8px;top:8px;border-left:1.5px solid;border-top:1.5px solid}.card.brk::after{right:8px;top:8px;border-right:1.5px solid;border-top:1.5px solid}
+.card.brk:hover::before,.card.brk:hover::after{opacity:.8}
+/* project */
+.proj{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:22px;align-items:start}
+.player{position:relative;background:#000;border-radius:10px;overflow:hidden;outline:1px solid var(--line);aspect-ratio:16/9}
+.player video,.player img{width:100%;height:100%;object-fit:contain;display:block;background:#000}
+.ph-title{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 12px}.ph-title h1{margin:0;font:600 24px "Instrument Sans"}
+.tl{position:relative;display:flex;gap:2px;height:64px;margin-top:10px;user-select:none}
+.tl .s{position:relative;border-radius:4px;overflow:hidden;background:var(--bg2);outline:1px solid var(--line);cursor:pointer;min-width:6px}
+.tl .s img{width:100%;height:100%;object-fit:cover;opacity:.85;display:block}.tl .s.sel{outline:2px solid var(--acc)}
+.tl .s span{position:absolute;left:4px;bottom:3px;font:9px "Plex Mono",monospace;color:#fff;text-shadow:0 1px 2px #000;white-space:nowrap}
+.tl .ph{position:absolute;top:-4px;bottom:-4px;width:0;border-left:1.5px solid var(--ink);pointer-events:none}
+.shots{margin-top:18px;display:flex;flex-direction:column;gap:6px}
+.shot{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:8px;border-radius:9px;background:var(--bg2);outline:1px solid var(--line)}
+.shot.sel{outline:1.5px solid var(--acc)}.shot img{width:120px;aspect-ratio:16/9;object-fit:cover;border-radius:5px;background:#000;display:block}
+.shot .hd{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.shot .hd b{font-weight:600}.shot .hd span{font:10.5px "Plex Mono",monospace;color:var(--faint)}
+.shot .flds{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;margin-top:6px}
+.fld{display:flex;flex-direction:column;gap:2px}.fld label{font:9.5px "Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.fld input{background:var(--bg);border:1px solid var(--line2);border-radius:6px;padding:5px 8px;font-size:12.5px;width:100%}
+.fld input.edited{border-color:var(--warn)}
+.side{position:sticky;top:70px;display:flex;flex-direction:column;gap:14px}
+.box{border-radius:10px;outline:1px solid var(--line);background:var(--bg2);padding:14px 15px}
+.box h3{margin:0 0 9px;font:10.5px "Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);display:flex;justify-content:space-between;gap:8px}
+.kv{display:grid;grid-template-columns:90px 1fr;gap:4px 10px;font-size:12.5px}.kv dt{font:10.5px "Plex Mono",monospace;color:var(--faint);padding-top:2px}.kv dd{margin:0;word-break:break-all}
+/* assistant */
+.chat{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow:auto;font-size:13px;padding-right:2px}
+.msg{white-space:pre-wrap;line-height:1.45}.msg.you{align-self:flex-end;background:color-mix(in oklab,var(--acc) 12%,var(--bg));border-radius:10px 10px 2px 10px;padding:7px 10px;max-width:90%}
+.msg.agent{border-left:2px solid var(--line2);padding-left:10px}
+.tool{font:11px "Plex Mono",monospace;color:var(--mute);border-left:2px solid var(--line2);padding-left:9px}.tool b{color:var(--ink);font-weight:400}.tool.done b{color:var(--acc)}.tool.failed b{color:var(--bad)}
+.perm{border:1px solid var(--warn);border-radius:8px;padding:9px;font-size:12.5px}.perm .opts{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.compose{display:flex;gap:8px;margin-top:10px}.compose textarea{flex:1;min-height:44px;max-height:160px;background:var(--bg);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:13px;resize:vertical}
+.agents{display:flex;gap:6px;flex-wrap:wrap}.agents button[disabled]{opacity:.35;cursor:not-allowed}
+.hint{color:var(--faint);font-size:12px;margin-top:6px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--line2);border-radius:999px;padding:7px 16px;font:12px "Plex Mono",monospace;opacity:0;transition:opacity .2s;pointer-events:none}.toast.on{opacity:1}
+.gate{max-width:560px;margin:12vh auto;text-align:left}.gate h1{font:600 24px "Instrument Sans"}.gate code{font:12px "Plex Mono",monospace;background:var(--bg2);padding:2px 6px;border-radius:4px}
+@media(max-width:1100px){.proj{grid-template-columns:1fr}.side{position:static}}
+@media(max-width:560px){main{padding:16px 12px}.grid{grid-template-columns:1fr}.shot{grid-template-columns:1fr}.shot img{width:100%}}

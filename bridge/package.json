@@ -1,0 +1,10 @@
+{
+  "name": "fframestudio-bridge",
+  "version": "0.1.0",
+  "description": "Local ACP bridge: lets the fframestudio web app use the agent subscriptions already on this machine (Claude Code, Codex/ChatGPT, Gemini CLI, Hermes, OpenCode).",
+  "type": "module",
+  "bin": { "fframestudio-bridge": "./bridge.mjs" },
+  "license": "Apache-2.0",
+  "engines": { "node": ">=20" },
+  "dependencies": { "ws": "^8.18.3" }
+}
