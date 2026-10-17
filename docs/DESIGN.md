@@ -46,7 +46,7 @@ They are views over one document, never separate "simple" and "pro" projects. (0
 | preview + browser export | WebAV (MIT) | last push 2026-01-10: maintenance pace; Chromium-only |
 | media I/O, proxies, thumbnails | Mediabunny (MPL-2.0) | file-level copyleft obligations |
 | native / server export | audited FFmpeg build; fframes (MIT) as optional motion-graphics backend | fframes does not consume our spec yet |
-| desktop shell | Electron first; Tauri only after the webview codec matrix passes | size vs codec consistency |
+| desktop shell | deferred: the web app + local bridge covers files, agents and offline; revisit for one-click install, identical export codecs, background renders | — |
 | captions | Transformers.js (browser), whisper.cpp (native) | model sizes |
 | masks | MediaPipe | quality on hard edges |
 | beats | web-audio-beat-detector as an editable suggestion | not authoritative downbeats |
@@ -78,15 +78,25 @@ them through the command system so their changes become reviewable proposals (§
 Time to first export, task success on scripted edits, SUS and NASA-TLX, recovery after an error,
 and how quickly people move to faster routes such as shortcuts and the palette. (05 §5)
 
-## 9. Build order
+## 9. Platforms (decided 2026-10-17)
+
+- **Web app is the product.** Every feature ships there first, served by the local bridge
+  (files, agents, renders) and usable by collaborators in any Chromium browser.
+- **Tern "beta-ui" is a secondary add-on.** A Luau plugin plus Tern Surface Protocol views:
+  native library, render queue, assistant and review notes, with preview/timeline opened in a
+  Tern browser pane. Same `project.json`, bridge and ACP agents. Tern is closed beta, so nothing
+  may depend on it.
+- **Desktop shell deferred** (see §5).
+
+## 10. Build order
 
 1. Document v1 + command system with undo (everything else calls it).
 2. Story / Timeline / Inspector over the imported projects; WebAV preview spike behind its gate.
 3. Assistant proposals through commands; export with the licence gate.
 4. Audio plugins: CC BY catalogue → ccMixter → ACE-Step → Earshot analysis.
-5. OTIO export, collaboration, desktop shell.
+5. OTIO export, collaboration.
+6. Tern beta-ui add-on.
 
 ## Open questions
 
-- Acceptable to start Electron-only for desktop?
 - Diffusion Studio and Freesound commercial terms need legal reading before use.
