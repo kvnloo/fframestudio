@@ -11,6 +11,7 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { createHash } from 'node:crypto';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const argv = process.argv.slice(2);
@@ -35,6 +36,9 @@ let bridge, browser;
 try {
   run('python3', ['tools/make_demo.py']);
   run('python3', ['tools/import_projects.py']);
+  const source = path.join(HOME, 'fframestudio/demo-src/demo.mp4');
+  const sourceHash = () => createHash('sha256').update(fs.readFileSync(source)).digest('hex');
+  const sourceBefore = sourceHash();
   const port = await freePort(), token = 'verify-' + Math.random().toString(36).slice(2);
   bridge = spawn(process.execPath, ['bridge/bridge.mjs', '--port', String(port), '--root', path.join(HOME, 'fframestudio'), '--token', token, '--quiet'], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
   await new Promise((ok, bad) => { bridge.stdout.once('data', ok); bridge.once('exit', (c) => bad(new Error('bridge exited ' + c))); setTimeout(() => bad(new Error('bridge not ready in 15 s')), 15000); });
@@ -46,9 +50,12 @@ try {
   const exe = channel ? undefined : process.env.CHROMIUM || (fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined);
   browser = await chromium.launch({ channel, executablePath: exe, args: ['--autoplay-policy=no-user-gesture-required'] });
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  ctx.on('page', (p) => {
+    p.on('console', (m) => { if (m.type() === 'error' && !/favicon/.test(m.text())) report.console_errors.push(m.text().slice(0, 300)); });
+    p.on('pageerror', (e) => report.console_errors.push(e.message));
+    p.on('response', (r) => { if (r.status() >= 400 && !/\/me$|favicon/.test(r.url())) report.failed_requests.push(`${r.status()} ${r.url().replace(token, '<token>')}`); });
+  });
   const page = await ctx.newPage();
-  page.on('console', (m) => { if (m.type() === 'error' && !/favicon/.test(m.text())) report.console_errors.push(m.text().slice(0, 300)); });
-  page.on('response', (r) => { if (r.status() >= 400 && !/\/me$|favicon/.test(r.url())) report.failed_requests.push(`${r.status()} ${r.url().replace(token, '<token>')}`); });
   const shot = (n) => page.screenshot({ path: path.join(OUT, n + '.png') });
 
   await journey('gate: app refuses without the link', async () => {
@@ -64,26 +71,41 @@ try {
     assert(posterOk, 'poster image did not load'); await shot('02-library'); return { titles };
   });
   await journey('project: plays and seeks by shot', async () => {
-    await page.click('.card'); await page.waitForSelector('#vid');
-    await page.waitForFunction(() => document.querySelector('#vid').readyState >= 2, null, { timeout: 15000 })
-      .catch(async () => { throw new Error('video not decodable here: ' + JSON.stringify(await page.$eval('#vid', (v) => ({ src: v.currentSrc, err: v.error?.code, h264: v.canPlayType('video/mp4; codecs="avc1.640028"') })))); });
-    const dur = await page.$eval('#vid', (v) => v.duration); assert(Math.abs(dur - 12) < 0.5, `duration ${dur}`);
-    const shots = await page.$$eval('.tl .s', (e) => e.length); assert(shots === 4, `shots ${shots}`);
-    await page.click('.tl .s:nth-child(3)'); await page.waitForTimeout(400);
-    const t = await page.$eval('#vid', (v) => v.currentTime); assert(Math.abs(t - 6) < 0.2, `seek landed at ${t}`);
+    await page.click('.card'); await page.waitForSelector('#preview-video');
+    await page.waitForFunction(() => document.querySelector('#preview-video').readyState >= 2, null, { timeout: 15000 })
+      .catch(async () => { throw new Error('video not decodable here: ' + JSON.stringify(await page.$eval('#preview-video', (v) => ({ src: v.currentSrc, err: v.error?.code, h264: v.canPlayType('video/mp4; codecs="avc1.640028"') })))); });
+    const dur = await page.$eval('#preview-video', (v) => v.duration); assert(Math.abs(dur - 12) < 0.5, `duration ${dur}`);
+    const shots = await page.locator('#timeline .timeline-clip').count(); assert(shots === 4, `shots ${shots}`);
+    await page.click('[data-action="play"]');
+    await page.waitForFunction(() => document.querySelector('#preview-video').currentTime > 0.2);
+    await page.click('[data-action="pause"]');
+    await page.locator('#timeline .timeline-clip').nth(2).click(); await page.waitForTimeout(400);
+    const t = await page.$eval('#preview-video', (v) => v.currentTime); assert(Math.abs(t - 6) < 0.2, `seek landed at ${t}`);
     await shot('03-project'); return { duration_s: dur, shots, seek_to_shot3_s: +t.toFixed(3) };
   });
   await journey('edit: shot title saves and survives reload', async () => {
-    const field = page.locator('.fld input').first(); const before = await field.inputValue();
-    const after = before + ' (verified)'; await field.fill(after); await field.dispatchEvent('change');
-    await page.waitForFunction((v) => document.querySelector('.fld input')?.value === v, after, { timeout: 5000 });
+    await page.locator('#timeline .timeline-clip').first().click();
+    const clipId = await page.locator('#timeline .timeline-clip.selected').getAttribute('data-select');
+    const field = page.locator('input[data-field="title"]'); const before = await field.inputValue();
+    const after = before + ' (verified)'; await field.fill(after); await field.press('Tab');
+    await page.waitForFunction(() => document.querySelector('#save-status').textContent === 'Unsaved changes');
+    await page.click('[data-action="save"]');
+    await page.waitForFunction(() => document.querySelector('#save-status').textContent === 'Saved', null, { timeout: 5000 });
     const file = JSON.parse(fs.readFileSync(path.join(HOME, 'fframestudio/projects/demo/project.json'), 'utf8'));
-    const saved = Object.values(file.edits || {}).some((e) => Object.values(e).includes(after)); assert(saved, 'edit not in project.json');
-    await page.reload(); await page.waitForSelector('.fld input');
-    const persisted = await page.locator('.fld input').first().inputValue(); assert(persisted === after, `after reload: ${persisted}`);
-    const src = JSON.parse(run('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'json', path.join(HOME, 'fframestudio/demo-src/demo.mp4')]));
+    const saved = file.videos?.flatMap((v) => v.clips).find((c) => c.id === clipId)?.textOverrides.title;
+    assert(saved === after, 'edit not in project.json');
+    // Deliver a file notification while the reloaded editor's worker is still opening.
+    await page.route('**/app/src/doc/worker.js', async (route) => {
+      await page.request.put(base + '/fs?path=projects/demo/project.json', { data: JSON.stringify(file) });
+      await page.waitForTimeout(100);
+      await route.continue();
+    }, { times: 1 });
+    await page.reload(); await page.waitForSelector('input[data-field="title"]');
+    const persisted = await page.locator('input[data-field="title"]').inputValue(); assert(persisted === after, `after reload: ${persisted}`);
+    const src = JSON.parse(run('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'json', source]));
     assert(Math.abs(src.format.duration - 12) < 0.5, 'source changed');
-    await shot('04-edited'); return { before, after };
+    assert(sourceHash() === sourceBefore, 'source mp4 bytes changed');
+    await shot('04-edited'); return { before, after, clip_id: clipId, source_sha256: sourceBefore };
   });
   await journey('assistant: agents listed, unavailable ones disabled', async () => {
     const pills = await page.$$eval('[data-agent]', (e) => e.map((b) => ({ id: b.dataset.agent, disabled: b.disabled })));
@@ -93,7 +115,8 @@ try {
     const m = await ctx.newPage(); await m.setViewportSize({ width: 390, height: 844 });
     await m.goto(base + '/'); await m.waitForSelector('.card');
     const lib = await m.evaluate(() => document.documentElement.scrollWidth);
-    await m.click('.card'); await m.waitForSelector('#vid');
+    await m.screenshot({ path: path.join(OUT, '05-mobile-library.png') });
+    await m.click('.card'); await m.waitForSelector('#preview-video');
     const proj = await m.evaluate(() => document.documentElement.scrollWidth);
     await m.screenshot({ path: path.join(OUT, '05-mobile.png') }); await m.close();
     assert(lib <= 391 && proj <= 391, `scrollWidth library ${lib}, project ${proj}`); return { library: lib, project: proj };

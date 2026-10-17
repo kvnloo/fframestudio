@@ -33,7 +33,7 @@ Preconditions:
 - **Check the poster.** Assert the image decoded. Run `await page.$eval('.card img', (i) => i.complete && i.naturalWidth > 0);`. It is true.
 - **Filter by tag.** Choose a tag chip. Run `await page.click('.pill[data-tag="<tag>"]');`. Only cards with that tag stay in `.grid`, and the chip gets class `on`.
 - **Clear the filter.** Choose the `all` chip. Run `await page.click('.pill[data-tag=""]');`. Every card returns.
-- **Open a project.** Choose a card. Run `await page.click('.card');` then `await page.waitForSelector('#vid');`. The hash becomes `#/p/<id>` and the project view renders.
+- **Open a project.** Choose a card. Run `await page.click('.card');` then `await page.waitForSelector('#preview-video');`. The hash becomes `#/p/<id>` and the project view renders.
 - **Live reload.** Change `projects/library.json` on disk. The `/events` stream fires, `loadLib()` reads `library.json` and `route()` re-renders. The grid updates without a reload.
 - **Proof.** Screenshot the populated grid. The harness writes `02-library.png`. It shows the header, the cards and the poster.
 

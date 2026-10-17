@@ -19,7 +19,7 @@ async function boot() {
     <p>Start the bridge with <code>npm run bridge</code> and open the <code>/open?token=…</code> link it prints (also in <code>~/.config/fframestudio/bridge.json</code>). The link sets a same-site cookie so this page can reach your projects and agents.</p></div>`; return; }
   $('#bridge').innerHTML='<span class="dot ok"></span>bridge connected';
   api.agents().then(r=>{AGENTS=r.agents;renderAssistant($('#assistant-slot'));}).catch(()=>{});
-  api.events(e=>{EDITOR?.external(e.path).catch(err=>toast(err.message));if(e.path==='projects/library.json')loadLib();});
+  api.events(e=>{EDITOR?.external(e.path).catch(err=>{console.error(err.stack);toast(err.message);});if(e.path==='projects/library.json')loadLib();});
   addEventListener('hashchange',route);if(location.hash.startsWith('#/p/')){loadLib();route();}else{await loadLib();route();}
 }
 async function loadLib() { LIB = await fetch('/lib/library.json').then((r) => (r.ok ? r.json() : { projects: [] })); }

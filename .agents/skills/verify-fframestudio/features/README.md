@@ -25,9 +25,9 @@ This directory is the maintained source for verifying the user-facing behavior o
 | `/open?token=T` | sets the `ffs` cookie, redirects to the library |
 | `.card`, `.card .t` | library cards and titles |
 | `.pill[data-tag]` | library tag filter chips |
-| `#vid` | project player (proxy video) |
-| `.tl .s[data-id]` | timeline shot blocks; click seeks to the shot |
-| `.fld input[data-shot][data-k]` | editable on-screen text; `change` saves to `project.json` `edits` |
+| `#preview-video` | project player (proxy video) |
+| `#timeline .timeline-clip[data-select]` | timeline shot blocks; click seeks to the shot |
+| `input[data-field]`, `textarea[data-field]` | selected clip text; `change` edits, `[data-action="save"]` writes `textOverrides` |
 | `[data-agent]`, `#ask`, `#send`, `#chat` | assistant agent pills, prompt, send, transcript |
 
 ## Proof and skip reporting

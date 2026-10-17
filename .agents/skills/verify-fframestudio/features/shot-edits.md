@@ -1,48 +1,45 @@
 # Shot edits
 
-Shot edits let a user change the on-screen text of a shot in the project view. A committed field is written under `edits` in `project.json`, marked as edited, and restored on reload. The source media is never written.
+Inspector lets a user change the selected shot's on-screen text. Change commits a local edit; Save writes the clip's `textOverrides` in `project.json`. Reload restores the value and source media stays unchanged.
 
 ## Sub-features
 
-- `edit-fields` renders one input per text field of each shot, tagged with `data-shot` and `data-k`.
-- `edit-merge` shows the shot's text merged with saved edits.
-- `edit-commit` saves on the input's `change` event.
-- `edit-save` writes the project file under `edits[shot][key]`.
-- `edit-toast` shows the `Saved` toast after a write.
-- `edit-mark` adds class `edited` to a field whose value differs from the shot's original text.
-- `edit-persist` restores saved values after a page reload.
-- `edit-source-safe` leaves the source video unchanged on disk.
-- `edit-external` reloads the project when the assistant changes `project.json`.
+- `edit-fields` shows `input[data-field]` or `textarea[data-field]` for the selected clip.
+- `edit-merge` displays original text merged with saved overrides.
+- `edit-commit` applies the field's `change` event to the local document.
+- `edit-save` writes `videos[].clips[].textOverrides` with `[data-action="save"]`.
+- `edit-status` shows Unsaved changes, Saving… and Saved in `#save-status`.
+- `edit-persist` restores saved values after reload.
+- `edit-source-safe` leaves the source video bytes and duration unchanged.
+- `edit-external` loads external changes or preserves dirty local edits with a conflict notice.
 
 ## How to get to it (user POV)
 
-- Open a project.
-- Edit an on-screen text field inside a shot.
-- Reload the page or reopen the project to confirm the new value.
-- Let the assistant change the project file and watch the view update.
+- Open a project and choose a Story or Timeline clip.
+- Edit a Words field in Inspector, then choose Save.
+- Reload or reopen the project to confirm persistence.
 
 ## Driving it with Playwright
 
 Preconditions:
 
-- The project view is open and `.fld input` elements are present.
-- The demo project file is `projects/demo/project.json` under the temp `HOME`.
-- The source video is `fframestudio/demo-src/demo.mp4` and is 12 s long.
+- The demo editor is open with `input[data-field="title"]` present.
+- The project file is `fframestudio/projects/demo/project.json` under the temp `HOME`.
+- The source `fframestudio/demo-src/demo.mp4` has a recorded SHA-256 and 12 s duration before editing.
 
-- **Read a field.** Take the first field and its value. Run `const field = page.locator('.fld input').first();` and `const before = await field.inputValue();`. The value is the merged text for the shot.
-- **Edit and commit.** Type a new value and fire `change`. Run `await field.fill(after);` and `await field.dispatchEvent('change');`. The `Saved` toast appears and the view re-renders.
-- **Wait for the save.** Run `await page.waitForFunction((v) => document.querySelector('.fld input')?.value === v, after, { timeout: 5000 });`. The first field shows the new value.
-- **Confirm on disk.** Read the project file. Run `JSON.parse(fs.readFileSync(path.join(HOME, 'fframestudio/projects/demo/project.json'), 'utf8'));`. Some value under `file.edits` equals the new value.
-- **Confirm it persists.** Reload and reopen. Run `await page.reload();` and `await page.waitForSelector('.fld input');` then `await page.locator('.fld input').first().inputValue();`. It equals the new value.
-- **Confirm the source is safe.** Run `ffprobe -v error -show_entries format=duration -of json <source mp4>`. The duration is still 12 s.
-- **Proof.** Screenshot the edited view. The harness writes `04-edited.png`. It shows the field with its new value.
+- **Select the first shot.** Run `await page.locator('#timeline .timeline-clip').first().click();`. Read its `data-select` ID from `#timeline .timeline-clip.selected`.
+- **Read the title.** Run `const field = page.locator('input[data-field="title"]');` and `const before = await field.inputValue();`.
+- **Edit.** Run `await field.fill(after);` and `await field.press('Tab');`. Wait until `#save-status` reads `Unsaved changes`.
+- **Save.** Run `await page.click('[data-action="save"]');` and wait until `#save-status` reads `Saved`.
+- **Confirm on disk.** Parse `project.json`, find the exact selected clip under `videos[].clips[]`, and assert `clip.textOverrides.title === after`.
+- **Confirm persistence.** Run `await page.reload();`, wait for `input[data-field="title"]`, and assert its `inputValue()` equals `after`.
+- **Confirm source safety.** Run `ffprobe` and assert the source duration remains 12 s within 0.5 s. Recompute SHA-256 and assert the source bytes are identical.
+- **Proof.** `04-edited.png` shows the saved title after reload; `report.json` records the clip ID and source hash.
 
 ## Gotchas
 
-- Save fires on `change`, not on `input`. Use `dispatchEvent('change')` or blur the field, or nothing is written.
-- The shown value is the merged text (`text` plus `edits`), so compare against the merged value, not the raw shot text.
-- The whole view re-renders after a save. Re-query `.fld input` before reading it again.
-- A visible value alone is not proof. Read `project.json` and confirm the value under `edits`.
-- Reload is required to prove persistence. A value in the current DOM may only be local state.
-- A green UI run does not prove the source is untouched. Check the source file with `ffprobe`.
-- The save writes the whole project file without its `__abs` field. An external change made at the same moment can be overwritten.
+- `change` applies a local command. It does not write to disk until Save.
+- Inspector shows only the selected clip, and reload initially selects the first clip.
+- Verify the same clip and field on disk, not an arbitrary matching string elsewhere in the document.
+- A displayed value is not persistence proof; read the file and reload.
+- Duration alone cannot prove source bytes are untouched. Compare the before/after hash too.
