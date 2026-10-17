@@ -1,0 +1,89 @@
+{
+  "1080p30": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "samples": 1,
+    "duration": 2,
+    "elapsedMs": 8245.969999969006,
+    "framesPerSecond": 7.276281626082259,
+    "realtimeFactor": 0.24254272086940862,
+    "bytes": 3039579
+  },
+  "portrait60": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 60,
+    "samples": 1,
+    "duration": 2,
+    "elapsedMs": 15261.67000001669,
+    "framesPerSecond": 7.862835456399514,
+    "realtimeFactor": 0.13104725760665856,
+    "bytes": 3007149
+  },
+  "4k30": {
+    "width": 3840,
+    "height": 2160,
+    "fps": 30,
+    "samples": 1,
+    "duration": 2,
+    "elapsedMs": 15887.219999969006,
+    "framesPerSecond": 3.7766204534284196,
+    "realtimeFactor": 0.12588734844761398,
+    "bytes": 3058770
+  },
+  "1440p120": {
+    "width": 2560,
+    "height": 1440,
+    "fps": 120,
+    "samples": 1,
+    "duration": 2,
+    "elapsedMs": 15139.465000033379,
+    "framesPerSecond": 15.852607737424728,
+    "realtimeFactor": 0.1321050644785394,
+    "bytes": 6047345
+  },
+  "1080p240": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 240,
+    "samples": 1,
+    "duration": 2,
+    "elapsedMs": 28230.585000038147,
+    "framesPerSecond": 17.002835754177656,
+    "realtimeFactor": 0.07084514897574024,
+    "bytes": 9828924
+  },
+  "accum60": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
+    "samples": 4,
+    "duration": 2,
+    "elapsedMs": 15415.04500001669,
+    "framesPerSecond": 7.784602639815199,
+    "realtimeFactor": 0.12974337733025332,
+    "bytes": 3006264
+  },
+  "accum30": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "samples": 8,
+    "duration": 2,
+    "elapsedMs": 11588.449999988079,
+    "framesPerSecond": 5.177569045045862,
+    "realtimeFactor": 0.17258563483486208,
+    "bytes": 3040749
+  },
+  "chromiumCapture": {
+    "frames": 60,
+    "seconds": 6.869564816006459
+  },
+  "webavSilent20s": {
+    "elapsedMs": 24190.649999976158,
+    "bytes": 4629123,
+    "error": null
+  },
+  "errors": []
+}
