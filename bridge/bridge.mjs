@@ -70,6 +70,19 @@ const tokenOk = (t) => { const a = Buffer.from(String(t || '')), b = Buffer.from
 const loopHost = (h) => /^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(String(h || ''));
 const originOk = (o) => !o || ORIGINS.has(o) || /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(o);
 const inRoot = (p) => { const r = path.resolve(ROOT, String(p || '').replace(/^\/+/, '')); return r === ROOT || r.startsWith(ROOT + path.sep) ? r : null; };
+// /fs must not follow a symlink out of the root. Resolve the nearest existing ancestor with realpath,
+// refuse a symlink as the final component, and write with O_NOFOLLOW so a link swapped in later fails.
+const REAL_ROOT = fs.realpathSync(ROOT);
+const insideReal = (r) => r === REAL_ROOT || r.startsWith(REAL_ROOT + path.sep);
+const fsPath = (p, write) => {
+  const lexical = inRoot(p); if (!lexical) return null;
+  let st = null; try { st = fs.lstatSync(lexical); } catch {}
+  if (st?.isSymbolicLink()) { if (write) return null; try { return insideReal(fs.realpathSync(lexical)) ? lexical : null; } catch { return null; } }
+  let anc = st ? lexical : path.dirname(lexical);
+  for (;;) { try { fs.lstatSync(anc); break; } catch { anc = path.dirname(anc); } }
+  try { return insideReal(fs.realpathSync(anc)) ? lexical : null; } catch { return null; }
+};
+const NOFOLLOW_WRITE = fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_TRUNC | (fs.constants.O_NOFOLLOW || 0);
 
 function cors(req, res) {
   const o = req.headers.origin;
@@ -102,10 +115,10 @@ const server = http.createServer(async (req, res) => {
   if (u.pathname === '/file') { const f = path.resolve(String(u.searchParams.get('path') || '')); if (!referenced().has(f)) return send(res, 403, { error: 'file is not referenced by any project' }); return serveFile(req, res, f); }
   if (u.pathname === '/agents') return send(res, 200, { root: ROOT, agents: AGENTS.map((a) => ({ id: a.id, name: a.name, login: a.login, available: has(a) })) });
   if (u.pathname === '/fs') {
-    const p = inRoot(u.searchParams.get('path')); if (!p) return send(res, 400, { error: 'path outside project root' });
+    const p = fsPath(u.searchParams.get('path'), req.method === 'PUT'); if (!p) return send(res, 400, { error: 'path outside project root' });
     if (req.method === 'GET') { try { return send(res, 200, { path: path.relative(ROOT, p), absolute: p, content: fs.readFileSync(p, 'utf8') }); } catch { return send(res, 404, { error: 'not found' }); } }
     if (req.method === 'PUT') { let b = ''; for await (const c of req) { b += c; if (b.length > 8e6) return send(res, 413, { error: 'too big' }); }
-      fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, b); return send(res, 200, { ok: true, absolute: p }); }
+      fs.mkdirSync(path.dirname(p), { recursive: true }); if (!fsPath(path.relative(ROOT, p), true)) return send(res, 400, { error: 'path outside project root' }); fs.writeFileSync(p, b, { flag: NOFOLLOW_WRITE }); return send(res, 200, { ok: true, absolute: p }); }
   }
   if (u.pathname === '/events') { res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' }); res.write(': ok\n\n'); watchers.add(res); req.on('close', () => watchers.delete(res)); return; }
   send(res, 404, { error: 'not found' });

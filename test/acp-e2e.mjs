@@ -31,6 +31,20 @@ try {
   out.security.rebinding_host = await new Promise((ok) => http.get({ host: '127.0.0.1', port, path: '/agents', headers: { Host: 'evil.example', Authorization: `Bearer ${token}` } }, (x) => { ok(x.statusCode); x.resume(); }).on('error', () => ok('refused')));
   out.security.ok = await r('/agents', { Authorization: `Bearer ${token}` });
   out.security.path_escape = await r('/fs?path=../../etc/passwd', { Authorization: `Bearer ${token}` });
+  // symlinks inside the root must not lead outside it (read, dangling-link write, write through a linked dir)
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'ffs-outside-'));
+  fs.writeFileSync(path.join(outside, 'secret.txt'), 'outside');
+  fs.symlinkSync(path.join(outside, 'secret.txt'), path.join(root, 'link-read'));
+  fs.symlinkSync(path.join(outside, 'created.txt'), path.join(root, 'link-dangling'));
+  fs.symlinkSync(outside, path.join(root, 'link-dir'));
+  const put = (p) => fetch(`${base}/fs?path=${encodeURIComponent(p)}`, { method: 'PUT', body: 'x', headers: { Authorization: `Bearer ${token}` } }).then((x) => x.status);
+  out.security.symlink_read = await r('/fs?path=link-read', { Authorization: `Bearer ${token}` });
+  out.security.symlink_write_dangling = await put('link-dangling');
+  out.security.symlink_write_dir = await put('link-dir/new.txt');
+  out.security.symlink_mkdir_dir = await put('link-dir/sub/new.txt');
+  out.security.outside_untouched = fs.readdirSync(outside).sort().join(',') === 'secret.txt';
+  out.security.inside_write = await put('notes/ok.txt');
+  fs.rmSync(outside, { recursive: true, force: true });
   const wsRefusal = (protocols, extra) => new Promise((ok) => { const w = new WebSocket(`ws://127.0.0.1:${port}/acp?agent=hermes`, protocols, extra); w.onopen = () => { w.close(); ok('OPENED'); }; w.onerror = () => ok('refused'); });
   out.security.ws_no_token = await wsRefusal([]);
   out.security.ws_bad_token = await wsRefusal(['fframestudio.nope']);
@@ -69,7 +83,7 @@ try {
 console.log(JSON.stringify(out, null, 1));
 // fail loudly so CI and agents can rely on the exit code
 const sec = out.security, fails = [];
-const want = { no_token: 401, bad_token: 401, foreign_origin: 403, rebinding_host: 403, ok: 200, path_escape: 400, ws_no_token: 'refused', ws_bad_token: 'refused' };
+const want = { no_token: 401, bad_token: 401, foreign_origin: 403, rebinding_host: 403, ok: 200, path_escape: 400, symlink_read: 400, symlink_write_dangling: 400, symlink_write_dir: 400, symlink_mkdir_dir: 400, outside_untouched: true, inside_write: 200, ws_no_token: 'refused', ws_bad_token: 'refused' };
 for (const [k, v] of Object.entries(want)) if (sec[k] !== v) fails.push(`security.${k}: got ${sec[k]}, want ${v}`);
 for (const [id, r] of Object.entries(out.agents)) if (!r.ok) fails.push(`agent ${id}: ${r.error || 'no pong'}`);
 if (out.edit && !out.edit.ok) fails.push(`edit ${out.edit.agent}: ${out.edit.error || 'file not changed as asked'}`);
