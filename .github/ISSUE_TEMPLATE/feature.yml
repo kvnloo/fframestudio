@@ -1,0 +1,11 @@
+name: Feature
+description: Propose a feature or a ROADMAP item to work on
+labels: [feature]
+body:
+  - type: textarea
+    id: job
+    attributes: { label: The job, description: "What a filmmaker is trying to do, in their words. Which ROADMAP row, if any." }
+    validations: { required: true }
+  - type: textarea
+    id: proof
+    attributes: { label: How we will know it works, description: "The user journey you will add to verify, and any budget (ms, fps, VMAF) it must meet." }

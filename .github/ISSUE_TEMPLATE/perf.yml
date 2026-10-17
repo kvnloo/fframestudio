@@ -1,0 +1,11 @@
+name: Performance
+description: Something is slower than it should be
+labels: [performance]
+body:
+  - type: textarea
+    id: measure
+    attributes: { label: Measurement, description: "What you measured, how (command or trace), the number, and the budget in docs/perf.md it misses." }
+    validations: { required: true }
+  - type: input
+    id: machine
+    attributes: { label: Machine, description: "CPU, GPU, browser version" }

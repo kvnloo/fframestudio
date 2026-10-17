@@ -1,0 +1,14 @@
+name: Bug
+description: Something broke or looks wrong
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes: { label: What happened, description: "What you did, what you expected, what you saw. Screenshots help." }
+    validations: { required: true }
+  - type: textarea
+    id: doctor
+    attributes: { label: npm run doctor, description: Paste the output, render: text }
+  - type: input
+    id: browser
+    attributes: { label: Browser and OS }
