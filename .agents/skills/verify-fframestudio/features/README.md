@@ -58,6 +58,7 @@ When you change a feature, update its file and the matching journey in `test/ver
 | --- | --- | --- |
 | Library | [library.md](./library.md) | `library: open link, demo project listed` |
 | Project player | [project-player.md](./project-player.md) | `project: plays and seeks by shot` |
+| System theme | [system-theme.md](./system-theme.md) | `system theme: follows and live-updates` |
 | Shot edits | [shot-edits.md](./shot-edits.md) | `edit: shot title saves and survives reload` |
 | Context menu | [context-menu.md](./context-menu.md) | `context menu: native menu replaced, actions work` |
 | Crash recovery and autosave | [recovery.md](./recovery.md) | `recovery: unsaved title survives page close, undo and explicit save` and the other `recovery:` journeys |

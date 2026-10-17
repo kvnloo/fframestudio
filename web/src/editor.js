@@ -1,6 +1,7 @@
 import { fpsOf, textOf, uid, rational } from './doc/project.js';
 import { scope, COMMANDS, CommandStore, proposalCommand, recoveryCommand } from './doc/commands.js';
 import { RecoveryJournal, fileHash } from './doc/journal.js';
+import { setThemeSettings, themeInfo, onTheme, shotColorSlot } from './system-theme.js';
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
@@ -206,7 +207,7 @@ export class Editor {
       '',
     )}${(this.doc.metadata?.renders || []).map((r) => `<dt>${esc(r.label)}</dt><dd><a href="${esc(this.url(r.file))}" target="_blank" rel="noopener">${esc(r.width)}×${esc(r.height)} · ${esc(r.fps)} fps · source render</a></dd>`).join('')}</dl><p>Original media stays untouched. Project: ${esc(this.absolute)}</p></details>
   <div id="assistant-slot"></div><dialog id="palette"><div class="panel-title">Commands <button data-action="close-palette">Esc · close</button></div><input id="command-search" placeholder="Find a command…" aria-label="Search commands"><div id="command-list"></div></dialog>
-  <dialog id="settings"><div class="panel-title">Workspace ${button('close-settings', 'Close')}</div><label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option><option value="contrast">High contrast</option><option value="custom">Custom</option></select></label><div id="custom-tokens">${['bg', 'ink', 'acc'].map((k) => `<label>${k}<input type="color" data-token="${k}" value="${this.settings.tokens?.[k] || { bg: '#0a0a0b', ink: '#ecebe7', acc: '#7fd49a' }[k]}"></label>`).join('')}</div><p>Resize side panels using their lower-right handle. Collapse choices are remembered.</p><p>Key names: Mod+z, Mod+Shift+z, Space, ArrowLeft…</p><div class="keybindings">${Object.entries(
+  <dialog id="settings"><div class="panel-title">Workspace ${button('close-settings', 'Close')}</div><label>Theme <select id="theme"><option value="system">Follow system</option><option value="dark">Dark</option><option value="light">Light</option><option value="contrast">High contrast</option><option value="custom">Custom</option></select></label><p id="theme-source" class="hint" role="status"></p><div id="custom-tokens">${['bg', 'ink', 'acc'].map((k) => `<label>${k}<input type="color" data-token="${k}" value="${this.settings.tokens?.[k] || { bg: '#0a0a0b', ink: '#ecebe7', acc: '#7fd49a' }[k]}"></label>`).join('')}</div><p>Resize side panels using their lower-right handle. Collapse choices are remembered.</p><p>Key names: Mod+z, Mod+Shift+z, Space, ArrowLeft…</p><div class="keybindings">${Object.entries(
     defaults,
   )
     .map(
@@ -246,7 +247,19 @@ export class Editor {
       this.refresh();
     };
     $('#command-search').oninput = () => this.paletteItems();
-    $('#theme').value = this.settings.theme || 'dark';
+    const updateThemeInfo = info => {
+      const select = $('#theme'); if (!select) return;
+      for (const source of info.available) {
+        if (![...select.options].some(o => o.value === 'system:' + source)) {
+          const option = document.createElement('option'); option.value = 'system:' + source;
+          option.textContent = 'Follow ' + ({ omarchy: 'Omarchy', noctalia: 'Noctalia', wal: 'pywal / wallust', kde: 'KDE', gnome: 'GNOME' }[source] || source); select.append(option);
+        }
+      }
+      select.value = this.settings.theme || info.choice;
+      select.options[0].textContent = 'Follow system · ' + info.label;
+      $('#theme-source').textContent = info.label + (info.adjustments.length ? ' · Contrast adjusted for readability: ' + info.adjustments.join('; ') : ' · Original palette contrast retained');
+    };
+    this.untheme?.(); this.untheme = onTheme(updateThemeInfo); updateThemeInfo(themeInfo());
     $('#theme').onchange = (e) => {
       this.settings.theme = e.target.value;
       this.saveSettings();
@@ -321,13 +334,7 @@ export class Editor {
   }
   applySettings() {
     this.restoringLayout = true;
-    document.documentElement.dataset.theme = this.settings.theme || 'dark';
-    for (const k of ['bg', 'ink', 'acc'])
-      document.documentElement.style.removeProperty('--' + k);
-    if (this.settings.theme === 'custom')
-      for (const [k, v] of Object.entries(this.settings.tokens || {}))
-        if (['bg', 'ink', 'acc'].includes(k) && /^#[0-9a-f]{6}$/i.test(v))
-          document.documentElement.style.setProperty('--' + k, v);
+    setThemeSettings(this.settings);
     for (const key of ['story', 'inspector']) {
       const p = $(`.${key}-panel`);
       p.classList.toggle('collapsed', !!this.settings[key + 'Collapsed']);
@@ -504,6 +511,7 @@ export class Editor {
       node.setAttribute('role', 'button');
       node.setAttribute('aria-label', c.name);
       node.setAttribute('aria-pressed', c.id === this.selection);
+      node.style.setProperty('--shot-color', `var(--shot-${shotColorSlot(c.metadata?.type || c.kind)},var(--line2))`);
       node.style.transform = `translateX(${c.start * this.scale}px)`;
       node.style.width = `${Math.max(2, c.duration * this.scale)}px`;
       const sig = JSON.stringify([
@@ -1274,6 +1282,7 @@ export class Editor {
     cancelAnimationFrame(this.raf);
     clearInterval(this.previewTimer);
     this.journal?.close();
+    this.untheme?.();
     this.worker.terminate();
     this.thumbs.terminate();
     this.observer.disconnect();

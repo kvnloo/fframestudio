@@ -2,8 +2,9 @@
 // Served by the local bridge (same origin), authenticated by the cookie the /open link sets.
 import { Editor, defaults } from '/app/src/editor.js';
 import { ContextMenu } from '/app/src/context-menu.js';
+import { initSystemTheme, receiveTheme } from '/app/src/system-theme.js';
 const connectAgent=async options=>(await import('/app/dist/acp-client.js')).connectAgent(options);
-const bridgeApi=()=>({read:async p=>{const r=await fetch('/fs?path='+encodeURIComponent(p));if(!r.ok)throw Error('Read failed: '+r.status);return r.json();},agents:async()=>{const r=await fetch('/agents');return r.json();},events:fn=>{const es=new EventSource('/events');es.onmessage=e=>fn(JSON.parse(e.data));return ()=>es.close();}});
+const bridgeApi=()=>({read:async p=>{const r=await fetch('/fs?path='+encodeURIComponent(p));if(!r.ok)throw Error('Read failed: '+r.status);return r.json();},agents:async()=>{const r=await fetch('/agents');return r.json();},events:fn=>{const es=new EventSource('/events');es.addEventListener('theme',e=>receiveTheme(JSON.parse(e.data)));es.onmessage=e=>fn(JSON.parse(e.data));return ()=>es.close();}});
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -49,6 +50,7 @@ async function boot() {
   if (!ME?.ok) { $('#bridge').innerHTML = '<span class="dot bad"></span>not signed in'; $('#view').innerHTML = `<div class="gate"><div class="cap">fframestudio</div><h1>Open the link the bridge printed</h1>
     <p>Start the bridge with <code>npm run bridge</code> and open the <code>/open?token=…</code> link it prints (also in <code>~/.config/fframestudio/bridge.json</code>). The link sets a same-site cookie so this page can reach your projects and agents.</p></div>`; return; }
   $('#bridge').innerHTML='<span class="dot ok"></span>bridge connected';
+  initSystemTheme(); // One small fetch in parallel with agents, library and project loading.
   api.agents().then(r=>{AGENTS=r.agents;renderAssistant($('#assistant-slot'));}).catch(()=>{});
   api.events(e=>{EDITOR?.external(e.path).catch(err=>{console.error(err.stack);toast(err.message);});if(e.path==='projects/library.json')loadLib();});
   addEventListener('hashchange',route);if(location.hash.startsWith('#/p/')){loadLib();route();}else{await loadLib();route();}
