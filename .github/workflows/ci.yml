@@ -1,0 +1,29 @@
+name: ci
+on:
+  push: { branches: [main] }
+  pull_request:
+permissions: { contents: read }
+concurrency: { group: "${{ github.workflow }}-${{ github.ref }}", cancel-in-progress: true }
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - name: ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: doctor
+        run: npm run doctor
+      - name: build
+        run: npm run build:acp && git diff --exit-code web/dist/
+      - name: bridge security
+        run: npm test
+      - name: drive the app
+        run: npm run verify -- --out verify-out/ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: verify-evidence, path: verify-out/ci, retention-days: 14 }

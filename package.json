@@ -14,11 +14,13 @@
     "test": "node test/acp-e2e.mjs",
     "test:agents": "node test/acp-e2e.mjs claude codex hermes --edit claude",
     "import": "python3 tools/import_projects.py",
-    "demo": "python3 tools/make_demo.py"
+    "demo": "python3 tools/make_demo.py",
+    "verify": "node test/verify.mjs"
   },
   "devDependencies": {
     "@agentclientprotocol/sdk": "1.9.0",
-    "esbuild": "^0.25.0"
+    "esbuild": "^0.25.0",
+    "playwright": "^1.64.1"
   },
   "license": "Apache-2.0"
 }

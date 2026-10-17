@@ -96,8 +96,8 @@ const server = http.createServer(async (req, res) => {
     return serveFile(req, res, f);
   }
   const auth = (req.headers.authorization || '').replace(/^Bearer /, '') || u.searchParams.get('token') || cookieTok(req); // query only for EventSource
+  if (u.pathname === '/me') return send(res, 200, tokenOk(auth) ? { ok: true, root: ROOT } : { ok: false }); // lets the app show the sign-in page without a console error
   if (!tokenOk(auth)) return send(res, 401, { error: 'bad token' });
-  if (u.pathname === '/me') return send(res, 200, { ok: true, root: ROOT });
   if (u.pathname.startsWith('/lib/')) { const f = path.resolve(LIBDIR, decodeURIComponent(u.pathname.slice(5))); if (!f.startsWith(LIBDIR + path.sep)) return send(res, 400, { error: 'bad path' }); return serveFile(req, res, f); }
   if (u.pathname === '/file') { const f = path.resolve(String(u.searchParams.get('path') || '')); if (!referenced().has(f)) return send(res, 403, { error: 'file is not referenced by any project' }); return serveFile(req, res, f); }
   if (u.pathname === '/agents') return send(res, 200, { root: ROOT, agents: AGENTS.map((a) => ({ id: a.id, name: a.name, login: a.login, available: has(a) })) });

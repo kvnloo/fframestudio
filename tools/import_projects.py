@@ -63,7 +63,7 @@ def media_for(pdir, render, shots, info):
 def from_timeline(txt, fps):
     shots = []
     for m in re.finditer(r"#(\d+)\s+(\S+)\s+frames\s+(\d+)\.\.(\d+)", txt):
-        shots.append({"id": f"s{int(m.group(1)) + 1:02d}", "name": re.sub(r"(?<!^)([A-Z])", r" \1", m.group(2)), "t0": round(int(m.group(3)) / fps, 3), "t1": round(int(m.group(4)) / fps, 3), "origin": "timeline.txt"})
+        shots.append({"id": f"s{int(m.group(1)) + 1:02d}", "name": re.sub(r"(?<!^)([A-Z])", r" \1", m.group(2)), "t0": round(int(m.group(3)) / fps, 3), "t1": round(int(m.group(4)) / fps, 3), "text": {"title": re.sub(r"(?<!^)([A-Z])", r" \1", m.group(2))}, "origin": "timeline.txt"})
     return shots
 
 def html_film_shots(js):

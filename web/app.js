@@ -12,8 +12,8 @@ function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('o
 
 let ME = null, AGENTS = [], LIB = null;
 async function boot() {
-  try { ME = await fetch('/me').then((r) => (r.ok ? r.json() : null)); } catch {}
-  if (!ME) { $('#bridge').innerHTML = '<span class="dot bad"></span>not signed in'; $('#view').innerHTML = `<div class="gate"><div class="cap">fframestudio</div><h1>Open the link the bridge printed</h1>
+  try { ME = await fetch('/me').then((r) => r.json()); } catch {}
+  if (!ME?.ok) { $('#bridge').innerHTML = '<span class="dot bad"></span>not signed in'; $('#view').innerHTML = `<div class="gate"><div class="cap">fframestudio</div><h1>Open the link the bridge printed</h1>
     <p>Start the bridge with <code>npm run bridge</code> and open the <code>/open?token=…</code> link it prints (also in <code>~/.config/fframestudio/bridge.json</code>). The link sets a same-site cookie so this page can reach your projects and agents.</p></div>`; return; }
   AGENTS = (await api.agents()).agents;
   $('#bridge').innerHTML = `<span class="dot ok"></span>bridge · ${AGENTS.filter((a) => a.available).length} agents`;
