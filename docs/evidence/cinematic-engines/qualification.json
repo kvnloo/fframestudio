@@ -1,0 +1,110 @@
+{
+  "scope": "PR #7 cinematic candidate catalog; not engine runtime qualification",
+  "base_revision": "9e3bcdaf1156e0829923f78cec869f420850dada",
+  "node": "v26.7.0",
+  "upstream_audit": {
+    "entries": 19,
+    "api_metadata_comparisons_passed": 19,
+    "pinned_capability_quotes": 44,
+    "first_checked_at": "2026-10-18T02:58:16.995021Z",
+    "last_checked_at": "2026-10-18T02:58:23.625231Z",
+    "readme_assistant": "opencode/deepseek-v4.1-flash-free",
+    "method": "GitHub API metadata, default HEAD commit, and license/README/source at that SHA; model claims rechecked against API data"
+  },
+  "gates": {
+    "npm_test": {
+      "exit_code": 0
+    },
+    "no_local_paths": {
+      "exit_code": 0
+    },
+    "verify": {
+      "exit_code": 1,
+      "elapsed_seconds": 150.741
+    }
+  },
+  "npm_test": {
+    "node_tests": 69,
+    "passed": 69,
+    "failed": 0,
+    "catalog_tests": 7,
+    "acp_security": "passed",
+    "discovery_config_content_unchanged": true,
+    "discovery_config_mtime_unchanged": true
+  },
+  "browser_verify": {
+    "started": "2026-10-18T03:15:48.123Z",
+    "runs": 1,
+    "journeys": 21,
+    "passed": 19,
+    "failed": [
+      {
+        "name": "system theme: follows and live-updates",
+        "ok": false,
+        "ms": 1560,
+        "error": "theme application exceeded frame budget: 39 ms"
+      },
+      {
+        "name": "context menu: native menu replaced, actions work",
+        "ok": false,
+        "ms": 2848,
+        "error": "menu open work exceeded 16 ms: 41.30000001192093"
+      }
+    ],
+    "context_menu": {
+      "menu_open_ms": {
+        "median": 17,
+        "worst": 83.30000001192093
+      },
+      "open_ready_median_ms": 5.3499999940395355,
+      "open_ready_worst_ms": 41.30000001192093,
+      "samples": [
+        {
+          "ready_ms": 41.30000001192093,
+          "rendering_opportunity_ms": 82.30000001192093
+        },
+        {
+          "ready_ms": 5.699999988079071,
+          "rendering_opportunity_ms": 69.39999997615814
+        },
+        {
+          "ready_ms": 9.599999964237213,
+          "rendering_opportunity_ms": 17.19999998807907
+        },
+        {
+          "ready_ms": 7.300000011920929,
+          "rendering_opportunity_ms": 16.80000001192093
+        },
+        {
+          "ready_ms": 7,
+          "rendering_opportunity_ms": 14.099999964237213
+        },
+        {
+          "ready_ms": 3.600000023841858,
+          "rendering_opportunity_ms": 29.400000035762787
+        },
+        {
+          "ready_ms": 1.5,
+          "rendering_opportunity_ms": 16.799999952316284
+        },
+        {
+          "ready_ms": 2.699999988079071,
+          "rendering_opportunity_ms": 10.600000023841858
+        },
+        {
+          "ready_ms": 5,
+          "rendering_opportunity_ms": 83.30000001192093
+        },
+        {
+          "ready_ms": 3.699999988079071,
+          "rendering_opportunity_ms": 9.900000035762787
+        }
+      ]
+    },
+    "console_errors": [],
+    "failed_request_count": 0,
+    "browser_runtime_and_harness_unchanged_from_base": true,
+    "interpretation": "Timing failures remain unresolved. Layout-ready and next-rAF timing are not physical compositor presentation; no environment or baseline cause has been established."
+  },
+  "merge_ready": false
+}
