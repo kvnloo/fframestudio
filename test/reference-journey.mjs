@@ -8,6 +8,8 @@ export async function verifyReference({page,base,out,journey,assert,library}) {
   await journey('actions: palette/menu/shortcut/agent share one registry',async()=>{
     const demo=JSON.parse(fs.readFileSync(path.join(library,'library.json'),'utf8')).projects.find(p=>p.title==='Demo film');
     assert(demo,'demo fixture missing');await page.goto(base+'/#/p/'+demo.id);await ready();
+    const eager=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>/\/(voice|reference|intent|recreate)\.js$/.test(new URL(r.name).pathname)).map(r=>new URL(r.name).pathname));
+    assert(eager.length===0,'optional desks loaded during ordinary project open: '+eager.join(', '));
     // Existing full journeys cover each native menu and shortcut behaviour; compare exact edits here.
     const results=[];
     await page.click('[data-action="palette"]');await page.fill('#command-search','duplicate');
@@ -44,7 +46,7 @@ export async function verifyReference({page,base,out,journey,assert,library}) {
     return {generatedLicence:'CC0 (solid-colour/tone fixture authored for this test)',cuts:measured.shots.map(s=>s.startFrame),cached:true,editable:true,comparison:sync};
   });
   await journey('voice: typed-fallback says shorten the second shot by one second, change the text, undo',async()=>{
-    await page.evaluate(()=>{window.ffs.voice.panel.hidden=false;});
+    await page.evaluate(async()=>{(await window.ffs.ensureVoice()).panel.hidden=false;});
     const direction=async text=>{await page.fill('#voice-transcript',text);await page.click('#voice-form button');};
     await direction('shorten the second shot by one second');await page.waitForSelector('#voice-confirm:visible');
     assert(await page.evaluate(()=>window.ffs.video.clips[1].duration)===90,'destructive trim applied without confirmation');

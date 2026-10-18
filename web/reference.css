@@ -4,7 +4,7 @@
 .voice-desk {box-sizing:border-box;}
 .voice-desk label:has(#speech-consent) {display:flex;align-items:center;gap:8px;}
 #speech-consent {width:16px;min-height:16px;margin:0;}
-.reference-comparing > label:not(#reference-scrub-label),.reference-comparing > p,.reference-comparing > form,.reference-comparing .reference-stage,.reference-comparing > progress,.reference-comparing #reference-breakdown {display:none;}
+.reference-desk.reference-comparing > label:not(#reference-scrub-label),.reference-desk.reference-comparing > p,.reference-desk.reference-comparing > form,.reference-desk.reference-comparing .reference-stage,.reference-desk.reference-comparing > progress,.reference-desk.reference-comparing #reference-breakdown {display:none;}
 .reference-comparing #reference-status {line-height:1.5;}
 .reference-comparing .reference-comparison video {max-height:350px;}
 .reference-desk {width:min(1100px,94vw);max-height:90dvh;overflow:auto;padding:24px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;}

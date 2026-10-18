@@ -6,7 +6,6 @@ import { initSystemTheme, receiveTheme, setThemeSettings, themeInfo, onTheme } f
 import { colourSlot } from '/app/src/studio.js';
 const connectAgent=async options=>(await import('/app/dist/acp-client.js')).connectAgent(options);
 import * as host from '/app/src/host.js';
-import { ReferenceDesk } from '/app/src/reference.js';
 import { actionManifest } from '/app/src/actions.js';
 let libraryReference;
 import { preferences as storage } from '/app/src/host.js';
@@ -95,7 +94,7 @@ function showLibrary() {
   if (host.isLocal()) mountFolderControls();
   if (document.querySelector('meta[name="ffs-hosted"]')) mountExamples();
   const importButton=document.createElement('button');importButton.className='pill';importButton.id='import-reference';importButton.textContent='Import reference';document.querySelector('.libhead').append(importButton);
-  importButton.onclick=()=>{libraryReference?.destroy();libraryReference=new ReferenceDesk();libraryReference.open();};
+  importButton.onclick=async()=>{const {ReferenceDesk}=await import('/app/src/reference.js');libraryReference?.destroy();libraryReference=new ReferenceDesk();libraryReference.open();};
   $('#library-theme').onchange=e=>{settings.theme=e.target.value;storage.setItem('ffs.settings',JSON.stringify(settings));applyLibraryTheme();};
   $$('[data-tag]').forEach((b) => (b.onclick = () => { TAG = b.dataset.tag; showLibrary(); }));
   $$('.card').forEach((card) => (card.onclick = (event) => {
@@ -198,7 +197,7 @@ boot().then(async () => {
     history.replaceState(null,'',location.pathname+location.hash);
     const { consumeSharedReference }=await import('/app/src/share-intake.js');
     const shared=await consumeSharedReference();
-    if(shared) { libraryReference?.destroy();libraryReference=new ReferenceDesk();libraryReference.open();
+    if(shared) { const {ReferenceDesk}=await import('/app/src/reference.js');libraryReference?.destroy();libraryReference=new ReferenceDesk();libraryReference.open();
       if(shared.file)libraryReference.importFile(shared.file).catch(e=>libraryReference.error(e));
       else { libraryReference.q('#reference-url').value=shared.url||shared.text||'';libraryReference.status.textContent='Shared link ready. Choose Import URL to fetch a direct public video via your local bridge.'; }
     }

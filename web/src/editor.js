@@ -1,6 +1,4 @@
 import { ACTIONS, action as studioAction } from './actions.js';
-import { VoiceControl } from './voice.js';
-import { ReferenceDesk } from './reference.js';
 import { fpsOf, textOf, uid, rational } from './doc/project.js';
 import { scope, COMMANDS, CommandStore, proposalCommand, recoveryCommand } from './doc/commands.js';
 import { RecoveryJournal, fileHash } from './doc/journal.js';
@@ -113,6 +111,9 @@ export class Editor {
     );
     this.keyHandler = (e) => this.key(e);
     addEventListener('keydown', this.keyHandler);
+    this.voiceRelease = e => { if(e.code === 'KeyV') this.voiceHeld = false; };
+    addEventListener('keyup',this.voiceRelease);
+    this.voiceBlur=()=>{this.voiceHeld=false;};addEventListener('blur',this.voiceBlur);
     this.beforeUnload = (e) => {
       if (this.dirty) {
         e.preventDefault();
@@ -226,8 +227,7 @@ export class Editor {
     .join('')}</div>${button('reset-settings', 'Reset workspace')}</dialog>`;
     this.studio = new StudioView(this);
     this.studio.mount();
-    this.voice = new VoiceControl(this);
-    this.reference = new ReferenceDesk(this);
+    $('.editor-tools',this.root).insertAdjacentHTML('beforeend',button('voice','Voice · hold V')+button('import-reference','Import reference')+(this.doc.metadata?.reference ? button('compare-reference','Compare reference') : ''));
     $('#recovery').oncancel = (e) => e.preventDefault();
     this.assistant?.($('#assistant-slot', this.root));
     this.root.onclick = (e) => {
@@ -1057,14 +1057,24 @@ export class Editor {
       item('palette', 'Command palette'), item('settings', 'Workspace settings'), null, ...history,
     ] };
   }
+  ensureVoice() {
+    return this.voiceLoading ||= import('./voice.js').then(({VoiceControl})=>{
+      if(this.dead)throw Error('Editor closed');this.voice=new VoiceControl(this);return this.voice;
+    });
+  }
+  ensureReference() {
+    return this.referenceLoading ||= import('./reference.js').then(({ReferenceDesk})=>{
+      if(this.dead)throw Error('Editor closed');this.reference=new ReferenceDesk(this);return this.reference;
+    });
+  }
   action(id, params = {}) {
     return Promise.resolve().then(() => studioAction(id).apply(this, params, { interactive: true }));
   }
   async performAction(a, params = {}) {
     const { clipId } = params;
-    if (a === 'voice') return this.voice.toggle();
-    if (a === 'import-reference') return this.reference.open();
-    if (a === 'compare-reference') return this.reference.compareProject();
+    if (a === 'voice') return (await this.ensureVoice()).toggle();
+    if (a === 'import-reference') return (await this.ensureReference()).open();
+    if (a === 'compare-reference') return (await this.ensureReference()).compareProject();
     if (a === 'seek') return this.seek(params.frame);
     if (a === 'open-panel') { this.studio.showTab(params.panel); return; }
     if (this.loading) return;
@@ -1303,7 +1313,11 @@ export class Editor {
     }
   }
   key(e) {
-    if (this.voice?.key(e)) return;
+    if(e.code==='KeyV'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey&&!e.target.isContentEditable&&!e.target.closest('input,textarea,select,[contenteditable]')&&!document.querySelector('dialog[open]')) {
+      e.preventDefault();
+      if(!e.repeat){this.voiceHeld=true;this.ensureVoice().then(v=>{if(this.voiceHeld){v.held=true;v.start();}}).catch(e=>{if(!this.dead)this.toast(e.message);});}
+      return;
+    }
     if (e.key === 'Escape') return;
     const typing = e.target.matches('input,textarea,select') || e.target.isContentEditable,
       mod = e.ctrlKey || e.metaKey;
@@ -1339,6 +1353,7 @@ export class Editor {
     this.panelResize?.disconnect();
     removeEventListener('pointerup', this.panelResizeEnd);
     removeEventListener('keydown', this.keyHandler);
+    removeEventListener('keyup',this.voiceRelease);removeEventListener('blur',this.voiceBlur);
     removeEventListener('beforeunload', this.beforeUnload);
   }
 }

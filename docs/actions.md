@@ -44,7 +44,7 @@ const receipt = await entry.apply(editor, edit.params);
 
 Internal recovery/batch/restore commands remain private to the store. Ordinary content actions,
 including agent proposals and voice edits, still use the existing synchronous edit/patch path;
-analysis never enters the animation loop. Add a schema and inverse round-trip test whenever a
+analysis never enters the animation loop. Reference/voice modules and desk DOM load only when requested; ordinary project cold-open does not fetch these optional surfaces. Add a schema and inverse round-trip test whenever a
 new content action is introduced. Do not add an action to a string list in a new feature module.
 
 ## Reference intake and local analysis

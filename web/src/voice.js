@@ -4,8 +4,7 @@ import { request, isLocal } from './host.js';
 export class VoiceControl {
   constructor(editor) {
     this.editor = editor;
-    const tools = editor.root.querySelector('.editor-tools');
-    this.button = document.createElement('button'); this.button.className = 'pill'; this.button.dataset.action = 'voice'; this.button.textContent = 'Voice · hold V'; tools.append(this.button);
+    this.button = editor.root.querySelector('[data-action=voice]');
     this.panel = document.createElement('section'); this.panel.className = 'voice-desk panel'; this.panel.hidden = true;
     this.panel.innerHTML = `<header><strong>Voice direction</strong> <output id="mic-state" role="status">Mic off · typed fallback ready</output><button id="voice-close">Close</button></header><p class="hint">One action at a time. Web Speech may use your browser’s speech service; enable it only if you consent. Otherwise use local transcription or type. Nothing is always listening.</p><label><input type="checkbox" id="speech-consent"> Allow browser speech recognition</label><form id="voice-form"><label>Live transcript / typed direction<input id="voice-transcript" autocomplete="off" placeholder="shorten the second shot by one second"></label><button>Preview direction</button></form><pre id="voice-preview" aria-live="polite"></pre><button id="voice-confirm" hidden>Confirm edit</button><button id="voice-cancel" hidden>Cancel edit</button>`;
     document.body.append(this.panel);
