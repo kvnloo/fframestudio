@@ -73,7 +73,7 @@ export class TasteInspector {
       try {
         const preview = this.preview();
         if (!this.on || !preview.changes.length) return;
-        await this.e.run({ type:'apply-taste', videoId:this.e.videoId, receipt:tasteReceipt(p, preview, new Date().toISOString()) });
+        await this.e.action('apply-taste', { videoId:this.e.videoId, receipt:tasteReceipt(p, preview, new Date().toISOString()) });
         this.e.toast('Taste direction applied. Undo restores the original.');
         this.update();
       } catch (error) { this.e.toast(error.message); }

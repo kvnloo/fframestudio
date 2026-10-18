@@ -993,7 +993,7 @@ export class Editor {
   }
   paletteItems() {
     const q = $('#command-search').value.toLowerCase();
-    const names = Object.keys(ACTIONS).filter(n => ACTIONS[n].palette && !/^(close-|recover|discard-|keep-|reload-|inspect-|reject-|apply-)/.test(n));
+    const names = Object.keys(ACTIONS).filter(n => ACTIONS[n].palette);
     $('#command-list').innerHTML = names
       .filter((n) => [n, ACTIONS[n].title, ...ACTIONS[n].synonyms].join(' ').includes(q))
       .map(
@@ -1083,6 +1083,9 @@ export class Editor {
   }
   async performAction(a, params = {}) {
     const { clipId } = params;
+    if (a !== 'palette' && a !== 'close-palette' && $('#palette').open) $('#palette').close();
+    if (a === 'taste' || (a === 'apply-taste' && !params.receipt)) { this.studio.showTab('taste'); return; }
+    if (a === 'apply-taste') { studioAction(a).preview(this, params); return this.run({type:a,...params}); }
     if (a === 'component-lab') return window.open('/app/labs/video-styles.html', '_blank', 'noopener,noreferrer');
     if (a === 'voice') return (await this.ensureVoice()).toggle();
     if (a === 'import-reference') return (await this.ensureReference()).open();
