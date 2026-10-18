@@ -66,6 +66,12 @@ test('untrusted recipes reject unknown fields, incorrect types, invalid tracks, 
   assert.throws(()=>parseRecipe('{bad'),SyntaxError);
 });
 
+test('visible result replaces the action without a ghost label over the result', () => {
+  const state=evaluateRecipe(instantiate('ui-action-result'),70);
+  assert.equal(state.layers.find(l=>l.id==='action').opacity,0);
+  assert.equal(state.layers.find(l=>l.id==='result').opacity,1);
+});
+
 test('documented easing endpoints, cubic reference values and hold destination jump', () => {
   assert.equal(interpolate([[0,10],[10,20]],5),15);
   assert.equal(interpolate([[0,10],[10,20,'hold']],9),10);

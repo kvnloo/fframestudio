@@ -416,4 +416,3 @@ footer>span{display:block;
 @media(max-width:600px){.screen-options select,.checkbox{min-height:44px}.checkbox input{width:18px;height:18px}.transport button,.exports button,.inspector input,.inspector select,.inspector button{min-height:44px}.scrubber input{min-height:32px}}
 @media(prefers-reduced-motion:reduce){.layer{will-change:auto}
 }
-

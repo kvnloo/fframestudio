@@ -36,7 +36,7 @@ const mechanisms = {
     props: { action: 'Generate report', result: 'Report ready', background: '#101218' },
     layers: [
       { id: 'action', role: 'ui-control', text: 'action', z: 1,
-        tracks: { x: [[0, .12]], y: [[0, .46]], scale: [[0, 1], [.53, 1.03, 'out-cubic'], [.61, 1]], opacity: [[0, 1], [.65, 1], [.8, .2, 'out-cubic']] } },
+        tracks: { x: [[0, .12]], y: [[0, .46]], scale: [[0, 1], [.53, 1.03, 'out-cubic'], [.61, 1]], opacity: [[0, 1], [.52, 1], [.61, 0, 'out-cubic']] } },
       { id: 'result', role: 'confirmation', text: 'result', z: 2,
         tracks: { x: [[0, .12]], y: [[0, .59], [.83, .48, 'out-cubic']], scale: [[0, .92], [.83, 1, 'out-cubic']], opacity: [[0, 0], [.57, 0], [.79, 1, 'out-cubic']] } },
     ],
