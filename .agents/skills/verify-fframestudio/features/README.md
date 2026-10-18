@@ -56,6 +56,7 @@ When you change a feature, update its file and the matching journey in `test/ver
 
 | feature | file | journey in `test/verify.mjs` |
 | --- | --- | --- |
+| Procedural source inspector | [procedural.md](./procedural.md) | `procedural: ff-tracking 12 shots, ff-unmute one take + markers` |
 | Hosted local-first Studio | [hosted.md](./hosted.md) | four `hosted:` journeys in `test/hosted-journey.mjs`, included by `test/verify.mjs` |
 | Adaptive fitted layout | [layout.md](./layout.md) | `layout: fits and adapts across sizes` |
 | Studio film desk | [studio.md](./studio.md) | `studio: themes, slate tabs, loops and screening room`; additional `tools/verify-studio.mjs` visual/audio proof |
