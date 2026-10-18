@@ -17,6 +17,7 @@ import { verifyHosted } from './hosted-journey.mjs';
 import { verifyProcedural } from './procedural-journey.mjs';
 import { makeLayoutFixture, verifyLayout } from './layout-journey.mjs';
 import { verifyStyleComponents } from './style-components-journey.mjs';
+import { verifyTaste } from './taste-journey.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const argv = process.argv.slice(2);
@@ -592,6 +593,7 @@ try {
     await m.screenshot({ path: path.join(OUT, '05-mobile.png') }); await m.close();
     assert(lib <= 391 && proj <= 391, `scrollWidth library ${lib}, project ${proj}`); return { library: lib, project: proj };
   });
+  await journey('taste: import file profile -> preview diff -> apply -> undo -> delete', () => verifyTaste({page,root:ROOT,out:OUT,assert}));
   await journey('layout: fits and adapts across sizes', () => verifyLayout({browser, context:ctx, base, out:OUT, assert}));
   await journey('procedural: ff-tracking 12 shots, ff-unmute one take + markers', async () => {
     run('python3', ['test/procedural_fixture.py', HOME]);

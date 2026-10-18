@@ -1,6 +1,7 @@
 import { clone, validate, reflow, uid } from './project.js';
 import { COMMAND_IDS, validateCommand } from '../actions.js';
 export const COMMANDS = COMMAND_IDS;
+import { validateApplication, validateSchema, constraintsSchema } from '../taste/profile.js';
 export function diff(a, b, path = '') {
   if (a === b) return [];
   if (
@@ -291,6 +292,19 @@ function mutate(d, c, depth = 0) {
       );
       v.scenes = v.scenes.filter((s) => s.clipIds.length);
       break;
+    case 'apply-taste': {
+      need(Object.keys(c).every(k => ['type', 'videoId', 'receipt'].includes(k)), 'Aggregate Taste command fields only');
+      const receipt = clone(validateApplication(c.receipt));
+      const locks = d.metadata?.tasteBrandConstraints || {};
+      validateSchema(locks, constraintsSchema);
+      for (const [key, value] of Object.entries(locks)) need(JSON.stringify(receipt.dials[key]) === JSON.stringify(value), 'Taste cannot override brand constraints');
+      d.metadata = { ...d.metadata, tasteDirection: clone(receipt.dials), tasteApplications: [...(d.metadata?.tasteApplications || []), receipt] };
+      for (const s of Object.values(v.styles)) {
+        if (receipt.changedSignals.includes('palette')) s.color = receipt.dials.palette[0];
+        if (receipt.changedSignals.includes('typography')) s.fontFamily = receipt.dials.typography;
+      }
+      break;
+    }
     case 'edit-style':
       need(
         safeKey(c.styleId) && Object.hasOwn(v.styles, c.styleId),

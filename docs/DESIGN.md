@@ -131,6 +131,16 @@ Visual/audio qualification is reproducible with `node tools/verify-studio.mjs`; 
 ## Procedural source inspection
 
 The read-only `procedural-fframes` sidecar is visible in Source and selected Shot views. Tracking uses actual SceneDef boundaries and named palette stops; unmute remains one continuous take with waveform, event and camera-keyframe tracks. Source metadata/provenance is not an editable shader composition. Explicit source-only imports show no verified-render claim. See [procedural-fframes.md](procedural-fframes.md) for the schema boundary, empirical Linux Metal build limitation, tests and deferred writeback/render work.
+## 12. My Taste (issue #11, A/B)
+
+My Taste lives beside Direction in the same slate. Human-reviewed aggregate file
+profiles stay in IndexedDB, start Off, and expose evidence/uncertainty, strength,
+signal controls and original/adjusted direction studies with an explained diff.
+Applying uses the ordinary command store and saves an aggregate receipt; Undo
+restores the prior document. Brand locks remain authoritative. Palette/type
+update editorial shared styles; pace and other dials remain direction tokens,
+not silent source retiming. The narrow mocked/file/disabled-by-default AgentWeb
+contract and deliberate gaps are documented in [TASTE.md](TASTE.md).
 
 ## Open questions
 

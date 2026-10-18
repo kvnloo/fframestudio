@@ -835,6 +835,8 @@ export class Editor {
       $('#preview-still').dataset.select = c.id;
       const colour = this.video.styles[c.styleId]?.color || '';
       $('#preview-text').style.color = colour;
+      const fontFamily = this.video.styles[c.styleId]?.fontFamily;
+      $('#preview-text').style.fontFamily = fontFamily === 'IBM Plex Mono' ? 'Plex Mono' : fontFamily || '';
       $('#canvas').dataset.customInk = String(!!colour && colour !== '#ecebe7');
       const still = $('#preview-still'),
         src = c.thumb || this.doc.preview.poster;
@@ -1088,6 +1090,7 @@ export class Editor {
     if (a === 'seek') return this.seek(params.frame);
     if (a === 'open-panel') { this.studio.showTab(params.panel); return; }
     if (this.loading) return;
+    if (a === 'apply-taste') { $('#palette').close(); this.studio.showTab('taste'); return; }
     if (['loop-shot','loop-film','mute','screening'].includes(a)) return this.studio.action(a);
     if (a !== 'palette' && a !== 'close-palette' && $('#palette').open)
       $('#palette').close();

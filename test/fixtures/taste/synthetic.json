@@ -1,0 +1,15 @@
+{
+  "schema": "fframestudio.taste-profile/1",
+  "revision": "synthetic-film-study-1",
+  "signals": {
+    "palette": { "value": ["#53bbad", "#edb16a"], "evidenceCount": 9, "confidence": 0.9 },
+    "typography": { "value": "Instrument Serif", "evidenceCount": 8, "confidence": 0.85 },
+    "framing": { "value": "wide", "evidenceCount": 5, "confidence": 0.65 },
+    "motion": { "value": 65, "evidenceCount": 6, "confidence": 0.75 },
+    "pacing": { "value": 78, "evidenceCount": 7, "confidence": 0.8 },
+    "transition": { "value": "match", "evidenceCount": 4, "confidence": 0.6 },
+    "density": { "value": 28, "evidenceCount": 3, "confidence": 0.4 },
+    "soundtrack": { "value": null, "evidenceCount": 0, "confidence": 0 }
+  },
+  "provenance": { "sourceCount": 2, "itemCount": 12 }
+}
