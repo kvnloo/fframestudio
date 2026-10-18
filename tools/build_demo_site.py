@@ -42,6 +42,7 @@ def build(output, examples=None):
             file.write_text(text)
     index = (app / 'index.html').read_text().replace('<title>', '<meta name="ffs-hosted" content="local-first"><link rel="stylesheet" href="/app/hosted.css"><title>', 1)
     (output / 'index.html').write_text(index)
+    shutil.copyfile(ROOT / 'web/share-worker.js', output / 'share-worker.js')
     (app / 'index.html').unlink()
     target = output / 'examples'
     if target.exists():
@@ -100,7 +101,7 @@ def build(output, examples=None):
     (target / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data:; media-src 'self' blob: data:; worker-src 'self' blob: data:; connect-src 'self' blob: http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
     config = {'cleanUrls': True, 'headers': [
-        {'source': '/(.*)', 'headers': [{'key':'Content-Security-Policy','value':csp}, {'key':'X-Content-Type-Options','value':'nosniff'}, {'key':'Referrer-Policy','value':'no-referrer'}, {'key':'X-Frame-Options','value':'DENY'}, {'key':'Permissions-Policy','value':'camera=(), microphone=(), geolocation=()'}, {'key':'Cache-Control','value':'public, max-age=0, must-revalidate'}]},
+        {'source': '/(.*)', 'headers': [{'key':'Content-Security-Policy','value':csp}, {'key':'X-Content-Type-Options','value':'nosniff'}, {'key':'Referrer-Policy','value':'no-referrer'}, {'key':'X-Frame-Options','value':'DENY'}, {'key':'Permissions-Policy','value':'camera=(), microphone=(self), geolocation=()'}, {'key':'Cache-Control','value':'public, max-age=0, must-revalidate'}]},
         {'source': '/app/' + assets + '/:path*', 'headers':[{'key':'Cache-Control','value':'public, max-age=31536000, immutable'}]},
         {'source': '/examples/:file(.*\\.[0-9a-f]{12}\\.[a-z0-9]+)', 'headers':[{'key':'Cache-Control','value':'public, max-age=31536000, immutable'}]},
     ]}

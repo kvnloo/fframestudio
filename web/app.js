@@ -6,6 +6,8 @@ import { initSystemTheme, receiveTheme, setThemeSettings, themeInfo, onTheme } f
 import { colourSlot } from '/app/src/studio.js';
 const connectAgent=async options=>(await import('/app/dist/acp-client.js')).connectAgent(options);
 import * as host from '/app/src/host.js';
+import { actionManifest } from '/app/src/actions.js';
+let libraryReference;
 import { preferences as storage } from '/app/src/host.js';
 const bridgeApi=()=>({read:host.read,agents:()=>host.request('/agents').then(r=>r.json()),events:fn=>host.events(fn,receiveTheme)});
 
@@ -91,6 +93,8 @@ function showLibrary() {
     <div class="strip">${Array.from({ length: Math.min(40, p.shots || 1) }, () => '<i></i>').join('')}</div></div></a>`).join('')}</div>`;
   if (host.isLocal()) mountFolderControls();
   if (document.querySelector('meta[name="ffs-hosted"]')) mountExamples();
+  const importButton=document.createElement('button');importButton.className='pill';importButton.id='import-reference';importButton.textContent='Import reference';document.querySelector('.libhead').append(importButton);
+  importButton.onclick=async()=>{const {ReferenceDesk}=await import('/app/src/reference.js');libraryReference?.destroy();libraryReference=new ReferenceDesk();libraryReference.open();};
   $('#library-theme').onchange=e=>{settings.theme=e.target.value;storage.setItem('ffs.settings',JSON.stringify(settings));applyLibraryTheme();};
   $$('[data-tag]').forEach((b) => (b.onclick = () => { TAG = b.dataset.tag; showLibrary(); }));
   $$('.card').forEach((card) => (card.onclick = (event) => {
@@ -126,6 +130,7 @@ let CUR=null,AG=null,EDITOR=null;
 async function showProject(id){
  if(EDITOR?.doc.id===id)return;
  if(EDITOR?.dirty&&!confirm('Leave unsaved edits?')){location.hash='#/p/'+EDITOR.doc.id;return;}
+ libraryReference?.destroy();libraryReference=null;
  EDITOR?.destroy();AG?.session?.close();AG=null;CHAT=[];
  let j;try { j=await api.read(`projects/${id}/project.json`); }catch(error){toast(error.message);location.hash='#/';return;}
  EDITOR=new Editor($('#view'),{api,toast,onChange:d=>{CUR={...d,__abs:j.absolute};},assistant:renderAssistant});
@@ -181,8 +186,20 @@ async function sendPrompt() {
   if(!(await EDITOR.save())){BUSY=false;return;}
   const proposalPath=`${ME.root}/projects/${CUR.id}/proposals/${Date.now()}.json`;
   const ctx=`You are the assistant inside fframestudio. NEVER edit project.json or source media. Read ${CUR.__abs}, schema fframestudio.project/1. Write ONLY a proposal to ${proposalPath}. Format: {"schema":"fframestudio.proposal/1","projectId":"${CUR.id}","baseRevision":${CUR.revision},"title":"short description","commands":[...]}. Commands: edit-text {clipId,field,value}, trim {clipId,duration,sourceIn?} (INTEGER FRAMES), move {clipId,index}, split {clipId,at,newId} (at is clip-local frames), duplicate {clipId,newId}, delete {clipId}, replace {clipId,mediaId}, group {clipIds,id,name}, set-beat-lock {clipId,value}, retime {clipId,speed:{num,den}}. Every command may include videoId. Text values are strings or string arrays. Existing IDs must match. New IDs must be unique. Beat-locked timing edits require explicit unlocking. Scope is this clip unless edit-style {styleId,color} explicitly changes all clips using the style. No code in JSON. The user will Inspect, Apply or Reject. Do not claim the project changed. Selection: ${EDITOR.selection}. Video: ${EDITOR.videoId}. Be brief. Request: `;
-  try { const r = await AG.session.prompt(ctx + text); push({ kind: 'note', text: `turn ended: ${r.stopReason}` }); await EDITOR.external(proposalPath.slice(ME.root.length+1)); }
+  try { const r = await AG.session.prompt(ctx + '\nTyped registry actions (also accepted as {id,params}): '+JSON.stringify(actionManifest().filter(a=>a.command))+'\n'+text); push({ kind: 'note', text: `turn ended: ${r.stopReason}` }); await EDITOR.external(proposalPath.slice(ME.root.length+1)); }
   catch (e) { push({ kind: 'note', text: `error: ${e.message}` }); }
   BUSY = false;
 }
-boot();
+addEventListener('ffs-library-updated',async()=>{await loadLib();if(!location.hash.startsWith('#/p/'))showLibrary();});
+boot().then(async () => {
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/share-worker.js').catch(()=>{});
+  if (new URLSearchParams(location.search).has('shared')) {
+    history.replaceState(null,'',location.pathname+location.hash);
+    const { consumeSharedReference }=await import('/app/src/share-intake.js');
+    const shared=await consumeSharedReference();
+    if(shared) { const {ReferenceDesk}=await import('/app/src/reference.js');libraryReference?.destroy();libraryReference=new ReferenceDesk();libraryReference.open();
+      if(shared.file)libraryReference.importFile(shared.file).catch(e=>libraryReference.error(e));
+      else { libraryReference.q('#reference-url').value=shared.url||shared.text||'';libraryReference.status.textContent='Shared link ready. Choose Import URL to fetch a direct public video via your local bridge.'; }
+    }
+  }
+});

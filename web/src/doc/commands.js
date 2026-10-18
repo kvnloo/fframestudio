@@ -1,21 +1,6 @@
 import { clone, validate, reflow, uid } from './project.js';
-export const COMMANDS = [
-  'add',
-  'select',
-  'move',
-  'trim',
-  'split',
-  'replace',
-  'edit-text',
-  'duplicate',
-  'group',
-  'set-beat-lock',
-  'retime',
-  'delete',
-  'edit-style',
-  'save-version',
-  'restore-version',
-];
+import { COMMAND_IDS, validateCommand } from '../actions.js';
+export const COMMANDS = COMMAND_IDS;
 export function diff(a, b, path = '') {
   if (a === b) return [];
   if (
@@ -443,6 +428,7 @@ export class CommandStore {
             path: '/revision', before: before.revision, after: this.doc.revision,
           }] : [])]
         : diff(before, this.doc),
+      inverse: receipt?.inverse || null,
       undo: this.past.length,
       redo: this.future.length,
     };
@@ -472,10 +458,10 @@ export function proposalCommand(p, doc) {
       p.commands.length <= 100,
     'Invalid proposal commands',
   );
-  for (const c of p.commands)
-    need(
-      c && COMMANDS.includes(c.type) && c.type !== 'select',
-      'Command not allowed in a proposal',
-    );
-  return { type: 'batch', commands: clone(p.commands) };
+  const commands = p.commands.map(c => {
+    const command = c?.id && c?.params ? { ...c.params, type: c.id } : c;
+    need(command && COMMANDS.includes(command.type) && command.type !== 'select', 'Command not allowed in a proposal');
+    return validateCommand(command);
+  });
+  return { type: 'batch', commands: clone(commands) };
 }

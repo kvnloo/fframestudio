@@ -1,0 +1,1 @@
+{"name":"fframestudio","short_name":"fframestudio","start_url":"/","display":"standalone","share_target":{"action":"/share","method":"POST","enctype":"multipart/form-data","params":{"title":"title","text":"text","url":"url","files":[{"name":"video","accept":["video/mp4","video/webm","video/quicktime"]}]}}}

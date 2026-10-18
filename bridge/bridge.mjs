@@ -20,6 +20,7 @@ import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline';
 import { WebSocketServer } from 'ws';
+import { referenceAPI, stopReferenceHelpers } from './reference.mjs';
 import { AGENTS as BUILTIN } from './agents.mjs';
 import { watchTheme, detectTheme } from './system-theme.mjs';
 
@@ -88,7 +89,7 @@ const NOFOLLOW_WRITE = fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constan
 
 function cors(req, res) {
   const o = req.headers.origin;
-  if (o && originOk(o)) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-FFS-Expected'); res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS'); res.setHeader('Access-Control-Allow-Private-Network', 'true'); }
+  if (o && originOk(o)) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-FFS-Expected'); res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS'); res.setHeader('Access-Control-Allow-Private-Network', 'true'); }
 }
 const send = (res, code, body, type = 'application/json') => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(type === 'application/json' ? JSON.stringify(body) : body); };
 
@@ -114,8 +115,9 @@ const themeOptions = { home: THEME_HOME, source: opt('--theme-source', undefined
 const theme = watchTheme({ ...themeOptions, onChange: state => {
   const msg = `event: theme\ndata: ${JSON.stringify(state)}\n\n`; watchers.forEach(r => r.write(msg));
 } });
-process.once('SIGTERM', () => { theme.close(); process.exit(0); });
-process.once('SIGINT', () => { theme.close(); process.exit(0); });
+process.once('SIGTERM', () => { theme.close(); stopReferenceHelpers(); process.exit(0); });
+process.once('SIGINT', () => { theme.close(); stopReferenceHelpers(); process.exit(0); });
+const handleReference = referenceAPI({ root: ROOT, safePath: fsPath, send });
 const server = http.createServer(async (req, res) => {
   cors(req, res);
   const u = new URL(req.url, 'http://x');
@@ -126,6 +128,7 @@ const server = http.createServer(async (req, res) => {
     if (!tokenOk(u.searchParams.get('token'))) return send(res, 401, { error: 'bad token' });
     res.writeHead(302, { 'Set-Cookie': `ffs=${TOKEN}; HttpOnly; SameSite=Strict; Path=/`, Location: '/' + (u.searchParams.get('to') || '') }); return res.end();
   }
+  if (u.pathname === '/share-worker.js' && req.method === 'GET') return serveFile(req,res,path.join(WEB,'share-worker.js'));
   if (req.method === 'GET' && (u.pathname === '/' || u.pathname.startsWith('/app/'))) { // the web app itself (no secrets in it)
     const rel = u.pathname === '/' ? 'index.html' : decodeURIComponent(u.pathname.slice(5));
     const f = path.resolve(WEB, rel); if (!f.startsWith(WEB + path.sep)) return send(res, 400, { error: 'bad path' });
@@ -134,6 +137,7 @@ const server = http.createServer(async (req, res) => {
   const auth = (req.headers.authorization || '').replace(/^Bearer /, '') || u.searchParams.get('token') || cookieTok(req); // query only for EventSource
   if (u.pathname === '/me') return send(res, 200, tokenOk(auth) ? { ok: true, root: ROOT } : { ok: false }); // lets the app show the sign-in page without a console error
   if (!tokenOk(auth)) return send(res, 401, { error: 'bad token' });
+  if (await handleReference(req, res, u)) return;
   if (u.pathname === '/theme' && req.method === 'GET') {
     await theme.ready;
     const source = u.searchParams.get('source');

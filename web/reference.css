@@ -1,0 +1,29 @@
+/* On-demand desks are outside the timeline animation/layout path. */
+.reference-desk [hidden] {display:none!important;}
+.reference-desk header,.voice-desk header {position:static;height:auto;min-height:0;padding:0 0 12px;width:auto;z-index:auto;background:none;}
+.voice-desk {box-sizing:border-box;}
+.voice-desk label:has(#speech-consent) {display:flex;align-items:center;gap:8px;}
+#speech-consent {width:16px;min-height:16px;margin:0;}
+.reference-desk.reference-comparing > label:not(#reference-scrub-label),.reference-desk.reference-comparing > p,.reference-desk.reference-comparing > form,.reference-desk.reference-comparing .reference-stage,.reference-desk.reference-comparing > progress,.reference-desk.reference-comparing #reference-breakdown {display:none;}
+.reference-comparing #reference-status {line-height:1.5;}
+.reference-comparing .reference-comparison video {max-height:350px;}
+.reference-desk {width:min(1100px,94vw);max-height:90dvh;overflow:auto;padding:24px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;}
+.reference-desk header,.voice-desk header {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.reference-desk input,.voice-desk input:not([type=checkbox]) {max-width:100%;padding:8px;}
+.reference-desk form,.reference-stage {display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin:12px 0;}
+.reference-desk label,.voice-desk label {display:grid;gap:6px;}
+.reference-desk button,.voice-desk button {min-height:36px;padding:6px 12px;cursor:pointer;}
+.reference-comparison {display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:16px 0;}
+.reference-comparison figure {margin:0;min-width:0;}
+.reference-comparison figcaption {font-size:12px;margin:8px 0;}
+.reference-comparison video {width:100%;max-height:260px;background:#080808;}
+.reference-rebuilt {position:relative;}
+.reference-rebuilt span {position:absolute;inset:30% 8%;display:grid;place-items:center;font-size:28px;font-weight:bold;pointer-events:none;}
+#reference-status {display:block;margin:12px 0;} #reference-scrub {width:100%;}
+.reference-shots {display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px;}
+.reference-shot {display:flex;text-align:left;gap:12px;background:var(--bg2);color:var(--ink);border:1px solid var(--line);}
+.reference-shot img {width:112px;height:68px;object-fit:cover;}
+.reference-shot span {font-size:12px;} .reference-shot i {display:inline-block;width:22px;height:16px;margin:6px 3px 0 0;border:1px solid #888;}
+.voice-desk {position:fixed;right:20px;bottom:24px;width:min(620px,calc(100vw - 32px));max-height:70dvh;overflow:auto;padding:20px;z-index:90;box-shadow:0 16px 80px #0008;border:1px solid var(--line);background:var(--bg);}
+.voice-desk[hidden] {display:none;} .voice-desk pre {max-height:160px;overflow:auto;white-space:pre-wrap;} .voice-desk form {margin-top:12px;display:grid;gap:8px;} .voice-desk output {font-size:12px;}
+@media(max-width:600px) {.reference-desk {padding:12px;} .reference-stage input {width:100px;} .reference-comparison {grid-template-columns:1fr;} .voice-desk {right:8px;bottom:8px;} }

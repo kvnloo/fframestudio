@@ -1,0 +1,300 @@
+{
+  "schema": "fframestudio.qualification/1",
+  "sourceRevision": "732c97c40784128080641b46d3aaf8ff1b9e6f91",
+  "registry": {
+    "actions": 58,
+    "contentActions": 15
+  },
+  "nodeTests": {
+    "tests": 203,
+    "pass": 203,
+    "grammarCases": 119,
+    "acpSecurity": true
+  },
+  "browserAttempts": [
+    {
+      "evidence": "preliminary-first/report.json",
+      "ok": false,
+      "journeys": 24,
+      "failed": [
+        {
+          "name": "system theme: follows and live-updates",
+          "error": "theme application exceeded frame budget: 89.40000003576279 ms"
+        },
+        {
+          "name": "context menu: native menu replaced, actions work",
+          "error": "menu not presented in the next frame (frame 16.700000000000728 ms): {\"menu_open_ms\":{\"median\":68.34999996423721,\"worst\":79.59999996423721},\"open_ready_median_ms\":4.1500000059604645,\"open_ready_worst_ms\":8.599999964237213,\"samples\":[{\"ready_ms\":5.600000023841858,\"rendering_opportunity_ms\":76.10000002384186},{\"ready_ms\":4.199999988079071,\"rendering_opportunity_ms\":72.19999998807907},{\"ready_ms\":6.399999976158142,\"rendering_opportunity_ms\":79.59999996423721},{\"ready_ms\":2.899999976158142,\"rendering_opportunity_ms\":69.29999995231628},{\"ready_ms\":4.399999976158142,\"rendering_opportunity_ms\":71.1000"
+        },
+        {
+          "name": "layout: fits and adapts across sizes",
+          "error": "page.waitForSelector: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.story-card canvas[data-ready=\"true\"]') to be visible\u001b[22m\n"
+        },
+        {
+          "name": "actions: palette/menu/shortcut/agent share one registry",
+          "error": "page.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-action=\"palette\"]')\u001b[22m\n"
+        },
+        {
+          "name": "reference: import -> analyze -> recreate",
+          "error": "page.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-action=\"import-reference\"]')\u001b[22m\n"
+        },
+        {
+          "name": "voice: typed-fallback says shorten the second shot by one second, change the text, undo",
+          "error": "page.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#voice-transcript')\u001b[22m\n"
+        },
+        {
+          "name": "console clean",
+          "error": "{\"e\":[\"Failed to load resource: the server responded with a status of 404 (Not Found)\"],\"r\":[\"404 http://127.0.0.1:23093/fs?path=projects%2Fdemo-film%2Fproject.json\"]}"
+        }
+      ]
+    },
+    {
+      "evidence": "qualified/verify-final-1/report.json",
+      "ok": true,
+      "journeys": 25,
+      "failed": []
+    },
+    {
+      "evidence": "qualified/verify-final-2/report.json",
+      "ok": false,
+      "journeys": 25,
+      "failed": [
+        {
+          "name": "context menu: native menu replaced, actions work",
+          "error": "menu open work exceeded 16 ms: 30.200000047683716"
+        }
+      ]
+    },
+    {
+      "evidence": "qualified/verify-final-3/report.json",
+      "ok": true,
+      "journeys": 25,
+      "failed": []
+    },
+    {
+      "evidence": "qualified/verify-replay-closure/report.json",
+      "ok": true,
+      "journeys": 25,
+      "failed": []
+    },
+    {
+      "evidence": "qualified/verify-replay-last/report.json",
+      "ok": true,
+      "journeys": 25,
+      "failed": []
+    },
+    {
+      "evidence": "verify-2/report.json",
+      "ok": false,
+      "journeys": 25,
+      "failed": [
+        {
+          "name": "context menu: native menu replaced, actions work",
+          "error": "menu open work exceeded 16 ms: 32.09999996423721"
+        }
+      ]
+    },
+    {
+      "evidence": "verify-final-1/report.json",
+      "ok": true,
+      "journeys": 25,
+      "failed": []
+    },
+    {
+      "evidence": "verify-final-2/report.json",
+      "ok": true,
+      "journeys": 25,
+      "failed": []
+    },
+    {
+      "evidence": "verify-final-3/report.json",
+      "ok": false,
+      "journeys": 25,
+      "failed": [
+        {
+          "name": "system theme: follows and live-updates",
+          "error": "theme application exceeded frame budget: 32.200000047683716 ms"
+        },
+        {
+          "name": "context menu: native menu replaced, actions work",
+          "error": "menu open work exceeded 16 ms: 25.899999976158142"
+        }
+      ]
+    }
+  ],
+  "performanceAttempts": [
+    {
+      "evidence": "perf-final/perf.json",
+      "coldOpenMs": 414.0999999642372,
+      "summary": {
+        "cmdWorstMs": 49.69999998807907,
+        "nextFrameWorstMs": 56.09999996423721,
+        "scrubFps": 55.46311702717692
+      },
+      "budgets": {
+        "coldOpen": false,
+        "commandPaintReady": false,
+        "commandNextFrame": false,
+        "scrubNoLongtasks": true,
+        "scrub60fps": false,
+        "gzip": true,
+        "virtualized": true,
+        "stableDOM": true,
+        "autosaveFrameWork": true,
+        "layoutNoLongtasks": true,
+        "splitterNoLongtasks": true,
+        "splitter60fps": true
+      },
+      "editorGzipBytes": 71530,
+      "splitterFps": 59.99999999999999
+    },
+    {
+      "evidence": "qualified/perf-final/perf.json",
+      "coldOpenMs": 197.10000002384186,
+      "summary": {
+        "cmdWorstMs": 11,
+        "nextFrameWorstMs": 16.900000035762787,
+        "scrubFps": 56.002800140007004
+      },
+      "budgets": {
+        "coldOpen": true,
+        "commandPaintReady": true,
+        "commandNextFrame": true,
+        "scrubNoLongtasks": true,
+        "scrub60fps": false,
+        "gzip": true,
+        "virtualized": true,
+        "stableDOM": true,
+        "autosaveFrameWork": true,
+        "layoutNoLongtasks": true,
+        "splitterNoLongtasks": false,
+        "splitter60fps": false
+      },
+      "editorGzipBytes": 71844,
+      "splitterFps": 47.5047504750475
+    },
+    {
+      "evidence": "qualified/perf-replay-1/perf.json",
+      "coldOpenMs": 172.79999995231628,
+      "summary": {
+        "cmdWorstMs": 13.300000011920929,
+        "nextFrameWorstMs": 17.200000047683716,
+        "scrubFps": 59.99999999999999
+      },
+      "budgets": {
+        "coldOpen": true,
+        "commandPaintReady": true,
+        "commandNextFrame": true,
+        "scrubNoLongtasks": true,
+        "scrub60fps": true,
+        "gzip": true,
+        "virtualized": true,
+        "stableDOM": true,
+        "autosaveFrameWork": true,
+        "layoutNoLongtasks": true,
+        "splitterNoLongtasks": true,
+        "splitter60fps": false
+      },
+      "editorGzipBytes": 71844,
+      "splitterFps": 50.0
+    },
+    {
+      "evidence": "qualified/perf-replay-2/perf.json",
+      "coldOpenMs": 270,
+      "summary": {
+        "cmdWorstMs": 12,
+        "nextFrameWorstMs": 16.80000001192093,
+        "scrubFps": 60.00300015000751
+      },
+      "budgets": {
+        "coldOpen": true,
+        "commandPaintReady": true,
+        "commandNextFrame": true,
+        "scrubNoLongtasks": true,
+        "scrub60fps": true,
+        "gzip": true,
+        "virtualized": true,
+        "stableDOM": true,
+        "autosaveFrameWork": true,
+        "layoutNoLongtasks": true,
+        "splitterNoLongtasks": true,
+        "splitter60fps": false
+      },
+      "editorGzipBytes": 71844,
+      "splitterFps": 56.0
+    },
+    {
+      "evidence": "qualified/perf-replay-3/perf.json",
+      "coldOpenMs": 161.89999997615814,
+      "summary": {
+        "cmdWorstMs": 10.699999988079071,
+        "nextFrameWorstMs": 16.80000001192093,
+        "scrubFps": 59.99999999999999
+      },
+      "budgets": {
+        "coldOpen": true,
+        "commandPaintReady": true,
+        "commandNextFrame": true,
+        "scrubNoLongtasks": true,
+        "scrub60fps": true,
+        "gzip": true,
+        "virtualized": true,
+        "stableDOM": true,
+        "autosaveFrameWork": true,
+        "layoutNoLongtasks": true,
+        "splitterNoLongtasks": true,
+        "splitter60fps": true
+      },
+      "editorGzipBytes": 71844,
+      "splitterFps": 60.003000150007495
+    }
+  ],
+  "unchangedBudgets": true,
+  "analysisFixture": {
+    "licence": "CC0; generated solid-colour shots plus tone",
+    "detectedCutFrames": [
+      90,
+      180
+    ],
+    "toleranceFrames": 1
+  },
+  "directURLSmoke": {
+    "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    "success": true,
+    "bytes": 1128375,
+    "container": "ftyp"
+  },
+  "discoveryConfigUnchanged": true,
+  "visualReview": {
+    "inspected": true,
+    "files": [
+      "qualified/visual-final/reference-breakdown.png",
+      "qualified/visual-final/reference-side-by-side.png",
+      "qualified/visual-final/voice-typed-fallback.png"
+    ],
+    "notes": [
+      "Timestamped evidence, RMS and uncertainty readable.",
+      "Comparison scrubber fits with explicit approximation labels.",
+      "Typed transcript and mic-off state visible; source-backed title has readable contrast."
+    ]
+  },
+  "notRun": [
+    "real microphone",
+    "configured local Whisper model decoding",
+    "Android PWA share-sheet real device"
+  ],
+  "deferred": [
+    "automatic LLM utterance resolution",
+    "multimodal providers",
+    "partial analysis resume",
+    "synthesized scene reconstruction and final render qualification"
+  ],
+  "qualificationNote": "Attempts include preliminary working-tree candidates and earlier eager-loading code. Failures are retained; these are not controlled baseline/candidate comparisons.",
+  "latestPassingBrowserSequence": [
+    "qualified/verify-final-3/report.json",
+    "qualified/verify-replay-last/report.json",
+    "qualified/verify-replay-closure/report.json"
+  ],
+  "latestPassingPerformance": "qualified/perf-replay-3/perf.json",
+  "noLocalPaths": "PASS",
+  "buildSite": "PASS"
+}

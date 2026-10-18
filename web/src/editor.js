@@ -1,3 +1,4 @@
+import { ACTIONS, action as studioAction } from './actions.js';
 import { fpsOf, textOf, uid, rational } from './doc/project.js';
 import { scope, COMMANDS, CommandStore, proposalCommand, recoveryCommand } from './doc/commands.js';
 import { RecoveryJournal, fileHash } from './doc/journal.js';
@@ -37,7 +38,7 @@ export const defaults = {
   save: 'Mod+s',
   duplicate: 'Mod+d',
   add: 'Mod+Shift+a',
-  select: 'v',
+  voice: 'v',
   move: 'Mod+Shift+m',
   trim: 't',
   replace: 'r',
@@ -111,6 +112,9 @@ export class Editor {
     );
     this.keyHandler = (e) => this.key(e);
     addEventListener('keydown', this.keyHandler);
+    this.voiceRelease = e => { if(e.code === 'KeyV') this.voiceHeld = false; };
+    addEventListener('keyup',this.voiceRelease);
+    this.voiceBlur=()=>{this.voiceHeld=false;};addEventListener('blur',this.voiceBlur);
     this.beforeUnload = (e) => {
       if (this.dirty) {
         e.preventDefault();
@@ -231,6 +235,7 @@ export class Editor {
       $('#canvas').append(notice);
       $('.preview-label').textContent = 'Metadata-only import · no verified video or playable proxy';
     }
+    $('.editor-tools',this.root).insertAdjacentHTML('beforeend',button('voice','Voice · hold V')+button('import-reference','Import reference')+(this.doc.metadata?.reference ? button('compare-reference','Compare reference') : ''));
     $('#recovery').oncancel = (e) => e.preventDefault();
     this.assistant?.($('#assistant-slot', this.root));
     this.root.onclick = (e) => {
@@ -789,8 +794,9 @@ export class Editor {
   }
   async select(id, seek = true) {
     if (!this.video.clips.some((c) => c.id === id)) return;
+    const previous = this.selection;
     this.selection = id;
-    this.store.commit({
+    const receipt = this.store.commit({
       type: 'select',
       clipId: id,
       videoId: this.videoId,
@@ -801,8 +807,10 @@ export class Editor {
     this.studio?.inspector();
     $('#selection-label').textContent = this.clip.name;
     if (seek) this.seek(this.clip.start);
+    return { ...receipt, inverse: { type:'select', clipId:previous } };
   }
   seek(frame) {
+    if(!Number.isFinite(frame))throw Error('Choose a finite playhead frame');
     this.frame = Math.max(0, Math.min(this.total - 1, Math.round(frame)));
     this.updatePreview(true);
   }
@@ -814,6 +822,7 @@ export class Editor {
       (c) => this.frame >= c.start && this.frame < c.start + c.duration,
     );
     if (c) this.studio?.preview(c);
+    this.reference?.sync();
     if (+$('#seek').value !== Math.floor(this.frame))
       $('#seek').value = Math.floor(this.frame);
     if (!c) return;
@@ -981,27 +990,10 @@ export class Editor {
     $('[data-action="apply-proposal"]').disabled = !this.proposalValid;
   }
   paletteItems() {
-    const q = $('#command-search').value.toLowerCase(),
-      names = [
-        ...COMMANDS,
-        'play',
-        'reverse',
-        'pause',
-        'forward',
-        'previousFrame',
-        'nextFrame',
-        'previousClip',
-        'nextClip',
-        'in',
-        'out',
-        'undo',
-        'redo',
-        'save',
-        'compare',
-        'settings',
-      ];
+    const q = $('#command-search').value.toLowerCase();
+    const names = Object.keys(ACTIONS).filter(n => ACTIONS[n].palette && !/^(close-|recover|discard-|keep-|reload-|inspect-|reject-|apply-)/.test(n));
     $('#command-list').innerHTML = names
-      .filter((n) => n.includes(q))
+      .filter((n) => [n, ACTIONS[n].title, ...ACTIONS[n].synonyms].join(' ').includes(q))
       .map(
         (n) =>
           `<button data-action="${n}" class="palette-row"><span>${esc(n.replaceAll('-', ' '))}</span><kbd>${esc(this.settings.keys?.[n] || defaults[n] || '—')}</kbd></button>`,
@@ -1074,7 +1066,26 @@ export class Editor {
       item('palette', 'Command palette'), item('settings', 'Workspace settings'), null, ...history,
     ] };
   }
-  async action(a, { clipId } = {}) {
+  ensureVoice() {
+    return this.voiceLoading ||= import('./voice.js').then(({VoiceControl})=>{
+      if(this.dead)throw Error('Editor closed');this.voice=new VoiceControl(this);return this.voice;
+    });
+  }
+  ensureReference() {
+    return this.referenceLoading ||= import('./reference.js').then(({ReferenceDesk})=>{
+      if(this.dead)throw Error('Editor closed');this.reference=new ReferenceDesk(this);return this.reference;
+    });
+  }
+  action(id, params = {}) {
+    return Promise.resolve().then(() => studioAction(id).apply(this, params, { interactive: true }));
+  }
+  async performAction(a, params = {}) {
+    const { clipId } = params;
+    if (a === 'voice') return (await this.ensureVoice()).toggle();
+    if (a === 'import-reference') return (await this.ensureReference()).open();
+    if (a === 'compare-reference') return (await this.ensureReference()).compareProject();
+    if (a === 'seek') return this.seek(params.frame);
+    if (a === 'open-panel') { this.studio.showTab(params.panel); return; }
     if (this.loading) return;
     if (['loop-shot','loop-film','mute','screening'].includes(a)) return this.studio.action(a);
     if (a !== 'palette' && a !== 'close-palette' && $('#palette').open)
@@ -1311,6 +1322,11 @@ export class Editor {
     }
   }
   key(e) {
+    if(e.code==='KeyV'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey&&!e.target.isContentEditable&&!e.target.closest('input,textarea,select,[contenteditable]')&&!document.querySelector('dialog[open]')) {
+      e.preventDefault();
+      if(!e.repeat){this.voiceHeld=true;this.ensureVoice().then(v=>{if(this.voiceHeld){v.held=true;v.start();}}).catch(e=>{if(!this.dead)this.toast(e.message);});}
+      return;
+    }
     if (e.key === 'Escape') return;
     const typing = e.target.matches('input,textarea,select') || e.target.isContentEditable,
       mod = e.ctrlKey || e.metaKey;
@@ -1331,6 +1347,8 @@ export class Editor {
   }
   destroy() {
     this.dead = true;
+    this.voice?.destroy();
+    this.reference?.destroy();
     this.studio?.destroy();
     cancelAnimationFrame(this.raf);
     clearInterval(this.previewTimer);
@@ -1344,6 +1362,7 @@ export class Editor {
     this.panelResize?.disconnect();
     removeEventListener('pointerup', this.panelResizeEnd);
     removeEventListener('keydown', this.keyHandler);
+    removeEventListener('keyup',this.voiceRelease);removeEventListener('blur',this.voiceBlur);
     removeEventListener('beforeunload', this.beforeUnload);
   }
 }

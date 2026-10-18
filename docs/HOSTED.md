@@ -29,6 +29,12 @@ and browser eviction can make them unavailable. Export or save to your folder fo
 portable storage. Imported local media is played with object URLs. Video export
 still requires the local engine/bridge; a project Save is not a rendered export.
 
+## Reference files and speech
+
+**Import reference** accepts a local video into an additive browser-local project (60 MB / ten minutes), preserving its content hash and source bytes without replacing or writing the visitor’s existing folder. Browser-only frame mapping assumes 30 fps and is labeled. Analysis and remote URL downloading require the loopback bridge; hosted mode never fetches arbitrary pages or remote video URLs. Social links explain permitted download → file import.
+
+Core voice edits also have a typed fallback. Web Speech can use a browser-vendor service and requires explicit consent in the voice desk; the hosted Permissions-Policy permits self microphone access, not automatic recording. No reference is sent to a model provider. See [actions.md](actions.md) for registry, local analysis and speech/privacy boundaries. Real mic and Android share-sheet qualification are NOT RUN.
+
 ## Examples are editable copies
 
 `/examples/manifest.json` describes the optional shelf. Opening an example creates

@@ -68,6 +68,22 @@ export async function verifyHosted({browser,source,out,root,journey,assert}) {
       assert(createHash('sha256').update(fs.readFileSync(path.join(examples,'project.json'))).digest('hex')===before,'example original mutated');
       assert(!external.length,'example mode contacted external hosts');assert(!errors.length&&!failed.length,JSON.stringify({errors,failed}));return {copyPersists:true,originalUnchanged:true,credited:true};
     });
+    await journey('hosted: imports reference file without URL fetching',async()=>{
+      const local=await context.newPage();const requests=[];local.on('request',r=>requests.push(r.url()));
+      await local.goto(server.base);await local.waitForSelector('#import-reference');await local.click('#import-reference');
+      await local.fill('#reference-url','https://example.com/reference.mp4');await local.click('#reference-url-form button');
+      await local.waitForFunction(()=>document.querySelector('#reference-status').textContent.includes('does not fetch'));
+      assert(!requests.some(u=>u.startsWith('https://example.com')),'hosted URL importer fetched remote media');
+      await local.setInputFiles('#reference-file',source);await local.waitForFunction(()=>document.querySelector('#reference-status').textContent.includes('Imported into this browser'));
+      assert(await local.locator('#reference-analyze').isDisabled(),'hosted falsely offers ffmpeg analysis');
+      await local.click('#reference-close');await local.reload();await local.waitForSelector('.card[data-project^="reference-"]');
+      assert(await local.locator('.card[data-project="visitor-film"]').count()===1,'reference replaced existing folder library');
+      await local.click('.card[data-project^="reference-"]');await local.waitForFunction(()=>window.ffs?.interactiveAt);await local.waitForFunction(()=>document.querySelector('#preview-video').readyState>=2);
+      assert(await local.evaluate(()=>window.ffs.doc.metadata.reference.approximation),'hosted reference lost provenance');
+      await local.evaluate(async()=>{await window.ffs.run({type:'edit-text',clipId:window.ffs.selection,field:'title',value:'Hosted reference'});await window.ffs.save();});
+      await local.reload();await local.waitForFunction(()=>window.ffs?.interactiveAt);assert(await local.evaluate(()=>window.ffs.clip.textOverrides.title)==='Hosted reference','browser reference Save did not persist');
+      await local.close();return {fileImport:true,persists:true,additive:true,urlFetch:false,analysis:'bridge required'};
+    });
     await journey('hosted: connects to local bridge',async()=>{
       const library=path.join(work,'bridge-root/projects');fs.mkdirSync(library,{recursive:true});fs.cpSync(path.join(fixture,'visitor-film'),path.join(library,'visitor-film'),{recursive:true});fs.writeFileSync(path.join(library,'library.json'),JSON.stringify({projects:[{id:'visitor-film',title:'Visitor film',kind:'fframes-timeline',shots:4,renders:1,duration_s:12,tags:['local']}]}));
       const port=await new Promise(ok=>{const s=net.createServer().listen(0,'127.0.0.1',()=>{const p=s.address().port;s.close(()=>ok(p));});}),token='hosted-test-'+crypto.randomUUID();
