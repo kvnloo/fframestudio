@@ -98,10 +98,10 @@ def import_one(s):
     if s["kind"] == "procedural-fframes":
         # Never overwrite saved v1 edits or synthesize fictitious footage.
         raw_render = s.get("render")
-        if not raw_render:
+        if not raw_render and not s.get("source_only"):
             return {"id": s["id"], "skipped": "procedural source needs a render path"}
-        source_render = pathlib.Path(raw_render) if raw_render.startswith("/") else base / raw_render
-        if not source_render.is_file():
+        source_render = pathlib.Path(raw_render) if raw_render and raw_render.startswith("/") else base / (raw_render or "")
+        if not source_render.is_file() and not s.get("source_only"):
             return {"id": s["id"], "skipped": "render missing; run the source render pipeline first"}
         if (pdir / "project.json").is_file():
             previous = json.loads((pdir / "project.json").read_text())
@@ -145,13 +145,18 @@ def import_one(s):
             if foot: P["notes"].append(f"Poster is a frame of the source footage ({foot[0].name}), not the finished film.")
             P["edit_in"] = {"app": "browser (deterministic page)", "local": str(base / "index.html")}
             if not (s.get("render") and render.exists()): P["notes"].append("No rendered master found; render with " + s.get("build", "render.sh"))
-        if s.get("render") and render.exists():
+        if k == "procedural-fframes" and s.get("source_only"):
+            inspected = inspect_procedural(base, artifacts=s.get("artifacts"))
+            P["shots"], P["procedural"] = inspected["shots"], inspected["metadata"]
+            P.update(canvas={"width": 1920, "height": 1080, "fps": P["procedural"]["fps"]}, duration_s=P["procedural"]["total_frames"] / P["procedural"]["fps"], media={})
+            P["notes"].append("Source metadata only — no verified render or playable proxy. " + s.get("render_error", ""))
+        elif s.get("render") and render.exists():
             info = probe(render); P.update(canvas={"width": info["width"], "height": info["height"], "fps": info["fps"]}, duration_s=info["duration_s"])
             P["renders"].append({"label": "master", "file": str(render), **info})
             tl = base / s["timeline"] if s.get("timeline") else None
             if k == "fframes": P["shots"] = from_timeline(tl.read_text(), info["fps"]) if tl and tl.exists() else cuts(render, info["duration_s"])
             if k == "procedural-fframes":
-                inspected = inspect_procedural(base, info)
+                inspected = inspect_procedural(base, info, artifacts=s.get("artifacts"))
                 P["shots"] = inspected["shots"]
                 P["procedural"] = inspected["metadata"]
                 P["notes"].append("Baked proxy only; procedural fields are source-derived and read-only.")
