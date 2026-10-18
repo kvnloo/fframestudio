@@ -1,6 +1,6 @@
 {
   "schema": "fframestudio.cinematic-catalog/1",
-  "purpose": "Research and qualify film-quality OSS adapters without claiming runtime support",
+  "purpose": "Research and qualify cinematic candidates, including restricted-license projects, without claiming runtime support",
   "engines": [
     {
       "id": "fframes",
@@ -14,7 +14,33 @@
         "shader",
         "timeline"
       ],
-      "first_probe": "Source-aware shot import and read-only stage breakdown"
+      "first_probe": "Source-aware shot import and read-only stage breakdown",
+      "checked_at": "2026-10-18T02:58:17.100108Z",
+      "evidence_url": "https://api.github.com/repos/dmtrKovalenko/fframes",
+      "upstream": {
+        "revision": "44745c09a6c8c51071609097326a820cf59d087b",
+        "commit_url": "https://github.com/dmtrKovalenko/fframes/commit/44745c09a6c8c51071609097326a820cf59d087b",
+        "last_commit_at": "2026-10-17T03:39:58Z",
+        "stars": 2834,
+        "license_spdx": "MIT",
+        "license_url": "https://github.com/dmtrKovalenko/fframes/blob/44745c09a6c8c51071609097326a820cf59d087b/LICENSE.txt",
+        "license_note": "MIT core; FFmpeg/libav features and system codec licenses need separate review."
+      },
+      "feature_evidence": {
+        "procedural": {
+          "url": "https://github.com/dmtrKovalenko/fframes/blob/44745c09a6c8c51071609097326a820cf59d087b/README.md#L10",
+          "quote": "Write your video in Rust and SVG, render it on the GPU."
+        },
+        "shader": {
+          "url": "https://github.com/dmtrKovalenko/fframes/blob/44745c09a6c8c51071609097326a820cf59d087b/README.md#L98",
+          "quote": "ers when SVG is not enough.** Run SkSL or pasted Shadertoy GLSL as a layer of any frame."
+        },
+        "timeline": {
+          "url": "https://github.com/dmtrKovalenko/fframes/blob/44745c09a6c8c51071609097326a820cf59d087b/README.md#L171",
+          "quote": "74), everything placed on the beat grid of its soundtrack |"
+        }
+      },
+      "limitations": "Upstream Rust/SVG/SkSL renderer capability only; no source inspector or new runtime adapter is delivered here."
     },
     {
       "id": "fosfora",
@@ -28,7 +54,33 @@
         "shader",
         "compositing"
       ],
-      "first_probe": "Export measured onset/amplitude feature stream to a single parameter"
+      "first_probe": "Export measured onset/amplitude feature stream to a single parameter",
+      "checked_at": "2026-10-18T02:58:17.259199Z",
+      "evidence_url": "https://api.github.com/repos/kevinraymond/fosfora",
+      "upstream": {
+        "revision": "43e31eb0e7110a5f2f8bc0122cdc92558706342e",
+        "commit_url": "https://github.com/kevinraymond/fosfora/commit/43e31eb0e7110a5f2f8bc0122cdc92558706342e",
+        "last_commit_at": "2026-10-17T09:25:22Z",
+        "stars": 57,
+        "license_spdx": "Apache-2.0",
+        "license_url": "https://github.com/kevinraymond/fosfora/blob/43e31eb0e7110a5f2f8bc0122cdc92558706342e/LICENSE-APACHE",
+        "license_note": "README and application manifest declare MIT OR Apache-2.0; GitHub detects Apache-2.0. Optional Ableton Link builds use GPL-2.0-or-later."
+      },
+      "feature_evidence": {
+        "audio-reactive": {
+          "url": "https://github.com/kevinraymond/fosfora/blob/43e31eb0e7110a5f2f8bc0122cdc92558706342e/README.md#L127",
+          "quote": "\"loud = big\". Fosfora tracks 85 things about your music 86 times a second — beat and tempo, key, percussive and harmonic content pulled apart, the moment a build turns into a drop — and any of them can drive any parameter. |"
+        },
+        "shader": {
+          "url": "https://github.com/kevinraymond/fosfora/blob/43e31eb0e7110a5f2f8bc0122cdc92558706342e/README.md#L131",
+          "quote": "| **Make it yours** | Every effect is a WGSL shader you can open in the built-in editor and edit while it's running — it recompiles on save and tells you where you broke it. |"
+        },
+        "compositing": {
+          "url": "https://github.com/kevinraymond/fosfora/blob/43e31eb0e7110a5f2f8bc0122cdc92558706342e/README.md#L125",
+          "quote": "hop or OBS — up to 8 of them, 13 blend modes, drag to reorder. Put a slow shader under a particle storm, dial the opacity, and it's a new look. Three of the modes warp instead of tint: set a layer to Displace and its shapes bend everything underneath, so a ring effect becomes a shockwave through whatever it's sitting on. Layers can also be images,"
+        }
+      },
+      "limitations": "Live wgpu/WGSL application; Linux Vulkan requirement is an upstream claim, not tested GPU compatibility or deterministic offline export."
     },
     {
       "id": "motion-canvas",
@@ -41,7 +93,29 @@
         "procedural",
         "timeline"
       ],
-      "first_probe": "Import a short kinetic-typography clip with editable text and timing"
+      "first_probe": "Import a short kinetic-typography clip with editable text and timing",
+      "checked_at": "2026-10-18T02:58:17.152519Z",
+      "evidence_url": "https://api.github.com/repos/motion-canvas/motion-canvas",
+      "upstream": {
+        "revision": "7b91435c301d530351dcf5ebb91dd139c002e405",
+        "commit_url": "https://github.com/motion-canvas/motion-canvas/commit/7b91435c301d530351dcf5ebb91dd139c002e405",
+        "last_commit_at": "2026-07-02T20:01:32Z",
+        "stars": 19375,
+        "license_spdx": "MIT",
+        "license_url": "https://github.com/motion-canvas/motion-canvas/blob/7b91435c301d530351dcf5ebb91dd139c002e405/LICENSE",
+        "license_note": "GitHub detects MIT; no redistribution or integration approval is implied."
+      },
+      "feature_evidence": {
+        "procedural": {
+          "url": "https://github.com/motion-canvas/motion-canvas/blob/7b91435c301d530351dcf5ebb91dd139c002e405/README.md#L22",
+          "quote": "- A TypeScript library that uses generators to program animations."
+        },
+        "timeline": {
+          "url": "https://github.com/motion-canvas/motion-canvas/blob/7b91435c301d530351dcf5ebb91dd139c002e405/README.md#L26",
+          "quote": "synchronize them with voice-overs."
+        }
+      },
+      "limitations": "Generator-authored vector animation and voice-over timing, not measured onset-reactive rendering."
     },
     {
       "id": "ossia-score",
@@ -51,11 +125,32 @@
       "fit": "external",
       "status": "research",
       "features": [
-        "audio-reactive",
         "timeline",
         "shader"
       ],
-      "first_probe": "Assess OSC/interchange as external-process boundary; check GPL impact"
+      "first_probe": "Assess OSC/interchange as external-process boundary; check GPL impact",
+      "checked_at": "2026-10-18T02:58:17.369115Z",
+      "evidence_url": "https://api.github.com/repos/ossia/score",
+      "upstream": {
+        "revision": "dad5bd37336d0e962207c3641bc6a7ecc22e217c",
+        "commit_url": "https://github.com/ossia/score/commit/dad5bd37336d0e962207c3641bc6a7ecc22e217c",
+        "last_commit_at": "2026-10-15T20:25:07Z",
+        "stars": 2079,
+        "license_spdx": "NOASSERTION",
+        "license_url": "https://github.com/ossia/score/blob/dad5bd37336d0e962207c3641bc6a7ecc22e217c/LICENSE.txt",
+        "license_note": "GitHub reports NOASSERTION; LICENSE.txt contains GPLv3 and third-party notices. Review full distribution and submodules before reuse."
+      },
+      "feature_evidence": {
+        "timeline": {
+          "url": "https://github.com/ossia/score/blob/dad5bd37336d0e962207c3641bc6a7ecc22e217c/README.md#L5",
+          "quote": "**](https://ossia.io) is a ***sequencer*** for audio-visual artists, designed to create ***interactive*** shows."
+        },
+        "shader": {
+          "url": "https://github.com/ossia/score/blob/dad5bd37336d0e962207c3641bc6a7ecc22e217c/README.md#L7",
+          "quote": "ive-code*** with JavaScript, [ISF Shaders](https://isf.video), [Faust](https://faust.grame.fr), PureData or C++. Leverage IoT protocols such as CoAP or MQTT, interact with joysticks, Wiimotes, Leapmotions, Web APIs, LSL-compatible devices and BLE sensors and integrate programs from a wealth of creative programming languages such as [Structure Synth"
+        }
+      },
+      "limitations": "Sequencing audio and shader controls does not by itself prove an audio-reactive analysis-to-parameter path; that tag is intentionally omitted."
     },
     {
       "id": "theatre",
@@ -65,10 +160,32 @@
       "fit": "adapter",
       "status": "research",
       "features": [
-        "camera",
+        "procedural",
         "timeline"
       ],
-      "first_probe": "Keyframe import/export; review Studio AGPL boundary separately"
+      "first_probe": "Keyframe import/export; review Studio AGPL boundary separately",
+      "checked_at": "2026-10-18T02:58:16.995021Z",
+      "evidence_url": "https://api.github.com/repos/theatre-js/theatre",
+      "upstream": {
+        "revision": "6ea82b938ea49609489f6377ded693ccc6ee8f5b",
+        "commit_url": "https://github.com/theatre-js/theatre/commit/6ea82b938ea49609489f6377ded693ccc6ee8f5b",
+        "last_commit_at": "2024-04-11T09:35:04Z",
+        "stars": 12774,
+        "license_spdx": "Apache-2.0",
+        "license_url": "https://github.com/theatre-js/theatre/blob/6ea82b938ea49609489f6377ded693ccc6ee8f5b/LICENSE",
+        "license_note": "GitHub detects root Apache-2.0; packages/core/LICENSE is Apache-2.0, packages/studio/LICENSE is AGPL-3.0. Do not infer Studio is permissive."
+      },
+      "feature_evidence": {
+        "procedural": {
+          "url": "https://github.com/theatre-js/theatre/blob/6ea82b938ea49609489f6377ded693ccc6ee8f5b/README.md#L23",
+          "quote": "Theatre.js can be used both programmatically _and_ visually."
+        },
+        "timeline": {
+          "url": "https://github.com/theatre-js/theatre/blob/6ea82b938ea49609489f6377ded693ccc6ee8f5b/packages/core/src/sequences/Sequence.ts#L89-L91",
+          "quote": "length: val(this.pointer.length),\n        playing: val(this.pointer.playing),\n        position: val(this.pointer.position),"
+        }
+      },
+      "limitations": "Animates host JavaScript variables; not a camera renderer. README says development moved temporarily to a private repository; pinned public commit is from 2024."
     },
     {
       "id": "postprocessing",
@@ -80,10 +197,35 @@
       "features": [
         "shader",
         "compositing",
-        "color",
-        "camera"
+        "color"
       ],
-      "first_probe": "Define bloom/DOF/aberration parameters; compare to SkSL implementation"
+      "first_probe": "Define bloom/DOF/aberration parameters; compare to SkSL implementation",
+      "checked_at": "2026-10-18T02:58:19.221689Z",
+      "evidence_url": "https://api.github.com/repos/pmndrs/postprocessing",
+      "upstream": {
+        "revision": "9cf03cff26615636a564d8bfddf765edb8917441",
+        "commit_url": "https://github.com/pmndrs/postprocessing/commit/9cf03cff26615636a564d8bfddf765edb8917441",
+        "last_commit_at": "2026-09-09T19:35:45Z",
+        "stars": 2887,
+        "license_spdx": "Zlib",
+        "license_url": "https://github.com/pmndrs/postprocessing/blob/9cf03cff26615636a564d8bfddf765edb8917441/LICENSE.md",
+        "license_note": "Zlib library; README also credits MIT-licensed three.js-derived code."
+      },
+      "feature_evidence": {
+        "shader": {
+          "url": "https://github.com/pmndrs/postprocessing/blob/9cf03cff26615636a564d8bfddf765edb8917441/README.md#L74",
+          "quote": "and effects that use complex fragment shaders."
+        },
+        "compositing": {
+          "url": "https://github.com/pmndrs/postprocessing/blob/9cf03cff26615636a564d8bfddf765edb8917441/README.md#L20",
+          "quote": "ommon rendering workflow with fullscreen image manipulation tools. The following WebGL attributes should be used for an optimal post processing workflow:"
+        },
+        "color": {
+          "url": "https://github.com/pmndrs/postprocessing/blob/9cf03cff26615636a564d8bfddf765edb8917441/README.md#L52",
+          "quote": "g-LinearOrGammaWorkflow.html) for color management and postprocessing supports this automatically. Simply set `WebGLRenderer.outputColorSpace` to `SRGBColorSpace` and postprocessing will follow suit."
+        }
+      },
+      "limitations": "Three.js/WebGL passes, not SkSL. Depth-of-field effects do not imply camera choreography, so camera is not a capability tag."
     },
     {
       "id": "shader-park",
@@ -96,7 +238,29 @@
         "shader",
         "procedural"
       ],
-      "first_probe": "Assess GL shader interchange; never assume direct SkSL compatibility"
+      "first_probe": "Assess GL shader interchange; never assume direct SkSL compatibility",
+      "checked_at": "2026-10-18T02:58:19.582041Z",
+      "evidence_url": "https://api.github.com/repos/shader-park/shader-park-core",
+      "upstream": {
+        "revision": "dd5e26c39963b63a7280c5b6bc20463c75258d62",
+        "commit_url": "https://github.com/shader-park/shader-park-core/commit/dd5e26c39963b63a7280c5b6bc20463c75258d62",
+        "last_commit_at": "2024-05-28T12:37:30Z",
+        "stars": 827,
+        "license_spdx": "MIT",
+        "license_url": "https://github.com/shader-park/shader-park-core/blob/dd5e26c39963b63a7280c5b6bc20463c75258d62/LICENSE",
+        "license_note": "GitHub detects MIT; exported targets and host dependencies require their own review."
+      },
+      "feature_evidence": {
+        "shader": {
+          "url": "https://github.com/shader-park/shader-park-core/blob/dd5e26c39963b63a7280c5b6bc20463c75258d62/README.md#L9",
+          "quote": "ith just a few lines of code, create shaders which are:"
+        },
+        "procedural": {
+          "url": "https://github.com/shader-park/shader-park-core/blob/dd5e26c39963b63a7280c5b6bc20463c75258d62/README.md#L8",
+          "quote": "ader Park simplifies creating procedural graphics using javascript."
+        }
+      },
+      "limitations": "JavaScript shader authoring with target-specific exports; direct WGSL/SkSL interchange is unverified."
     },
     {
       "id": "otio",
@@ -108,7 +272,25 @@
       "features": [
         "timeline"
       ],
-      "first_probe": "Loss-aware cuts-only export retaining sidecar metadata"
+      "first_probe": "Loss-aware cuts-only export retaining sidecar metadata",
+      "checked_at": "2026-10-18T02:58:19.443714Z",
+      "evidence_url": "https://api.github.com/repos/AcademySoftwareFoundation/OpenTimelineIO",
+      "upstream": {
+        "revision": "f8a2f36df61ce88eb6b73a57df393a87d3e3e42e",
+        "commit_url": "https://github.com/AcademySoftwareFoundation/OpenTimelineIO/commit/f8a2f36df61ce88eb6b73a57df393a87d3e3e42e",
+        "last_commit_at": "2026-10-17T17:51:16Z",
+        "stars": 2024,
+        "license_spdx": "Apache-2.0",
+        "license_url": "https://github.com/AcademySoftwareFoundation/OpenTimelineIO/blob/f8a2f36df61ce88eb6b73a57df393a87d3e3e42e/LICENSE.txt",
+        "license_note": "Apache-2.0; adapters and media are separate, and contributor trademarks are not licensed."
+      },
+      "feature_evidence": {
+        "timeline": {
+          "url": "https://github.com/AcademySoftwareFoundation/OpenTimelineIO/blob/f8a2f36df61ce88eb6b73a57df393a87d3e3e42e/README.md#L44",
+          "quote": "OpenTimelineIO is an interchange format and API for editorial cut information."
+        }
+      },
+      "limitations": "Editorial cut metadata interchange, not a media container or image renderer."
     },
     {
       "id": "ocio",
@@ -120,7 +302,25 @@
       "features": [
         "color"
       ],
-      "first_probe": "Compare test-pattern transforms and declare color-space metadata"
+      "first_probe": "Compare test-pattern transforms and declare color-space metadata",
+      "checked_at": "2026-10-18T02:58:19.400491Z",
+      "evidence_url": "https://api.github.com/repos/AcademySoftwareFoundation/OpenColorIO",
+      "upstream": {
+        "revision": "22dd9c4faa0d1b7cfb3d64d1a6e9cb454acc6cfd",
+        "commit_url": "https://github.com/AcademySoftwareFoundation/OpenColorIO/commit/22dd9c4faa0d1b7cfb3d64d1a6e9cb454acc6cfd",
+        "last_commit_at": "2026-10-01T01:27:18Z",
+        "stars": 2133,
+        "license_spdx": "BSD-3-Clause",
+        "license_url": "https://github.com/AcademySoftwareFoundation/OpenColorIO/blob/22dd9c4faa0d1b7cfb3d64d1a6e9cb454acc6cfd/LICENSE",
+        "license_note": "BSD-3-Clause code; README has CC-BY-4.0 document metadata and separately copyrighted example imagery. Configs/dependencies need review."
+      },
+      "feature_evidence": {
+        "color": {
+          "url": "https://github.com/AcademySoftwareFoundation/OpenColorIO/blob/22dd9c4faa0d1b7cfb3d64d1a6e9cb454acc6cfd/README.md#L24",
+          "quote": "OpenColorIO (OCIO) is a complete color management solution geared towards"
+        }
+      },
+      "limitations": "Color transforms/configuration only; no host render pipeline or ACES image-quality validation performed."
     },
     {
       "id": "effectcraft",
@@ -134,7 +334,33 @@
         "camera",
         "timeline"
       ],
-      "first_probe": "Evaluate early-stage Rust renderer on a reproducible title fixture"
+      "first_probe": "Evaluate early-stage Rust renderer on a reproducible title fixture",
+      "checked_at": "2026-10-18T02:58:19.596619Z",
+      "evidence_url": "https://api.github.com/repos/storytold/effectcraft",
+      "upstream": {
+        "revision": "f36b2b3e6bd121dc52b00503cdf8d60f42ac242a",
+        "commit_url": "https://github.com/storytold/effectcraft/commit/f36b2b3e6bd121dc52b00503cdf8d60f42ac242a",
+        "last_commit_at": "2026-10-18T01:43:07Z",
+        "stars": 7177,
+        "license_spdx": "Apache-2.0",
+        "license_url": "https://github.com/storytold/effectcraft/blob/f36b2b3e6bd121dc52b00503cdf8d60f42ac242a/LICENSE-APACHE",
+        "license_note": "README and Cargo.toml declare MIT OR Apache-2.0; GitHub detects Apache-2.0. ArtCraft trademarks and bundled assets have separate restrictions."
+      },
+      "feature_evidence": {
+        "compositing": {
+          "url": "https://github.com/storytold/effectcraft/blob/f36b2b3e6bd121dc52b00503cdf8d60f42ac242a/README.md#L18",
+          "quote": "the spirit of After Effects: compositions, layers,"
+        },
+        "camera": {
+          "url": "https://github.com/storytold/effectcraft/blob/f36b2b3e6bd121dc52b00503cdf8d60f42ac242a/README.md#L138",
+          "quote": "one- and two-node **cameras** with depth of field, **lights** (parallel, spot, point, ambient)"
+        },
+        "timeline": {
+          "url": "https://github.com/storytold/effectcraft/blob/f36b2b3e6bd121dc52b00503cdf8d60f42ac242a/README.md#L95",
+          "quote": "- **Keyframes that behave the same:** linear, Bezier, hold, auto and continuous Bezier, roving"
+        }
+      },
+      "limitations": "Young alpha; README explicitly says feature existence is not measured After Effects behavior parity."
     },
     {
       "id": "filmcraft",
@@ -148,7 +374,33 @@
         "compositing",
         "color"
       ],
-      "first_probe": "Compare command contract and frame-timing semantics"
+      "first_probe": "Compare command contract and frame-timing semantics",
+      "checked_at": "2026-10-18T02:58:21.084279Z",
+      "evidence_url": "https://api.github.com/repos/storytold/filmcraft",
+      "upstream": {
+        "revision": "4a69a038d32761f604b3c7e4845b21fb40b3cbe4",
+        "commit_url": "https://github.com/storytold/filmcraft/commit/4a69a038d32761f604b3c7e4845b21fb40b3cbe4",
+        "last_commit_at": "2026-10-18T01:43:10Z",
+        "stars": 14594,
+        "license_spdx": "Apache-2.0",
+        "license_url": "https://github.com/storytold/filmcraft/blob/4a69a038d32761f604b3c7e4845b21fb40b3cbe4/LICENSE-APACHE",
+        "license_note": "README and Cargo.toml declare MIT OR Apache-2.0; GitHub detects Apache-2.0. ArtCraft trademarks and bundled assets have separate restrictions."
+      },
+      "feature_evidence": {
+        "timeline": {
+          "url": "https://github.com/storytold/filmcraft/blob/4a69a038d32761f604b3c7e4845b21fb40b3cbe4/README.md#L81",
+          "quote": "**A timeline you already know.** Source and Program monitors, bins with thumbnails, a multi-track timeline with patch and target buttons, sync locks and linked selection. The Editing, Assembly, Color, Effects and Audio workspaces are all there, and every panel docks wherever you want it."
+        },
+        "compositing": {
+          "url": "https://github.com/storytold/filmcraft/blob/4a69a038d32761f604b3c7e4845b21fb40b3cbe4/README.md#L69",
+          "quote": "the public specifications. A GPU compositor works in linear light. Frame math runs on exact integer time, so edits never drift. And every action in the app is a command that an AI agent can drive as precisely as you can."
+        },
+        "color": {
+          "url": "https://github.com/storytold/filmcraft/blob/4a69a038d32761f604b3c7e4845b21fb40b3cbe4/README.md#L106",
+          "quote": "**A complete Lumetri-style grading panel**, in the order a colourist works:"
+        }
+      },
+      "limitations": "Early NLE; README distinguishes feature breadth from readiness and documents CPU-bound grading/export paths."
     },
     {
       "id": "natron",
@@ -161,7 +413,29 @@
         "compositing",
         "color"
       ],
-      "first_probe": "Test external finishing boundary for one shot; review GPL"
+      "first_probe": "Test external finishing boundary for one shot; review GPL",
+      "checked_at": "2026-10-18T02:58:21.471702Z",
+      "evidence_url": "https://api.github.com/repos/NatronGitHub/Natron",
+      "upstream": {
+        "revision": "3763d805d7d277d10af10025ae41af677682b3e6",
+        "commit_url": "https://github.com/NatronGitHub/Natron/commit/3763d805d7d277d10af10025ae41af677682b3e6",
+        "last_commit_at": "2026-07-24T09:48:49Z",
+        "stars": 5584,
+        "license_spdx": "GPL-2.0",
+        "license_url": "https://github.com/NatronGitHub/Natron/blob/3763d805d7d277d10af10025ae41af677682b3e6/LICENSE.txt",
+        "license_note": "GitHub returns GPL-2.0 (verbatim API identifier); review exact source and plugin terms rather than treating an external process as automatic license clearance."
+      },
+      "feature_evidence": {
+        "compositing": {
+          "url": "https://github.com/NatronGitHub/Natron/blob/3763d805d7d277d10af10025ae41af677682b3e6/README.md#L7",
+          "quote": ", open-source (GPLv2 license) video compositor, similar in functionality to Adobe After Effects, Foundry's Nuke, or Blackmagic Fusion. It is portable and cross-platform (GNU/Linux, macOS, and Microsoft Windows)."
+        },
+        "color": {
+          "url": "https://github.com/NatronGitHub/Natron/blob/3763d805d7d277d10af10025ae41af677682b3e6/README.md#L33",
+          "quote": "- Color management handled by [OpenColorIO](https://opencolorio.org/)."
+        }
+      },
+      "limitations": "Desktop compositor; no native FrameStudio compositing or licensed plugin bundle is enabled."
     },
     {
       "id": "blender",
@@ -176,7 +450,37 @@
         "compositing",
         "color"
       ],
-      "first_probe": "External scene/render worker for one camera and lighting fixture; review GPL"
+      "first_probe": "External scene/render worker for one camera and lighting fixture; review GPL",
+      "checked_at": "2026-10-18T02:58:21.472393Z",
+      "evidence_url": "https://api.github.com/repos/blender/blender",
+      "upstream": {
+        "revision": "3f4216e1bad1e76e9c2d4a00b4a9d09954593f47",
+        "commit_url": "https://github.com/blender/blender/commit/3f4216e1bad1e76e9c2d4a00b4a9d09954593f47",
+        "last_commit_at": "2026-10-17T13:51:33Z",
+        "stars": 21003,
+        "license_spdx": "NOASSERTION",
+        "license_url": "https://github.com/blender/blender/blob/3f4216e1bad1e76e9c2d4a00b4a9d09954593f47/COPYING",
+        "license_note": "GitHub reports NOASSERTION; README says Blender as a whole is GPL Version 3, with compatible per-file licenses; COPYING refers to doc/license/GPL-license.txt. GitHub is a mirror."
+      },
+      "feature_evidence": {
+        "camera": {
+          "url": "https://github.com/blender/blender/blob/3f4216e1bad1e76e9c2d4a00b4a9d09954593f47/source/blender/makesrna/intern/rna_camera.cc#L741",
+          "quote": "ruct_ui_text(srna, \"Camera\", \"Camera data-block for storing camera settings\");"
+        },
+        "procedural": {
+          "url": "https://github.com/blender/blender/blob/3f4216e1bad1e76e9c2d4a00b4a9d09954593f47/source/blender/nodes/geometry/CMakeLists.txt#L61",
+          "quote": "nodes/node_geo_curve_primitive_circle.cc"
+        },
+        "compositing": {
+          "url": "https://github.com/blender/blender/blob/3f4216e1bad1e76e9c2d4a00b4a9d09954593f47/.github/README.md#L15",
+          "quote": "gging, animation, simulation, rendering, compositing,"
+        },
+        "color": {
+          "url": "https://github.com/blender/blender/blob/3f4216e1bad1e76e9c2d4a00b4a9d09954593f47/source/blender/makesrna/intern/rna_scene.cc#L6856",
+          "quote": "prop, \"View Settings\", \"Color management settings applied on image before saving\");"
+        }
+      },
+      "limitations": "Camera, color and procedural tags have pinned source evidence beyond the short README; no Cycles worker or Linux/Vulkan benchmark ran."
     },
     {
       "id": "cables",
@@ -189,7 +493,29 @@
         "shader",
         "procedural"
       ],
-      "first_probe": "Review runtime license and graph interchange"
+      "first_probe": "Review runtime license and graph interchange",
+      "checked_at": "2026-10-18T02:58:21.243054Z",
+      "evidence_url": "https://api.github.com/repos/cables-gl/cables",
+      "upstream": {
+        "revision": "b8e22d168b7780b3ffb94df752207135b8df913c",
+        "commit_url": "https://github.com/cables-gl/cables/commit/b8e22d168b7780b3ffb94df752207135b8df913c",
+        "last_commit_at": "2026-10-17T05:57:50Z",
+        "stars": 569,
+        "license_spdx": null,
+        "license_url": "https://github.com/cables-gl/cables/blob/b8e22d168b7780b3ffb94df752207135b8df913c/package.json",
+        "license_note": "GitHub reports no detected license (null); pinned package.json declares MIT but /license returns 404. Do not treat the manifest alone as redistribution clearance."
+      },
+      "feature_evidence": {
+        "shader": {
+          "url": "https://github.com/cables-gl/cables/blob/b8e22d168b7780b3ffb94df752207135b8df913c/src/corelibs/cgl/cgl_shader.js#L71",
+          "quote": "* shader.setSource(attachments.shader_vert,attachments.shader_frag);"
+        },
+        "procedural": {
+          "url": "https://github.com/cables-gl/cables/blob/b8e22d168b7780b3ffb94df752207135b8df913c/src/core/core_patch.js#L568",
+          "quote": "* patch.addOp('Ops.Math.Sum', { showUiAttribs: false });"
+        }
+      },
+      "limitations": "Thin README does not establish capabilities; tags cite pinned shader and procedural patch APIs instead. Runtime/editor packaging needs separate review."
     },
     {
       "id": "hydra",
@@ -202,7 +528,29 @@
         "shader",
         "audio-reactive"
       ],
-      "first_probe": "Assess deterministic capture of a short shader sequence"
+      "first_probe": "Assess deterministic capture of a short shader sequence",
+      "checked_at": "2026-10-18T02:58:21.431215Z",
+      "evidence_url": "https://api.github.com/repos/hydra-synth/hydra-synth",
+      "upstream": {
+        "revision": "9d29a9f4fd8f9081b9759943f38db36f05b9a88f",
+        "commit_url": "https://github.com/hydra-synth/hydra-synth/commit/9d29a9f4fd8f9081b9759943f38db36f05b9a88f",
+        "last_commit_at": "2026-07-16T18:47:51Z",
+        "stars": 401,
+        "license_spdx": "AGPL-3.0",
+        "license_url": "https://github.com/hydra-synth/hydra-synth/blob/9d29a9f4fd8f9081b9759943f38db36f05b9a88f/LICENSE",
+        "license_note": "GitHub detects AGPL-3.0; do not assume permissive embedding just because this is a JavaScript module."
+      },
+      "feature_evidence": {
+        "shader": {
+          "url": "https://github.com/hydra-synth/hydra-synth/blob/9d29a9f4fd8f9081b9759943f38db36f05b9a88f/README.md#L74",
+          "quote": "precision: null  // force precision of shaders, can be 'highp', 'mediump', or 'lowp' (recommended for ios). When no precision is specified, will use highp for ios, and mediump for everything else."
+        },
+        "audio-reactive": {
+          "url": "https://github.com/hydra-synth/hydra-synth/blob/9d29a9f4fd8f9081b9759943f38db36f05b9a88f/README.md#L66",
+          "quote": "detectAudio: true, // recommend setting this to false to avoid asking for microphone"
+        }
+      },
+      "limitations": "Experimental live video synth; microphone analysis and shader precision controls do not prove deterministic offline cinematic export."
     },
     {
       "id": "ghost-arcade",
@@ -216,7 +564,33 @@
         "shader",
         "compositing"
       ],
-      "first_probe": "Try external capture or OSC boundary; review AGPL restrictions"
+      "first_probe": "Try external capture or OSC boundary; review AGPL restrictions",
+      "checked_at": "2026-10-18T02:58:23.027695Z",
+      "evidence_url": "https://api.github.com/repos/riskcapital/ghost-arcade",
+      "upstream": {
+        "revision": "a2c62b104fab82f93081382cd592826f0457fd01",
+        "commit_url": "https://github.com/riskcapital/ghost-arcade/commit/a2c62b104fab82f93081382cd592826f0457fd01",
+        "last_commit_at": "2026-09-30T21:35:07Z",
+        "stars": 75,
+        "license_spdx": "AGPL-3.0",
+        "license_url": "https://github.com/riskcapital/ghost-arcade/blob/a2c62b104fab82f93081382cd592826f0457fd01/LICENSE",
+        "license_note": "GitHub detects AGPL-3.0; README specifies AGPL-3.0-only. Network and derivative-work terms need review."
+      },
+      "feature_evidence": {
+        "audio-reactive": {
+          "url": "https://github.com/riskcapital/ghost-arcade/blob/a2c62b104fab82f93081382cd592826f0457fd01/src/lib/audio/analyzer.ts#L2",
+          "quote": "// WebAudio API-based real-time audio analysis with FFT, beat detection, and BPM estimation"
+        },
+        "shader": {
+          "url": "https://github.com/riskcapital/ghost-arcade/blob/a2c62b104fab82f93081382cd592826f0457fd01/src/lib/isf/renderer.ts#L130",
+          "quote": "export function createISFShader("
+        },
+        "compositing": {
+          "url": "https://github.com/riskcapital/ghost-arcade/blob/a2c62b104fab82f93081382cd592826f0457fd01/README.md#L81",
+          "quote": "│  ├── Layer pipeline → effect chain → mesh warp → composite        │"
+        }
+      },
+      "limitations": "Pinned default source is legacy 1.9; README advertises 2.x on another branch. Tags cite legacy source/architecture, not 2.x native Rust/wgpu, Vulkan or export claims."
     },
     {
       "id": "rust-motion",
@@ -229,7 +603,29 @@
         "procedural",
         "timeline"
       ],
-      "first_probe": "Study native preview and headless export contracts"
+      "first_probe": "Study native preview and headless export contracts",
+      "checked_at": "2026-10-18T02:58:23.314327Z",
+      "evidence_url": "https://api.github.com/repos/sjkim1127/rust-motion",
+      "upstream": {
+        "revision": "9f65321dbcc5687d8d3033c55f443a10e17e1927",
+        "commit_url": "https://github.com/sjkim1127/rust-motion/commit/9f65321dbcc5687d8d3033c55f443a10e17e1927",
+        "last_commit_at": "2026-10-17T03:43:46Z",
+        "stars": 3,
+        "license_spdx": "Apache-2.0",
+        "license_url": "https://github.com/sjkim1127/rust-motion/blob/9f65321dbcc5687d8d3033c55f443a10e17e1927/LICENSE",
+        "license_note": "README declares MIT OR Apache-2.0; GitHub detects Apache-2.0. Host, codec and GPU dependency licenses require separate review."
+      },
+      "feature_evidence": {
+        "procedural": {
+          "url": "https://github.com/sjkim1127/rust-motion/blob/9f65321dbcc5687d8d3033c55f443a10e17e1927/README.md#L80",
+          "quote": "eEmitter` adapters for media, procedural shapes, kinetic captions, fitted multiline text, fades, slides, sequences, freezes, and composited layers."
+        },
+        "timeline": {
+          "url": "https://github.com/sjkim1127/rust-motion/blob/9f65321dbcc5687d8d3033c55f443a10e17e1927/README.md#L123",
+          "quote": "| `rust-motion-core` | Dioxus composition timeline, sequence, freeze, Lottie, and hooks |"
+        }
+      },
+      "limitations": "Experimental GPU path with documented CPU fallback and explicit DOM/CSS subset, not a browser engine or replacement editor."
     },
     {
       "id": "remotion",
@@ -242,7 +638,64 @@
         "procedural",
         "timeline"
       ],
-      "first_probe": "Compare rendering concepts; review licensing before any dependency"
+      "first_probe": "Compare rendering concepts; review licensing before any dependency",
+      "checked_at": "2026-10-18T02:58:23.556167Z",
+      "evidence_url": "https://api.github.com/repos/remotion-dev/remotion",
+      "upstream": {
+        "revision": "02109419d34bea9ddfb45883b6dbf1ec477379e6",
+        "commit_url": "https://github.com/remotion-dev/remotion/commit/02109419d34bea9ddfb45883b6dbf1ec477379e6",
+        "last_commit_at": "2026-10-17T13:26:34Z",
+        "stars": 64795,
+        "license_spdx": "NOASSERTION",
+        "license_url": "https://github.com/remotion-dev/remotion/blob/02109419d34bea9ddfb45883b6dbf1ec477379e6/LICENSE.md",
+        "license_note": "GitHub reports NOASSERTION; LICENSE.md is the special Remotion License, not unrestricted permissive OSS. Review company/developer-seat terms before adoption."
+      },
+      "feature_evidence": {
+        "procedural": {
+          "url": "https://github.com/remotion-dev/remotion/blob/02109419d34bea9ddfb45883b6dbf1ec477379e6/README.md#L21",
+          "quote": "- **Make videos programmatically**: Connect to data, and manage complexity with code."
+        },
+        "timeline": {
+          "url": "https://github.com/remotion-dev/remotion/blob/02109419d34bea9ddfb45883b6dbf1ec477379e6/packages/core/src/Sequence.tsx#L174",
+          "quote": "readonly durationInFrames?: number;"
+        }
+      },
+      "limitations": "React-authored videos and frame-ranged Sequence API; source availability does not imply unrestricted OSS redistribution."
+    },
+    {
+      "id": "cinetic",
+      "repo": "Leonxlnx/cinetic",
+      "tier": "next",
+      "role": "technique",
+      "fit": "reference",
+      "status": "research",
+      "features": [
+        "procedural",
+        "timeline"
+      ],
+      "first_probe": "Compare two seeded, attributed timing recipes in fframes; no Remotion dependency or copied reference film",
+      "checked_at": "2026-10-18T02:58:23.625231Z",
+      "evidence_url": "https://api.github.com/repos/Leonxlnx/cinetic",
+      "upstream": {
+        "revision": "ecfa6605de1adb9345ce937724810dc32267d068",
+        "commit_url": "https://github.com/Leonxlnx/cinetic/commit/ecfa6605de1adb9345ce937724810dc32267d068",
+        "last_commit_at": "2026-10-18T00:18:57Z",
+        "stars": 278,
+        "license_spdx": "MIT",
+        "license_url": "https://github.com/Leonxlnx/cinetic/blob/ecfa6605de1adb9345ce937724810dc32267d068/LICENSE",
+        "license_note": "MIT skill/toolkit only. Default Remotion and optional HyperFrames have separate engine licenses; no engines or reference films are bundled by this catalog."
+      },
+      "feature_evidence": {
+        "procedural": {
+          "url": "https://github.com/Leonxlnx/cinetic/blob/ecfa6605de1adb9345ce937724810dc32267d068/README.md#L25",
+          "quote": "- **273 techniques, drawn at random.** A library of measured moves in 14 categories, each with a build recipe and timing at 60 fps. `pick.py` draws the film's plan, weighted for its format and energy, so two films don't share the same fade-up, push-in and end card."
+        },
+        "timeline": {
+          "url": "https://github.com/Leonxlnx/cinetic/blob/ecfa6605de1adb9345ce937724810dc32267d068/README.md#L28",
+          "quote": "beat grid, measured sound.** `timeline.ts` drives the picture, the soundtrack and the QA scripts, so every hit lands on its frame. The effects come from an [earshot](https://github.com/Leonxlnx/earshot) sound kit: sounds designed in code and rendered with measured sync points, one soft sound per text fragment, one clean element on the lockup. Typi"
+        }
+      },
+      "limitations": "Agent directing skill and recipe library, not a renderer. The 273-technique count is an upstream claim, not independently measured here; scored sound is not audio-reactivity."
     }
   ]
 }
