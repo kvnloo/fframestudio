@@ -13,7 +13,7 @@ My Taste previews human-reviewed aggregate visual preferences beside Direction, 
 
 ## How to get to it (user POV)
 
-Open a project → Film slate → My Taste, immediately beside Direction. Import aggregate JSON from your device, opt in, inspect the changes, then Apply direction. Task/project scope does not change a durable user default. Delete applies only to the local file profile.
+Open a project → Film slate → My Taste, immediately beside Direction, or choose `apply-taste` in Commands (opens review, never applies automatically). Import aggregate JSON from your device, opt in, inspect the changes, then Apply direction. Task/project scope does not change a durable user default. Delete applies only to the local file profile.
 
 ## Driving it with Playwright
 

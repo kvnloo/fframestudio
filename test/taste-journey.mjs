@@ -2,7 +2,11 @@ import path from 'node:path';
 export async function verifyTaste({page,root,out,assert,prefix='taste'}) {
   const fixture=path.join(root,'test/fixtures/taste/synthetic.json');
   const ready=()=>page.waitForFunction(()=>window.ffs?.interactiveAt&&!window.ffs.loading);
-  await ready(); await page.click('#tab-taste'); await page.waitForSelector('#taste-file');
+  await ready();
+  await page.click('[data-action="palette"]');
+  await page.locator('#command-search').fill('apply-taste');
+  await page.locator('#command-list [data-action="apply-taste"]').click();
+  await page.waitForSelector('#taste-file');
   await page.waitForFunction(()=>document.querySelector('#taste-state').dataset.state==='disconnected');
   const before=await page.evaluate(()=>JSON.stringify({...window.ffs.doc,revision:0}));
   await page.locator('#taste-file').setInputFiles(fixture);

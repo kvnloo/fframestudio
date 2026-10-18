@@ -1070,6 +1070,7 @@ export class Editor {
   }
   async action(a, { clipId } = {}) {
     if (this.loading) return;
+    if (a === 'apply-taste') { $('#palette').close(); this.studio.showTab('taste'); return; }
     if (['loop-shot','loop-film','mute','screening'].includes(a)) return this.studio.action(a);
     if (a !== 'palette' && a !== 'close-palette' && $('#palette').open)
       $('#palette').close();

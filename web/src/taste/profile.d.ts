@@ -45,6 +45,12 @@ export interface TasteFileAdapter extends TasteAdapter {
   importJSON(text: string): Promise<TasteResult>;
   deleteProfile(): Promise<TasteResult>;
 }
+export const profileSchema: object;
+export const applicationSchema: object;
+export const dialsSchema: object;
+export const constraintsSchema: object;
+export const SIGNALS: Record<TasteSignal, object>;
+export function validateSchema(value: unknown, schema: object, path?: string): unknown;
 export const KEYS: TasteSignal[];
 export const DEFAULT_DIALS: Readonly<TasteDials>;
 export function validateProfile(value: unknown): TasteProfile;
