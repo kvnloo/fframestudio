@@ -21,7 +21,7 @@
     "test:doc": "node --test test/doc/*.test.mjs",
     "test:editor": "node tools/verify-editor.mjs",
     "test:editor-acp": "node tools/verify-editor.mjs --acp",
-    "test:perf": "node --test test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf",
+    "test:perf": "node --test --test-concurrency=1 test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf",
     "test:procedural": "python3 -m unittest discover -s test -p 'test_procedural_fframes.py'"
   },
   "devDependencies": {

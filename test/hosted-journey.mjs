@@ -6,6 +6,7 @@ import { once } from 'node:events';
 import net from 'node:net';
 import { createHash } from 'node:crypto';
 import { staticSite } from './static-site.mjs';
+import { verifyStyleComponents } from './style-components-journey.mjs';
 export async function verifyHosted({browser,source,out,root,journey,assert}) {
   const work=fs.mkdtempSync(path.join(os.tmpdir(),'ffs-hosted-')), site=path.join(work,'site'), fixture=path.join(work,'my-projects'), examples=path.join(work,'examples');
   fs.mkdirSync(path.join(fixture,'visitor-film'),{recursive:true});fs.mkdirSync(examples);
@@ -84,6 +85,7 @@ export async function verifyHosted({browser,source,out,root,journey,assert}) {
       await local.reload();await local.waitForFunction(()=>window.ffs?.interactiveAt);assert(await local.evaluate(()=>window.ffs.clip.textOverrides.title)==='Hosted reference','browser reference Save did not persist');
       await local.close();return {fileImport:true,persists:true,additive:true,urlFetch:false,analysis:'bridge required'};
     });
+    await journey('hosted: style component lab equals runtime', () => verifyStyleComponents({context,base:server.base,out,root,assert,mode:'hosted',perf:false}));
     await journey('hosted: connects to local bridge',async()=>{
       const library=path.join(work,'bridge-root/projects');fs.mkdirSync(library,{recursive:true});fs.cpSync(path.join(fixture,'visitor-film'),path.join(library,'visitor-film'),{recursive:true});fs.writeFileSync(path.join(library,'library.json'),JSON.stringify({projects:[{id:'visitor-film',title:'Visitor film',kind:'fframes-timeline',shots:4,renders:1,duration_s:12,tags:['local']}]}));
       const port=await new Promise(ok=>{const s=net.createServer().listen(0,'127.0.0.1',()=>{const p=s.address().port;s.close(()=>ok(p));});}),token='hosted-test-'+crypto.randomUUID();

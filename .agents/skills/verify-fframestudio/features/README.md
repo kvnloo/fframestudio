@@ -59,6 +59,7 @@ When you change a feature, update its file and the matching journey in `test/ver
 | Procedural source inspector | [procedural.md](./procedural.md) | `procedural: ff-tracking 12 shots, ff-unmute one take + markers` |
 | Reference / typed actions / voice | [reference-voice.md](./reference-voice.md) | `actions:`, `reference:`, `voice:` journeys and hosted reference-file journey |
 | Hosted local-first Studio | [hosted.md](./hosted.md) | five `hosted:` journeys in `test/hosted-journey.mjs`, included by `test/verify.mjs` |
+| Video Style Components | [style-components.md](./style-components.md) | `style components: lab preview equals runtime`; `hosted: style component lab equals runtime` |
 | Adaptive fitted layout | [layout.md](./layout.md) | `layout: fits and adapts across sizes` |
 | Studio film desk | [studio.md](./studio.md) | `studio: themes, slate tabs, loops and screening room`; additional `tools/verify-studio.mjs` visual/audio proof |
 | Library | [library.md](./library.md) | `library: open link, demo project listed` |

@@ -16,6 +16,7 @@ import { verifyReference } from './reference-journey.mjs';
 import { verifyHosted } from './hosted-journey.mjs';
 import { verifyProcedural } from './procedural-journey.mjs';
 import { makeLayoutFixture, verifyLayout } from './layout-journey.mjs';
+import { verifyStyleComponents } from './style-components-journey.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const argv = process.argv.slice(2);
@@ -598,6 +599,7 @@ try {
     try { return await verifyProcedural({page:fixturePage,base,library:path.join(HOME,'fframestudio/projects'),out:OUT,assert}); }
     finally { await fixturePage.close(); }
   });
+  await journey('style components: lab preview equals runtime', () => verifyStyleComponents({context:ctx,base,out:OUT,root:ROOT,assert}));
   await verifyHosted({browser,source,out:OUT,root:ROOT,journey,assert});
   await verifyReference({page,base,out:OUT,journey,assert,library:path.join(HOME,'fframestudio/projects')});
   await journey('console clean', async () => { assert(!report.console_errors.length && !report.failed_requests.length, JSON.stringify({ e: report.console_errors, r: report.failed_requests })); });
