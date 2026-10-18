@@ -9,11 +9,21 @@
 .examples-shelf { scroll-margin-top:64px; border-top:1px solid var(--line); margin-top:32px; padding-top:24px; }
 .folder-actions a { min-height:44px; display:inline-flex; align-items:center; }
 .examples-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr)); gap:24px; }
-.example-card { border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--bg2); }
+.example-card { scroll-margin-top:64px; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--bg2); }
 .example-card img { width:100%; aspect-ratio:16/9; object-fit:cover; }
 .example-card .tx { padding:20px; }
 .example-card h3 { font-size:24px; margin:0 0 8px; }
 .examples-shelf a { color:var(--acc); }
 .install-command { white-space:pre-wrap; overflow-wrap:anywhere; font-size:11px; line-height:1.7; }
 #bridge { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px; }
+.example-featured { grid-column:1/-1; display:grid; grid-template-columns:minmax(220px,1fr) minmax(0,2fr); border-color:var(--acc); }
+.example-type { padding:32px; display:flex; flex-direction:column; justify-content:center; font-family:var(--font-display, sans-serif); font-size:clamp(40px,6vw,88px); letter-spacing:-.06em; border-right:1px solid var(--line); }
+.example-type span { font:14px/1.5 sans-serif; letter-spacing:0; margin-top:12px; }
+.example-meta { display:flex; flex-wrap:wrap; gap:16px; color:var(--acc); font-size:12px; margin-bottom:12px; }
+.example-status { border-left:2px solid var(--acc); padding-left:12px; }
+.example-card details { font-size:14px; line-height:1.5; }
+.example-card summary { cursor:pointer; min-height:44px; display:flex; align-items:center; text-decoration:underline; }
+.example-card .tx { min-width:0; overflow-wrap:anywhere; }
+.example-featured img { height:100%; }
+@media(max-width:767px) { .example-featured { grid-template-columns:1fr; } .example-type { padding:20px; font-size:48px; border-right:0; border-bottom:1px solid var(--line); } }
 @media(max-width:600px) { .local-library { padding:18px; } #bridge { font-size:9px; max-width:160px; } .examples-grid { gap:16px; } }

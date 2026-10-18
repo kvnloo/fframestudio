@@ -11,7 +11,14 @@ test('static builder omits absent examples, versions assets and emits local-only
     const site=path.join(work,'site');
     const result=spawnSync('python3',['tools/build_demo_site.py','--out',site,'--examples',path.join(work,'absent')],{encoding:'utf8'});
     assert.equal(result.status,0,result.stderr);
-    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(site,'examples/manifest.json'),'utf8')),[]);
+    const catalog=JSON.parse(fs.readFileSync(path.join(site,'examples/manifest.json'),'utf8'));
+    assert.equal(catalog.length,2);
+    assert.equal(catalog[0].id,'fframes-intro');
+    assert.equal(catalog[0].readiness,'awaiting-permission');
+    assert.equal(catalog[0].poster,'');
+    assert.equal(catalog[0].video,undefined);
+    const demo=catalog.find(e=>e.id==='demo');assert.equal(demo.category,'Demo');assert.equal(demo.duration,12);assert.equal(demo.readiness,'available');
+    const demoDoc=JSON.parse(fs.readFileSync(path.join(site,demo.project)));assert.equal(demoDoc.shots.length,4);assert.equal(demoDoc.shots.at(-1).t1,12);
     const config=JSON.parse(fs.readFileSync(path.join(site,'vercel.json'),'utf8'));
     assert.equal(config.cleanUrls,true);
     const headers=Object.fromEntries(config.headers[0].headers.map(h=>[h.key.toLowerCase(),h.value]));

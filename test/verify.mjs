@@ -79,6 +79,7 @@ try {
     await page.goto(`${base}/open?token=${token}`); await page.waitForSelector('.card', { timeout: 10000 });
     const titles = await page.$$eval('.card .t', (e) => e.map((x) => x.textContent));
     assert(titles.includes('Demo film'), `cards: ${titles.join(', ')}`);
+    await page.locator('.card img').first().evaluate(img => img.decode());
     const posterOk = await page.$eval('.card img', (i) => i.complete && i.naturalWidth > 0);
     assert(posterOk, 'poster image did not load');
     assert(await page.locator('.kind-chip').count() === titles.length, 'film kind chips missing');

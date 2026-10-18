@@ -109,16 +109,18 @@ function mountFolderControls() {
 }
 function mountExamples() {
   const shelf=document.createElement('section');shelf.id='examples-shelf';shelf.className='examples-shelf';
-  shelf.innerHTML='<div class="cap">EXAMPLES · NOT YOUR PROJECTS</div><h2>A few films to <em>make your own.</em></h2><p>Open an example as a browser-local copy. Originals are never changed.</p><div class="examples-grid"></div>';
+  shelf.innerHTML='<div class="cap">EXAMPLES · NOT YOUR PROJECTS</div><h2>A few films to <em>make your own.</em></h2><p>Open an example as a browser-local copy. Originals are never changed.</p><div class="examples-grid" aria-live="polite"><p>Loading examples…</p></div>';
   $('#view').append(shelf);
   const observer=new IntersectionObserver(async entries=>{
     if(!entries.some(e=>e.isIntersecting))return;observer.disconnect();
     try{
       const examples=await import('/app/src/examples.js'), list=await examples.listExamples();
       if(!shelf.isConnected)return;
-      shelf.querySelector('.examples-grid').innerHTML=list.length?list.map(e=>`<article class="example-card" data-example="${esc(e.id)}">${e.poster?`<img loading="lazy" src="${esc(e.poster)}" alt="">`:''}<div class="tx"><h3>${esc(e.title)}</h3><p>${esc(e.author)} · ${esc(e.licence)}</p><p class="hint">${esc(e.credit)}</p><div class="folder-actions"><button class="pill" data-open-example="${esc(e.id)}">Open a copy ↗</button>${e.source_url?`<a href="${esc(e.source_url)}" target="_blank" rel="noopener noreferrer">Source ↗</a>`:''}</div></div></article>`).join(''):'<p class="hint">Examples will appear here when available.</p>';
-      shelf.querySelectorAll('[data-open-example]').forEach(b=>b.onclick=async()=>{try{location.hash='#/p/'+await examples.openCopy(b.dataset.openExample);}catch(error){toast(error.message);}});
-    }catch(error){toast('Examples unavailable: '+error.message);}
+      const duration=e=>{const seconds=Math.round(e.duration||0);return seconds?`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`:'';};
+      shelf.querySelector('.examples-grid').innerHTML=list.length?list.map(e=>`<article class="example-card ${e.featured?'example-featured':''}" data-example="${esc(e.id)}">${e.poster?`<img loading="lazy" src="${esc(e.poster)}" alt="${esc(e.title)} film still">`:e.featured?'<div class="example-type" aria-hidden="true">fframes<span>Original launch film</span></div>':''}<div class="tx"><div class="example-meta"><span>${esc(e.category||'Short film')}</span><span>${duration(e)}</span>${e.featured?'<span>Featured</span>':''}</div><h3>${esc(e.title)}</h3><p>${esc(e.author)} · ${esc(e.licence)}</p><p class="hint">${esc(e.credit)}</p>${e.readiness!=='available'?`<p class="example-status">${e.readiness==='awaiting-permission'?'Awaiting media permission':'Local build only'}. Build the complete film on your machine; no media is hosted here.</p><details><summary>Open locally</summary><p>From a FrameStudio checkout:</p><code class="install-command">${esc(e.localCommand||'See source for local setup')}</code><p>Then use Open a folder above to select the generated project. Rust, native build tools and a supported GPU are required.</p><a href="https://github.com/kvnloo/fframestudio/blob/main/docs/HOSTED.md#original-launch-film-local-only" target="_blank" rel="noopener noreferrer">Local setup instructions ↗</a></details>`:''}<div class="folder-actions">${e.readiness==='available'?`<button class="pill" data-open-example="${esc(e.id)}">Open a copy ↗</button>`:''}${e.source_url?`<a href="${esc(e.source_url)}" target="_blank" rel="noopener noreferrer">Source ↗</a>`:''}</div></div></article>`).join(''):'<p class="hint">Examples will appear here when available.</p>';
+      shelf.querySelectorAll('img').forEach(img=>img.onerror=()=>{img.replaceWith(Object.assign(document.createElement('p'),{className:'hint',textContent:'Poster unavailable. The project can still be opened.'}));});
+      shelf.querySelectorAll('[data-open-example]').forEach(b=>b.onclick=async()=>{b.disabled=true;b.textContent='Loading project…';try{location.hash='#/p/'+await examples.openCopy(b.dataset.openExample);}catch(error){b.disabled=false;b.textContent='Retry opening';toast(error.message);}});
+    }catch(error){shelf.querySelector('.examples-grid').innerHTML='<p role="alert">Examples unavailable. Reload this page to retry.</p>';toast('Examples unavailable: '+error.message);}
   });observer.observe(shelf);
 }
 /* ---------------- project ---------------- */

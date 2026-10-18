@@ -1,16 +1,38 @@
 #!/usr/bin/env python3
 """Build a static, local-first studio. Only explicitly licensed Examples are optional.
 
-No media is generated and no visitor projects are bundled. --examples expects a directory
-with manifest.json and its referenced files; absent default artifacts are silently skipped.
+The synthetic 12-second demo is generated in a disposable HOME. No visitor projects
+are bundled. --examples expects manifest.json and its referenced cleared assets.
 """
 import argparse
 import hashlib
 import json
 from pathlib import Path
 import shutil
+import os
+import subprocess
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def synthetic_demo(target):
+    """Retain the small cleared four-shot fixture, without writing a visitor library."""
+    with tempfile.TemporaryDirectory(prefix='ffs-site-demo-') as home:
+        subprocess.run(['python3', str(ROOT / 'tools/make_demo.py')], env={**os.environ, 'HOME': home}, check=True, stdout=subprocess.DEVNULL)
+        video = Path(home) / 'fframestudio/demo-src/demo.mp4'
+        poster = Path(home) / 'demo.jpg'
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', '1', '-i', str(video), '-frames:v', '1', str(poster)], check=True)
+        def publish(stem, suffix, data):
+            name = stem + '.' + hashlib.sha256(data).hexdigest()[:12] + suffix
+            (target / name).write_bytes(data)
+            return '/examples/' + name
+        proxy = publish('demo', '.mp4', video.read_bytes())
+        image = publish('demo', '.jpg', poster.read_bytes())
+        document = {'schema': 'fframestudio.project/0', 'id': 'demo', 'title': 'Demo film', 'kind': 'fframes', 'canvas': {'width': 1280, 'height': 720, 'fps': 30}, 'duration_s': 12, 'media': {'proxy': proxy, 'poster': image}, 'source': {'author': 'fframestudio contributors', 'licence': 'Apache-2.0', 'source_url': 'https://github.com/kvnloo/fframestudio'}, 'shots': [{'id': 'demo-' + str(i), 'name': name, 't0': i * 3, 't1': (i + 1) * 3, 'origin': 'tools/make_demo.py', 'chapter': name} for i, name in enumerate(['Hook', 'Reveal', 'Detail', 'Ask'])], 'notes': ['Synthetic test patterns and generated tones. Not the original launch film.']}
+        project = publish('demo', '.json', json.dumps(document).encode())
+        return {'id': 'demo', 'title': 'Demo film', 'category': 'Demo', 'duration': 12, 'author': 'fframestudio contributors', 'licence': 'Apache-2.0', 'credit': 'Synthetic four-shot test patterns and generated tones; tools/make_demo.py.', 'credits': ['fframestudio contributors'], 'sourceRepo': 'https://github.com/kvnloo/fframestudio', 'sourcePath': 'tools/make_demo.py', 'source_url': 'https://github.com/kvnloo/fframestudio/blob/main/tools/make_demo.py', 'provenance': {'kind': 'synthetic'}, 'readiness': 'available', 'video': proxy, 'poster': image, 'project': project}
+
 
 def default_examples():
     for ancestor in ROOT.parents:
@@ -19,7 +41,7 @@ def default_examples():
             return candidate
     return None
 
-def build(output, examples=None):
+def build(output, examples=None, allow_unlisted_media=()):
     output = output.resolve()
     if output == ROOT or ROOT in output.parents and output.parts[len(ROOT.parts):len(ROOT.parts)+1] in [('web',), ('tools',), ('bridge',)]:
         raise ValueError('Output must not overwrite source directories')
@@ -47,7 +69,8 @@ def build(output, examples=None):
     if target.exists():
         shutil.rmtree(target)
     target.mkdir()
-    manifest = []
+    catalog = {e['id']: e for e in json.loads((ROOT / 'examples/catalog.json').read_text())}
+    manifest = [synthetic_demo(target)]
     if examples and examples.is_dir() and (examples / 'manifest.json').exists():
         source = examples.resolve()
         entries = json.loads((source / 'manifest.json').read_text())
@@ -89,14 +112,36 @@ def build(output, examples=None):
             (target / name).write_bytes(data)
             copied[original] = '/examples/' + name
             return copied[original]
+        seen = {'demo'}
         for entry in entries:
+            if entry.get('id') in seen:
+                raise ValueError('Duplicate or reserved example ID: ' + str(entry.get('id')))
+            entry = {**entry, **{k: v for k, v in catalog.get(entry.get('id'), {}).items() if k not in ['poster', 'video', 'project', 'master']}}
+            seen.add(entry.get('id'))
+            readiness = entry.get('readiness', 'available')
+            if readiness not in ['available', 'local-build-only', 'awaiting-permission']:
+                raise ValueError('Invalid example readiness')
+            if readiness != 'available' and entry.get('id') not in allow_unlisted_media:
+                manifest.append({k: v for k, v in entry.items() if k not in ['poster', 'video', 'project', 'master']} | {'poster': ''})
+                continue
+            # Explicit owner override is a publication decision, not a licence grant.
+            entry['readiness'] = 'available'
             for key in ['id', 'title', 'author', 'source_url', 'licence', 'credit', 'video', 'project']:
                 if not isinstance(entry.get(key), str) or not entry[key]:
                     raise ValueError('Example is missing required attribution or assets: ' + key)
-            e = {key: entry[key] for key in ['id', 'title', 'author', 'source_url', 'licence', 'credit']}
+            e = {key: value for key, value in entry.items() if key not in ['poster', 'video', 'project', 'master']}
+            e.setdefault('category', 'Demo' if entry['id'] in ['synthetic', 'demo'] else 'Short film')
+            e.setdefault('duration', entry.get('duration_s', 0))
+            e.setdefault('sourceRepo', entry['source_url'].split('/tree/')[0])
+            e.setdefault('sourcePath', 'examples/' + entry['source_url'].split('/examples/', 1)[1] if '/examples/' in entry['source_url'] else '')
+            e.setdefault('provenance', {'source_url': entry['source_url']})
+            e.setdefault('credits', [entry['credit']])
             for key in ['poster', 'video', 'project']:
                 e[key] = copy_asset(entry[key]) if entry.get(key) else ''
             manifest.append(e)
+    existing = {e['id'] for e in manifest}
+    manifest.extend(e for id_, e in catalog.items() if id_ not in existing)
+    manifest.sort(key=lambda e: not e.get('featured', False))
     (target / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data:; media-src 'self' blob: data:; worker-src 'self' blob: data:; connect-src 'self' blob: http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
     config = {'cleanUrls': True, 'headers': [
@@ -114,5 +159,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, default=ROOT / 'site')
     parser.add_argument('--examples', type=Path, default=default_examples())
+    parser.add_argument('--allow-unlisted-media', action='append', default=[], choices=['fframes-intro'], help='Owner opt-in after obtaining permission; never a licence grant')
     args = parser.parse_args()
-    build(args.out, args.examples)
+    build(args.out, args.examples, args.allow_unlisted_media)

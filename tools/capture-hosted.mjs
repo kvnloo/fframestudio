@@ -20,7 +20,12 @@ try {
     const capture=async name=>{await page.screenshot({path:path.join(out,`${name}-${width}x${height}.png`)});evidence.push({file:`${name}-${width}x${height}.png`,width,height});};
     await capture('empty');
     await page.locator('#examples-shelf').scrollIntoViewIfNeeded();await page.waitForSelector('[data-open-example="neon-triangle"]');
-    await page.locator('.example-card img').evaluateAll(images=>Promise.all(images.map(i=>i.decode())));
+    await page.locator('.example-card img').evaluateAll(images=>Promise.all(images.map(i=>{i.loading='eager';return i.decode();})));
+    const feature=page.locator('[data-example="fframes-intro"]');
+    await feature.evaluate(el=>window.scrollTo({top:scrollY+el.getBoundingClientRect().top-64,behavior:'instant'}));
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    assert.ok(await feature.evaluate(el=>el.getBoundingClientRect().top>=52));
+    assert.equal(await feature.locator('img').count(),0,'public intro must not redistribute a derived poster');
     await capture('examples');
     assert.ok(await page.locator('.example-card').first().innerText().then(t=>t.includes('Dmitriy Kovalenko')&&t.includes('MIT')));
     await page.click('[data-open-example="neon-triangle"]');await page.waitForFunction(()=>window.ffs?.interactiveAt&&!window.ffs.loading);
