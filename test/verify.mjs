@@ -14,6 +14,7 @@ import { chromium } from 'playwright';
 import { createHash } from 'node:crypto';
 import { verifyHosted } from './hosted-journey.mjs';
 import { makeLayoutFixture, verifyLayout } from './layout-journey.mjs';
+import { verifyStyleComponents } from './style-components-journey.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const argv = process.argv.slice(2);
@@ -590,6 +591,7 @@ try {
     assert(lib <= 391 && proj <= 391, `scrollWidth library ${lib}, project ${proj}`); return { library: lib, project: proj };
   });
   await journey('layout: fits and adapts across sizes', () => verifyLayout({browser, context:ctx, base, out:OUT, assert}));
+  await journey('style components: lab preview equals runtime', () => verifyStyleComponents({context:ctx,base,out:OUT,root:ROOT,assert}));
   await verifyHosted({browser,source,out:OUT,root:ROOT,journey,assert});
   await journey('console clean', async () => { assert(!report.console_errors.length && !report.failed_requests.length, JSON.stringify({ e: report.console_errors, r: report.failed_requests })); });
 } catch (e) {

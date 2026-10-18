@@ -1,28 +1,39 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FrameStudio · Video Style Components</title>
-<style>
-:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#101218;color:#f2f3f5}
-*{box-sizing:border-box}body{margin:0;padding:clamp(12px,3vw,40px)}
-main{max-width:1100px;margin:auto;display:grid;gap:16px}h1{font-size:1.5rem;margin:0}p{color:#acb6c6;line-height:1.45}
-.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:end}label{display:grid;gap:6px;font-size:.78rem;color:#bbc5d4}
-select,input,button{background:#222736;border:1px solid #3a465b;color:inherit;padding:10px;border-radius:8px;font:inherit}
-input[type=range]{flex:1;min-width:220px;accent-color:#83d5a4}input[type=text]{width:min(310px,80vw)}
-button{cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #83d5a4}
-#stage{position:relative;aspect-ratio:16/9;width:100%;overflow:hidden;background:#101218;border:1px solid #3c4655;border-radius:16px}
-.layer{position:absolute;transform-origin:left center;white-space:nowrap;will-change:transform,opacity}
-.role-title,.role-hero{font-size:clamp(1.1rem,5vw,5rem);font-weight:800;letter-spacing:-.06em}
-.role-eyebrow{font-size:clamp(.65rem,1.5vw,1.25rem);letter-spacing:.22em;color:#89d6aa;font-weight:700}
-.role-ui-control{font-weight:650;font-size:clamp(.7rem,2.6vw,2rem);padding:.7em 1em;border-radius:14px;background:#65d8a6;color:#15291c}
-.role-confirmation{font-weight:700;font-size:clamp(.85rem,3vw,2.3rem);padding:.7em 1em;border-radius:14px;background:#273f36;border:1px solid #83d5a4}
-.meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}output{color:#99e3b8}footer{color:#9aa8bb;font-size:.85rem}
-</style>
-</head><body><main>
-<h1>Video Style Components</h1>
-<p>Deterministic component laboratory. Preview frames, edit text, then export an editable recipe. This is not yet a video renderer.</p>
-<div class="controls"><label>Component<select id="component"></select></label><label>Primary text<input id="primary" type="text" maxlength="512"></label><label>Secondary text<input id="secondary" type="text" maxlength="512"></label></div>
-<div id="stage" aria-label="Selected motion component preview"></div>
-<div class="meta"><button id="play">Play</button><input id="frame" type="range" min="0" max="89" value="0" aria-label="Scrub frame"><output id="position">0</output><button id="export">Export recipe JSON</button></div>
-<footer id="message" role="status">Use the scrubber to inspect any exact frame.</footer>
-<script type="module" src="/app/labs/video-styles.js"></script>
-</main></body></html>
+<title>Component Lab · fframestudio</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/app/labs/video-styles.css">
+</head><body>
+<header><a href="/" class="wordmark">◉ fframestudio</a><span class="crumb">/ &nbsp; COMPONENT LAB</span><span class="edition">MOTION STUDIES &nbsp; / &nbsp; VOL. 01</span></header>
+<main>
+<section class="intro"><div><div class="cap">THE MOTION DEPARTMENT</div><h1>Make your next <em>move.</em></h1></div><p>Three small mechanisms. Endless new takes.<br> Editable, seekable recipes — not rendered video.</p></section>
+<div class="catalog" role="group" aria-label="Choose a motion component">
+<button data-component="headline-reveal" class="component-card"><span class="card-num">01 / TYPOGRAPHY</span><strong>A bold entrance<span class="card-art">Aa<span>↗</span></span></strong><span>Headline reveal <span aria-hidden="true">↗</span></span></button>
+<button data-component="foreground-fly-through" class="component-card"><span class="card-num">02 / TRANSITION</span><strong>Through the frame<span class="card-art">◎</span></strong><span>Foreground fly-through <span aria-hidden="true">↗</span></span></button>
+<button data-component="ui-action-result" class="component-card"><span class="card-num">03 / PRODUCT UI</span><strong>Show the payoff<span class="card-art">↳ ✓</span></strong><span>Action → visible result <span aria-hidden="true">↗</span></span></button>
+</div>
+<section class="workbench" aria-label="Component workbench">
+<aside class="inspector"><div class="section-label"><span>DIRECT THE TAKE</span><span>↙</span></div>
+<label>Component<select id="component"></select></label>
+<div class="take-switch" role="group" aria-label="Edit variant"><button data-take="a" aria-pressed="true">Take A</button><button data-take="b" aria-pressed="false">Take B</button></div>
+<label><span id="primary-label">Headline</span><input id="primary" type="text" maxlength="120"></label>
+<label><span id="secondary-label">Supporting line</span><input id="secondary" type="text" maxlength="120"></label>
+<div class="colors"><label>Canvas<input id="background" type="color" aria-label="Background color"></label><label>Ink<input id="foreground" type="color" aria-label="Text color"></label><label>Accent<input id="accent" type="color" aria-label="Accent color"></label></div>
+<div class="pair"><label>Duration · frames<input id="duration" type="number" min="2" max="36000" step="1"></label><label>Motion scale<input id="motion" type="number" min="0.5" max="1.5" step="0.05"></label></div>
+<div class="pair"><label>FPS · numerator<input id="fps-num" type="number" min="1" max="1000000" step="1"></label><label>Denominator<input id="fps-den" type="number" min="1" max="1000000" step="1"></label></div>
+</aside>
+<div class="screening"><div class="screen-toolbar"><div class="cap">SCREENING ROOM <span class="live-dot">●</span></div><div class="screen-options"><label class="checkbox"><input id="compare" type="checkbox" checked> Compare</label><label class="checkbox"><input id="guides" type="checkbox" checked> Safe areas</label><select id="aspect" aria-label="Aspect ratio"><option>16:9</option><option>9:16</option><option>1:1</option></select></div></div>
+<div class="previews" id="previews">
+<figure><figcaption><span>TAKE A <span class="take-tag">ORIGINAL</span></span><output id="sample-a"></output></figcaption><div class="screen-mat"><div id="stage-a" class="stage" role="img" aria-label="Take A motion preview"></div></div></figure>
+<figure id="figure-b"><figcaption><span>TAKE B <span class="take-tag">REMIX</span></span><output id="sample-b"></output></figcaption><div class="screen-mat"><div id="stage-b" class="stage" role="img" aria-label="Take B motion preview"></div></div></figure>
+</div>
+<div class="transport"><button id="play" aria-label="Play motion preview">▶ Play</button><label class="scrubber">FRAME<input id="frame" type="range" min="0" max="89" value="30" aria-label="Scrub frame"></label><output id="position">30 / 89</output></div>
+<div class="notes"><span id="description"></span><span class="cap">DOM / 2D ONLY</span></div>
+<div class="exports"><button id="copy-instance">Copy instance JSON</button><button id="copy-definition">Copy definition JSON</button><button id="export">Download recipe ↓</button><button id="json-toggle" aria-expanded="false" aria-controls="json-panel">Import / inspect JSON</button></div>
+<div id="json-panel" hidden><label>Portable JSON · active take<textarea id="json" spellcheck="false" aria-label="Recipe JSON"></textarea></label><button id="import">Import recipe into active take</button></div>
+<p id="message" role="status">Scrub in any order. The same frame always returns the same values.</p>
+</div>
+</section>
+<footer><span>SIDECAR RECIPES <span aria-hidden="true">✳</span> Your story lane stays untouched.</span><span>Motion-grammar ideas: <a href="https://github.com/echris6/motion-video-kit" target="_blank" rel="noopener noreferrer">echris6 / motion-video-kit (MIT)</a>. Original code. No renderer or audio playback.</span></footer>
+</main><script type="module" src="/app/labs/video-styles.js"></script>
+</body></html>
