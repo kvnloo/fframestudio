@@ -42,7 +42,17 @@ export async function verifyProcedural({page, base, library, out, assert, real =
         await page.waitForFunction(()=>document.querySelector('#preview-video').readyState>=2);
         assert(await page.$eval('#preview-video',v=>v.videoWidth>0),'real render not decoded');
       }
+      if (!p.render_verified) assert(await page.locator('.source-no-render').isVisible(),'metadata-only canvas implies a rendered preview');
+      await page.locator('#source-pane').evaluate(n=>n.scrollTop=0);
       await page.screenshot({path:path.join(out,`${real?'real':'synthetic'}-${id}-source.png`)});
+      if (id === 'ff-unmute') {
+        await panel.locator('[data-source-event="kick"]').first().scrollIntoViewIfNeeded();
+        await page.screenshot({path:path.join(out,`${real?'real':'synthetic'}-${id}-events.png`)});
+        await panel.getByText(/^Camera values ·/).click();
+        await panel.locator('.source-camera').first().locator('summary').click();
+        await panel.locator('.source-camera').first().scrollIntoViewIfNeeded();
+        await page.screenshot({path:path.join(out,`${real?'real':'synthetic'}-${id}-camera.png`)});
+      }
       await page.click('[data-slate-tab="shot"]');
       assert(await page.locator('.procedural-selected').isVisible(),'selected source inspector missing');
       await page.screenshot({path:path.join(out,`${real?'real':'synthetic'}-${id}-shot.png`)});

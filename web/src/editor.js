@@ -224,6 +224,13 @@ export class Editor {
     .join('')}</div>${button('reset-settings', 'Reset workspace')}</dialog>`;
     this.studio = new StudioView(this);
     this.studio.mount();
+    if (this.doc.metadata?.procedural && !this.doc.metadata.procedural.render_verified) {
+      const notice = document.createElement('div');
+      notice.className = 'source-no-render';
+      notice.innerHTML = '<span class="cap">Source metadata only</span><strong>No rendered preview</strong><p>Inspect source scenes, camera and events in the slate.<br>A compatible source renderer must produce the film separately.</p>';
+      $('#canvas').append(notice);
+      $('.preview-label').textContent = 'Metadata-only import · no verified video or playable proxy';
+    }
     $('#recovery').oncancel = (e) => e.preventDefault();
     this.assistant?.($('#assistant-slot', this.root));
     this.root.onclick = (e) => {

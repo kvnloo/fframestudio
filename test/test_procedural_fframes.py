@@ -123,6 +123,38 @@ pub const CLAPS: [f32; 1] = [8.5];''')
         self.assertEqual(found["bpm"], 120)
         self.assertEqual(found["camera_keyframes"][-1]["frame"], 480)
 
+    def test_rendered_synthetic_import_generates_real_proxy_and_preserves_sources(self):
+        import hashlib
+        import json
+        import os
+        import shutil
+        import subprocess
+        from procedural_fixture import make
+        if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+            self.skipTest("FFmpeg/ffprobe required for synthetic media import")
+        sources = make(self.root)
+        for s in sources:
+            duration = 6 if s["id"] == "ff-tracking" else 16
+            render = Path(s["path"]) / "synthetic.mp4"
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=c=navy:s=96x54:r=30", "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000", "-t", str(duration), "-c:v", "libx264", "-threads", "2", "-pix_fmt", "yuv420p", "-c:a", "aac", str(render)], check=True, capture_output=True)
+            s.update(render="synthetic.mp4", source_only=False)
+        library = self.root / "rendered-library"
+        config = self.root / "rendered-sources.json"
+        config.write_text(json.dumps(dict(library_root=str(library), sources=sources)))
+        before = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in (self.root / "source-fixtures").rglob("*") if p.is_file()}
+        subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / "tools/import_projects.py")], env=os.environ | {"FFS_SOURCES": str(config)}, capture_output=True, check=True)
+        for s in sources:
+            project = json.loads((library / s["id"] / "project.json").read_text())
+            proxy = library / s["id"] / project["media"]["proxy"]
+            self.assertTrue(project["procedural"]["render_verified"])
+            info = json.loads(subprocess.check_output(["ffprobe", "-v", "error", "-count_frames", "-show_streams", "-of", "json", str(proxy)]))
+            video = next(x for x in info["streams"] if x["codec_type"] == "video")
+            self.assertEqual(int(video["nb_read_frames"]), 180 if s["id"] == "ff-tracking" else 480)
+            self.assertEqual(video["r_frame_rate"], "30/1")
+            self.assertTrue(any(x["codec_type"] == "audio" for x in info["streams"]))
+            self.assertTrue((library / s["id"] / project["media"]["poster"]).is_file())
+        self.assertTrue(all(hashlib.sha256(Path(p).read_bytes()).hexdigest() == digest for p, digest in before.items()))
+
     def test_actual_importer_source_only_and_saved_project_guard(self):
         import json
         import os
