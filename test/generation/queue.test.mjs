@@ -101,6 +101,17 @@ test('restart recovers running and queued jobs as interrupted, no automatic expe
     assert.equal(JSON.parse(await fs.readFile(path.join(root, '.generation/jobs', id + '.json'))).state, 'failed');
   }
 });
+test('concurrent submissions reserve bounded queue capacity before async probes', async t => {
+  const provider = { capability: { ...LTX, id: 'fake' },
+    async probe() { await new Promise(r => setTimeout(r, 10)); return { available: true }; },
+    async generate(settings, { signal }) { if (signal.aborted) throw Error('cancelled'); await new Promise(resolve => signal.addEventListener('abort', resolve, { once: true })); throw Error('cancelled'); } };
+  const { q } = await world(t, { providers: [provider] });
+  const attempts = await Promise.allSettled(Array.from({ length: 40 }, (_, seed) => q.submit(settings({ seed }))));
+  assert.equal(attempts.filter(a => a.status === 'fulfilled').length, 32);
+  assert.equal(attempts.filter(a => a.status === 'rejected' && a.reason.message === 'queue-full').length, 8);
+  assert.equal(q.list().length, 32);
+  await q.close();
+});
 test('provider exception credentials never enter events or journal', async t => {
   const secret = 'planted-test-key-' + crypto.randomUUID();
   const provider = { capability: { ...LTX, id: 'fake' }, async probe() { return { available: true }; }, async generate() { throw Error('Upstream returned key=' + secret); } };

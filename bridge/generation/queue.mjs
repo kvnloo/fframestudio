@@ -11,6 +11,7 @@ const need = (value, message) => { if (!value) throw Error(message); };
 export async function safePath(root, relative, { create = false } = {}) {
   need(typeof relative === 'string' && relative && !path.isAbsolute(relative) && !relative.includes('\\') && !relative.split('/').some(p => !p || p === '.' || p === '..'), 'unsafe-path');
   const realRoot = await fs.realpath(root);
+  need(realRoot === path.resolve(root), 'unsafe-path');
   let current = realRoot;
   const parts = relative.split('/');
   for (let i = 0; i < parts.length; i++) {
@@ -58,10 +59,11 @@ export async function validateMedia(file, settings, signal) {
 export class GenerationQueue {
   constructor({ root, providers, publish = () => {} }) {
     this.root = root; this.providers = new Map(providers.map(p => [p.capability.id, p]));
-    this.publish = publish; this.jobs = new Map(); this.active = null; this.closed = false;
+    this.publish = publish; this.jobs = new Map(); this.cancelling = new Set(); this.submitting = 0; this.active = null; this.closed = false;
     this.ready = this.recover();
   }
   async recover() {
+    this.root = await fs.realpath(this.root);
     const marker = await safePath(this.root, '.generation/jobs/.marker', { create: true });
     this.stateDir = path.dirname(marker);
     for (const name of await fs.readdir(this.stateDir)) {
@@ -93,19 +95,22 @@ export class GenerationQueue {
     const settings = settingsFor(input, provider.capability);
     await safePath(this.root, `projects/${settings.projectId}/project.json`);
     const st = await fs.stat(await safePath(this.root, `projects/${settings.projectId}/project.json`)); need(st.isFile(), 'unknown-project');
-    need([...this.jobs.values()].filter(j => !terminal.has(j.state)).length < 32, 'queue-full');
+    need([...this.jobs.values()].filter(j => !terminal.has(j.state)).length + this.submitting < 32, 'queue-full');
+    this.submitting++;
+    try {
     const status = await provider.probe(); need(status.available, 'provider-unavailable');
     const now = new Date().toISOString();
     const j = { schema: 'fframestudio.generation-job/1', id: randomUUID(), providerId: provider.capability.id, projectId: settings.projectId,
       settings, model: provider.capability.model, version: provider.capability.version, weightRevision: provider.capability.weightRevision || null, inference: structuredClone(provider.capability.inference || {}), licence: structuredClone(provider.capability.licence), cost: structuredClone(provider.capability.cost),
       state: 'queued', progress: 0, retryOf, createdAt: now, updatedAt: now, error: null, result: null };
     await this.persist(j); this.kick(); return structuredClone(j);
+    } finally { this.submitting--; }
   }
-  kick() { if (!this.pumping && !this.closed) { this.pumping = this.pump().finally(() => { this.pumping = null; if (!this.closed && [...this.jobs.values()].some(j => j.state === 'queued')) this.kick(); }); } }
+  kick() { if (!this.pumping && !this.closed) { this.pumping = this.pump().finally(() => { this.pumping = null; if (!this.closed && [...this.jobs.values()].some(j => j.state === 'queued' && !this.cancelling.has(j.id))) this.kick(); }); } }
   async pump() {
     for (;;) {
       if (this.closed) return;
-      const next = [...this.jobs.values()].find(j => j.state === 'queued'); if (!next) return;
+      const next = [...this.jobs.values()].find(j => j.state === 'queued' && !this.cancelling.has(j.id)); if (!next) return;
       const j = structuredClone(next);
       const controller = new AbortController(); let finish;
       this.active = { id: j.id, controller, done: new Promise(resolve => { finish = resolve; }) };
@@ -141,7 +146,11 @@ export class GenerationQueue {
     await this.ready; const j = structuredClone(this.jobs.get(id)); need(j, 'unknown-job');
     if (terminal.has(j.state)) return structuredClone(j);
     if (this.active?.id === id) { const active = this.active; active.controller.abort(); await active.done; }
-    else { j.state = 'cancelled'; j.updatedAt = new Date().toISOString(); await this.persist(j); }
+    else {
+      this.cancelling.add(id);
+      try { j.state = 'cancelled'; j.updatedAt = new Date().toISOString(); await this.persist(j); }
+      finally { this.cancelling.delete(id); }
+    }
     return structuredClone(this.jobs.get(id));
   }
   async retry(id) { await this.ready; const j = this.jobs.get(id); need(j && ['failed', 'cancelled'].includes(j.state), 'not-retryable'); return this.submit(j.settings, id); }
