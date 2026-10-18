@@ -59,7 +59,8 @@ def main():
     pipe.enable_model_cpu_offload()
     pipe.vae.enable_tiling()
     emit(0.15)
-    timesteps = [1000, 993, 987, 981, 975, 909, 725, 0.03]
+    inference = request["inference"]
+    timesteps = inference["timesteps"]
     count = max(9, round((request["duration"] * request["fps"] - 1) / 8) * 8 + 1)
 
     def progress(pipeline, step, timestep, values):
@@ -69,8 +70,9 @@ def main():
     frames = pipe(
         prompt_embeds=prompt_embeds, prompt_attention_mask=mask,
         width=request["width"], height=request["height"], num_frames=count,
-        timesteps=timesteps, guidance_scale=1.0, decode_timestep=0.05,
-        decode_noise_scale=0.025,
+        timesteps=timesteps, guidance_scale=inference["guidanceScale"],
+        decode_timestep=inference["decodeTimestep"],
+        decode_noise_scale=inference["decodeNoiseScale"],
         generator=torch.Generator(device="cpu").manual_seed(request["seed"]),
         callback_on_step_end=progress, output_type="pil",
     ).frames[0]
@@ -94,7 +96,12 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        if "--probe" in sys.argv:
+            import torch
+            from diffusers import LTXPipeline
+            print(json.dumps({"available": torch.cuda.is_available(), "runtime": "diffusers", "torch": torch.__version__}))
+        else:
+            main()
     except Exception:
         # Diffusion libraries can include environment data and paths in errors.
         # Never serialize tracebacks or raw exceptions into jobs/SSE/logs.

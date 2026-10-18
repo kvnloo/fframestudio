@@ -81,6 +81,7 @@ export class GenerationQueue {
     return Promise.all([...this.providers.values()].map(async p => ({ ...structuredClone(p.capability), ...await p.probe() })));
   }
   async persist(j) {
+    j.sequence = (j.sequence || 0) + 1;
     const file = await safePath(this.root, '.generation/jobs/' + j.id + '.json');
     await atomicJSON(file, j);
     this.jobs.set(j.id, structuredClone(j));
@@ -96,7 +97,7 @@ export class GenerationQueue {
     const status = await provider.probe(); need(status.available, 'provider-unavailable');
     const now = new Date().toISOString();
     const j = { schema: 'fframestudio.generation-job/1', id: randomUUID(), providerId: provider.capability.id, projectId: settings.projectId,
-      settings, model: provider.capability.model, version: provider.capability.version, licence: structuredClone(provider.capability.licence), cost: structuredClone(provider.capability.cost),
+      settings, model: provider.capability.model, version: provider.capability.version, weightRevision: provider.capability.weightRevision || null, inference: structuredClone(provider.capability.inference || {}), licence: structuredClone(provider.capability.licence), cost: structuredClone(provider.capability.cost),
       state: 'queued', progress: 0, retryOf, createdAt: now, updatedAt: now, error: null, result: null };
     await this.persist(j); this.kick(); return structuredClone(j);
   }
@@ -123,7 +124,7 @@ export class GenerationQueue {
         await safePath(this.root, rel + '/result.mp4');
         const media = await validateMedia(output, j.settings, controller.signal);
         const sidecar = { schema: 'fframestudio.generation/1', jobId: j.id, prompt: j.settings.prompt, seed: j.settings.seed,
-          model: j.model, version: j.version, settings: j.settings, licence: j.licence, cost: j.cost, media, generatedAt: new Date().toISOString(), machineGenerated: true };
+          model: j.model, version: j.version, weightRevision: j.weightRevision, settings: { ...j.settings, inference: j.inference }, licence: j.licence, cost: j.cost, media, generatedAt: new Date().toISOString(), machineGenerated: true };
         await atomicJSON(await safePath(this.root, rel + '/result.json'), sidecar);
         if (controller.signal.aborted) throw Error('cancelled');
         j.result = { file: `media/generated/${j.id}/result.mp4`, sidecar: `media/generated/${j.id}/result.json`, media, provenance: sidecar };

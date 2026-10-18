@@ -13,8 +13,9 @@ export const LICENCE = Object.freeze({
 });
 export const LTX = Object.freeze({
   schema: 'fframestudio.generation-provider/1', id: 'local-ltx', name: 'LTX Video 2B distilled · local',
-  model: 'Lightricks/LTX-Video', version: 'ltxv-2b-0.9.6-distilled',
+  model: 'Lightricks/LTX-Video', version: 'ltxv-2b-0.9.6-distilled', weightRevision: '8984fa25007f376c1a299016d0957a37a2f797bb',
   modes: ['t2v'], maxDuration: 5, resolutions: [[704, 480], [480, 704], [480, 480]], fps: [24],
+  inference: { preset: 'bf16-cpu-offload-vae-tiling', dtype: 'bfloat16', textEncoderDevice: 'cpu', timesteps: [1000, 993, 987, 981, 975, 909, 725, 0.03], guidanceScale: 1, decodeTimestep: 0.05, decodeNoiseScale: 0.025 },
   vram: { minimumFreeMiB: 9216, measuredPeakMiB: null, preset: 'bf16-cpu-offload-vae-tiling' },
   cost: { kind: 'local', amount: 0, currency: 'USD', note: 'No API fee; hardware/electricity and licence conditions apply.' },
   licence: LICENCE,
@@ -66,26 +67,31 @@ export function providers({ python = process.env.FFS_GEN_PYTHON, modelDir = proc
     capability: LTX,
     async probe() {
       const gpu = await gpuProbe();
-      const installed = !!python && fs.existsSync(python) && !!modelDir && fs.existsSync(path.join(modelDir, 'ltxv-2b-0.9.6-distilled-04-25.safetensors')) && fs.existsSync(path.join(modelDir, 'base/model_index.json'));
-      const available = installed && !!gpu && gpu.freeMiB >= LTX.vram.minimumFreeMiB;
-      return { available, gpu, reason: available ? null : !installed ? 'Local inference unavailable: install the worker and model outside the repository.' : !gpu ? 'Local inference unavailable: NVIDIA GPU not detected.' : 'Local inference unavailable: wait for at least 9 GiB free VRAM.', qualification: 'experimental-unmeasured' };
+      let manifest;
+      try { manifest = JSON.parse(fs.readFileSync(path.join(modelDir || '', 'model.json'), 'utf8')); } catch {}
+      const installed = manifest?.revision === LTX.weightRevision && !!python && fs.existsSync(python) && !!modelDir && fs.existsSync(path.join(modelDir, 'ltxv-2b-0.9.6-distilled-04-25.safetensors')) && fs.existsSync(path.join(modelDir, 'base/model_index.json'));
+      let runtime = false;
+      if (installed) { try { const raw = await runProcess(python, [path.join(here, 'ltx_worker.py'), '--probe'], { timeout: 15000,
+        env: { PATH: process.env.PATH, HOME: process.env.HOME, HF_HUB_OFFLINE: '1', CUDA_VISIBLE_DEVICES: '0' } }); runtime = JSON.parse(raw).available === true; } catch {} }
+      const available = installed && runtime && !!gpu && gpu.freeMiB >= LTX.vram.minimumFreeMiB;
+      return { available, gpu, reason: available ? null : !installed ? 'Local inference unavailable: install the worker and model outside the repository.' : !runtime ? 'Local inference unavailable: worker runtime is not ready.' : !gpu ? 'Local inference unavailable: NVIDIA GPU not detected.' : 'Local inference unavailable: wait for at least 9 GiB free VRAM.', qualification: 'experimental-unmeasured' };
     },
     async generate(settings, context) {
       const status = await this.probe();
       if (!status.available) throw Error('unavailable');
       return runProcess(python, [path.join(here, 'ltx_worker.py')], {
-        signal: context.signal, input: { ...settings, output: context.output, modelDir, parentPid: process.pid },
+        signal: context.signal, input: { ...settings, inference: this.capability.inference, output: context.output, modelDir, parentPid: process.pid },
         env: { PATH: process.env.PATH, HOME: process.env.HOME, HF_HUB_OFFLINE: '1', TOKENIZERS_PARALLELISM: 'false', CUDA_VISIBLE_DEVICES: '0' },
         onLine: line => { try { const p = JSON.parse(line); if (p.type === 'progress') context.progress(p.progress); } catch {} },
       });
     },
   }, {
-    capability: { ...LTX, id: 'hosted-experimental', name: 'Hosted experimental · disabled', model: 'unverified', version: 'none', cost: { kind: 'unknown', amount: null, currency: 'USD', note: 'No verifiably free text-to-video API qualified.' }, vram: { minimumFreeMiB: 0, measuredPeakMiB: null }, licence: { name: 'Unverified — disabled', url: 'https://portal.nousresearch.com/' } },
+    capability: { ...LTX, id: 'hosted-experimental', name: 'Hosted experimental · disabled', model: 'unverified', version: 'none', weightRevision: null, inference: null, cost: { kind: 'unknown', amount: null, currency: 'USD', note: 'No verifiably free text-to-video API qualified.' }, vram: { minimumFreeMiB: 0, measuredPeakMiB: null }, licence: { name: 'Unverified — disabled', url: 'https://portal.nousresearch.com/' } },
     async probe() { return { available: false, reason: 'Disabled: no free video endpoint, licence and current limits verified. No network requests are made.' }; },
     async generate() { throw Error('unavailable'); },
   }];
   if (fake) list.unshift({
-    capability: { ...LTX, id: 'fake', name: 'Test pattern · fake provider (not AI)', model: 'ffmpeg-testsrc2', version: '1', vram: { minimumFreeMiB: 0, measuredPeakMiB: 0 }, licence: { name: 'Synthetic test pattern', url: 'https://ffmpeg.org/' } },
+    capability: { ...LTX, id: 'fake', name: 'Test pattern · fake provider (not AI)', model: 'ffmpeg-testsrc2', version: '1', weightRevision: null, inference: { preset: 'ffmpeg-testsrc2' }, vram: { minimumFreeMiB: 0, measuredPeakMiB: 0 }, licence: { name: 'Synthetic test pattern', url: 'https://ffmpeg.org/' } },
     async probe() { return { available: true, reason: null, qualification: 'test-only' }; },
     async generate(settings, context) {
       return runProcess(process.execPath, [path.join(here, 'fake-worker.mjs')], { signal: context.signal,
