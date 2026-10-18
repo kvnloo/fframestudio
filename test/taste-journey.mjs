@@ -63,5 +63,21 @@ export async function verifyTaste({page,root,out,assert,prefix='taste'}) {
   assert(await page.evaluate(async()=>{
     const {fileAdapter}=await import('/app/src/taste/adapters.js');return (await fileAdapter().getProfile()).state;
   })==='disconnected','deleted profile reappeared');
-  return {imported:true,profilePersisted:true,optIn:true,diff:true,previewPure:true,receiptPersisted:true,undo:true,deleted:true,reloadDeleted:true,viewports:[[1896,880],[390,780]]};
+  // Selecting a curated social reference file never uploads by itself.
+  let networkImports = 0;
+  const onRequest = request => { if (request.url().includes('/taste/import/collection')) networkImports++; };
+  page.on('request', onRequest);
+  await page.locator('#taste-source').selectOption('agentweb');
+  await page.waitForSelector('#taste-social-file');
+  await page.locator('#taste-social-file').setInputFiles(path.join(root, 'test/fixtures/taste/social-pinterest.json'));
+  await page.waitForFunction(() => document.querySelector('#taste-social-preview')?.textContent.includes('1 selected pinterest'));
+  assert(await page.locator('#taste-social-submit').isDisabled(), 'upload enabled without consent');
+  assert(networkImports === 0, 'import sent without approval');
+  await page.locator('#taste-social-consent').check();
+  assert(await page.locator('#taste-social-submit').isEnabled(), 'approved import unavailable');
+  assert(networkImports === 0, 'checkbox alone sent an import');
+  await page.locator('#taste-source').selectOption('file');
+  assert(await page.locator('#taste-social-file').count() === 0, 'social selection remained after disconnect');
+  page.off('request', onRequest);
+  return {socialConsentGate:true,imported:true,profilePersisted:true,optIn:true,diff:true,previewPure:true,receiptPersisted:true,undo:true,deleted:true,reloadDeleted:true,viewports:[[1896,880],[390,780]]};
 }
