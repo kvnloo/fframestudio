@@ -135,3 +135,31 @@ dependencies and does not commit a personal TASTE.md or derived profile.
 Left: **C** real X/AgentWeb source import and remote deletion/tenant qualification;
 **D** official Pinterest/YouTube capability work; **E** voice and durable feedback;
 **F** opt-in blind preference evaluation. These are not simulated as working APIs.
+
+## Selected social references (issue #11, first C/D slice)
+
+This is **explicit, curated collection submission**, not OAuth account crawling or native export parsing. The original aggregate-profile JSON import remains browser-local; **a separate input** appears only after choosing *AgentWeb · bridge, opt-in*. The social upload accepts a small user-reviewed list of reference links. The user must check a separate consent box and click **Teach AgentWeb from selection** before anything crosses the bridge.
+
+Example `selected-references.json` (fictional IDs):
+
+```json
+{
+  "schema": "fframestudio.social-references/1",
+  "provider": "youtube",
+  "collectionId": "motion-inspiration",
+  "items": [
+    {"url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "title": "Kinetic video reference", "tags": ["motion", "typography"]}
+  ]
+}
+```
+
+Supported provider labels: `youtube` (individual videos/Shorts, **not** playlists), `pinterest` (user-selected pin/board links), `x` (selected public post URLs; authorized bookmarks still use AgentWeb's existing X connector) and `collection` (other public HTTPS reference links). It does not accept full platform exports automatically. Select the subset yourself, rather than assuming a saved/liked post is accessible.
+
+Contract:
+- 64 KiB input maximum, at most 50 selected entries; names and tags bounded. Only URL, title, creator and tags are accepted, not full post text, social cookies, OAuth tokens or arbitrary nested fields.
+- Reference URLs are **never fetched** by FrameStudio or the generic AgentWeb collection importer. YouTube IDs are canonicalized; tracking query parameters and fragments are discarded. Provider-host allowlists apply to X/Pinterest/YouTube. Duplicate selected URLs are collapsed.
+- The local bridge requires its existing authenticated token and allowed Origin; `POST /taste/import/collection` also validates the request independently. A bridge explicitly configured with `--enable-agentweb-taste` forwards sanitized items with its **server-only** AgentWeb token via HTTPS to `POST /api/taste/import/collection`.
+- The import response is **not** passed through to the browser. The bridge re-reads the existing safe `GET /api/taste/profile` projection, discarding free-form terms/domains before delivery. Disabled/unavailable service states are shown as such; raw inputs aren't cached in IndexedDB or copied into a film.
+- Once explicitly submitted, AgentWeb retains the resulting **aggregate Taste snapshot** until the user deletes it through the AgentWeb service; clearing the FrameStudio local file profile is not remote deletion. Profile acquisition still supplies no measured palette/camera/font evidence; visual dials remain unknown until the planned visual importer (#62) is implemented and qualified.
+
+This is intentionally narrower than the future direct Pinterest/YouTube OAuth integrations. Never claim a native platform connector exists from this work. Tests: `node --test test/doc/taste-social.test.mjs` and `node test/acp-e2e.mjs` (no live service or credentials required).

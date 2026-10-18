@@ -1,6 +1,7 @@
 import { KEYS, previewTaste, tasteReceipt } from './profile.js';
 import { fileAdapter, bridgeAdapter } from './adapters.js';
 import { request } from '../host.js';
+import { parseSocialReferences, MAX_SOCIAL_REFERENCES_BYTES } from './social-references.js';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]);
 const labels = { palette:'Palette', typography:'Typography', framing:'Framing', motion:'Motion', pacing:'Cuts / pacing', transition:'Transition style', density:'Density', soundtrack:'Soundtrack mood' };
@@ -16,6 +17,7 @@ export class TasteInspector {
     this.e = editor; this.pane = pane;
     this.file = fileAdapter(); this.source = 'file'; this.result = { state:'disconnected' };
     this.on = false; this.strength = 65; this.enabled = [...KEYS]; this.scope = 'task';
+    this.socialCollection = null; this.socialStatus = '';
     this.render();
     this.load();
   }
@@ -31,19 +33,25 @@ export class TasteInspector {
     const p = this.result.profile;
     this.pane.innerHTML = `<div class="slate-heading"><span class="cap">A creative prior · not a rule</span><h2>My <em>Taste.</em></h2><p>Your direction, with the evidence visible.</p></div>
       <div class="taste-source"><label>Profile source<select id="taste-source"><option value="file">File · browser-local</option><option value="agentweb">AgentWeb · bridge, opt-in</option></select></label>
-      <label class="taste-import">Import aggregate JSON<input id="taste-file" type="file" accept="application/json,.json"></label>
+      ${this.source === 'file' ? `<label class="taste-import">Import aggregate JSON<input id="taste-file" type="file" accept="application/json,.json"></label>` : ''}
       <div class="taste-actions"><button id="taste-retry" class="pill">Read profile</button><button id="taste-delete" class="pill" ${!p || this.source !== 'file' ? 'disabled' : ''}>Delete profile</button></div></div>
+      ${this.source === 'agentweb' ? `<section class="taste-social" aria-label="Import selected social references">
+        <p class="hint">Select only references you want to teach. Curated JSON links from X, Pinterest, YouTube or other collections; not direct account scraping.</p>
+        <label>Curated reference JSON<input id="taste-social-file" type="file" accept=".json,application/json"></label>
+        <p id="taste-social-preview" role="status">${esc(this.socialStatus || 'No references selected. Nothing leaves this device.')}</p>
+        <label class="taste-switch"><input id="taste-social-consent" type="checkbox"> I approve sending this selected metadata to my configured AgentWeb service.</label>
+        <button class="pill" id="taste-social-submit" disabled>Teach AgentWeb from selection</button></section>` : ''}
       <p id="taste-state" role="status" data-state="${this.result.state}">${p ? `${p.provenance.itemCount} evidence items · ${p.provenance.sourceCount} sources · revision ${esc(p.revision.slice(0,12))}` : esc(messages[this.result.state])}</p>
-      <p class="hint">Only aggregate signals. No posts, media, URLs or credentials. File profiles stay in this browser’s IndexedDB. Nothing is uploaded.</p>
+      ${this.source === 'file' ? `<p class="hint">Aggregate JSON only: no URLs, posts, media or credentials. Browser-local IndexedDB; nothing uploaded.</p>` : `<p class="hint">Selected URLs and descriptors are sent to AgentWeb only after approval. FrameStudio does not retain them; AgentWeb stores aggregate signals.</p>`}
       ${p ? `<fieldset class="taste-controls"><legend>Apply to this film’s direction</legend><label class="taste-switch"><input id="taste-on" type="checkbox" ${this.on ? 'checked' : ''}> Taste on <span>Preview only · Apply to commit</span></label><label>Strength <output id="taste-strength-value">${this.strength}%</output><input id="taste-strength" type="range" min="0" max="100" value="${this.strength}"></label><label>Application scope<select id="taste-scope"><option value="task">This task only</option><option value="project">This project</option></select></label><div class="taste-signals">${KEYS.map(k => {
         const s = p.signals[k];
         return `<label><input type="checkbox" data-taste-signal="${k}" ${this.enabled.includes(k) ? 'checked' : ''} ${s.value === null ? 'disabled' : ''}><span><b>${labels[k]}</b><small>${s.value === null ? 'Unknown · no visual evidence' : `${s.evidenceCount} evidence · ${Math.round(s.confidence*100)}% confidence${s.confidence < .5 ? ' · uncertain' : ''}`}</small></span></label>`;
       }).join('')}</div></fieldset>
       <section class="taste-comparison" aria-label="Direction comparison"><div class="cap">ORIGINAL → TASTE-ADJUSTED</div><div id="taste-studies"></div><ol id="taste-diff" aria-label="Explained direction diff"></ol><p class="hint">Palette and typography update shared styles. Other dials are direction tokens only: source footage, timing and music stay untouched. Brand locks always win.</p><button class="pill" id="taste-apply">Apply direction · undoable</button></section><p class="hint">Delete clears the local profile and this preview. Existing project receipts contain aggregate dials only; Undo reverses an applied direction.</p>` : ''}`;
     this.pane.querySelector('#taste-source').value = this.source;
-    this.pane.querySelector('#taste-source').onchange = e => { this.source = e.target.value; ++this.epoch; this.on = false; this.result = {state:'disconnected'}; this.render(); };
+    this.pane.querySelector('#taste-source').onchange = e => { this.source = e.target.value; ++this.epoch; this.on = false; this.socialCollection = null; this.socialStatus = ''; this.result = {state:'disconnected'}; this.render(); };
     this.pane.querySelector('#taste-retry').onclick = () => this.load().catch(() => this.fail('offline'));
-    this.pane.querySelector('#taste-file').onchange = async e => {
+    if (this.source === 'file') this.pane.querySelector('#taste-file').onchange = async e => {
       try {
         const epoch = ++this.epoch;
         const file = e.target.files[0]; if (!file) return;
@@ -55,6 +63,53 @@ export class TasteInspector {
         this.source = 'file'; this.result = result; this.on = false; this.render();
       } catch { this.fail('invalid'); }
     };
+    const socialFile = this.pane.querySelector('#taste-social-file');
+    if (socialFile) {
+      const consent = this.pane.querySelector('#taste-social-consent');
+      const submit = this.pane.querySelector('#taste-social-submit');
+      const status = this.pane.querySelector('#taste-social-preview');
+      const sync = () => { submit.disabled = !consent.checked || !this.socialCollection; };
+      consent.onchange = sync;
+      socialFile.onchange = async e => {
+        const epoch = ++this.epoch;
+        try {
+          const file = e.target.files?.[0];
+          if (!file || file.size > MAX_SOCIAL_REFERENCES_BYTES) throw Error('Unsupported file');
+          const raw = await file.text();
+          if (this.dead || epoch !== this.epoch) return;
+          this.socialCollection = parseSocialReferences(raw);
+          status.textContent = this.socialCollection.items.length + ' selected ' + this.socialCollection.provider
+            + ' references. No network request yet; metadata will be sent only after approval.';
+        } catch {
+          this.socialCollection = null;
+          status.textContent = 'Invalid or oversized references. Select a reviewed JSON collection.';
+        } finally {
+          socialFile.value = '';
+          sync();
+        }
+      };
+      submit.onclick = async () => {
+        if (!consent.checked || !this.socialCollection || this.dead) return;
+        const approved = this.socialCollection, epoch = ++this.epoch;
+        this.socialCollection = null;
+        submit.disabled = true;
+        status.textContent = 'Importing only the selected metadata…';
+        try {
+          const result = await bridgeAdapter(request).importCollection(approved);
+          if (this.dead || epoch !== this.epoch || this.source !== 'agentweb') return;
+          this.result = result;
+          this.on = false;
+          this.socialStatus = result.state === 'ready'
+            ? 'Imported aggregate metadata. Visual signals remain unknown until measured.'
+            : 'Import unavailable: ' + (messages[result.state] || result.state);
+          this.render();
+        } catch {
+          if (this.dead || epoch !== this.epoch) return;
+          this.socialStatus = 'Import failed; verify bridge connection, then select references again.';
+          this.render();
+        }
+      };
+    }
     this.pane.querySelector('#taste-delete').onclick = async () => {
       ++this.epoch;
       try { this.result = await this.file.deleteProfile(); this.on = false; this.signature = ''; this.render(); }

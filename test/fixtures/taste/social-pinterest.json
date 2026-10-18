@@ -1,0 +1,12 @@
+{
+  "schema": "fframestudio.social-references/1",
+  "provider": "pinterest",
+  "collectionId": "synthetic_reference_board",
+  "items": [
+    {
+      "url": "https://www.pinterest.com/pin/123456789/?utm_source=fixture",
+      "title": "Synthetic typography reference",
+      "tags": ["editorial", "motion"]
+    }
+  ]
+}
