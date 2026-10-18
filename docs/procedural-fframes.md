@@ -1,42 +1,65 @@
 # Source-aware procedural fframes imports
 
-This is the read-only ingestion foundation for [ff-tracking](https://github.com/mrsarac/ff-tracking) and [ff-unmute](https://github.com/mrsarac/ff-unmute), two films by Mustafa Saraç using [fframes](https://github.com/dmtrKovalenko/fframes) by Dmitriy Kovalenko.
+Read-only ingestion and inspection of [ff-tracking](https://github.com/mrsarac/ff-tracking) and [ff-unmute](https://github.com/mrsarac/ff-unmute), films by **Mustafa Saraç**, using fframes by Dmitriy Kovalenko. This is not a source editor, GPU preview or final compositor. Python 3.11+ stdlib, FFmpeg and ffprobe are required; no runtime package was added.
 
-Add entries to ~/.config/fframestudio/sources.json (adjust paths):
+## Import
 
-    {
-      "library_root": "~/fframestudio/projects",
-      "sources": [
-        {
-          "id": "tracking", "title": "ff-tracking",
-          "kind": "procedural-fframes", "path": "~/src/ff-tracking",
-          "render": "out/tracking.mp4", "build": "tools/render.sh"
-        },
-        {
-          "id": "unmute", "title": "ff-unmute",
-          "kind": "procedural-fframes", "path": "~/src/ff-unmute",
-          "render": "out/unmute.mp4", "build": "tools/render.sh"
-        }
-      ]
-    }
+Point `FFS_SOURCES` at a registry JSON. Use a temporary library for qualification; the importer never builds or modifies a source checkout.
 
-Render these sources first, following their READMEs. Then run:
+```json
+{
+  "library_root": "<temporary-library>/projects",
+  "sources": [
+    {"id":"ff-tracking", "title":"ff-tracking", "kind":"procedural-fframes", "path":"<source>/ff-tracking", "render":"out/tracking.mp4"},
+    {"id":"ff-unmute", "title":"ff-unmute", "kind":"procedural-fframes", "path":"<source>/ff-unmute", "render":"out/unmute.mp4"}
+  ]
+}
+```
 
-    python3 tools/import_projects.py tracking unmute
-    npm run bridge
+```sh
+FFS_SOURCES="$TMPDIR/procedural-sources.json" python3 tools/import_projects.py
+```
 
-## What is imported
+Run upstream `tools/render.sh` separately **in an isolated copy**, after reviewing dependencies. Missing renders are skipped by default. Only explicit `"source_only": true` imports without footage: no proxy/poster is generated, and the inspector says **Metadata only — no verified render or playable proxy**. Optional `artifacts` points to a build copy's exported tracks/measurements; its HUD bytes must match the source before that data is trusted. Re-import refuses to overwrite saved project/1 edits.
 
-- **ff-tracking:** scenes are taken from the SCENE_LIST and timing constants in hud/src/lib.rs. In the reference version, this produces 12 source-aligned, half-second shots. Labels carry the real source text and palette, without painting new text over already-baked frames.
-- **ff-unmute:** the cinematic take is continuous. hud/src/generated.rs provides editorial SHOT_FRAMES markers and music events (KICKS, CLAPS, TOKENS). Editorial markers are not physical video cuts; kick onsets are not invented full-song beat markers.
-- Both: library proxy/thumbnail generation uses the existing importer; the project carries an explicit read-only procedural metadata record with provenance, render dependency stages, and source timings. Migration to project/1 retains these records in metadata.
+## Read-only inspector
 
-The importer **never runs the source build scripts or writes into the Rust project**. Missing output is skipped, edited project/1 documents are protected from re-import overwrites, and fps/duration mismatches fail rather than applying incorrect shot timings. The existing browser preview is a baked MP4, **not** a live GPU shader or native fframes export.
+Open **Source** in the film slate; the **Shot** tab also shows selected source fields above the ordinary editorial controls.
 
-## Next slices
+- **Tracking:** the reference `SCENE_LIST` provides **12 × 15-frame shots at 30 fps**, never scene detection. Its scene grid contains source text, kind, palette, hero baseline, size and Cam tilt/roll/zoom/pan/blur/shake. Paper, Thermal, Mono, Phosphor, Amber, Navy and Neon swatches use the actual five source colour stops. If `out/tracks.json` exists, the sidecar retains every frame's focus and shows each shot's start/mid/end focus. A hero baseline is not mislabeled as focal plane.
+- **Unmute:** **one continuous 16-second / 480-frame take**, not 22 or 12 invented cuts. SHOT_FRAMES are editorial annotations. Show source-measured music.wav peaks, event tracks and exact sub-frame seconds, and the Catmull–Rom camera keyframe track/values. Frame conversion uses positive half-up rounding, matching Rust rather than Python banker's rounding.
+- **Causality:** KICKS are measured kick-stem onsets. CLAPS/TOKENS are exported synthesized score event timestamps (token count is measured separately). The bar grid is authored 4/4 at generated score BPM, not detected full-song beats. Preserve this distinction.
+- **Provenance:** source revision, source/measurement SHA-256, render dependency stages, author, engine and font credits survive migration and save/reopen. Tracking also credits **nooga** for its optional Slab score, explicitly marked not used by tools/render.sh.
 
-Source-aware camera/FX inspector, typed reversible controls, isolated render worker, audio analysis waveform and real export are follow-ups in [#3](https://github.com/kvnloo/fframestudio/issues/3), [#4](https://github.com/kvnloo/fframestudio/issues/4) and [#5](https://github.com/kvnloo/fframestudio/issues/5). Do not treat this import adapter as proof those features work.
+Everything under **Source — read-only** is informational. Future writable text/palette/camera/score surfaces are named but have no setter. Timeline/Words edit the editorial document/proxy, not baked glyphs, sound or shaders. No source editing, resynthesis or rebuild flow exists.
 
-Source-only regression tests (no GPU):
+The adapter recognizes a bounded subset of Rust literal declarations; it never evaluates Rust or rewrites source. Workspace members, package/bin names, camera literals, arrays and rendered FPS/duration are validated. Unsupported forms fail closed. This shared sidecar is not a general Rust parser.
 
-    npm run test:procedural
+## Empirical Linux result
+
+Pinned sources: tracking `55abcd62a04c96eeb3ab51d7d75df64d068bd1e6`; unmute `3ba661da9b150433c277948f0c24b9033a5bfa96`. Both non-Windows Cargo sections enable **Metal**, not Vulkan. After environment fixes (writable Cargo cache, matching x264/FFmpeg), both documented scripts failed on Linux:
+
+```text
+error[E0455]: link kind `framework` is only supported on Apple targets
+error: could not compile `core-graphics-types` (lib)
+fatal error: 'Metal/Metal.h' file not found
+```
+
+Skia's prebuilt also returned 404 before the Metal source-build failure. No backend/source patch was made under the environment-only rule. Vulkan/GPU rendering was not reached.
+
+Both HUD test suites passed. Tracking's real tracks/camera/SFX helpers ran. Unmute synthesized/analyzed its actual audio and regenerated generated.rs byte-for-byte. Both pinned sources imported and opened in **metadata-only** mode without changing original tracked bytes. No video frame count, A/V sync, rendered contact sheet or playable public Example is claimed from these failed video builds.
+
+Both films' default media are generated by code under MIT, © 2026 Mustafa Saraç; JetBrains Mono is SIL OFL 1.1. Tracking's optional score is by nooga, explicitly offered under upstream MIT, but not used by the default render. A public example still needs a successful render, full frame/fps/audio checks, retained notices and visual review; failed builds yield no manifest entries.
+
+## Qualification
+
+```sh
+npm run test:procedural
+npm run verify
+node test/verify-procedural-real.mjs
+FFS_PROCEDURAL_LIBRARY="<temporary-library>/projects" node test/verify-procedural-real.mjs --out verify-out/procedural-real
+```
+
+Eight GPU-free Python tests cover literal parsing, stale renders, exact frame conversion, detector identity, importer execution and saved-project protection. The committed synthetic generator feeds the real importer; the browser journey **procedural: ff-tracking 12 shots, ff-unmute one take + markers** checks shot/frame counts, palette names, waveform/events/keyframes, no source inputs, credits and save/reopen. Synthetic fixture data is explicitly labelled; it is not a real render. The optional local journey skips cleanly without a supplied library, copies that library and starts only its own `--no-config` bridge. Its report distinguishes metadata-only inspection from verified-render E2E.
+
+Remaining #3/#4 work: isolated working-copy overrides, writeback, dependent queue/cancel/cache, GPU previews, voice actions, reconstructed A/V export and original-vs-remix synchronization. These are deliberately not shown as working controls.
