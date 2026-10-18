@@ -6,6 +6,7 @@
     "bridge"
   ],
   "scripts": {
+    "gen:smoke": "node tools/gen-smoke.mjs",
     "build:site": "python3 tools/build_demo_site.py",
     "verify:hosted": "node tools/verify-hosted.mjs",
     "bridge": "node bridge/bridge.mjs",
@@ -13,7 +14,7 @@
     "test:acp": "node test/acp-e2e.mjs",
     "setup": "bash scripts/setup.sh",
     "doctor": "bash scripts/setup.sh --check",
-    "test": "node --test test/doc/*.test.mjs test/theme/*.test.mjs test/hosted/*.test.mjs && node test/acp-e2e.mjs",
+    "test": "node --test test/generation/*.test.mjs test/doc/*.test.mjs test/theme/*.test.mjs test/hosted/*.test.mjs && node test/acp-e2e.mjs",
     "test:agents": "node test/acp-e2e.mjs claude codex hermes --edit claude",
     "import": "python3 tools/import_projects.py",
     "demo": "python3 tools/make_demo.py",
