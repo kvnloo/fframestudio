@@ -1,0 +1,173 @@
+{
+  "issue": 8,
+  "status": "implemented; public media awaiting permission",
+  "artifactRoot": "project-artifacts/fframestudio",
+  "media": {
+    "revision": "44745c09a6c8c51071609097326a820cf59d087b",
+    "sourceUnmodified": true,
+    "duration": 127.5,
+    "frames": 7650,
+    "scenes": 16,
+    "audioRms": 0.15517825454948067,
+    "audioSamples": 1020000,
+    "hashes": {
+      "master.mp4": "7035f24b1ae18eb99a18d4bd2bb2925f714a58f48c151e2f1c0eb5a52d420c54",
+      "proxy.mp4": "0d6778c9dd2dc5d7b04e6711684e85f4a212ca7dd082e3b987f0a5b951768359",
+      "project.json": "f702c1b4af6acd9510119bb9e5adc780a6c0c9ccbe03976222a3cb67251c1056"
+    },
+    "readiness": "awaiting-permission",
+    "faststart": true
+  },
+  "gates": {
+    "npmTest": {
+      "passed": true,
+      "tests": 64,
+      "security": "passed; discovery config bytes and mtime unchanged",
+      "log": "ui-compare/issue-8/npm-test-release.log"
+    },
+    "noLocalPaths": true,
+    "buildSite": {
+      "passed": true,
+      "bytes": 6998968,
+      "entries": 6
+    },
+    "verify": {
+      "qualifyingFinalRevisionRuns": [
+        7,
+        9,
+        12
+      ],
+      "journeysPerRun": 22,
+      "allPassingRuns": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        9,
+        12
+      ],
+      "retainedFailures": [
+        {
+          "run": 2,
+          "journeys": [
+            "context menu: native menu replaced, actions work"
+          ]
+        },
+        {
+          "run": 3,
+          "journeys": [
+            "library: open link, demo project listed"
+          ]
+        },
+        {
+          "run": 8,
+          "journeys": [
+            "system theme: follows and live-updates",
+            "context menu: native menu replaced, actions work"
+          ]
+        },
+        {
+          "run": 10,
+          "journeys": [
+            "system theme: follows and live-updates"
+          ]
+        },
+        {
+          "run": 11,
+          "journeys": [
+            "system theme: follows and live-updates",
+            "context menu: native menu replaced, actions work"
+          ]
+        }
+      ],
+      "note": "Not consecutive or universally frame-safe; shared-host timing failures remain in evidence. No timing budgets changed. The poster readiness race now waits for actual decode."
+    },
+    "performance": {
+      "latestPassed": true,
+      "log": "ui-compare/issue-8/perf-final.log",
+      "coldOpenMs": 159,
+      "commandReadyWorstMs": 9.900000035762787,
+      "scrubFps": 60.003000150007495,
+      "gzipBytes": 58583,
+      "budgetsUnchanged": true,
+      "retainedFailures": [
+        "ui-compare/issue-8/perf-release.log",
+        "ui-compare/issue-8/perf-retry.log"
+      ]
+    },
+    "localIntro": {
+      "seeks": [
+        {
+          "scene": "scene-0",
+          "expected": 0,
+          "actual": 0
+        },
+        {
+          "scene": "scene-10",
+          "expected": 60.333333333333336,
+          "actual": 60.333333
+        },
+        {
+          "scene": "scene-15",
+          "expected": 111.23333333333333,
+          "actual": 111.233333
+        },
+        {
+          "scrubFrame": 0,
+          "actual": 0
+        },
+        {
+          "scrubFrame": 3825,
+          "actual": 63.75
+        },
+        {
+          "scrubFrame": 7649,
+          "actual": 127.483333
+        }
+      ],
+      "screenshots": [
+        "intro-editor-1896x880.png",
+        "intro-editor-390x780.png"
+      ],
+      "ok": true,
+      "duration": 127.5,
+      "audio": {
+        "decoded": 3900,
+        "tracks": 0
+      },
+      "scenes": 16,
+      "reopened": true,
+      "sourceUnchanged": true
+    },
+    "localIntroAbsentArtifact": "clean skip"
+  },
+  "artifacts": {
+    "nativeMaster": "examples/intro/master.mp4",
+    "portableProject": "examples/intro/project/",
+    "timeline": "examples/intro/timeline.json",
+    "ffprobe": "examples/intro/logs/",
+    "contactSheet": "examples/intro/contact-sheet.jpg",
+    "screenshots": [
+      "ui-compare/issue-8/examples-1896x880.png",
+      "ui-compare/issue-8/examples-390x780.png",
+      "ui-compare/issue-8/intro-editor-1896x880.png",
+      "ui-compare/issue-8/intro-editor-390x780.png",
+      "ui-compare/issue-8/intro-source-1896x880.png"
+    ]
+  },
+  "visualReview": [
+    "Viewed contact sheet: varied coherent early/middle/late frames, no missing-render blanks; transitional typography is baked upstream motion.",
+    "Viewed actual public gallery desktop/phone: typographic feature, source/credits, Long-form/2:08 and permission status visible; phone wordmark clears sticky header.",
+    "Viewed real intro desktop/phone and Source tab: aspect-correct film, real scene timeline, measured waveform, author/link and 1280x720/60 fps proxy metadata; no horizontal overflow."
+  ],
+  "retainedCorrectedFailures": [
+    "Local film Source attribution initially absent; fixed for local metadata.source as well as example copies; successful real-film and synthetic regression journeys retained.",
+    "Capture initially waited forever on unfetched below-fold lazy posters; capture harness loads posters before decode, production remains lazy."
+  ],
+  "left": [
+    "Obtain media redistribution permission before publishing any intro-derived proxy, poster, master or contact sheet.",
+    "Owner imports the portable project if desired; no owner library or bridge configuration was written.",
+    "Timing varies under shared-host contention; retained failures prohibit a universal frame-budget claim."
+  ]
+}

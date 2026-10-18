@@ -46,6 +46,78 @@ the source link pins their upstream revision. `examples/LICENSES.md` retains the
 provided redistribution notices when present. Rendered proxies are baked films:
 their original titles/effects are not separate editable compositor layers.
 
+## Original launch film (local only)
+
+The featured **fframes — Original launch film** is the upstream long-form showcase
+by Dmitriy Kovalenko. Its public catalog entry is `awaiting-permission`: MIT covers
+code, but the music, sound effects, clips and stills lack source/licence metadata.
+**Do not redistribute the master, proxy, contact sheet or poster without permission.**
+The public card therefore uses typography, not derived media. The existing synthetic
+12-second demo (`npm run demo`) and permitted short examples remain independent.
+
+From a checkout, with Node, Python, FFmpeg/ffprobe, Git, Rust/Cargo, native Skia
+build prerequisites and a supported Vulkan/Metal GPU:
+
+```sh
+npm run example:fframes-intro
+# Optional existing, unmodified pinned checkout and an explicit output location:
+npm run example:fframes-intro -- --source <upstream-checkout> --out <local-output>
+# Optional explicit library import (never automatic):
+npm run example:fframes-intro -- --import-library <your-library-projects-folder>
+```
+
+The tool pins `44745c09a6c8c51071609097326a820cf59d087b`, refuses tracked
+source changes, builds the original binary without patching upstream, saves its
+`timeline --json`, renders a native master and creates a 720p H.264/AAC faststart
+proxy and poster. It runs ffprobe/frame/audio checks and saves a receipt and contact
+sheet. A default run writes only `~/.cache/fframestudio/examples/intro`; it never
+writes bridge configuration or your library. Select its **project/** subfolder with
+**Open a folder** / **Open read-only** in Studio, or use the explicit import flag.
+Do not select the build root: it also contains the large master, checkout and caches.
+The portable package contains only the proxy, poster, document, timeline and notices. The output
+`project.json` uses the app's project/0 → project/1 migration with all 16 real scene
+boundaries and raw upstream audio timing in provenance. No beat grid is fabricated;
+the browser measures the embedded mix for its waveform. Titles, shaders and scene
+effects are baked pixels, not editable source layers.
+
+Upstream advertises **128 seconds / 2:08**. At the pinned revision its actual CLI
+timeline is **7,650 frames at 60 fps = 127.5 seconds**; the project preserves that
+exact duration, not a padded or trimmed substitute. Native dependencies differ by
+platform; build failures are fatal and logged under the output's `logs/`. Existing
+build environments can use `CARGO_TARGET_DIR`, standard compiler/FFmpeg environment
+variables, or `--binary <already-built-original-binary>`. `--reuse-master` avoids
+rendering a second time when regenerating local assets. These are local development
+options, not a hosted render service. Review `contact-sheet.jpg` before use.
+
+After obtaining permission, the owner can place that generated folder's files in
+the selected examples directory and deliberately opt in:
+
+```sh
+python3 tools/build_demo_site.py --examples <local-output> --allow-unlisted-media fframes-intro
+```
+
+This flag is **not a licence grant**. The default build strips intro video, project
+and poster references even if an input manifest claims `available`. The catalog
+records `sourceRepo`, `sourcePath`, `duration` (seconds), `provenance`, `credits`,
+`poster`, `readiness` (`available | local-build-only | awaiting-permission`), category
+(`Demo | Short film | Long-form`) and featured status. Existing cleared manifests
+are upgraded by the builder. The metadata-only entry is present even without assets.
+No master is bundled and the existing 60 MB site budget remains enforced.
+
+```sh
+npm run verify:intro  # clean skip without a local artifact
+FFS_INTRO_ARTIFACT=<local-output> FFS_EVIDENCE=<evidence-directory> npm run verify:intro
+```
+
+This optional Chromium journey opens a disposable copy through the hosted folder
+input, seeks first/middle/last real scenes, plays, verifies decoded audio and a
+measured waveform, checks attribution and reopens. It never connects to a user
+bridge or writes a real library. CI retains the fast synthetic fixture, with no
+Rust/GPU requirement, and checks the feature on desktop and mobile. The portable
+[issue #8 qualification receipt](evidence/issue-8-intro.json) records verified media,
+real playback, passing runs and retained timing/readiness failures; it does not claim
+universal frame-budget reliability on a contended host.
+
 ## Connect your own bridge
 
 Start your own `npm run bridge` and open the **hosted studio** link it prints:
@@ -125,8 +197,10 @@ latency overhead or physical compositor presentation timings.
 
 `site/` is generated and ignored by Git. No visitor library is copied into it.
 The builder discovers the optional `project-artifacts/fframestudio/examples/out`
-artifact directory above the checkout, or takes `--examples`. Missing examples
-are silently omitted. Referenced example media/project JSON and fonts/ACP assets
+artifact directory above the checkout, or takes `--examples`. Missing optional short
+examples are omitted; the metadata-only launch-film card and generated 12-second
+synthetic Demo remain. The Demo is generated in a disposable HOME using FFmpeg,
+never a visitor library. Referenced example media/project JSON and fonts/ACP assets
 have content-versioned names. `site/vercel.json` enables clean URLs, revalidation
 for HTML/code/manifest, year-long immutable caching for versioned assets, no-referrer,
 MIME sniffing protection, frame denial and the local-only CSP. Serve **site/**,
