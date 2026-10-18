@@ -18,11 +18,11 @@ def run(args):
 
 
 def ffmpeg(file, *args):
-    return run(['ffmpeg', '-nostdin', '-v', 'info', '-threads', '1', '-protocol_whitelist', 'file,pipe', '-i', str(file), *args])
+    return run(['ffmpeg', '-nostdin', '-v', 'info', '-threads', '1', '-protocol_whitelist', 'file,pipe', '-format_whitelist', 'mov,matroska,avi,wav,ogg', '-i', str(file), *args])
 
 
 def probe(file):
-    p = run(['ffprobe', '-v', 'error', '-protocol_whitelist', 'file,pipe', '-show_streams', '-show_format', '-of', 'json', str(file)])
+    p = run(['ffprobe', '-v', 'error', '-protocol_whitelist', 'file,pipe', '-format_whitelist', 'mov,matroska,avi', '-show_streams', '-show_format', '-of', 'json', str(file)])
     data = json.loads(p.stdout)
     video = next((s for s in data['streams'] if s['codec_type'] == 'video'), None)
     if not video or not set(data['format']['format_name'].split(',')) & {'mov','mp4','matroska','webm','avi'}:
@@ -123,17 +123,19 @@ def main():
     parser.add_argument('--model')
     args = parser.parse_args()
     if args.transcribe:
+        # Decode into bounded PCM with an explicit container/protocol allowlist before
+        # handing data to PyAV/Whisper. Never let a playlist reach a model decoder.
+        wav = args.file.with_suffix('.wav')
+        ffmpeg(args.file, '-t', '30', '-ac', '1', '-ar', '16000', '-y', str(wav))
         if args.engine == 'faster-whisper':
             from faster_whisper import WhisperModel
             # Installed, locally cached model only; never download weights implicitly.
             model = WhisperModel(args.model or 'tiny', device='cpu', compute_type='int8', local_files_only=True)
-            segments, _ = model.transcribe(str(args.file), beam_size=1)
+            segments, _ = model.transcribe(str(wav), beam_size=1)
             text = ' '.join(s.text for s in segments)
         else:
             if not args.model or not Path(args.model).is_file():
                 raise ValueError('Configure installed local Whisper weights with FFS_WHISPER_MODEL.')
-            wav = args.file.with_suffix('.wav')
-            ffmpeg(args.file, '-ac', '1', '-ar', '16000', '-y', str(wav))
             if args.engine == 'whisper':
                 run(['whisper', str(wav), '--model', args.model, '--device', 'cpu', '--fp16', 'False', '--output_format', 'txt', '--output_dir', str(args.file.parent)])
             else:

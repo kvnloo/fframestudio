@@ -16,6 +16,13 @@ test('direct media URL policy rejects pages, auth, social links and private netw
  for(const ip of ['127.0.0.1','10.0.0.2','172.16.1.1','169.254.169.254','192.168.1.2','::1','::ffff:127.0.0.1','fe80::1','2001:db8::1','2002:7f00:1::1','3fff::1','100.64.1.1','0.0.0.0'])assert.equal(publicAddress(ip),false,ip);
  assert.equal(publicAddress('8.8.8.8'),true);
 });
+test('speech predecode refuses playlists before loading any model',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'ffs-stt-policy-'));try {
+  const file=path.join(dir,'recording.webm');fs.writeFileSync(file,'#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\nhttp://127.0.0.1:1/private.ts\n#EXT-X-ENDLIST\n');
+  const p=spawnSync('python3',['bridge/analyze-reference.py',file,'--transcribe'],{encoding:'utf8',timeout:5000});
+  assert.equal(p.status,1);assert.match(p.stdout,/whitelist|Invalid data|not permitted/i);assert.doesNotMatch(p.stdout,/No module named/);
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
 test('CC0 generated three-shot tone: detected cuts ±1 frame, palette, audio, editable inverse',()=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'ffs-reference-'));try{
   const file=path.join(dir,'cc0-colour-tone.mp4');generateReference(file);
