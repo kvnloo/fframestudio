@@ -22,7 +22,7 @@ const definitions = {
   'restore-version': object({ videoId: str, id: str }, ['id']),
 };
 export const COMMAND_IDS = Object.freeze(Object.keys(definitions));
-const ui = ['play','reverse','pause','forward','previousFrame','nextFrame','previousClip','nextClip','in','out','undo','redo','palette','close-palette','save','compare','settings','close-settings','reset-settings','toggle-story','toggle-inspector','loop-shot','loop-film','mute','screening','play-here','seek-start','copy-timecode','recover','discard-recovery','export','export-project','save-copy','reload-external','keep-local','inspect-proposal','reject-proposal','apply-proposal','import-reference','compare-reference','voice'];
+const ui = ['play','reverse','pause','forward','previousFrame','nextFrame','previousClip','nextClip','in','out','undo','redo','palette','close-palette','save','compare','settings','close-settings','reset-settings','toggle-story','toggle-inspector','loop-shot','loop-film','mute','screening','play-here','seek-start','copy-timecode','recover','discard-recovery','export','export-project','save-copy','reload-external','keep-local','inspect-proposal','reject-proposal','apply-proposal','import-reference','compare-reference','voice','component-lab'];
 const destructive = new Set(['delete','trim','in','out','replace','restore-version','reload-external','reset-settings']);
 const bulk = new Set(['edit-style','group','restore-version','apply-proposal']);
 const synonyms = { trim: ['shorten', 'trim shot'], delete: ['remove'], 'edit-text': ['change text', 'change title'], play: ['start playback'], pause: ['stop playback'], 'import-reference': ['deconstruct', 'reference video'], voice: ['dictate', 'microphone'] };

@@ -1081,6 +1081,7 @@ export class Editor {
   }
   async performAction(a, params = {}) {
     const { clipId } = params;
+    if (a === 'component-lab') return window.open('/app/labs/video-styles.html', '_blank', 'noopener,noreferrer');
     if (a === 'voice') return (await this.ensureVoice()).toggle();
     if (a === 'import-reference') return (await this.ensureReference()).open();
     if (a === 'compare-reference') return (await this.ensureReference()).compareProject();

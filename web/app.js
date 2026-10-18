@@ -6,7 +6,7 @@ import { initSystemTheme, receiveTheme, setThemeSettings, themeInfo, onTheme } f
 import { colourSlot } from '/app/src/studio.js';
 const connectAgent=async options=>(await import('/app/dist/acp-client.js')).connectAgent(options);
 import * as host from '/app/src/host.js';
-import { actionManifest } from '/app/src/actions.js';
+import { actionManifest, action as studioAction } from '/app/src/actions.js';
 let libraryReference;
 import { preferences as storage } from '/app/src/host.js';
 const bridgeApi=()=>({read:host.read,agents:()=>host.request('/agents').then(r=>r.json()),events:fn=>host.events(fn,receiveTheme)});
@@ -87,14 +87,20 @@ function showLibrary() {
   const shown = ps.filter((p) => !TAG || (p.tags || []).includes(TAG));
   const settings=applyLibraryTheme();
   $('#view').innerHTML = `<label class="library-theme">WORKSPACE <select id="library-theme" aria-label="Library theme">${['system','studio','paper','dark','light','contrast','custom',...themeInfo().available.map(s=>'system:'+s)].map(t=>`<option value="${t}" ${t===themeInfo().choice?'selected':''}>${t==='system'?'Follow system · '+esc(themeInfo().label):t.startsWith('system:')?'Follow '+esc(t.slice(7)):t[0].toUpperCase()+t.slice(1)}</option>`).join('')}</select></label><div class="libhead"><div><div class="cap">THE FILM LIBRARY · ${ps.length} PRODUCTIONS</div><h1>Every film, <em>one place.</em></h1></div>
-    <a class="pill" href="/app/labs/video-styles.html" target="_blank" rel="noopener noreferrer">Video style components ↗</a><div class="chips"><button class="pill ${!TAG ? 'on' : ''}" data-tag="">all</button>${tags.map((t) => `<button class="pill ${TAG === t ? 'on' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>
+    <a id="component-lab" class="pill" href="/app/labs/video-styles.html" target="_blank" rel="noopener noreferrer">Video style components ↗</a><div class="chips"><button class="pill ${!TAG ? 'on' : ''}" data-tag="">all</button>${tags.map((t) => `<button class="pill ${TAG === t ? 'on' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>
   <div class="grid">${shown.map((p,index) => `<a data-project="${esc(p.id)}" data-colour="${colourSlot(p.kind)}" class="card brk" href="#/p/${esc(p.id)}"><div class="pv">${p.poster ? `<img src="${esc(host.libraryPoster(p.poster))}" loading="lazy" alt="">` : '<div class="none">no render yet</div>'}<span class="poster-index">CUT ${String(index+1).padStart(2,'0')} / ${esc(p.kind)}</span><span class="rt">RUNTIME ${fmt(p.duration_s)}</span></div>
     <div class="tx"><div class="t">${esc(p.title)}</div><div class="m"><span class="kind-chip">${esc(p.kind)}</span><span>${p.shots} shots</span><span>${p.renders} render${p.renders === 1 ? '' : 's'}</span><span>${(p.tags || []).map(esc).join(' · ')}</span></div>
     <div class="strip">${Array.from({ length: Math.min(40, p.shots || 1) }, () => '<i></i>').join('')}</div></div></a>`).join('')}</div>`;
   if (host.isLocal()) mountFolderControls();
   if (document.querySelector('meta[name="ffs-hosted"]')) mountExamples();
   const importButton=document.createElement('button');importButton.className='pill';importButton.id='import-reference';importButton.textContent='Import reference';document.querySelector('.libhead').append(importButton);
-  importButton.onclick=async()=>{const {ReferenceDesk}=await import('/app/src/reference.js');libraryReference?.destroy();libraryReference=new ReferenceDesk();libraryReference.open();};
+  const libraryContext={performAction:async id=>{
+    if(id==='component-lab')return window.open('/app/labs/video-styles.html','_blank','noopener,noreferrer');
+    if(id==='import-reference'){const {ReferenceDesk}=await import('/app/src/reference.js');libraryReference?.destroy();libraryReference=new ReferenceDesk();return libraryReference.open();}
+    throw Error('Unsupported library action: '+id);
+  }};
+  importButton.onclick=()=>studioAction('import-reference').apply(libraryContext).catch(error=>toast(error.message));
+  $('#component-lab').onclick=event=>{if(event.button||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;event.preventDefault();studioAction('component-lab').apply(libraryContext);};
   $('#library-theme').onchange=e=>{settings.theme=e.target.value;storage.setItem('ffs.settings',JSON.stringify(settings));applyLibraryTheme();};
   $$('[data-tag]').forEach((b) => (b.onclick = () => { TAG = b.dataset.tag; showLibrary(); }));
   $$('.card').forEach((card) => (card.onclick = (event) => {
