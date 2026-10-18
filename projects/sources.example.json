@@ -10,6 +10,7 @@
     "fframes": { "path": "fframes project dir", "render": "master video", "timeline": "timeline.txt (optional)", "brief": "optional", "review": "optional", "build": "optional", "entry": "optional" },
     "fframes-clips": { "path": "dir", "renders": ["clip masters"], "build": "optional" },
     "html-film": { "path": "dir", "film": "film.js with DURATION and SHOTS", "build": "optional" },
-    "capture-manifest": { "path": "dir", "manifest": "manifest.json with clips[]", "optional": true }
+    "capture-manifest": { "path": "dir", "manifest": "manifest.json with clips[]", "optional": true },
+    "procedural-fframes": { "path": "ff-tracking/ff-unmute Rust checkout", "render": "existing master video (required)", "build": "optional and never run by importer" }
   }
 }

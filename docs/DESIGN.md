@@ -128,6 +128,10 @@ timer. No runtime dependency or framework was added.
 Visual/audio qualification is reproducible with `node tools/verify-studio.mjs`; see the
 [Studio feature map](../.agents/skills/verify-fframestudio/features/studio.md) for stable handles.
 
+## Procedural source inspection
+
+The read-only `procedural-fframes` sidecar is visible in Source and selected Shot views. Tracking uses actual SceneDef boundaries and named palette stops; unmute remains one continuous take with waveform, event and camera-keyframe tracks. Source metadata/provenance is not an editable shader composition. Explicit source-only imports show no verified-render claim. See [procedural-fframes.md](procedural-fframes.md) for the schema boundary, empirical Linux Metal build limitation, tests and deferred writeback/render work.
+
 ## Open questions
 
 - Diffusion Studio and Freesound commercial terms need legal reading before use.

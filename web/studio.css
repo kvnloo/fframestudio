@@ -1240,3 +1240,33 @@ dialog .panel-title {
     display: none !important;
   }
 }
+
+/* Procedural metadata stays inside the fitted slate, never masquerading as controls. */
+.procedural-source { font-size: 12px; line-height: 1.5; }
+.procedural-source h2 { font-size: 26px; margin: 8px 0; }
+.procedural-source h3 { font-size: 13px; margin: 18px 0 8px; }
+.procedural-source code, .procedural-values dd { overflow-wrap: anywhere; }
+.procedural-values { display: grid; grid-template-columns: minmax(65px, 1fr) minmax(0, 2fr); gap: 3px 10px; font-size: 11px; }
+.procedural-values dt { opacity: .7; }
+.procedural-values dd { margin: 0; font-family: var(--mono); }
+.source-palettes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.source-palette>div { display: flex; height: 14px; overflow: hidden; border: 1px solid var(--line); border-radius: 3px; }
+.source-palette i { flex: 1; }
+.source-shot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.source-shot { padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 5px; overflow-wrap: anywhere; }
+.source-shot summary { cursor: pointer; font-size: 11px; }
+.source-shot small { display: block; opacity: .7; }
+.procedural-track { display: grid; grid-template-columns: 72px minmax(0,1fr); gap: 8px; align-items: center; height: 24px; font-size: 11px; }
+.procedural-track>div { height: 14px; position: relative; background: var(--line); }
+.procedural-track i { position: absolute; width: 2px; height: 14px; background: var(--acc); transform: translateX(-1px); }
+.procedural-track [data-source-event="kick"] { background: #f19a72; }
+.procedural-track [data-source-event="clap"] { background: #e5c16c; }
+.procedural-track [data-source-event="token"] { background: #77cfc4; }
+.source-wave { width: 100%; height: 60px; stroke: var(--acc); stroke-width: 1.5; }
+.source-time-range { display: flex; justify-content: space-between; font-size: 10px; opacity: .7; }
+.source-camera { margin: 8px 0; }
+.procedural-selected { border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 12px; }
+.procedural-selected h3 { margin: 8px 0; }
+.source-no-render { position: absolute; inset: 0; z-index: 4; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; background: var(--bg); color: var(--ink); }
+.source-no-render strong { font-size: clamp(20px, 2vw, 36px); margin: 12px 0; }
+.source-no-render p { font-size: 12px; line-height: 1.6; opacity: .7; }

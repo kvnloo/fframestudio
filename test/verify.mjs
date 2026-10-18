@@ -13,6 +13,7 @@ import path from 'node:path';
 import { chromium } from 'playwright';
 import { createHash } from 'node:crypto';
 import { verifyHosted } from './hosted-journey.mjs';
+import { verifyProcedural } from './procedural-journey.mjs';
 import { makeLayoutFixture, verifyLayout } from './layout-journey.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
@@ -590,6 +591,12 @@ try {
     assert(lib <= 391 && proj <= 391, `scrollWidth library ${lib}, project ${proj}`); return { library: lib, project: proj };
   });
   await journey('layout: fits and adapts across sizes', () => verifyLayout({browser, context:ctx, base, out:OUT, assert}));
+  await journey('procedural: ff-tracking 12 shots, ff-unmute one take + markers', async () => {
+    run('python3', ['test/procedural_fixture.py', HOME]);
+    const fixturePage = await ctx.newPage();
+    try { return await verifyProcedural({page:fixturePage,base,library:path.join(HOME,'fframestudio/projects'),out:OUT,assert}); }
+    finally { await fixturePage.close(); }
+  });
   await verifyHosted({browser,source,out:OUT,root:ROOT,journey,assert});
   await journey('console clean', async () => { assert(!report.console_errors.length && !report.failed_requests.length, JSON.stringify({ e: report.console_errors, r: report.failed_requests })); });
 } catch (e) {
