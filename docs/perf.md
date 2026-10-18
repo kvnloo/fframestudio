@@ -1,5 +1,43 @@
 # Editor performance and recovery
 
+## Reference / action registry / voice foundation qualification
+
+The action registry, reference desk and typed voice journeys have real browser and saved-file
+readback coverage. Reference/voice modules and desk DOM are lazy: ordinary project opening
+asserts that these optional modules were not fetched. Analysis is native ffmpeg/Python child
+work, never browser animation-loop work. No web runtime dependency or budget was added.
+
+The latest unit replay passes **203 tests**, including **119 utterance cases**, plus ACP/bridge
+security. File/URL capability handling, generated CC0 three-shot/tone analysis (cuts at frames
+90 and 180 within one frame), parameterized thumbnail cache isolation, cancellation, preview /
+confirmation, source-linked reconstruction and typed edit → undo → Save/reopen all pass.
+The no-local-paths and static site build gates pass. Discovery configuration bytes/mtime remain
+unchanged. Real microphone, installed speech-model decoding and Android share sheets are NOT RUN.
+
+**Timing acceptance is not consistently qualified.** The three-run browser sequence before the
+final replay is pass / menu-timing failure / pass. The failed menu sample takes 30.2 ms open-ready;
+no assertion was weakened. Earlier runs retain theme/menu timing failures and one thumbnail
+readiness timeout, as well as an initial new-journey fixture-ID error that was corrected.
+The fixed three-performance-replay series is splitter-frame-rate failure / splitter-frame-rate
+failure / pass. Earlier performance failures are retained, not replaced by the passing sample.
+
+| Latest passing performance replay | Measured | Unchanged budget |
+| --- | --- | --- |
+| 48-clip cold navigation → interactive | 161.9 ms | <300 ms |
+| 500-clip command → DOM/layout ready, worst | 10.7 ms | <16 ms |
+| Command → next rAF, worst | 16.8 ms | existing measured-next-frame gate |
+| Scrub / timeline splitter | 60.000 / 60.003 fps | unchanged frame-interval gate |
+| Shipped editor JavaScript gzip | 71,844 B | <150 KiB |
+
+The passing replay satisfies every existing budget, but does not establish reliable tail latency
+or physical compositor presentation. Host load and optional-module fan-out varied between
+samples; these are not controlled baseline/candidate comparisons and no single cause is proven.
+After retaining that failure, the final three consecutive full-suite processes each pass **25/25 journeys** (the third qualification run plus both final replays).
+See the portable [qualification receipt](evidence/issue-2-foundation.json), which retains every
+reported passing/failing browser and performance sample. Full screenshots and raw artifacts are
+external under the issue-2 UI comparison evidence directory. Breakdown, side-by-side and typed
+voice screenshots were visually reviewed; source-linked approximation and uncertainty are visible.
+
 ## Fitted layout qualification
 
 Runtime `4bef2f2` fits the copied real-library editor at **1896×880 → 880 px document
