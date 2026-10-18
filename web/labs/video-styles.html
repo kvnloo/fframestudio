@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FrameStudio · Video Style Components</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#101218;color:#f2f3f5}
+*{box-sizing:border-box}body{margin:0;padding:clamp(12px,3vw,40px)}
+main{max-width:1100px;margin:auto;display:grid;gap:16px}h1{font-size:1.5rem;margin:0}p{color:#acb6c6;line-height:1.45}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:end}label{display:grid;gap:6px;font-size:.78rem;color:#bbc5d4}
+select,input,button{background:#222736;border:1px solid #3a465b;color:inherit;padding:10px;border-radius:8px;font:inherit}
+input[type=range]{flex:1;min-width:220px;accent-color:#83d5a4}input[type=text]{width:min(310px,80vw)}
+button{cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #83d5a4}
+#stage{position:relative;aspect-ratio:16/9;width:100%;overflow:hidden;background:#101218;border:1px solid #3c4655;border-radius:16px}
+.layer{position:absolute;transform-origin:left center;white-space:nowrap;will-change:transform,opacity}
+.role-title,.role-hero{font-size:clamp(1.1rem,5vw,5rem);font-weight:800;letter-spacing:-.06em}
+.role-eyebrow{font-size:clamp(.65rem,1.5vw,1.25rem);letter-spacing:.22em;color:#89d6aa;font-weight:700}
+.role-ui-control{font-weight:650;font-size:clamp(.7rem,2.6vw,2rem);padding:.7em 1em;border-radius:14px;background:#65d8a6;color:#15291c}
+.role-confirmation{font-weight:700;font-size:clamp(.85rem,3vw,2.3rem);padding:.7em 1em;border-radius:14px;background:#273f36;border:1px solid #83d5a4}
+.meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}output{color:#99e3b8}footer{color:#9aa8bb;font-size:.85rem}
+</style>
+</head><body><main>
+<h1>Video Style Components</h1>
+<p>Deterministic component laboratory. Preview frames, edit text, then export an editable recipe. This is not yet a video renderer.</p>
+<div class="controls"><label>Component<select id="component"></select></label><label>Primary text<input id="primary" type="text" maxlength="512"></label><label>Secondary text<input id="secondary" type="text" maxlength="512"></label></div>
+<div id="stage" aria-label="Selected motion component preview"></div>
+<div class="meta"><button id="play">Play</button><input id="frame" type="range" min="0" max="89" value="0" aria-label="Scrub frame"><output id="position">0</output><button id="export">Export recipe JSON</button></div>
+<footer id="message" role="status">Use the scrubber to inspect any exact frame.</footer>
+<script type="module" src="/app/labs/video-styles.js"></script>
+</main></body></html>
