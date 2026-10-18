@@ -23,7 +23,7 @@ const PREFERRED = Object.freeze({
 });
 
 export function parseCineticPicks(input) {
-  if (typeof input !== 'string' || Buffer.byteLength(input, 'utf8') > 131072)
+  if (typeof input !== 'string' || new TextEncoder().encode(input).length > 131072)
     throw Error('Cinetic plan exceeds 128 KiB');
   const source = JSON.parse(input);
   if (!source || typeof source !== 'object' || Array.isArray(source) ||
