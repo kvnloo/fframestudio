@@ -107,7 +107,10 @@ This optional Chromium journey opens a disposable copy through the hosted folder
 input, seeks first/middle/last real scenes, plays, verifies decoded audio and a
 measured waveform, checks attribution and reopens. It never connects to a user
 bridge or writes a real library. CI retains the fast synthetic fixture, with no
-Rust/GPU requirement, and checks the feature on desktop and mobile.
+Rust/GPU requirement, and checks the feature on desktop and mobile. The portable
+[issue #8 qualification receipt](evidence/issue-8-intro.json) records verified media,
+real playback, passing runs and retained timing/readiness failures; it does not claim
+universal frame-budget reliability on a contended host.
 
 ## Connect your own bridge
 
