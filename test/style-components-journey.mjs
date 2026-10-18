@@ -78,6 +78,33 @@ export async function verifyStyleComponents({context,base,out,root,assert,mode='
     assert(parseRecipe(fs.readFileSync(await file.path(),'utf8')).props.action==='Imported action','download lost edits');
     await page.click('#copy-definition');assert(JSON.parse(await page.inputValue('#json')).id==='ui-action-result','definition copy is not a definition');
     await page.click('#json-toggle');
+    // Cinetic picks are reviewed as metadata; no technique code is executed.
+    await page.click('#json-toggle');
+    const plan = { seed:41, format:'launch', energy:'high', category:null, picks:[
+      {id:'tr-velocity-handoff-cut',name:'Velocity handoff cut',category:'transition',role:'workhorse'},
+      {id:'ty-kinetic-type',name:'Kinetic typography',category:'typography_motion',role:'accent'},
+      {id:'ca-orbit-move',name:'Camera orbit',category:'camera',role:'signature'},
+    ] };
+    await page.locator('#cinetic-file').setInputFiles({
+      name:'cinetic-picks.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(plan)),
+    });
+    await page.waitForFunction(()=>document.querySelector('#cinetic-list')?.children.length === 3);
+    assert(await page.locator('#cinetic-status').innerText().then(t=>t.includes('seed 41')),
+      'cinetic plan lost its seeded provenance');
+    assert(await page.locator('.cinetic-unmatched').count()===1,
+      'unsupported cinetic techniques were silently dropped');
+    await page.locator('[data-cinetic-suggest="tr-velocity-handoff-cut"]').click();
+    assert(await page.inputValue('#component')==='foreground-fly-through',
+      'reviewed cinetic plan did not select related style component');
+    assert((await page.locator('#message').innerText()).includes('Conceptual-only'),
+      'cinetic suggestion claims exact technique support');
+    await page.locator('#cinetic-file').setInputFiles({
+      name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{"secret":"bad"}'),
+    });
+    await page.waitForFunction(()=>document.querySelector('#cinetic-status')?.textContent.startsWith('Invalid'));
+    assert(await page.locator('#cinetic-list li').count()===0,
+      'invalid plan retained earlier technique actions');
+    await page.click('#json-toggle');
     // Keyboard seek and playback must drive the same mounted layers.
     await page.selectOption('#component','headline-reveal');
     await page.locator('#frame').fill('30');await page.locator('#frame').press('ArrowRight');
