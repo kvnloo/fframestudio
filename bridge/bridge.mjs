@@ -24,6 +24,8 @@ import { referenceAPI, stopReferenceHelpers } from './reference.mjs';
 import { AGENTS as BUILTIN } from './agents.mjs';
 import { watchTheme, detectTheme } from './system-theme.mjs';
 import { agentWebAdapter } from './taste.mjs';
+import { GenerationQueue } from './generation/queue.mjs';
+import { providers as generationProviders } from './generation/providers.mjs';
 
 const VERSION = '0.1.0';
 const argv = process.argv.slice(2);
@@ -120,8 +122,12 @@ const themeOptions = { home: THEME_HOME, source: opt('--theme-source', undefined
 const theme = watchTheme({ ...themeOptions, onChange: state => {
   const msg = `event: theme\ndata: ${JSON.stringify(state)}\n\n`; watchers.forEach(r => r.write(msg));
 } });
-process.once('SIGTERM', () => { theme.close(); stopReferenceHelpers(); process.exit(0); });
-process.once('SIGINT', () => { theme.close(); stopReferenceHelpers(); process.exit(0); });
+const generation = new GenerationQueue({ root: ROOT, providers: generationProviders({ fake: argv.includes('--generation-fake') }),
+  publish: data => { const msg = `data: ${JSON.stringify(data)}\n\n`; watchers.forEach(r => r.write(msg)); } });
+await generation.ready;
+const shutdown = async () => { theme.close(); stopReferenceHelpers(); await generation.close(); process.exit(0); };
+process.once('SIGTERM', shutdown);
+process.once('SIGINT', shutdown);
 const handleReference = referenceAPI({ root: ROOT, safePath: fsPath, send });
 const server = http.createServer(async (req, res) => {
   cors(req, res);
@@ -146,6 +152,26 @@ const server = http.createServer(async (req, res) => {
   if (u.pathname === '/taste/profile') {
     if (req.method !== 'GET' || u.search) return send(res, 400, { error: 'Read-only owner-scoped profile; no query parameters' });
     return send(res, 200, await taste.getProfile());
+  }
+  if (u.pathname.startsWith('/generation/')) {
+    try {
+      if (req.method === 'GET' && u.pathname === '/generation/providers') return send(res, 200, { providers: await generation.capabilities() });
+      if (req.method === 'GET' && u.pathname === '/generation/jobs') return send(res, 200, { jobs: generation.list(u.searchParams.get('projectId')) });
+      const match = /^\/generation\/jobs\/([\w-]+)(?:\/(cancel|retry))?$/.exec(u.pathname);
+      if (req.method === 'GET' && match && !match[2]) {
+        const job = generation.list().find(j => j.id === match[1]); return send(res, job ? 200 : 404, job || { error: 'unknown-job' });
+      }
+      if (req.method === 'POST' && match?.[2]) return send(res, 200, await generation[match[2]](match[1]));
+      if (req.method === 'POST' && u.pathname === '/generation/jobs') {
+        let body = '', size = 0; for await (const chunk of req) { size += chunk.length; if (size > 16384) return send(res, 413, { error: 'too-big' }); body += chunk; }
+        let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'invalid-json' }); }
+        return send(res, 202, await generation.submit(input));
+      }
+      return send(res, 404, { error: 'not-found' });
+    } catch (e) {
+      const known = ['invalid-settings', 'invalid-prompt', 'invalid-seed', 'unsupported-timing', 'unsupported-resolution', 'unknown-provider', 'provider-unavailable', 'queue-full', 'queue-closed', 'unknown-job', 'not-retryable', 'unsafe-path'];
+      return send(res, 400, { error: known.includes(e.message) ? e.message : 'generation-request-failed' });
+    }
   }
   if (u.pathname === '/theme' && req.method === 'GET') {
     await theme.ready;

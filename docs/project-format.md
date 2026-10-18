@@ -105,3 +105,8 @@ source titles remain visible beneath new text. Audio mixing, arbitrary overlay c
 transitions, waveform generation, native export and OTIO are not implemented here. Export
 is visibly unavailable, never a fake success. Undo history is session-local; saved Versions
 and project edits survive reload. Media files are never written by editor commands.
+
+Generation insertion uses the internal `import-generated` transaction: it adds a
+validated generated asset plus its referencing clip as one undo entry, retaining
+provenance in `media.generation`. See [generation.md](generation.md) for the output,
+licence and provider contract. It is not an externally proposed ACP command.

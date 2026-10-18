@@ -1,7 +1,7 @@
 import { fpsOf, textOf } from "./doc/project.js";
 import { FittedLayout } from "./fitted-layout.js";
 import { request, preferences as storage } from "./host.js";
-const panelTabs = ["shot", "narrative", "direction", "taste", "takes", "assistant", "source", "story"];
+const panelTabs = ["shot", "narrative", "direction", "taste", "takes", "generate", "assistant", "source", "story"];
 export const escapeHTML = (s) =>
   String(s ?? "").replace(
     /[&<>"']/g,
@@ -193,6 +193,13 @@ export class StudioView {
       $("#tab-" + t).setAttribute("aria-selected", String(t === tab));
       $("#tab-" + t).tabIndex = t === tab ? 0 : -1;
       $(t === "shot" ? "#inspector" : "#" + t + "-pane").hidden = t !== tab;
+    }
+    if (tab === 'generate' && !this.generation) {
+      import('./generation.js').then(({ GenerationPanel }) => {
+        if (this.dead || this.generation) return;
+        this.generation = new GenerationPanel(this.e, $('#generate-pane'));
+        this.generation.mount();
+      });
     }
     this.e.settings.slateTab = tab;
     storage.setItem("ffs.settings", JSON.stringify(this.e.settings));
@@ -568,6 +575,8 @@ export class StudioView {
     ctx.stroke();
   }
   destroy() {
+    this.dead = true;
+    this.generation?.destroy();
     this.taste?.destroy();
     this.layout?.destroy();
     clearTimeout(this.audioTimer);

@@ -1,0 +1,18 @@
+/* Lazy generation slate: existing Studio tokens, no framework or hot-path work. */
+.gen-form { display:grid; gap:12px; margin:16px 0 24px; }
+.gen-form label { display:grid; gap:6px; font-size:12px; color:var(--ink); }
+.gen-form textarea,.gen-form select,.gen-form input { width:100%; min-width:0; box-sizing:border-box; background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:6px; padding:9px; font:inherit; }
+.gen-form textarea { resize:vertical; }
+.gen-settings { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.gen-note { font-size:11px; line-height:1.6; color:var(--mute); overflow-wrap:anywhere; }
+.gen-grid { display:grid; gap:14px; }
+.gen-card { border:1px solid var(--line); border-radius:9px; padding:12px; background:var(--bg2); overflow:hidden; }
+.gen-card p { font-size:12px; overflow-wrap:anywhere; }
+.gen-job-head { display:flex; justify-content:space-between; text-transform:uppercase; font-size:11px; letter-spacing:.06em; }
+.gen-card progress { width:100%; accent-color:var(--acc); margin:8px 0; }
+.gen-card video { width:100%; display:block; border-radius:5px; background:#101010; }
+.gen-actions { display:flex; gap:6px; flex-wrap:wrap; margin:12px 0; }
+.gen-card details { font-size:11px; }
+.gen-card pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:240px; overflow:auto; }
+#gen-status { font-size:12px; line-height:1.6; }
+@media (max-width:600px) { .gen-actions .pill, .gen-form .pill, #gen-probe { min-height:44px; } }

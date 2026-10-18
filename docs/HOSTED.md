@@ -35,6 +35,16 @@ still requires the local engine/bridge; a project Save is not a rendered export.
 
 Core voice edits also have a typed fallback. Web Speech can use a browser-vendor service and requires explicit consent in the voice desk; the hosted Permissions-Policy permits self microphone access, not automatic recording. No reference is sent to a model provider. See [actions.md](actions.md) for registry, local analysis and speech/privacy boundaries. Real mic and Android share-sheet qualification are NOT RUN.
 
+## Local generation
+
+Generate shot requires an authenticated bridge with an optional local GPU worker;
+static hosting and browser-folder projects explicitly show local inference
+unavailable. No model or paid API is required for editing. Open a project from
+your connected bridge library to use its generation queue. See
+[generation.md](generation.md) for setup, licence conditions and qualification
+limits. The experimental hosted adapter is disabled; Portal/Space Bunny are not
+advertised as free video backends.
+
 ## Examples are editable copies
 
 `/examples/manifest.json` describes the optional shelf. Opening an example creates

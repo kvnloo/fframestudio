@@ -76,7 +76,7 @@ export const ACTIONS = Object.freeze(Object.fromEntries([
   ...Object.entries(definitions).map(([id, schema]) => [id, entry(id, schema, true)]),
   ...ui.map(id => [id, entry(id, object({ clipId: str }))]),
   ['seek', entry('seek', object({ frame: int }, ['frame']))],
-  ['open-panel', entry('open-panel', object({ panel: { type: 'string', enum: ['shot','narrative','direction','takes','assistant','source','story','taste'] } }, ['panel']))],
+  ['open-panel', entry('open-panel', object({ panel: { type: 'string', enum: ['shot','narrative','direction','takes','assistant','source','story','taste','generate'] } }, ['panel']))],
 ]));
 export function action(id) { if (!Object.hasOwn(ACTIONS, id)) throw Error(`Unknown studio action: ${id}`); return ACTIONS[id]; }
 export function validateCommand(command) {

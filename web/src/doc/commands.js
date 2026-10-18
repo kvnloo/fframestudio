@@ -124,6 +124,21 @@ function mutate(d, c, depth = 0) {
     return x;
   };
   switch (c.type) {
+    case 'import-generated': {
+      need(c.media?.kind === 'video' && typeof c.media.file === 'string' &&
+        /^media\/generated\/[\w-]+\/result\.mp4$/.test(c.media.file) &&
+        c.media.generation?.schema === 'fframestudio.generation/1' &&
+        c.media.generation.machineGenerated === true &&
+        Number.isSafeInteger(c.media.duration) && c.media.duration > 0 &&
+        typeof c.media.id === 'string' && typeof c.clipId === 'string', 'Invalid generated asset');
+      need(!d.media.some(m => m.id === c.media.id), 'Asset already imported');
+      d.media.push(clone(c.media));
+      mutate(d, { type: 'add', videoId: v.id, index: c.index, clip: {
+        id: c.clipId, name: c.name || 'Generated shot', mediaId: c.media.id,
+        duration: c.media.duration, metadata: { kind: 'video', generationJobId: c.media.generation.jobId },
+      } }, depth + 1);
+      break;
+    }
     case 'add': {
       const x = {
         id: uid('clip'),
@@ -385,6 +400,7 @@ export class CommandStore {
       videos:
         cmd.type === 'batch' ? clone(this.doc.videos) : [...this.doc.videos],
       versions: [...this.doc.versions],
+      media: cmd.type === 'import-generated' || cmd.type === 'batch' ? [...this.doc.media] : this.doc.media,
     };
     if (cmd.type !== 'batch') after.videos[vi] = video;
     mutate(after, cmd);
