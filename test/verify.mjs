@@ -14,6 +14,7 @@ import { chromium } from 'playwright';
 import { createHash } from 'node:crypto';
 import { verifyHosted } from './hosted-journey.mjs';
 import { makeLayoutFixture, verifyLayout } from './layout-journey.mjs';
+import { makeGenerationFixture, verifyGeneration } from './generation-journey.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const argv = process.argv.slice(2);
@@ -41,11 +42,12 @@ try {
   fs.cpSync(path.join(ROOT, 'test/fixtures/themes/wal/.cache'), path.join(HOME, '.cache'), { recursive: true });
   const themeFile = path.join(HOME, '.cache/wal/colors.json');
   makeLayoutFixture(path.join(HOME, 'fframestudio/projects'));
+  makeGenerationFixture(path.join(HOME, 'fframestudio/projects'));
   const source = path.join(HOME, 'fframestudio/demo-src/demo.mp4');
   const sourceHash = () => createHash('sha256').update(fs.readFileSync(source)).digest('hex');
   const sourceBefore = sourceHash();
   const port = await freePort(), token = 'verify-' + Math.random().toString(36).slice(2);
-  bridge = spawn(process.execPath, ['bridge/bridge.mjs', '--port', String(port), '--root', path.join(HOME, 'fframestudio'), '--token', token, '--quiet', '--no-config', '--theme-home', HOME], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
+  bridge = spawn(process.execPath, ['bridge/bridge.mjs', '--port', String(port), '--root', path.join(HOME, 'fframestudio'), '--token', token, '--quiet', '--no-config', '--theme-home', HOME, '--generation-fake'], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
   await new Promise((ok, bad) => { bridge.stdout.once('data', ok); bridge.once('exit', (c) => bad(new Error('bridge exited ' + c))); setTimeout(() => bad(new Error('bridge not ready in 15 s')), 15000); });
   const base = `http://127.0.0.1:${port}`;
   report.bridge = { port, health: await fetch(base + '/health').then((r) => r.json()) };
@@ -400,6 +402,7 @@ try {
     await shot('03-studio-slate');
     return { themes, loop_shot: true, loop_film: true, mute: true, screening_room: true };
   });
+  await journey('generate: fake provider -> job -> insert -> undo -> reopen', () => verifyGeneration({ context: ctx, base, out: OUT, library: path.join(HOME, 'fframestudio/projects'), assert }));
   await journey('edit: shot title saves and survives reload', async () => {
     await page.locator('#timeline .timeline-clip').first().click();
     const clipId = await page.locator('#timeline .timeline-clip.selected').getAttribute('data-select');

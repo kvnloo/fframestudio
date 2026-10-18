@@ -61,6 +61,10 @@ async function cacheMedia(url) {
   if (remoteMedia.has(url)) return;
   const r = await request(url); if (r.ok) remoteMedia.set(url, URL.createObjectURL(await r.blob()));
 }
+export async function prepareMedia(project, file) {
+  if (base) await cacheMedia('/lib/' + encodeURIComponent(project) + '/' + file.split('/').map(encodeURIComponent).join('/'));
+  return mediaURL(project, file);
+}
 export async function read(p) {
   const r = await request('/fs?path=' + encodeURIComponent(p));
   if (!r.ok) throw Error('Read failed: ' + r.status);

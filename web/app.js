@@ -56,7 +56,7 @@ async function boot() {
   $('#bridge').innerHTML = host.isLocal() ? 'Local · nothing uploaded' : '<span class="dot ok"></span>bridge connected';
   if(host.isRemote()){const b=document.createElement('button');b.className='pill';b.textContent='Disconnect';b.onclick=host.disconnectBridge;$('#bridge').append(b);}
   initSystemTheme();
-  api.events(e=>{EDITOR?.external(e.path).catch(err=>{console.error(err.stack);toast(err.message);});if(e.path==='projects/library.json')loadLib();});
+  api.events(e=>{if(typeof e.path !== 'string')return;EDITOR?.external(e.path).catch(err=>{console.error(err.stack);toast(err.message);});if(e.path==='projects/library.json')loadLib();});
   addEventListener('hashchange',route);if(location.hash.startsWith('#/p/')){loadLib();await route();}else{await loadLib();route();}
   api.agents().then(r=>{AGENTS=r.agents;renderAssistant($('#assistant-slot'));}).catch(()=>{});
 }

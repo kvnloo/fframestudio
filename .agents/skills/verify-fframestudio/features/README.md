@@ -59,6 +59,7 @@ When you change a feature, update its file and the matching journey in `test/ver
 | Hosted local-first Studio | [hosted.md](./hosted.md) | four `hosted:` journeys in `test/hosted-journey.mjs`, included by `test/verify.mjs` |
 | Adaptive fitted layout | [layout.md](./layout.md) | `layout: fits and adapts across sizes` |
 | Studio film desk | [studio.md](./studio.md) | `studio: themes, slate tabs, loops and screening room`; additional `tools/verify-studio.mjs` visual/audio proof |
+| Generate shot | [generation.md](./generation.md) | `generate: fake provider -> job -> insert -> undo -> reopen` |
 | Library | [library.md](./library.md) | `library: open link, demo project listed` |
 | Project player | [project-player.md](./project-player.md) | `project: plays and seeks by shot` |
 | System theme | [system-theme.md](./system-theme.md) | `system theme: follows and live-updates` |

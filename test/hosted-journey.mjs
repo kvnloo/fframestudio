@@ -55,7 +55,11 @@ export async function verifyHosted({browser,source,out,root,journey,assert}) {
         const bounds=await page.evaluate(()=>({width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,timeline:document.querySelector('.timeline-panel').getBoundingClientRect().bottom}));
         assert(bounds.width<=width+1,'hosted horizontal overflow');if(width>=1024)assert(bounds.height<=height+1&&bounds.timeline<=height,'hosted desktop does not fit');layouts.push({width,height,...bounds});
       }
-      assert(!external.length,'folder mode contacted external hosts');return {persisted:true,recoveryUndo:true,exported:true,sourceUnchanged:true,colours,layouts};
+      await page.click('#tab-generate');await page.waitForFunction(()=>document.querySelector('#gen-status')?.textContent.includes('Local inference unavailable'));
+      assert(await page.locator('#gen-submit').isDisabled(),'hosted folder enabled generation');
+      assert(!server.requests.some(r=>r.path.startsWith('/generation/')),'folder project probed generation APIs');
+      await page.screenshot({path:path.join(out,'generation-hosted-unavailable.png')});await page.click('#tab-shot');
+      assert(!external.length,'folder mode contacted external hosts');return {generationUnavailable:true,persisted:true,recoveryUndo:true,exported:true,sourceUnchanged:true,colours,layouts};
     });
     await journey('hosted: examples are separate, editable copies',async()=>{
       await page.setViewportSize({width:1896,height:880});await page.goto(server.base);await page.waitForSelector('#examples-shelf');await page.locator('#examples-shelf').scrollIntoViewIfNeeded();await page.waitForSelector('[data-open-example="synthetic"]');

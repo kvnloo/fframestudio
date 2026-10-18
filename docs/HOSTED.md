@@ -29,6 +29,16 @@ and browser eviction can make them unavailable. Export or save to your folder fo
 portable storage. Imported local media is played with object URLs. Video export
 still requires the local engine/bridge; a project Save is not a rendered export.
 
+## Local generation
+
+Generate shot requires an authenticated bridge with an optional local GPU worker;
+static hosting and browser-folder projects explicitly show local inference
+unavailable. No model or paid API is required for editing. Open a project from
+your connected bridge library to use its generation queue. See
+[generation.md](generation.md) for setup, licence conditions and qualification
+limits. The experimental hosted adapter is disabled; Portal/Space Bunny are not
+advertised as free video backends.
+
 ## Examples are editable copies
 
 `/examples/manifest.json` describes the optional shelf. Opening an example creates
