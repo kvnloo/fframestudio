@@ -23,6 +23,7 @@ import { WebSocketServer } from 'ws';
 import { AGENTS as BUILTIN } from './agents.mjs';
 import { watchTheme, detectTheme } from './system-theme.mjs';
 import { agentWebAdapter } from './taste.mjs';
+import { parseSocialReferences, MAX_SOCIAL_REFERENCES_BYTES } from '../web/src/taste/social-references.js';
 
 const VERSION = '0.1.0';
 const argv = process.argv.slice(2);
@@ -93,7 +94,7 @@ const NOFOLLOW_WRITE = fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constan
 
 function cors(req, res) {
   const o = req.headers.origin;
-  if (o && originOk(o)) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-FFS-Expected'); res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS'); res.setHeader('Access-Control-Allow-Private-Network', 'true'); }
+  if (o && originOk(o)) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-FFS-Expected'); res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS'); res.setHeader('Access-Control-Allow-Private-Network', 'true'); }
 }
 const send = (res, code, body, type = 'application/json') => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(type === 'application/json' ? JSON.stringify(body) : body); };
 
@@ -142,6 +143,22 @@ const server = http.createServer(async (req, res) => {
   if (u.pathname === '/taste/profile') {
     if (req.method !== 'GET' || u.search) return send(res, 400, { error: 'Read-only owner-scoped profile; no query parameters' });
     return send(res, 200, await taste.getProfile());
+  }
+  if (u.pathname === '/taste/import/collection') {
+    if (req.method !== 'POST' || u.search)
+      return send(res, 400, { error: 'Selected collection import requires POST without query parameters' });
+    if (String(req.headers['content-type'] || '').split(';')[0].trim() !== 'application/json')
+      return send(res, 415, { error: 'JSON body required' });
+    const chunks = []; let length = 0;
+    for await (const chunk of req) {
+      length += chunk.length;
+      if (length > MAX_SOCIAL_REFERENCES_BYTES) return send(res, 413, { error: 'Reference file exceeds 64 KiB' });
+      chunks.push(chunk);
+    }
+    let collection;
+    try { collection = parseSocialReferences(Buffer.concat(chunks).toString('utf8')); }
+    catch { return send(res, 400, { error: 'Invalid selected reference collection' }); }
+    return send(res, 200, await taste.importCollection(collection));
   }
   if (u.pathname === '/theme' && req.method === 'GET') {
     await theme.ready;
