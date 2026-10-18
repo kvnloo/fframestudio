@@ -45,7 +45,6 @@ export const VIDEO_STYLE_PRESETS = Object.freeze({
 });
 
 const TRACKS = ['x', 'y', 'scale', 'opacity'];
-const CURVES = new Set(['linear', 'hold', 'in-cubic', 'out-cubic', 'in-out-cubic']);
 const propPattern = /^[\w -]{1,100}$/;
 
 function ease(t, curve) {
@@ -113,7 +112,7 @@ export function evaluateRecipe(recipe, frame) {
   if (!Number.isSafeInteger(frame) || frame < 0 || frame >= recipe.durationFrames)
     throw Error('Frame out of bounds');
   const preset = VIDEO_STYLE_PRESETS[recipe.component];
-  const t = recipe.durationFrames === 1 ? 0 : frame / (recipe.durationFrames - 1);
+  const t = frame / (recipe.durationFrames - 1);
   return {
     component: recipe.component, frame,
     seconds: frame * recipe.fps.den / recipe.fps.num,
