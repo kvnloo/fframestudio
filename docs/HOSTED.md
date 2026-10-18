@@ -86,6 +86,17 @@ runtime requests are same-origin; with one, the only additional endpoint is your
 selected loopback bridge. The CSP limits connections accordingly. Do not treat
 CSP as protection against a malicious replacement of the trusted site's code.
 
+## My Taste: aggregate file profiles
+
+The Film slate's **My Taste** tab imports reviewed aggregate JSON into this
+origin's IndexedDB only. It starts Off, previews an explained dial diff and uses
+normal Save/Undo for applications. **Delete profile** removes the local profile
+and cached preview; existing projects retain only their aggregate direction and
+receipts. No source posts, media, URLs or credentials are accepted. AgentWeb reads
+require an explicitly configured bridge and are disabled by default; the hosted
+page never contacts the service directly. See [Taste](TASTE.md) for the contract,
+conservative Markdown converter, uncertainty and remaining source/voice work.
+
 ## Build and verify (no deployment required)
 
 ```sh

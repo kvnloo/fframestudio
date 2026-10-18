@@ -818,6 +818,8 @@ export class Editor {
       $('#preview-still').dataset.select = c.id;
       const colour = this.video.styles[c.styleId]?.color || '';
       $('#preview-text').style.color = colour;
+      const fontFamily = this.video.styles[c.styleId]?.fontFamily;
+      $('#preview-text').style.fontFamily = fontFamily === 'IBM Plex Mono' ? 'Plex Mono' : fontFamily || '';
       $('#canvas').dataset.customInk = String(!!colour && colour !== '#ecebe7');
       const still = $('#preview-still'),
         src = c.thumb || this.doc.preview.poster;

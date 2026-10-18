@@ -1240,3 +1240,39 @@ dialog .panel-title {
     display: none !important;
   }
 }
+
+/* My Taste uses the existing film slate, not a second editing surface. */
+#taste-pane { font-size: 13px; }
+#taste-pane .slate-heading p, #taste-pane .hint { font-size: 12px; line-height: 1.5; }
+.taste-source { display: grid; gap: 10px; }
+.taste-source label, .taste-controls > label { display: grid; gap: 6px; }
+.taste-source select, .taste-controls select { width: 100%; min-height: 36px; }
+.taste-import input { width: 100%; min-width: 0; font-size: 12px; }
+.taste-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+#taste-state { border-left: 2px solid var(--teal); padding-left: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+.taste-controls { border: 1px solid var(--line); padding: 12px; display: grid; gap: 12px; margin: 16px 0; min-width: 0; }
+.taste-controls legend { font-size: 12px; }
+.taste-controls .taste-switch { display: flex; align-items: center; gap: 8px; }
+.taste-switch span { color: var(--mute); font-size: 11px; }
+#taste-strength { width: 100%; margin: 0; }
+#taste-strength-value { font-family: var(--mono); }
+.taste-signals { display: grid; gap: 2px; }
+.taste-signals label { display: flex; align-items: center; gap: 9px; min-height: 44px; border-top: 1px solid var(--line); }
+.taste-signals b, .taste-signals small { display: block; }
+.taste-signals b { font-weight: 500; }
+.taste-signals small { color: var(--mute); font-size: 11px; margin-top: 3px; }
+#taste-studies { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+.taste-study { min-width: 0; display: grid; gap: 10px; align-content: start; background: var(--paper); color: var(--paper-ink); padding: 12px; border: 1px solid var(--line); border-radius: 6px; }
+.taste-study .cap { font-size: 9px; color: var(--paper-ink); }
+.taste-study strong { font-size: 20px; line-height: 1.2; overflow-wrap: anywhere; }
+.taste-study > span:not(.cap) { font-size: 11px; line-height: 1.4; }
+.taste-swatches { display: flex; height: 16px; gap: 3px; }
+.taste-swatches i { flex: 1; border: 1px solid rgb(0 0 0 / .2); }
+#taste-diff { padding-left: 20px; line-height: 1.5; }
+#taste-diff li { padding: 7px 0; border-bottom: 1px solid var(--line); }
+#taste-diff b, #taste-diff span, #taste-diff small { display: block; overflow-wrap: anywhere; }
+#taste-diff small { color: var(--mute); font-size: 11px; }
+#taste-apply { min-height: 40px; width: 100%; }
+@media (max-width: 640px) {
+  .taste-source select, .taste-controls select, .taste-actions button { min-height: 44px; }
+}

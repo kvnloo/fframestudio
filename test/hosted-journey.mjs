@@ -6,6 +6,7 @@ import { once } from 'node:events';
 import net from 'node:net';
 import { createHash } from 'node:crypto';
 import { staticSite } from './static-site.mjs';
+import { verifyTaste } from './taste-journey.mjs';
 export async function verifyHosted({browser,source,out,root,journey,assert}) {
   const work=fs.mkdtempSync(path.join(os.tmpdir(),'ffs-hosted-')), site=path.join(work,'site'), fixture=path.join(work,'my-projects'), examples=path.join(work,'examples');
   fs.mkdirSync(path.join(fixture,'visitor-film'),{recursive:true});fs.mkdirSync(examples);
@@ -56,6 +57,11 @@ export async function verifyHosted({browser,source,out,root,journey,assert}) {
         assert(bounds.width<=width+1,'hosted horizontal overflow');if(width>=1024)assert(bounds.height<=height+1&&bounds.timeline<=height,'hosted desktop does not fit');layouts.push({width,height,...bounds});
       }
       assert(!external.length,'folder mode contacted external hosts');return {persisted:true,recoveryUndo:true,exported:true,sourceUnchanged:true,colours,layouts};
+    });
+    await journey('hosted taste: file -> preview -> apply -> undo -> delete in IndexedDB',async()=>{
+      const result = await verifyTaste({page,root,out,assert,prefix:'hosted-taste'});
+      assert(!external.length,'Taste contacted a third-party host');
+      return {...result,externalRequests:0};
     });
     await journey('hosted: examples are separate, editable copies',async()=>{
       await page.setViewportSize({width:1896,height:880});await page.goto(server.base);await page.waitForSelector('#examples-shelf');await page.locator('#examples-shelf').scrollIntoViewIfNeeded();await page.waitForSelector('[data-open-example="synthetic"]');

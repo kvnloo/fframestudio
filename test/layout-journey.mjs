@@ -72,7 +72,7 @@ export async function verifyLayout({ browser, context, base, out, assert }) {
           assert(Math.abs(result.canvas.width/result.canvas.height-result.aspect)<.02, `${project} ${width}: canvas aspect distorted`);
           return result;
         };
-        const tabs = width<1024 ? ['shot','narrative','direction','takes','assistant','source','story'] : ['shot','narrative','direction','takes','assistant','source'];
+        const tabs = width<1024 ? ['shot','narrative','direction','taste','takes','assistant','source','story'] : ['shot','narrative','direction','taste','takes','assistant','source'];
         for(const tab of tabs) {
           await page.locator(`[data-slate-tab="${tab}"]`).click();
           const pane = page.locator(tab==='shot'?'#inspector':`#${tab}-pane`);

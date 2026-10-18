@@ -56,6 +56,7 @@ When you change a feature, update its file and the matching journey in `test/ver
 
 | feature | file | journey in `test/verify.mjs` |
 | --- | --- | --- |
+| My Taste | [taste.md](./taste.md) | `taste: import file profile -> preview diff -> apply -> undo -> delete`; `hosted taste:` in `test/hosted-journey.mjs` |
 | Hosted local-first Studio | [hosted.md](./hosted.md) | four `hosted:` journeys in `test/hosted-journey.mjs`, included by `test/verify.mjs` |
 | Adaptive fitted layout | [layout.md](./layout.md) | `layout: fits and adapts across sizes` |
 | Studio film desk | [studio.md](./studio.md) | `studio: themes, slate tabs, loops and screening room`; additional `tools/verify-studio.mjs` visual/audio proof |

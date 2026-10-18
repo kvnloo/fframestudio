@@ -128,6 +128,17 @@ timer. No runtime dependency or framework was added.
 Visual/audio qualification is reproducible with `node tools/verify-studio.mjs`; see the
 [Studio feature map](../.agents/skills/verify-fframestudio/features/studio.md) for stable handles.
 
+## 12. My Taste (issue #11, A/B)
+
+My Taste lives beside Direction in the same slate. Human-reviewed aggregate file
+profiles stay in IndexedDB, start Off, and expose evidence/uncertainty, strength,
+signal controls and original/adjusted direction studies with an explained diff.
+Applying uses the ordinary command store and saves an aggregate receipt; Undo
+restores the prior document. Brand locks remain authoritative. Palette/type
+update editorial shared styles; pace and other dials remain direction tokens,
+not silent source retiming. The narrow mocked/file/disabled-by-default AgentWeb
+contract and deliberate gaps are documented in [TASTE.md](TASTE.md).
+
 ## Open questions
 
 - Diffusion Studio and Freesound commercial terms need legal reading before use.
