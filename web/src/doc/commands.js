@@ -1,21 +1,7 @@
 import { clone, validate, reflow, uid } from './project.js';
-export const COMMANDS = [
-  'add',
-  'select',
-  'move',
-  'trim',
-  'split',
-  'replace',
-  'edit-text',
-  'duplicate',
-  'group',
-  'set-beat-lock',
-  'retime',
-  'delete',
-  'edit-style',
-  'save-version',
-  'restore-version',
-];
+import { COMMAND_IDS, validateCommand } from '../actions.js';
+export const COMMANDS = COMMAND_IDS;
+import { validateApplication, validateSchema, constraintsSchema } from '../taste/profile.js';
 export function diff(a, b, path = '') {
   if (a === b) return [];
   if (
@@ -138,6 +124,21 @@ function mutate(d, c, depth = 0) {
     return x;
   };
   switch (c.type) {
+    case 'import-generated': {
+      need(c.media?.kind === 'video' && typeof c.media.file === 'string' &&
+        /^media\/generated\/[\w-]+\/result\.mp4$/.test(c.media.file) &&
+        c.media.generation?.schema === 'fframestudio.generation/1' &&
+        c.media.generation.machineGenerated === true &&
+        Number.isSafeInteger(c.media.duration) && c.media.duration > 0 &&
+        typeof c.media.id === 'string' && typeof c.clipId === 'string', 'Invalid generated asset');
+      need(!d.media.some(m => m.id === c.media.id), 'Asset already imported');
+      d.media.push(clone(c.media));
+      mutate(d, { type: 'add', videoId: v.id, index: c.index, clip: {
+        id: c.clipId, name: c.name || 'Generated shot', mediaId: c.media.id,
+        duration: c.media.duration, metadata: { kind: 'video', generationJobId: c.media.generation.jobId },
+      } }, depth + 1);
+      break;
+    }
     case 'add': {
       const x = {
         id: uid('clip'),
@@ -306,6 +307,19 @@ function mutate(d, c, depth = 0) {
       );
       v.scenes = v.scenes.filter((s) => s.clipIds.length);
       break;
+    case 'apply-taste': {
+      need(Object.keys(c).every(k => ['type', 'videoId', 'receipt'].includes(k)), 'Aggregate Taste command fields only');
+      const receipt = clone(validateApplication(c.receipt));
+      const locks = d.metadata?.tasteBrandConstraints || {};
+      validateSchema(locks, constraintsSchema);
+      for (const [key, value] of Object.entries(locks)) need(JSON.stringify(receipt.dials[key]) === JSON.stringify(value), 'Taste cannot override brand constraints');
+      d.metadata = { ...d.metadata, tasteDirection: clone(receipt.dials), tasteApplications: [...(d.metadata?.tasteApplications || []), receipt] };
+      for (const s of Object.values(v.styles)) {
+        if (receipt.changedSignals.includes('palette')) s.color = receipt.dials.palette[0];
+        if (receipt.changedSignals.includes('typography')) s.fontFamily = receipt.dials.typography;
+      }
+      break;
+    }
     case 'edit-style':
       need(
         safeKey(c.styleId) && Object.hasOwn(v.styles, c.styleId),
@@ -386,6 +400,7 @@ export class CommandStore {
       videos:
         cmd.type === 'batch' ? clone(this.doc.videos) : [...this.doc.videos],
       versions: [...this.doc.versions],
+      media: cmd.type === 'import-generated' || cmd.type === 'batch' ? [...this.doc.media] : this.doc.media,
     };
     if (cmd.type !== 'batch') after.videos[vi] = video;
     mutate(after, cmd);
@@ -443,6 +458,7 @@ export class CommandStore {
             path: '/revision', before: before.revision, after: this.doc.revision,
           }] : [])]
         : diff(before, this.doc),
+      inverse: receipt?.inverse || null,
       undo: this.past.length,
       redo: this.future.length,
     };
@@ -472,10 +488,10 @@ export function proposalCommand(p, doc) {
       p.commands.length <= 100,
     'Invalid proposal commands',
   );
-  for (const c of p.commands)
-    need(
-      c && COMMANDS.includes(c.type) && c.type !== 'select',
-      'Command not allowed in a proposal',
-    );
-  return { type: 'batch', commands: clone(p.commands) };
+  const commands = p.commands.map(c => {
+    const command = c?.id && c?.params ? { ...c.params, type: c.id } : c;
+    need(command && COMMANDS.includes(command.type) && command.type !== 'select', 'Command not allowed in a proposal');
+    return validateCommand(command);
+  });
+  return { type: 'batch', commands: clone(commands) };
 }

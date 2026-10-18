@@ -12,8 +12,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { chromium } from 'playwright';
 import { createHash } from 'node:crypto';
+import { verifyReference } from './reference-journey.mjs';
 import { verifyHosted } from './hosted-journey.mjs';
+import { verifyProcedural } from './procedural-journey.mjs';
 import { makeLayoutFixture, verifyLayout } from './layout-journey.mjs';
+import { verifyStyleComponents } from './style-components-journey.mjs';
+import { verifyTaste } from './taste-journey.mjs';
+import { makeGenerationFixture, verifyGeneration } from './generation-journey.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const argv = process.argv.slice(2);
@@ -41,11 +46,12 @@ try {
   fs.cpSync(path.join(ROOT, 'test/fixtures/themes/wal/.cache'), path.join(HOME, '.cache'), { recursive: true });
   const themeFile = path.join(HOME, '.cache/wal/colors.json');
   makeLayoutFixture(path.join(HOME, 'fframestudio/projects'));
+  makeGenerationFixture(path.join(HOME, 'fframestudio/projects'));
   const source = path.join(HOME, 'fframestudio/demo-src/demo.mp4');
   const sourceHash = () => createHash('sha256').update(fs.readFileSync(source)).digest('hex');
   const sourceBefore = sourceHash();
   const port = await freePort(), token = 'verify-' + Math.random().toString(36).slice(2);
-  bridge = spawn(process.execPath, ['bridge/bridge.mjs', '--port', String(port), '--root', path.join(HOME, 'fframestudio'), '--token', token, '--quiet', '--no-config', '--theme-home', HOME], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
+  bridge = spawn(process.execPath, ['bridge/bridge.mjs', '--port', String(port), '--root', path.join(HOME, 'fframestudio'), '--token', token, '--quiet', '--no-config', '--theme-home', HOME, '--generation-fake'], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
   await new Promise((ok, bad) => { bridge.stdout.once('data', ok); bridge.once('exit', (c) => bad(new Error('bridge exited ' + c))); setTimeout(() => bad(new Error('bridge not ready in 15 s')), 15000); });
   const base = `http://127.0.0.1:${port}`;
   report.bridge = { port, health: await fetch(base + '/health').then((r) => r.json()) };
@@ -79,6 +85,7 @@ try {
     await page.goto(`${base}/open?token=${token}`); await page.waitForSelector('.card', { timeout: 10000 });
     const titles = await page.$$eval('.card .t', (e) => e.map((x) => x.textContent));
     assert(titles.includes('Demo film'), `cards: ${titles.join(', ')}`);
+    await page.locator('.card img').first().evaluate(img => img.decode());
     const posterOk = await page.$eval('.card img', (i) => i.complete && i.naturalWidth > 0);
     assert(posterOk, 'poster image did not load');
     assert(await page.locator('.kind-chip').count() === titles.length, 'film kind chips missing');
@@ -400,6 +407,7 @@ try {
     await shot('03-studio-slate');
     return { themes, loop_shot: true, loop_film: true, mute: true, screening_room: true };
   });
+  await journey('generate: fake provider -> job -> insert -> undo -> reopen', () => verifyGeneration({ context: ctx, base, out: OUT, library: path.join(HOME, 'fframestudio/projects'), assert }));
   await journey('edit: shot title saves and survives reload', async () => {
     await page.locator('#timeline .timeline-clip').first().click();
     const clipId = await page.locator('#timeline .timeline-clip.selected').getAttribute('data-select');
@@ -589,8 +597,17 @@ try {
     await m.screenshot({ path: path.join(OUT, '05-mobile.png') }); await m.close();
     assert(lib <= 391 && proj <= 391, `scrollWidth library ${lib}, project ${proj}`); return { library: lib, project: proj };
   });
+  await journey('taste: import file profile -> preview diff -> apply -> undo -> delete', () => verifyTaste({page,root:ROOT,out:OUT,assert}));
   await journey('layout: fits and adapts across sizes', () => verifyLayout({browser, context:ctx, base, out:OUT, assert}));
+  await journey('procedural: ff-tracking 12 shots, ff-unmute one take + markers', async () => {
+    run('python3', ['test/procedural_fixture.py', HOME]);
+    const fixturePage = await ctx.newPage();
+    try { return await verifyProcedural({page:fixturePage,base,library:path.join(HOME,'fframestudio/projects'),out:OUT,assert}); }
+    finally { await fixturePage.close(); }
+  });
+  await journey('style components: lab preview equals runtime', () => verifyStyleComponents({context:ctx,base,out:OUT,root:ROOT,assert}));
   await verifyHosted({browser,source,out:OUT,root:ROOT,journey,assert});
+  await verifyReference({page,base,out:OUT,journey,assert,library:path.join(HOME,'fframestudio/projects')});
   await journey('console clean', async () => { assert(!report.console_errors.length && !report.failed_requests.length, JSON.stringify({ e: report.console_errors, r: report.failed_requests })); });
 } catch (e) {
   report.journeys.push({ name: 'setup', ok: false, error: String(e.message || e).slice(0, 800) });

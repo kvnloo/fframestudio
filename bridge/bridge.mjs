@@ -20,8 +20,12 @@ import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline';
 import { WebSocketServer } from 'ws';
+import { referenceAPI, stopReferenceHelpers } from './reference.mjs';
 import { AGENTS as BUILTIN } from './agents.mjs';
 import { watchTheme, detectTheme } from './system-theme.mjs';
+import { agentWebAdapter } from './taste.mjs';
+import { GenerationQueue } from './generation/queue.mjs';
+import { providers as generationProviders } from './generation/providers.mjs';
 
 const VERSION = '0.1.0';
 const argv = process.argv.slice(2);
@@ -33,6 +37,10 @@ const TOKEN = opt('--token', process.env.FFS_BRIDGE_TOKEN || randomBytes(24).toS
 const HOSTED = opt('--hosted-origin', 'https://fframestudio.vercel.app');
 const ORIGINS = new Set([HOSTED, ...all('--allow-origin')]);
 const QUIET = argv.includes('--quiet');
+// A single bridge represents its owner's authenticated user, never a caller-supplied tenant.
+const taste = agentWebAdapter({ enabled: argv.includes('--enable-agentweb-taste'), baseURL: process.env.FFS_TASTE_AGENTWEB_URL, token: process.env.FFS_TASTE_AGENTWEB_TOKEN });
+// Do not pass the service credential to ACP children or any browser configuration.
+delete process.env.FFS_TASTE_AGENTWEB_TOKEN;
 const WEB = path.resolve(opt('--web', path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'web')));
 const LIBDIR = path.join(ROOT, 'projects');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml',
@@ -88,7 +96,7 @@ const NOFOLLOW_WRITE = fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constan
 
 function cors(req, res) {
   const o = req.headers.origin;
-  if (o && originOk(o)) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-FFS-Expected'); res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS'); res.setHeader('Access-Control-Allow-Private-Network', 'true'); }
+  if (o && originOk(o)) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-FFS-Expected'); res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS'); res.setHeader('Access-Control-Allow-Private-Network', 'true'); }
 }
 const send = (res, code, body, type = 'application/json') => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(type === 'application/json' ? JSON.stringify(body) : body); };
 
@@ -114,8 +122,13 @@ const themeOptions = { home: THEME_HOME, source: opt('--theme-source', undefined
 const theme = watchTheme({ ...themeOptions, onChange: state => {
   const msg = `event: theme\ndata: ${JSON.stringify(state)}\n\n`; watchers.forEach(r => r.write(msg));
 } });
-process.once('SIGTERM', () => { theme.close(); process.exit(0); });
-process.once('SIGINT', () => { theme.close(); process.exit(0); });
+const generation = new GenerationQueue({ root: ROOT, providers: generationProviders({ fake: argv.includes('--generation-fake') }),
+  publish: data => { const msg = `data: ${JSON.stringify(data)}\n\n`; watchers.forEach(r => r.write(msg)); } });
+await generation.ready;
+const shutdown = async () => { theme.close(); stopReferenceHelpers(); await generation.close(); process.exit(0); };
+process.once('SIGTERM', shutdown);
+process.once('SIGINT', shutdown);
+const handleReference = referenceAPI({ root: ROOT, safePath: fsPath, send });
 const server = http.createServer(async (req, res) => {
   cors(req, res);
   const u = new URL(req.url, 'http://x');
@@ -126,6 +139,7 @@ const server = http.createServer(async (req, res) => {
     if (!tokenOk(u.searchParams.get('token'))) return send(res, 401, { error: 'bad token' });
     res.writeHead(302, { 'Set-Cookie': `ffs=${TOKEN}; HttpOnly; SameSite=Strict; Path=/`, Location: '/' + (u.searchParams.get('to') || '') }); return res.end();
   }
+  if (u.pathname === '/share-worker.js' && req.method === 'GET') return serveFile(req,res,path.join(WEB,'share-worker.js'));
   if (req.method === 'GET' && (u.pathname === '/' || u.pathname.startsWith('/app/'))) { // the web app itself (no secrets in it)
     const rel = u.pathname === '/' ? 'index.html' : decodeURIComponent(u.pathname.slice(5));
     const f = path.resolve(WEB, rel); if (!f.startsWith(WEB + path.sep)) return send(res, 400, { error: 'bad path' });
@@ -134,6 +148,31 @@ const server = http.createServer(async (req, res) => {
   const auth = (req.headers.authorization || '').replace(/^Bearer /, '') || u.searchParams.get('token') || cookieTok(req); // query only for EventSource
   if (u.pathname === '/me') return send(res, 200, tokenOk(auth) ? { ok: true, root: ROOT } : { ok: false }); // lets the app show the sign-in page without a console error
   if (!tokenOk(auth)) return send(res, 401, { error: 'bad token' });
+  if (await handleReference(req, res, u)) return;
+  if (u.pathname === '/taste/profile') {
+    if (req.method !== 'GET' || u.search) return send(res, 400, { error: 'Read-only owner-scoped profile; no query parameters' });
+    return send(res, 200, await taste.getProfile());
+  }
+  if (u.pathname.startsWith('/generation/')) {
+    try {
+      if (req.method === 'GET' && u.pathname === '/generation/providers') return send(res, 200, { providers: await generation.capabilities() });
+      if (req.method === 'GET' && u.pathname === '/generation/jobs') return send(res, 200, { jobs: generation.list(u.searchParams.get('projectId')) });
+      const match = /^\/generation\/jobs\/([\w-]+)(?:\/(cancel|retry))?$/.exec(u.pathname);
+      if (req.method === 'GET' && match && !match[2]) {
+        const job = generation.list().find(j => j.id === match[1]); return send(res, job ? 200 : 404, job || { error: 'unknown-job' });
+      }
+      if (req.method === 'POST' && match?.[2]) return send(res, 200, await generation[match[2]](match[1]));
+      if (req.method === 'POST' && u.pathname === '/generation/jobs') {
+        let body = '', size = 0; for await (const chunk of req) { size += chunk.length; if (size > 16384) return send(res, 413, { error: 'too-big' }); body += chunk; }
+        let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'invalid-json' }); }
+        return send(res, 202, await generation.submit(input));
+      }
+      return send(res, 404, { error: 'not-found' });
+    } catch (e) {
+      const known = ['invalid-settings', 'invalid-prompt', 'invalid-seed', 'unsupported-timing', 'unsupported-resolution', 'unknown-provider', 'provider-unavailable', 'queue-full', 'queue-closed', 'unknown-job', 'not-retryable', 'unsafe-path'];
+      return send(res, 400, { error: known.includes(e.message) ? e.message : 'generation-request-failed' });
+    }
+  }
   if (u.pathname === '/theme' && req.method === 'GET') {
     await theme.ready;
     const source = u.searchParams.get('source');

@@ -1,5 +1,127 @@
 # Editor performance and recovery
 
+## Reference / action registry / voice foundation qualification
+
+The action registry, reference desk and typed voice journeys have real browser and saved-file
+readback coverage. Reference/voice modules and desk DOM are lazy: ordinary project opening
+asserts that these optional modules were not fetched. Analysis is native ffmpeg/Python child
+work, never browser animation-loop work. No web runtime dependency or budget was added.
+
+The latest unit replay passes **203 tests**, including **119 utterance cases**, plus ACP/bridge
+security. File/URL capability handling, generated CC0 three-shot/tone analysis (cuts at frames
+90 and 180 within one frame), parameterized thumbnail cache isolation, cancellation, preview /
+confirmation, source-linked reconstruction and typed edit → undo → Save/reopen all pass.
+The no-local-paths and static site build gates pass. Discovery configuration bytes/mtime remain
+unchanged. Real microphone, installed speech-model decoding and Android share sheets are NOT RUN.
+
+**Timing acceptance is not consistently qualified.** The three-run browser sequence before the
+final replay is pass / menu-timing failure / pass. The failed menu sample takes 30.2 ms open-ready;
+no assertion was weakened. Earlier runs retain theme/menu timing failures and one thumbnail
+readiness timeout, as well as an initial new-journey fixture-ID error that was corrected.
+The fixed three-performance-replay series is splitter-frame-rate failure / splitter-frame-rate
+failure / pass. Earlier performance failures are retained, not replaced by the passing sample.
+
+| Latest passing performance replay | Measured | Unchanged budget |
+| --- | --- | --- |
+| 48-clip cold navigation → interactive | 161.9 ms | <300 ms |
+| 500-clip command → DOM/layout ready, worst | 10.7 ms | <16 ms |
+| Command → next rAF, worst | 16.8 ms | existing measured-next-frame gate |
+| Scrub / timeline splitter | 60.000 / 60.003 fps | unchanged frame-interval gate |
+| Shipped editor JavaScript gzip | 71,844 B | <150 KiB |
+
+The passing replay satisfies every existing budget, but does not establish reliable tail latency
+or physical compositor presentation. Host load and optional-module fan-out varied between
+samples; these are not controlled baseline/candidate comparisons and no single cause is proven.
+After retaining that failure, the final three consecutive full-suite processes each pass **25/25 journeys** (the third qualification run plus both final replays).
+See the portable [qualification receipt](evidence/issue-2-foundation.json), which retains every
+reported passing/failing browser and performance sample. Full screenshots and raw artifacts are
+external under the issue-2 UI comparison evidence directory. Breakdown, side-by-side and typed
+voice screenshots were visually reviewed; source-linked approximation and uncertainty are visible.
+## Video Style Components: implementation and qualification boundary
+
+PR A/B runtime is `a59d062` (plus the documented Node benchmark-file serialization below).
+Measured on Linux 7.2.9-1-cachyos, Intel Core i9-10900KF / 20 logical CPUs,
+Node v26.7.0 and Chromium 153.0.8010.52. **The functional slice is implemented; the
+required three consecutive green browser runs and full performance gate are not qualified.**
+The [qualification receipt](evidence/style-components/qualification.json) preserves every full
+browser attempt's outcome, timing summaries and latest failures. Raw timing arrays, suite logs,
+all failed attempts and reviewed screenshots remain outside the repository under
+`<local>/ui-compare/issue-9/`. No host process was stopped, browser scheduling flag changed,
+frame budget weakened, warmup inserted into browser measurements or failed sample discarded.
+These shared-host samples do not establish the cause of timing failures or a controlled speedup.
+
+### Component evaluation (including full input/definition validation)
+
+Each component has 500 declared warmup samples and 3,000 measured arbitrary-order frame calls.
+The new microbenchmark gates **mean and p95 <1 ms**, not worst wall-clock latency. DOM, paint,
+audio and video encoding are excluded; all raw samples are retained externally.
+
+| Component | Initial complete perf mean / p95 / max ms | Latest serial mean / p95 / max ms |
+| --- | --- | --- |
+| `headline-reveal` | 0.0165 / 0.0237 / 0.5688 | 0.0203 / 0.0355 / 0.8526 |
+| `foreground-fly-through` | 0.0163 / 0.0226 / 0.2725 | 0.0180 / 0.0389 / 0.5097 |
+| `ui-action-result` | 0.0161 / 0.0237 / 0.2754 | 0.0990 / 0.0693 / **60.8601** |
+
+The latest microbenchmark passes its stated gate, but **not every frame call was <1 ms**:
+the 60.86 ms outlier and an earlier 53.80 ms headline outlier are retained. GC, scheduler
+preemption and contention have not been separated. Adding a second `test/perf` file would run
+latency tests concurrently under Node's default runner. `test:perf` now explicitly uses
+`--test-concurrency=1` to avoid introducing self-contention; all thresholds and measurement
+phases remain unchanged. This does not solve the observed browser timing failures.
+
+### Lab scrub and actual CLI parity
+
+The new `style components: lab preview equals runtime` journey compares 90 real DOM/CSS samples
+with independent CLI subprocesses: all three components, both edited takes, every aspect, five
+seek positions. It also tests copied/exported JSON, imported track changes, invalid-import
+rollback, download readback, keyboard seek, play/pause, compare/guides, mat bounds and aspect fit.
+The hosted journey repeats all 90 samples on a plain static server with the generated CSP,
+without bridge APIs or external requests. This is supported-property parity, not rendered video
+or cross-renderer pixel parity.
+
+Scrub dispatches a real range-input event on each of 121 rAF callbacks (120 measured intervals)
+for **each** component with both takes visible. Synchronous frame work, long tasks and rAF
+scheduling are recorded separately; mounted layers must survive. Existing 60 Hz clock-jitter
+tolerance is 17.5 ms mean interval. No physical compositor presentation is measured.
+
+| Latest full run (attempt 8) | Scrub fps | Mean / max synchronous work ms | Long tasks >50 ms |
+| --- | --- | --- | --- |
+| Headline | **56.695 — FAIL** | 0.403 / 2.500 | 0 |
+| Fly-through | 60.003 | 0.355 / 1.000 | 0 |
+| Action → result | 60.005 | 0.364 / 0.700 | 0 |
+
+Attempt 5 passed **all 23 journeys**, with all three components at 60.000–60.003 fps and zero
+long tasks. It predates the visual action-label cleanup. The final exact-runtime sequence
+(attempts 6/7/8) passes **22/23 each**: hosted parity and every pre-existing journey pass, but
+headline scrub misses the unchanged rate budget (50.709 / 56.254 / 56.695 fps). Attempt 6 also
+records a 56 ms lab long task. These failures are retained alongside the earlier passing process;
+**one passing process is not the requested repeated qualification**. Attempt 1 timed out after
+existing theme/menu failures; attempts 2–4 also retain lab scheduling failures.
+
+Desktop is 1896×880 with a 1896×880 document; phone is 390×780 with no horizontal overflow
+and intentional vertical scrolling (1787 px document). Both takes, all three mechanism captures
+and the full phone controls were reviewed with vision. Review caught an overlapping kicker,
+a stage covering Play, and a residual action label over its result; the final captures verify
+the fixes. This is a UI legibility/layout review, not approval of a rendered launch film.
+
+### Existing editor performance and remaining gates
+
+The first complete perf attempt failed only cold-open: **334.6 ms** against <300 ms. Its other
+budgets passed (10.3 ms worst ready, 17.1 ms next-rAF, 57.604 fps scrub under existing tolerance,
+zero scrub long tasks). The next attempt failed the Node duplicate-command wall sample at
+**16.404 ms**, so browser perf did not launch. After Node file serialization, Node tests pass,
+but the latest browser sample still fails: **394.0 ms** cold-open, **31.1 ms** worst ready,
+**94.6 ms** next-rAF, **53.5 fps** scrub, **48.502 fps** splitter and one **80 ms** splitter task.
+DOM identity, virtualization, gzip and autosave CPU gates still pass. No unchanged editor gate
+was weakened or represented as passing.
+
+`npm test` passes **70 Node tests plus ACP/security**, with discovery bytes and mtime unchanged.
+The two complete gate sequences also verify shared discovery bytes/mtime remain unchanged.
+`bash scripts/check-no-local-paths.sh` and `npm run build:site` pass. The published JSON Schema
+was consumed with a Draft 2020-12 validator against all nine component/aspect recipes. No runtime
+dependency was added. See [style-components.md](style-components.md) for reproduction commands,
+PR C's position-only carry join and the planned (unimplemented) fframes adapter contract.
+
 ## Fitted layout qualification
 
 Runtime `4bef2f2` fits the copied real-library editor at **1896×880 → 880 px document

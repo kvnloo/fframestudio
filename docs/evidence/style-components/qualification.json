@@ -1,0 +1,867 @@
+{
+  "runtimeRevision": "a59d062d2dd9f8096b2ba320fdbef1dc45613ca5",
+  "environment": {
+    "os": "Linux",
+    "kernel": "7.2.9-1-cachyos",
+    "cpu": "Intel(R) Core(TM) i9-10900KF CPU @ 3.70GHz",
+    "logicalCPUs": 20,
+    "node": "v26.7.0",
+    "chromium": "Chromium 153.0.8010.52 Arch Linux"
+  },
+  "gates": [
+    {
+      "name": "tests-final",
+      "exit": 0,
+      "seconds": 6.475766181945801
+    },
+    {
+      "name": "no-local-paths-final",
+      "exit": 0,
+      "seconds": 0.09093046188354492
+    },
+    {
+      "name": "verify-3",
+      "exit": 1,
+      "seconds": 98.77889156341553
+    },
+    {
+      "name": "verify-4",
+      "exit": 1,
+      "seconds": 93.96346831321716
+    },
+    {
+      "name": "verify-5",
+      "exit": 0,
+      "seconds": 64.67723321914673
+    },
+    {
+      "name": "perf-final",
+      "exit": 1,
+      "seconds": 11.025351524353027
+    },
+    {
+      "name": "build-site-final",
+      "exit": 0,
+      "seconds": 0.22694087028503418
+    },
+    {
+      "name": "tests-replay",
+      "exit": 0,
+      "seconds": 4.623739242553711
+    },
+    {
+      "name": "no-local-paths-replay",
+      "exit": 0,
+      "seconds": 0.04606485366821289
+    },
+    {
+      "name": "verify-6",
+      "exit": 1,
+      "seconds": 92.34403014183044
+    },
+    {
+      "name": "verify-7",
+      "exit": 1,
+      "seconds": 80.94343590736389
+    },
+    {
+      "name": "verify-8",
+      "exit": 1,
+      "seconds": 68.40932846069336
+    },
+    {
+      "name": "perf-replay",
+      "exit": 1,
+      "seconds": 0.6213188171386719
+    },
+    {
+      "name": "build-site-replay",
+      "exit": 0,
+      "seconds": 0.5036420822143555
+    },
+    {
+      "name": "perf-serial",
+      "exit": 1,
+      "note": "Node benchmark files serialized to avoid self-contention; browser budgets still failed. Thresholds unchanged."
+    }
+  ],
+  "nodeTestCounts": {
+    "tests-final.log": 69,
+    "tests-replay.log": 70
+  },
+  "verifyAttempts": [
+    {
+      "attempt": 1,
+      "ok": false,
+      "journeyCount": 18,
+      "passingJourneys": 13,
+      "failures": [
+        {
+          "name": "system theme: follows and live-updates",
+          "error": "theme application exceeded frame budget: 189.89999997615814 ms"
+        },
+        {
+          "name": "context menu: native menu replaced, actions work",
+          "error": "menu not presented in the next frame (frame 16.70000000001164 ms): {\"menu_open_ms\":{\"median\":71.19999998807907,\"worst\":195.30000001192093},\"open_ready_median_ms\":3.5,\"open_ready_worst_ms\":4.600000023841858,\"samples\":[{\"ready_ms\":2.399999976158142,\"rendering_opportunity_ms\":59.09999996423721},{\"ready_ms\":4.600000023841858,\"rendering_opportunity_ms\":101},{\"ready_ms\":3,\"rendering_opportunity_ms\":83.30000001192093},{\"ready_ms\":3.5,\"rendering_opportunity_ms\":14.800000011920929},{\"ready_ms\":3.600000023841858,\"rendering_opportunity_ms\":6.699999988079071},{\"ready_ms\":3.899999976158142,\"rendering_oppor"
+        },
+        {
+          "name": "layout: fits and adapts across sizes",
+          "error": "page.waitForFunction: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> /usr/bin/chromium --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,De"
+        },
+        {
+          "name": "style components: lab preview equals runtime",
+          "error": "browserContext.newPage: Target page, context or browser has been closed"
+        },
+        {
+          "name": "setup",
+          "error": "browser.newContext: Target page, context or browser has been closed"
+        }
+      ],
+      "styleJourneys": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "attempt": 2,
+      "ok": false,
+      "journeyCount": 23,
+      "passingJourneys": 22,
+      "failures": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "error": "lab scrub below existing 60 Hz scheduling tolerance"
+        }
+      ],
+      "styleJourneys": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "ok": false
+        },
+        {
+          "name": "hosted: style component lab equals runtime",
+          "ok": true,
+          "mode": "hosted",
+          "cliMatchedSamples": 90,
+          "layouts": [
+            {
+              "viewport": {
+                "width": 1896,
+                "height": 880
+              },
+              "document": {
+                "width": 1896,
+                "height": 880
+              }
+            },
+            {
+              "viewport": {
+                "width": 390,
+                "height": 780
+              },
+              "document": {
+                "width": 390,
+                "height": 1735
+              }
+            }
+          ]
+        }
+      ],
+      "labPerf": [
+        {
+          "component": "headline-reveal",
+          "fps": 46.75566347455362,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.7628099194242934,
+          "maxWorkMs": 3.199999988079071
+        }
+      ]
+    },
+    {
+      "attempt": 3,
+      "ok": false,
+      "journeyCount": 23,
+      "passingJourneys": 22,
+      "failures": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "error": "headline-reveal: lab scrub below existing 60 Hz scheduling tolerance"
+        }
+      ],
+      "styleJourneys": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "ok": false
+        },
+        {
+          "name": "hosted: style component lab equals runtime",
+          "ok": true,
+          "mode": "hosted",
+          "cliMatchedSamples": 90,
+          "layouts": [
+            {
+              "viewport": {
+                "width": 1896,
+                "height": 880
+              },
+              "document": {
+                "width": 1896,
+                "height": 880
+              }
+            },
+            {
+              "viewport": {
+                "width": 390,
+                "height": 780
+              },
+              "document": {
+                "width": 390,
+                "height": 1787
+              }
+            }
+          ]
+        }
+      ],
+      "labPerf": [
+        {
+          "component": "headline-reveal",
+          "fps": 55.816549606958446,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.47272727312135304,
+          "maxWorkMs": 1.699999988079071
+        },
+        {
+          "component": "foreground-fly-through",
+          "fps": 50.70706780464596,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.5595041345958868,
+          "maxWorkMs": 1.5
+        },
+        {
+          "component": "ui-action-result",
+          "fps": 56.694699045639226,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.48595041332166056,
+          "maxWorkMs": 1.0999999642372131
+        }
+      ]
+    },
+    {
+      "attempt": 4,
+      "ok": false,
+      "journeyCount": 23,
+      "passingJourneys": 22,
+      "failures": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "error": "headline-reveal: lab scrub below existing 60 Hz scheduling tolerance"
+        }
+      ],
+      "styleJourneys": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "ok": false
+        },
+        {
+          "name": "hosted: style component lab equals runtime",
+          "ok": true,
+          "mode": "hosted",
+          "cliMatchedSamples": 90,
+          "layouts": [
+            {
+              "viewport": {
+                "width": 1896,
+                "height": 880
+              },
+              "document": {
+                "width": 1896,
+                "height": 880
+              }
+            },
+            {
+              "viewport": {
+                "width": 390,
+                "height": 780
+              },
+              "document": {
+                "width": 390,
+                "height": 1787
+              }
+            }
+          ]
+        }
+      ],
+      "labPerf": [
+        {
+          "component": "headline-reveal",
+          "fps": 48.98159108535042,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.6066115680804922,
+          "maxWorkMs": 2.199999988079071
+        },
+        {
+          "component": "foreground-fly-through",
+          "fps": 51.80228793438377,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.6553719028953678,
+          "maxWorkMs": 2.600000023841858
+        },
+        {
+          "component": "ui-action-result",
+          "fps": 60.00300015000751,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.3793388427781665,
+          "maxWorkMs": 0.800000011920929
+        }
+      ]
+    },
+    {
+      "attempt": 5,
+      "ok": true,
+      "journeyCount": 23,
+      "passingJourneys": 23,
+      "failures": [],
+      "styleJourneys": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "ok": true,
+          "mode": "bridge",
+          "cliMatchedSamples": 90,
+          "layouts": [
+            {
+              "viewport": {
+                "width": 1896,
+                "height": 880
+              },
+              "document": {
+                "width": 1896,
+                "height": 880
+              }
+            },
+            {
+              "viewport": {
+                "width": 390,
+                "height": 780
+              },
+              "document": {
+                "width": 390,
+                "height": 1787
+              }
+            }
+          ]
+        },
+        {
+          "name": "hosted: style component lab equals runtime",
+          "ok": true,
+          "mode": "hosted",
+          "cliMatchedSamples": 90,
+          "layouts": [
+            {
+              "viewport": {
+                "width": 1896,
+                "height": 880
+              },
+              "document": {
+                "width": 1896,
+                "height": 880
+              }
+            },
+            {
+              "viewport": {
+                "width": 390,
+                "height": 780
+              },
+              "document": {
+                "width": 390,
+                "height": 1787
+              }
+            }
+          ]
+        }
+      ],
+      "labPerf": [
+        {
+          "component": "headline-reveal",
+          "fps": 60.00300015000751,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.33801652823597933,
+          "maxWorkMs": 0.7000000476837158
+        },
+        {
+          "component": "foreground-fly-through",
+          "fps": 60.00300015000751,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.333884297323621,
+          "maxWorkMs": 0.800000011920929
+        },
+        {
+          "component": "ui-action-result",
+          "fps": 59.99999999999999,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.3504132229434557,
+          "maxWorkMs": 0.800000011920929
+        }
+      ]
+    },
+    {
+      "attempt": 6,
+      "ok": false,
+      "journeyCount": 23,
+      "passingJourneys": 22,
+      "failures": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "error": "headline-reveal: lab scrub below existing 60 Hz scheduling tolerance"
+        }
+      ],
+      "styleJourneys": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "ok": false
+        },
+        {
+          "name": "hosted: style component lab equals runtime",
+          "ok": true,
+          "mode": "hosted",
+          "cliMatchedSamples": 90,
+          "layouts": [
+            {
+              "viewport": {
+                "width": 1896,
+                "height": 880
+              },
+              "document": {
+                "width": 1896,
+                "height": 880
+              }
+            },
+            {
+              "viewport": {
+                "width": 390,
+                "height": 780
+              },
+              "document": {
+                "width": 390,
+                "height": 1787
+              }
+            }
+          ]
+        }
+      ],
+      "labPerf": [
+        {
+          "component": "headline-reveal",
+          "fps": 50.70921056746143,
+          "longTasks": [
+            {
+              "start": 10906,
+              "duration": 56
+            }
+          ],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.4917355362048819,
+          "maxWorkMs": 1.300000011920929
+        },
+        {
+          "component": "foreground-fly-through",
+          "fps": 59.99999999999999,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.39421487790493925,
+          "maxWorkMs": 0.699999988079071
+        },
+        {
+          "component": "ui-action-result",
+          "fps": 58.53944094833896,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.3917355305892377,
+          "maxWorkMs": 0.800000011920929
+        }
+      ]
+    },
+    {
+      "attempt": 7,
+      "ok": false,
+      "journeyCount": 23,
+      "passingJourneys": 22,
+      "failures": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "error": "headline-reveal: lab scrub below existing 60 Hz scheduling tolerance"
+        }
+      ],
+      "styleJourneys": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "ok": false
+        },
+        {
+          "name": "hosted: style component lab equals runtime",
+          "ok": true,
+          "mode": "hosted",
+          "cliMatchedSamples": 90,
+          "layouts": [
+            {
+              "viewport": {
+                "width": 1896,
+                "height": 880
+              },
+              "document": {
+                "width": 1896,
+                "height": 880
+              }
+            },
+            {
+              "viewport": {
+                "width": 390,
+                "height": 780
+              },
+              "document": {
+                "width": 390,
+                "height": 1787
+              }
+            }
+          ]
+        }
+      ],
+      "labPerf": [
+        {
+          "component": "headline-reveal",
+          "fps": 56.25351584474033,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.383471076646127,
+          "maxWorkMs": 0.800000011920929
+        },
+        {
+          "component": "foreground-fly-through",
+          "fps": 60.00300015000751,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.3768595033440708,
+          "maxWorkMs": 0.7999999523162842
+        },
+        {
+          "component": "ui-action-result",
+          "fps": 58.53944094833896,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.45371900806742266,
+          "maxWorkMs": 1.600000023841858
+        }
+      ]
+    },
+    {
+      "attempt": 8,
+      "ok": false,
+      "journeyCount": 23,
+      "passingJourneys": 22,
+      "failures": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "error": "headline-reveal: lab scrub below existing 60 Hz scheduling tolerance"
+        }
+      ],
+      "styleJourneys": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "ok": false
+        },
+        {
+          "name": "hosted: style component lab equals runtime",
+          "ok": true,
+          "mode": "hosted",
+          "cliMatchedSamples": 90,
+          "layouts": [
+            {
+              "viewport": {
+                "width": 1896,
+                "height": 880
+              },
+              "document": {
+                "width": 1896,
+                "height": 880
+              }
+            },
+            {
+              "viewport": {
+                "width": 390,
+                "height": 780
+              },
+              "document": {
+                "width": 390,
+                "height": 1787
+              }
+            }
+          ]
+        }
+      ],
+      "labPerf": [
+        {
+          "component": "headline-reveal",
+          "fps": 56.694699045639226,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.403305785222487,
+          "maxWorkMs": 2.5
+        },
+        {
+          "component": "foreground-fly-through",
+          "fps": 60.00300015000751,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.3545454573040166,
+          "maxWorkMs": 1
+        },
+        {
+          "component": "ui-action-result",
+          "fps": 60.00498041337429,
+          "longTasks": [],
+          "nodesPreserved": true,
+          "frames": 121,
+          "meanWorkMs": 0.364462812084797,
+          "maxWorkMs": 0.699999988079071
+        }
+      ]
+    }
+  ],
+  "evaluationBenchmarks": [
+    {
+      "receipt": "eval",
+      "node": "v26.7.0",
+      "platform": "linux",
+      "arch": "x64",
+      "warmupPerComponent": 500,
+      "includes": "Full definition/recipe validation and evaluation; excludes DOM/render/encoding",
+      "samples": [
+        {
+          "component": "headline-reveal",
+          "count": 3000,
+          "meanMs": 0.07503292366666624,
+          "p95Ms": 0.07516699999999332,
+          "maxMs": 53.802374
+        },
+        {
+          "component": "foreground-fly-through",
+          "count": 3000,
+          "meanMs": 0.044525344999999904,
+          "p95Ms": 0.06489099999998871,
+          "maxMs": 49.971383
+        },
+        {
+          "component": "ui-action-result",
+          "count": 3000,
+          "meanMs": 0.016089868333334645,
+          "p95Ms": 0.021874000000025262,
+          "maxMs": 0.2763470000001007
+        }
+      ]
+    },
+    {
+      "receipt": "eval-final",
+      "node": "v26.5.0",
+      "platform": "linux",
+      "arch": "x64",
+      "warmupPerComponent": 500,
+      "includes": "Full definition/recipe validation and evaluation; excludes DOM/render/encoding",
+      "samples": [
+        {
+          "component": "headline-reveal",
+          "count": 3000,
+          "meanMs": 0.01652661766666661,
+          "p95Ms": 0.02372199999999225,
+          "maxMs": 0.5688499999999976
+        },
+        {
+          "component": "foreground-fly-through",
+          "count": 3000,
+          "meanMs": 0.01630274400000007,
+          "p95Ms": 0.022612999999978456,
+          "maxMs": 0.27254299999998466
+        },
+        {
+          "component": "ui-action-result",
+          "count": 3000,
+          "meanMs": 0.016089437333332967,
+          "p95Ms": 0.02365700000001425,
+          "maxMs": 0.27544299999999566
+        }
+      ]
+    },
+    {
+      "receipt": "eval-replay",
+      "node": "v26.5.0",
+      "platform": "linux",
+      "arch": "x64",
+      "warmupPerComponent": 500,
+      "includes": "Full definition/recipe validation and evaluation; excludes DOM/render/encoding",
+      "samples": [
+        {
+          "component": "headline-reveal",
+          "count": 3000,
+          "meanMs": 0.03689705899999988,
+          "p95Ms": 0.056378000000023576,
+          "maxMs": 14.684994999999986
+        },
+        {
+          "component": "foreground-fly-through",
+          "count": 3000,
+          "meanMs": 0.024982485000000384,
+          "p95Ms": 0.03491999999999962,
+          "maxMs": 0.738330000000019
+        },
+        {
+          "component": "ui-action-result",
+          "count": 3000,
+          "meanMs": 0.014335148666667085,
+          "p95Ms": 0.01582700000000159,
+          "maxMs": 0.13725900000002866
+        }
+      ]
+    },
+    {
+      "receipt": "eval-serial",
+      "node": "v26.7.0",
+      "platform": "linux",
+      "arch": "x64",
+      "warmupPerComponent": 500,
+      "includes": "Full definition/recipe validation and evaluation; excludes DOM/render/encoding",
+      "samples": [
+        {
+          "component": "headline-reveal",
+          "count": 3000,
+          "meanMs": 0.020328303666666468,
+          "p95Ms": 0.03552999999999429,
+          "maxMs": 0.8525970000000029
+        },
+        {
+          "component": "foreground-fly-through",
+          "count": 3000,
+          "meanMs": 0.01797229266666645,
+          "p95Ms": 0.038941999999991594,
+          "maxMs": 0.5097009999999784
+        },
+        {
+          "component": "ui-action-result",
+          "count": 3000,
+          "meanMs": 0.09896694899999975,
+          "p95Ms": 0.06929100000002109,
+          "maxMs": 60.86012499999998
+        }
+      ]
+    }
+  ],
+  "editorPerfAttempts": [
+    {
+      "receipt": "editor-perf",
+      "budgets": {
+        "coldOpen": false,
+        "commandPaintReady": true,
+        "commandNextFrame": true,
+        "scrubNoLongtasks": true,
+        "scrub60fps": true,
+        "gzip": true,
+        "virtualized": true,
+        "stableDOM": true,
+        "autosaveFrameWork": true,
+        "layoutNoLongtasks": true,
+        "splitterNoLongtasks": true,
+        "splitter60fps": true
+      },
+      "summary": {
+        "cmdWorstMs": 10.299999952316284,
+        "nextFrameWorstMs": 17.099999964237213,
+        "scrubFps": 57.603686635944705
+      },
+      "coldOpenMs": 334.60000002384186,
+      "domStable": true,
+      "editorGzipBytes": 57838,
+      "autosave": {
+        "writes": 13,
+        "cpuWorstMs": 6.199999988079071,
+        "wallWorstMs": 6.599999964237213
+      },
+      "scrubLongtasks": [],
+      "splitterFps": 59.99999999999999,
+      "splitterLongtasks": []
+    },
+    {
+      "receipt": "editor-perf-serial",
+      "budgets": {
+        "coldOpen": false,
+        "commandPaintReady": false,
+        "commandNextFrame": false,
+        "scrubNoLongtasks": true,
+        "scrub60fps": false,
+        "gzip": true,
+        "virtualized": true,
+        "stableDOM": true,
+        "autosaveFrameWork": true,
+        "layoutNoLongtasks": true,
+        "splitterNoLongtasks": false,
+        "splitter60fps": false
+      },
+      "summary": {
+        "cmdWorstMs": 31.099999964237213,
+        "nextFrameWorstMs": 94.60000002384186,
+        "scrubFps": 53.5
+      },
+      "coldOpenMs": 394,
+      "domStable": true,
+      "editorGzipBytes": 57838,
+      "autosave": {
+        "writes": 13,
+        "cpuWorstMs": 7.899999976158142,
+        "wallWorstMs": 105.5
+      },
+      "scrubLongtasks": [],
+      "splitterFps": 48.502425121256046,
+      "splitterLongtasks": [
+        80
+      ]
+    }
+  ],
+  "configGuards": [
+    {
+      "config_bytes_unchanged": true,
+      "config_mtime_unchanged": true
+    },
+    {
+      "config_bytes_unchanged": true,
+      "config_mtime_unchanged": true
+    }
+  ],
+  "status": "Functional A/B implemented; repeated browser and full performance qualification incomplete.",
+  "rawEvidence": "External ui-compare/issue-9 directory retains all logs, timing arrays and screenshots, including failed attempts."
+}

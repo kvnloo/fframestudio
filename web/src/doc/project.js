@@ -1,3 +1,4 @@
+import { validateApplication, validateSchema, constraintsSchema } from '../taste/profile.js';
 export const SCHEMA = 'fframestudio.project/1';
 export const clone = (value) => structuredClone(value);
 export const uid = (prefix = 'id') =>
@@ -155,6 +156,12 @@ export function validate(d) {
   ok(typeof d.id === 'string' && d.id.length, 'Missing project ID');
   ok(integer(d.fps?.num, 1) && integer(d.fps?.den, 1), 'Invalid rational fps');
   ok(integer(d.revision), 'Invalid revision');
+  if (d.metadata?.tasteDirection) validateSchema(d.metadata.tasteDirection, constraintsSchema);
+  if (d.metadata?.tasteBrandConstraints) validateSchema(d.metadata.tasteBrandConstraints, constraintsSchema);
+  if (d.metadata?.tasteApplications) {
+    ok(Array.isArray(d.metadata.tasteApplications), 'Invalid Taste receipts');
+    d.metadata.tasteApplications.forEach(validateApplication);
+  }
   ok(
     Array.isArray(d.media) &&
       Array.isArray(d.videos) &&

@@ -1,0 +1,84 @@
+{
+  "schema": "fframestudio.generation-qualification/1",
+  "sourceCommit": "0d16f20949bfedbb16ae722cfb817300ce828dd1",
+  "scope": "First slices only; not full issue acceptance or merge-ready",
+  "gates": {
+    "npmTest": { "passed": true, "nodeTests": 70, "acpSecurity": true, "discoveryConfigUnchanged": true },
+    "noLocalPaths": { "passed": true },
+    "buildSite": { "passed": true, "examples": 4 },
+    "verify": {
+      "runs": 6,
+      "fullPasses": 1,
+      "generationJourneyPasses": 6,
+      "journeysPerRun": 22,
+      "results": [
+        { "run": "attempt-1", "failed": ["context-menu next-frame timing", "layout poster decode timeout", "console: generation SSE forwarded as file event (fixed)"] },
+        { "run": "run-1", "failed": ["context-menu next-frame timing"] },
+        { "run": "run-2", "failed": [] },
+        { "run": "run-3", "failed": ["context-menu next-frame timing"] },
+        { "run": "run-4", "failed": ["context-menu next-frame timing"] },
+        { "run": "final-run", "failed": ["system-theme frame budget: 27.3 ms", "context-menu next-frame timing: 35 ms worst"] }
+      ],
+      "latest": { "passedJourneys": 20, "consoleErrors": 0, "failedRequests": 0, "generationCommandAndUndoMs": 2.100000023841858, "hostedGenerationUnavailable": true }
+    },
+    "performance": {
+      "passed": false,
+      "budgetsUnchanged": true,
+      "nodeRestoreVersionFailedMs": [54.436260000000004, 17.750833],
+      "nodeCpuLatestPassed": true,
+      "nodeEditorGzipBytes": 62084,
+      "defaultBridgePortAttempt": "Owned bridge failed to start; retried on a private free port without stopping another process.",
+      "candidateBrowser": {
+        "coldOpenMs": 493.19999998807907,
+        "commandReadyWorstMs": 60.10000002384186,
+        "nextFrameWorstMs": 95.59999996423721,
+        "scrubFps": 38.82418191902384,
+        "failedBudgets": ["coldOpen", "commandPaintReady", "commandNextFrame", "scrub60fps", "layoutNoLongtasks", "splitterNoLongtasks", "splitter60fps"]
+      },
+      "baselineBrowser": {
+        "commit": "9e3bcda",
+        "source": "git archive into disposable scratch directory; no other worktree modified",
+        "coldOpenMs": 686.6999999880791,
+        "commandReadyWorstMs": 12.300000011920929,
+        "nextFrameWorstMs": 45.89999997615814,
+        "scrubFps": 56.00280014000701,
+        "failedBudgets": ["coldOpen", "commandNextFrame", "scrub60fps", "splitter60fps"]
+      },
+      "interpretation": "Both baseline and candidate fail browser budgets. Shared-host variation does not establish a no-regression result; these are not passing qualification receipts."
+    },
+    "realModel": {
+      "smokeCommand": "npm run gen:smoke",
+      "status": "skipped",
+      "reason": "Shared GPU busy: 7540 MiB free; at least 9216 MiB required. No inference started.",
+      "latencySeconds": null,
+      "peakVramMiB": null,
+      "clipViewed": false
+    }
+  },
+  "worker": {
+    "python": "3.12",
+    "torch": "2.8.0+cu128",
+    "cuda": "12.8",
+    "cudaAvailable": true,
+    "diffusers": "0.35.2",
+    "transformers": "4.57.1",
+    "weightRevision": "8984fa25007f376c1a299016d0957a37a2f797bb",
+    "weightsAndVenvInstalledOutsideRepo": true,
+    "realInferenceExecuted": false,
+    "qualification": "experimental-unmeasured"
+  },
+  "visualReview": {
+    "fakeClipDecoded": true,
+    "desktopFormAndVariationReviewed": true,
+    "phonePreviewAndInsertControlsReviewed": true,
+    "hostedUnavailableReviewed": true,
+    "limitation": "Native video controls retain a transient buffering spinner in result screenshots; decoded test-pattern frames are visible. No real-model visual-quality claim."
+  },
+  "left": [
+    "Execute real 3-5 second 704x480 generation after GPU capacity is available; measure latency and peak VRAM and inspect its contact sheet.",
+    "Implement and qualify playhead reference/image-to-video.",
+    "Obtain three fully green browser journeys and green unchanged browser performance gates.",
+    "Qualify any future free hosted video endpoint, price/limits and licence before enabling its adapter."
+  ],
+  "artifacts": "External ui-compare/issue-1 contains all raw failed/passing reports, screenshots, baseline/candidate perf.json and full qualification.json. No model weights, venvs or clips are in Git."
+}

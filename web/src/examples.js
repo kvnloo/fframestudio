@@ -24,13 +24,18 @@ export const sourceLink = value => { try { const u=new URL(value);return ['http:
 export async function listExamples() {
   if(manifest)return manifest;
   const r=await fetch('/examples/manifest.json');
-  if(!r.ok)return [];
+  if(!r.ok)throw Error('Examples catalog could not be loaded. Reload to retry.');
   const value=await r.json();if(!Array.isArray(value))throw Error('Invalid examples manifest');
-  manifest=value.filter(e=>/^[\w.-]+$/.test(e.id)).map(e=>({...e,project:assetPath(e.project),video:assetPath(e.video),poster:e.poster?assetPath(e.poster):'',source_url:sourceLink(e.source_url)}));
+  manifest=value.filter(e=>/^[\w.-]+$/.test(e.id)).map(e=>{
+    const readiness=e.readiness||'available';
+    if(!['available','local-build-only','awaiting-permission'].includes(readiness))throw Error('Invalid example readiness');
+    return {...e,readiness,project:readiness==='available'?assetPath(e.project):'',video:readiness==='available'?assetPath(e.video):'',poster:readiness==='available'&&e.poster?assetPath(e.poster):'',source_url:sourceLink(e.source_url)};
+  });
   return manifest;
 }
 export async function openCopy(id) {
   const entry=(await listExamples()).find(e=>e.id===id);if(!entry)throw Error('Example not found');
+  if(entry.readiness!=='available')throw Error('This example must be built and opened locally; media permission is unresolved.');
   const copyId='example-copy-'+id;
   if(!await get(copyId)) {
     const r=await fetch(entry.project);if(!r.ok)throw Error('Example project unavailable');

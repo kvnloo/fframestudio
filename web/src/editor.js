@@ -1,9 +1,11 @@
+import { ACTIONS, action as studioAction } from './actions.js';
 import { fpsOf, textOf, uid, rational } from './doc/project.js';
 import { scope, COMMANDS, CommandStore, proposalCommand, recoveryCommand } from './doc/commands.js';
 import { RecoveryJournal, fileHash } from './doc/journal.js';
 import { setThemeSettings, themeInfo, onTheme, shotColorSlot } from './system-theme.js';
 import { StudioView, colourSlot, clipKind, timecode, advanceFrame } from './studio.js';
 import { PosterDecoder } from './poster-decoder.js';
+import { proceduralShot, proceduralSource } from './procedural.js';
 import { request, mediaURL, isLocal, isCopy, saveCopy, exportProject, preferences as storage } from './host.js';
 const esc = (s) =>
   String(s ?? '').replace(
@@ -36,7 +38,7 @@ export const defaults = {
   save: 'Mod+s',
   duplicate: 'Mod+d',
   add: 'Mod+Shift+a',
-  select: 'v',
+  voice: 'v',
   move: 'Mod+Shift+m',
   trim: 't',
   replace: 'r',
@@ -110,6 +112,9 @@ export class Editor {
     );
     this.keyHandler = (e) => this.key(e);
     addEventListener('keydown', this.keyHandler);
+    this.voiceRelease = e => { if(e.code === 'KeyV') this.voiceHeld = false; };
+    addEventListener('keyup',this.voiceRelease);
+    this.voiceBlur=()=>{this.voiceHeld=false;};addEventListener('blur',this.voiceBlur);
     this.beforeUnload = (e) => {
       if (this.dirty) {
         e.preventDefault();
@@ -193,6 +198,7 @@ export class Editor {
     }
   }
   mount() {
+    const attribution = this.doc.metadata?.example || this.doc.metadata?.source;
     this.root.innerHTML = `<div class="ph-title"><h1>${esc(this.doc.title)}</h1><span class="cap">one video · many views</span></div>
   <div class="editor-tools"><select id="video-choice" aria-label="Video">${this.doc.videos.map((v) => `<option value="${esc(v.id)}">${esc(v.name)}</option>`).join('')}</select><span id="save-status" role="status">${isCopy(this.doc.id) ? 'Example copy · edits stay in this browser' : isLocal() ? 'Local folder · nothing uploaded' : 'Loaded · document v1'}</span>${button('undo', 'Undo ↶')}${button('redo', 'Redo ↷')}${button('save', 'Save')}${button('palette', 'Commands ⌘K')}${button('settings', 'Workspace')}${button('export', 'Export video')}${isLocal() || isCopy(this.doc.id) ? button('export-project', 'Export project.json') : ''}${isCopy(this.doc.id) ? button('save-copy', 'Save to my folder') : ''}</div>
   <dialog id="recovery" aria-labelledby="recovery-title"><h2 id="recovery-title">Recover unsaved changes?</h2><p>This project has local edits that were not saved to project.json.</p>${button('recover', 'Recover unsaved changes')}${button('discard-recovery', 'Discard')}</dialog>
@@ -202,7 +208,7 @@ export class Editor {
   <section class="inspector-panel panel"><div class="panel-title">Inspector ${button('toggle-inspector', 'Collapse')}</div><div id="inspector"></div></section></div>
   <section class="timeline-panel panel"><div class="panel-title">Timeline <span id="scope" aria-live="polite">Select a clip to edit</span><label>Zoom <input id="zoom" type="range" min="0.5" max="8" step="0.25" value="1"></label><label><input id="snap" type="checkbox" checked> Snap</label></div><div id="timeline"><div id="timeline-space"><div id="beats"></div><div id="lane"></div><div id="playhead"></div></div></div><div class="panel-foot">${button('split', 'Split · S')}${button('duplicate', 'Duplicate')}${button('delete', 'Delete')}<span class="hint">Drag story cards to reorder · drag clip edges to trim · attached layers follow</span></div></section>
   <div class="secondary-grid"><section class="panel"><div class="panel-title">Takes <span>film versions</span></div><div class="version-tools"><input id="version-name" placeholder="Name this version" aria-label="Version name">${button('save-version', 'Save version')}<select id="version-a" aria-label="Version A"></select><select id="version-b" aria-label="Version B"></select>${button('compare', 'Compare')}${button('restore-version', 'Restore A')}</div><pre id="version-diff"></pre></section><section class="panel"><div class="panel-title">Assistant proposals <span>Inspect → Apply → Undo</span></div><div id="proposals">No pending proposal. Ask the assistant for an edit.</div></section></div>
-  <details class="source-panel"><summary>Source & provenance</summary>${this.doc.metadata?.example ? `<p>Example copy · ${esc(this.doc.metadata.example.author)} · ${esc(this.doc.metadata.example.licence)}</p><p>${esc(this.doc.metadata.example.credit)}</p><p><a href="${esc(/^https?:\/\//.test(this.doc.metadata.example.source_url) ? this.doc.metadata.example.source_url : '#')}" target="_blank" rel="noopener noreferrer">Original source ↗</a></p>` : ''}<p>${esc(this.doc.metadata?.source?.path || '')}</p><p>${esc((this.doc.metadata?.notes || []).join(' · '))}</p><dl class="kv">${Object.entries(
+  <details class="source-panel"><summary>Source & provenance</summary>${proceduralSource(this.doc.metadata, this.doc.metadata?.shots)}${attribution?.author ? `<p>${this.doc.metadata?.example ? 'Example copy' : 'Source'} · ${esc(attribution.author)} · ${esc(attribution.licence)}</p><p>${esc(attribution.credit)}</p>${/^https?:\/\//.test(attribution.source_url) ? `<p><a href="${esc(attribution.source_url)}" target="_blank" rel="noopener noreferrer">Original source ↗</a></p>` : ''}` : ''}<p>${esc(this.doc.metadata?.source?.path || '')}</p><p>${esc((this.doc.metadata?.notes || []).join(' · '))}</p><dl class="kv">${Object.entries(
     this.doc.metadata?.docs || {},
   )
     .map(
@@ -223,6 +229,14 @@ export class Editor {
     .join('')}</div>${button('reset-settings', 'Reset workspace')}</dialog>`;
     this.studio = new StudioView(this);
     this.studio.mount();
+    if (this.doc.metadata?.procedural && !this.doc.metadata.procedural.render_verified) {
+      const notice = document.createElement('div');
+      notice.className = 'source-no-render';
+      notice.innerHTML = '<span class="cap">Source metadata only</span><strong>No rendered preview</strong><p>Inspect source scenes, camera and events in the slate.<br>A compatible source renderer must produce the film separately.</p>';
+      $('#canvas').append(notice);
+      $('.preview-label').textContent = 'Metadata-only import · no verified video or playable proxy';
+    }
+    $('.editor-tools',this.root).insertAdjacentHTML('beforeend',button('voice','Voice · hold V')+button('import-reference','Import reference')+(this.doc.metadata?.reference ? button('compare-reference','Compare reference') : ''));
     $('#recovery').oncancel = (e) => e.preventDefault();
     this.assistant?.($('#assistant-slot', this.root));
     this.root.onclick = (e) => {
@@ -678,7 +692,7 @@ export class Editor {
     const active = document.activeElement?.dataset.field,
       selectionStart = document.activeElement?.selectionStart;
     const fields = { title: '', ...textOf(c) };
-    box.innerHTML = `<p class="scope-label">This clip: <b>${esc(c.name)}</b><br>Timing edits ripple downstream</p><fieldset><legend>Timing · integer frames</legend><label>Source in <input id="source-in" type="number" min="0" step="1" value="${c.sourceIn}"></label><label>Duration <input id="duration" type="number" min="1" step="1" value="${c.duration}"></label><label>Speed <input id="speed" type="number" min="0.01" step="0.25" value="${c.speed.num / c.speed.den}"></label><label><input id="beat-lock" type="checkbox" ${c.beatLock ? 'checked' : ''}> Beat lock (position + duration)</label><span class="hint" data-range>IN ${timecode(c.start, fpsOf(this.doc))} · ${c.start} f · ${this.doc.fps.num}/${this.doc.fps.den} fps</span></fieldset><fieldset><legend>Words · this clip only</legend>${Object.entries(
+    box.innerHTML = `${proceduralShot(c)}<p class="scope-label">This clip: <b>${esc(c.name)}</b><br>Timing edits ripple downstream</p><fieldset><legend>Timing · integer frames</legend><label>Source in <input id="source-in" type="number" min="0" step="1" value="${c.sourceIn}"></label><label>Duration <input id="duration" type="number" min="1" step="1" value="${c.duration}"></label><label>Speed <input id="speed" type="number" min="0.01" step="0.25" value="${c.speed.num / c.speed.den}"></label><label><input id="beat-lock" type="checkbox" ${c.beatLock ? 'checked' : ''}> Beat lock (position + duration)</label><span class="hint" data-range>IN ${timecode(c.start, fpsOf(this.doc))} · ${c.start} f · ${this.doc.fps.num}/${this.doc.fps.den} fps</span></fieldset><fieldset><legend>Words · this clip only</legend>${Object.entries(
       fields,
     )
       .map(
@@ -781,8 +795,9 @@ export class Editor {
   }
   async select(id, seek = true) {
     if (!this.video.clips.some((c) => c.id === id)) return;
+    const previous = this.selection;
     this.selection = id;
-    this.store.commit({
+    const receipt = this.store.commit({
       type: 'select',
       clipId: id,
       videoId: this.videoId,
@@ -793,8 +808,10 @@ export class Editor {
     this.studio?.inspector();
     $('#selection-label').textContent = this.clip.name;
     if (seek) this.seek(this.clip.start);
+    return { ...receipt, inverse: { type:'select', clipId:previous } };
   }
   seek(frame) {
+    if(!Number.isFinite(frame))throw Error('Choose a finite playhead frame');
     this.frame = Math.max(0, Math.min(this.total - 1, Math.round(frame)));
     this.updatePreview(true);
   }
@@ -806,6 +823,7 @@ export class Editor {
       (c) => this.frame >= c.start && this.frame < c.start + c.duration,
     );
     if (c) this.studio?.preview(c);
+    this.reference?.sync();
     if (+$('#seek').value !== Math.floor(this.frame))
       $('#seek').value = Math.floor(this.frame);
     if (!c) return;
@@ -818,6 +836,8 @@ export class Editor {
       $('#preview-still').dataset.select = c.id;
       const colour = this.video.styles[c.styleId]?.color || '';
       $('#preview-text').style.color = colour;
+      const fontFamily = this.video.styles[c.styleId]?.fontFamily;
+      $('#preview-text').style.fontFamily = fontFamily === 'IBM Plex Mono' ? 'Plex Mono' : fontFamily || '';
       $('#canvas').dataset.customInk = String(!!colour && colour !== '#ecebe7');
       const still = $('#preview-still'),
         src = c.thumb || this.doc.preview.poster;
@@ -973,27 +993,10 @@ export class Editor {
     $('[data-action="apply-proposal"]').disabled = !this.proposalValid;
   }
   paletteItems() {
-    const q = $('#command-search').value.toLowerCase(),
-      names = [
-        ...COMMANDS,
-        'play',
-        'reverse',
-        'pause',
-        'forward',
-        'previousFrame',
-        'nextFrame',
-        'previousClip',
-        'nextClip',
-        'in',
-        'out',
-        'undo',
-        'redo',
-        'save',
-        'compare',
-        'settings',
-      ];
+    const q = $('#command-search').value.toLowerCase();
+    const names = Object.keys(ACTIONS).filter(n => ACTIONS[n].palette);
     $('#command-list').innerHTML = names
-      .filter((n) => n.includes(q))
+      .filter((n) => [n, ACTIONS[n].title, ...ACTIONS[n].synonyms].join(' ').includes(q))
       .map(
         (n) =>
           `<button data-action="${n}" class="palette-row"><span>${esc(n.replaceAll('-', ' '))}</span><kbd>${esc(this.settings.keys?.[n] || defaults[n] || '—')}</kbd></button>`,
@@ -1066,8 +1069,32 @@ export class Editor {
       item('palette', 'Command palette'), item('settings', 'Workspace settings'), null, ...history,
     ] };
   }
-  async action(a, { clipId } = {}) {
+  ensureVoice() {
+    return this.voiceLoading ||= import('./voice.js').then(({VoiceControl})=>{
+      if(this.dead)throw Error('Editor closed');this.voice=new VoiceControl(this);return this.voice;
+    });
+  }
+  ensureReference() {
+    return this.referenceLoading ||= import('./reference.js').then(({ReferenceDesk})=>{
+      if(this.dead)throw Error('Editor closed');this.reference=new ReferenceDesk(this);return this.reference;
+    });
+  }
+  action(id, params = {}) {
+    return Promise.resolve().then(() => studioAction(id).apply(this, params, { interactive: true }));
+  }
+  async performAction(a, params = {}) {
+    const { clipId } = params;
+    if (a !== 'palette' && a !== 'close-palette' && $('#palette').open) $('#palette').close();
+    if (a === 'taste' || (a === 'apply-taste' && !params.receipt)) { this.studio.showTab('taste'); return; }
+    if (a === 'apply-taste') { studioAction(a).preview(this, params); return this.run({type:a,...params}); }
+    if (a === 'component-lab') return window.open('/app/labs/video-styles.html', '_blank', 'noopener,noreferrer');
+    if (a === 'voice') return (await this.ensureVoice()).toggle();
+    if (a === 'import-reference') return (await this.ensureReference()).open();
+    if (a === 'compare-reference') return (await this.ensureReference()).compareProject();
+    if (a === 'seek') return this.seek(params.frame);
+    if (a === 'open-panel') { this.studio.showTab(params.panel); return; }
     if (this.loading) return;
+    if (a === 'apply-taste') { $('#palette').close(); this.studio.showTab('taste'); return; }
     if (['loop-shot','loop-film','mute','screening'].includes(a)) return this.studio.action(a);
     if (a !== 'palette' && a !== 'close-palette' && $('#palette').open)
       $('#palette').close();
@@ -1303,6 +1330,11 @@ export class Editor {
     }
   }
   key(e) {
+    if(e.code==='KeyV'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey&&!e.target.isContentEditable&&!e.target.closest('input,textarea,select,[contenteditable]')&&!document.querySelector('dialog[open]')) {
+      e.preventDefault();
+      if(!e.repeat){this.voiceHeld=true;this.ensureVoice().then(v=>{if(this.voiceHeld){v.held=true;v.start();}}).catch(e=>{if(!this.dead)this.toast(e.message);});}
+      return;
+    }
     if (e.key === 'Escape') return;
     const typing = e.target.matches('input,textarea,select') || e.target.isContentEditable,
       mod = e.ctrlKey || e.metaKey;
@@ -1323,6 +1355,8 @@ export class Editor {
   }
   destroy() {
     this.dead = true;
+    this.voice?.destroy();
+    this.reference?.destroy();
     this.studio?.destroy();
     cancelAnimationFrame(this.raf);
     clearInterval(this.previewTimer);
@@ -1336,6 +1370,7 @@ export class Editor {
     this.panelResize?.disconnect();
     removeEventListener('pointerup', this.panelResizeEnd);
     removeEventListener('keydown', this.keyHandler);
+    removeEventListener('keyup',this.voiceRelease);removeEventListener('blur',this.voiceBlur);
     removeEventListener('beforeunload', this.beforeUnload);
   }
 }

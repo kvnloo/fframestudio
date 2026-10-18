@@ -61,6 +61,10 @@ async function cacheMedia(url) {
   if (remoteMedia.has(url)) return;
   const r = await request(url); if (r.ok) remoteMedia.set(url, URL.createObjectURL(await r.blob()));
 }
+export async function prepareMedia(project, file) {
+  if (base) await cacheMedia('/lib/' + encodeURIComponent(project) + '/' + file.split('/').map(encodeURIComponent).join('/'));
+  return mediaURL(project, file);
+}
 export async function read(p) {
   const r = await request('/fs?path=' + encodeURIComponent(p));
   if (!r.ok) throw Error('Read failed: ' + r.status);
@@ -113,6 +117,27 @@ export async function saveCopy(document) {
   const lib=await request('/fs?path=projects%2Flibrary.json').then(r=>r.ok?r.json():{content:'',path:'projects/library.json'});
   const data=lib.content?JSON.parse(lib.content):{projects:[]};data.projects.push({id:doc.id,title:doc.title,kind:'example copy',shots:doc.videos[0].clips.length,renders:1,duration_s:doc.videos[0].clips.reduce((n,c)=>n+c.duration,0)*doc.fps.den/doc.fps.num,tags:['local']});
   await write('projects/library.json',JSON.stringify(data,null,2),'application/json',await fileHash(lib.content));
+  return doc.id;
+}
+// New reference projects use ordinary project/media storage and exact readback.
+export async function createProject(doc, files = []) {
+  (await import('./doc/project.js')).validate(doc);
+  if(!/^[a-zA-Z0-9][\w.-]{0,127}$/.test(doc.id))throw Error('Invalid project ID');
+  for(const f of files)if(!f.path||f.path.startsWith('/')||f.path.split(/[\\/]/).some(p=>!p||p==='.'||p==='..'))throw Error('Media must be inside the new project');
+  if (folder) return folder.createBrowserProject(doc, files);
+  const write = async (p, body, type, expected) => {
+    const response = await request('/fs?path='+encodeURIComponent(p), {method:'PUT', headers:{'Content-Type':type,...(expected?{'X-FFS-Expected':expected}:{})}, body});
+    if (!response.ok) throw Error('Reference project save failed: '+response.status);
+  };
+  for (const f of files) await write('projects/'+doc.id+'/'+f.path,f.blob,'application/octet-stream');
+  const body=JSON.stringify(doc,null,2);await write('projects/'+doc.id+'/project.json',body,'application/json');
+  if ((await read('projects/'+doc.id+'/project.json')).content !== body) throw Error('Reference project readback failed');
+  const response=await request('/fs?path=projects%2Flibrary.json');const lib=response.ok?await response.json():{content:''};
+  const data=lib.content?JSON.parse(lib.content):{projects:[]};
+  data.projects.push({id:doc.id,title:doc.title,kind:'reference approximation',shots:doc.videos[0].clips.length,renders:1,duration_s:doc.videos[0].clips.reduce((n,c)=>n+c.duration,0)*doc.fps.den/doc.fps.num,tags:['reference','approximation']});
+  const hash=await (await import('./doc/journal.js')).fileHash(lib.content);
+  const libraryBody=JSON.stringify(data,null,2);await write('projects/library.json',libraryBody,'application/json',hash);
+  if((await request('/fs?path=projects%2Flibrary.json').then(r=>r.json())).content!==libraryBody)throw Error('Library readback failed');
   return doc.id;
 }
 export async function disconnectBridge() { sessionStorage.removeItem('ffs.bridge'); location.href = location.pathname; }

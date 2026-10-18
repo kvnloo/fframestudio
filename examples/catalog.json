@@ -1,0 +1,20 @@
+[
+  {
+    "id": "fframes-intro",
+    "title": "fframes — Original launch film",
+    "featured": true,
+    "category": "Long-form",
+    "duration": 128,
+    "author": "Dmitriy Kovalenko",
+    "sourceRepo": "https://github.com/dmtrKovalenko/fframes",
+    "sourcePath": "examples/fframes-intro",
+    "source_url": "https://github.com/dmtrKovalenko/fframes/tree/44745c09a6c8c51071609097326a820cf59d087b/examples/fframes-intro",
+    "licence": "MIT code; media permission unresolved",
+    "credit": "fframes by Dmitriy Kovalenko. Original music, sound effects, clips and photographic stills have no source/licence metadata in the audited example.",
+    "credits": ["fframes by Dmitriy Kovalenko", "Fonts: upstream bundled fonts; retain upstream notices", "Music, sound effects, clips and stills: original upstream media; redistribution not cleared"],
+    "provenance": {"revision": "44745c09a6c8c51071609097326a820cf59d087b", "timeline": "fframes-intro timeline --json", "licenceVerdict": "UNCLEAR"},
+    "poster": "",
+    "readiness": "awaiting-permission",
+    "localCommand": "npm run example:fframes-intro"
+  }
+]

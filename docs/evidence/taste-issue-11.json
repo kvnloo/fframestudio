@@ -1,0 +1,78 @@
+{
+  "schema": "fframestudio.qualification/1",
+  "issue": 11,
+  "delivery": ["A: read-only aggregate contract", "B: visual direction inspector"],
+  "implementationHead": "f737dbd",
+  "gates": {
+    "npm test": { "ok": true, "nodeTests": 69, "acpSecurity": true, "bridgeDiscoveryBytesAndMtimeUnchanged": true },
+    "bash scripts/check-no-local-paths.sh": { "ok": true },
+    "npm run verify": {
+      "ok": true,
+      "runs": [
+        { "report": "verify-out/taste-shipping-1/report.json", "journeys": 23, "ok": true },
+        { "report": "verify-out/taste-shipping-2/report.json", "journeys": 23, "ok": true },
+        { "report": "verify-out/taste-shipping-3/report.json", "journeys": 23, "ok": true }
+      ],
+      "tasteBridgeAndHosted": "Commands -> import file -> reload Off -> preview/toggle diff -> Apply -> Save/readback -> Undo -> Save -> Delete -> reload/readback"
+    },
+    "npm run test:perf": {
+      "ok": true,
+      "budgetsUnchanged": true,
+      "allExistingNodeAndBrowserBudgetsPassed": true,
+      "coldOpenMs": 169.0999999642372,
+      "commandLayoutReadyWorstMs": 12.700000047683716,
+      "commandNextRafWorstMs": 16.80000001192093,
+      "scrubFps": 60.00300015000751,
+      "splitterFps": 59.99999999999999,
+      "browserMeasuredEditorGzipBytes": 65956,
+      "autosaveCpuWorstMs": 5.5,
+      "note": "Layout-ready and next-rAF timings are not physical compositor presentation. Earlier failed samples are retained; no universal latency or zero-overhead claim."
+    },
+    "npm run build:site": { "ok": true, "bytes": 3547811, "optionalExamples": 4 },
+    "git diff --check": { "ok": true }
+  },
+  "priorFailuresRetained": {
+    "verify": [
+      { "run": "taste-trial-1", "failed": "context-menu next-frame tail", "worstMs": 105 },
+      { "run": "taste-final-1", "failed": "context-menu open work", "worstMs": 51.69999998807907 },
+      { "run": "taste-final-2", "failed": "context-menu next-frame tail", "worstMs": 98.5 },
+      { "run": "taste-final-3", "failed": "poster readiness and context-menu open work", "menuWorstMs": 62.10000002384186 }
+    ],
+    "unit": "One later npm test rerun timed out in the existing fixed-port compare-and-swap harness. The owned harness now allocates a free port, fails startup explicitly and guards child exit; final npm test passed.",
+    "performance": [
+      { "run": "current-failure-1", "coldOpenMs": 632.3999999761581, "commandReadyWorstMs": 66.5, "nextRafWorstMs": 166.5, "splitterFps": 48.5048504850485 },
+      { "run": "current-failure-2", "coldOpenMs": 499.5, "commandReadyWorstMs": 69.09999996423721, "nextRafWorstMs": 160.9000000357628, "splitterFps": 36.50182509125455 },
+      { "run": "baseline-9e3bcda", "coldOpenMs": 192, "commandReadyWorstMs": 12.399999976158142, "nextRafWorstMs": 16.900000035762787, "splitterFps": 55.50277513875695, "failed": "splitter60fps" },
+      { "run": "current-failure-3", "coldOpenMs": 402.30000001192093, "commandReadyWorstMs": 25.599999964237213, "nextRafWorstMs": 40, "splitterFps": 33.50167508375419 }
+    ],
+    "baselineVerify": "An unmodified 9e3bcda archive passed all 21 original journeys; no other worktree was modified.",
+    "interpretation": "Repeated serial runs varied substantially. Three final full-suite runs and the final performance run passed without budget changes; earlier failures remain evidence, not erased by retries."
+  },
+  "visualEvidence": {
+    "directory": "project-artifacts/fframestudio/ui-compare/issue-11",
+    "screenshots": 12,
+    "viewports": [[1896, 880], [390, 780]],
+    "states": ["inspector controls", "original-adjusted comparison", "explained diff"],
+    "hosts": ["bridge", "CSP-served static hosted"],
+    "visionReviewed": true,
+    "review": "Opt-in, strength, scope, evidence and diff text are legible; comparisons show actual bundled type and mixed swatches. Long signal/diff lists intentionally scroll inside the slate. Phone has no horizontal overflow; lower rows are reachable by scrolling, not compressed into the viewport."
+  },
+  "boundaries": {
+    "runtimeDependenciesAdded": 0,
+    "fixtures": "synthetic only",
+    "personalProfilesCommitted": false,
+    "liveAgentWebOrSocialAccess": false,
+    "agentWebPr57": "OPEN, not merged; envelope read through GitHub only",
+    "legacyVisualSignals": "unknown: PR57 lacks per-visual evidence counts",
+    "httpDefault": "disabled; explicit bridge-only opt-in, server environment token, no browser credentials",
+    "receipt": "aggregate revisions, scopes, counts, dials, intensity and timestamp only",
+    "rendering": "Palette/type update shared editorial styles; other signals are direction tokens, not silent source retiming or a final compositor."
+  },
+  "left": [
+    "C: real AgentWeb/X imports, per-tenant source access, remote deletion qualification",
+    "D: permitted Pinterest/YouTube access and explicit export fallbacks",
+    "E: voice and separately approved durable feedback",
+    "F: opt-in blind visual preference evaluation",
+    "Video Style Component catalogue/ranking integration beyond launch-film direction"
+  ]
+}

@@ -6,6 +6,8 @@ import { initSystemTheme, receiveTheme, setThemeSettings, themeInfo, onTheme } f
 import { colourSlot } from '/app/src/studio.js';
 const connectAgent=async options=>(await import('/app/dist/acp-client.js')).connectAgent(options);
 import * as host from '/app/src/host.js';
+import { actionManifest, action as studioAction } from '/app/src/actions.js';
+let libraryReference;
 import { preferences as storage } from '/app/src/host.js';
 const bridgeApi=()=>({read:host.read,agents:()=>host.request('/agents').then(r=>r.json()),events:fn=>host.events(fn,receiveTheme)});
 
@@ -56,7 +58,7 @@ async function boot() {
   $('#bridge').innerHTML = host.isLocal() ? 'Local · nothing uploaded' : '<span class="dot ok"></span>bridge connected';
   if(host.isRemote()){const b=document.createElement('button');b.className='pill';b.textContent='Disconnect';b.onclick=host.disconnectBridge;$('#bridge').append(b);}
   initSystemTheme();
-  api.events(e=>{EDITOR?.external(e.path).catch(err=>{console.error(err.stack);toast(err.message);});if(e.path==='projects/library.json')loadLib();});
+  api.events(e=>{if(typeof e.path !== 'string')return;EDITOR?.external(e.path).catch(err=>{console.error(err.stack);toast(err.message);});if(e.path==='projects/library.json')loadLib();});
   addEventListener('hashchange',route);if(location.hash.startsWith('#/p/')){loadLib();await route();}else{await loadLib();route();}
   api.agents().then(r=>{AGENTS=r.agents;renderAssistant($('#assistant-slot'));}).catch(()=>{});
 }
@@ -85,12 +87,20 @@ function showLibrary() {
   const shown = ps.filter((p) => !TAG || (p.tags || []).includes(TAG));
   const settings=applyLibraryTheme();
   $('#view').innerHTML = `<label class="library-theme">WORKSPACE <select id="library-theme" aria-label="Library theme">${['system','studio','paper','dark','light','contrast','custom',...themeInfo().available.map(s=>'system:'+s)].map(t=>`<option value="${t}" ${t===themeInfo().choice?'selected':''}>${t==='system'?'Follow system · '+esc(themeInfo().label):t.startsWith('system:')?'Follow '+esc(t.slice(7)):t[0].toUpperCase()+t.slice(1)}</option>`).join('')}</select></label><div class="libhead"><div><div class="cap">THE FILM LIBRARY · ${ps.length} PRODUCTIONS</div><h1>Every film, <em>one place.</em></h1></div>
-    <div class="chips"><button class="pill ${!TAG ? 'on' : ''}" data-tag="">all</button>${tags.map((t) => `<button class="pill ${TAG === t ? 'on' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>
+    <a id="component-lab" class="pill" href="/app/labs/video-styles.html" target="_blank" rel="noopener noreferrer">Video style components ↗</a><div class="chips"><button class="pill ${!TAG ? 'on' : ''}" data-tag="">all</button>${tags.map((t) => `<button class="pill ${TAG === t ? 'on' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>
   <div class="grid">${shown.map((p,index) => `<a data-project="${esc(p.id)}" data-colour="${colourSlot(p.kind)}" class="card brk" href="#/p/${esc(p.id)}"><div class="pv">${p.poster ? `<img src="${esc(host.libraryPoster(p.poster))}" loading="lazy" alt="">` : '<div class="none">no render yet</div>'}<span class="poster-index">CUT ${String(index+1).padStart(2,'0')} / ${esc(p.kind)}</span><span class="rt">RUNTIME ${fmt(p.duration_s)}</span></div>
     <div class="tx"><div class="t">${esc(p.title)}</div><div class="m"><span class="kind-chip">${esc(p.kind)}</span><span>${p.shots} shots</span><span>${p.renders} render${p.renders === 1 ? '' : 's'}</span><span>${(p.tags || []).map(esc).join(' · ')}</span></div>
     <div class="strip">${Array.from({ length: Math.min(40, p.shots || 1) }, () => '<i></i>').join('')}</div></div></a>`).join('')}</div>`;
   if (host.isLocal()) mountFolderControls();
   if (document.querySelector('meta[name="ffs-hosted"]')) mountExamples();
+  const importButton=document.createElement('button');importButton.className='pill';importButton.id='import-reference';importButton.textContent='Import reference';document.querySelector('.libhead').append(importButton);
+  const libraryContext={performAction:async id=>{
+    if(id==='component-lab')return window.open('/app/labs/video-styles.html','_blank','noopener,noreferrer');
+    if(id==='import-reference'){const {ReferenceDesk}=await import('/app/src/reference.js');libraryReference?.destroy();libraryReference=new ReferenceDesk();return libraryReference.open();}
+    throw Error('Unsupported library action: '+id);
+  }};
+  importButton.onclick=()=>studioAction('import-reference').apply(libraryContext).catch(error=>toast(error.message));
+  $('#component-lab').onclick=event=>{if(event.button||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;event.preventDefault();studioAction('component-lab').apply(libraryContext);};
   $('#library-theme').onchange=e=>{settings.theme=e.target.value;storage.setItem('ffs.settings',JSON.stringify(settings));applyLibraryTheme();};
   $$('[data-tag]').forEach((b) => (b.onclick = () => { TAG = b.dataset.tag; showLibrary(); }));
   $$('.card').forEach((card) => (card.onclick = (event) => {
@@ -109,16 +119,18 @@ function mountFolderControls() {
 }
 function mountExamples() {
   const shelf=document.createElement('section');shelf.id='examples-shelf';shelf.className='examples-shelf';
-  shelf.innerHTML='<div class="cap">EXAMPLES · NOT YOUR PROJECTS</div><h2>A few films to <em>make your own.</em></h2><p>Open an example as a browser-local copy. Originals are never changed.</p><div class="examples-grid"></div>';
+  shelf.innerHTML='<div class="cap">EXAMPLES · NOT YOUR PROJECTS</div><h2>A few films to <em>make your own.</em></h2><p>Open an example as a browser-local copy. Originals are never changed.</p><div class="examples-grid" aria-live="polite"><p>Loading examples…</p></div>';
   $('#view').append(shelf);
   const observer=new IntersectionObserver(async entries=>{
     if(!entries.some(e=>e.isIntersecting))return;observer.disconnect();
     try{
       const examples=await import('/app/src/examples.js'), list=await examples.listExamples();
       if(!shelf.isConnected)return;
-      shelf.querySelector('.examples-grid').innerHTML=list.length?list.map(e=>`<article class="example-card" data-example="${esc(e.id)}">${e.poster?`<img loading="lazy" src="${esc(e.poster)}" alt="">`:''}<div class="tx"><h3>${esc(e.title)}</h3><p>${esc(e.author)} · ${esc(e.licence)}</p><p class="hint">${esc(e.credit)}</p><div class="folder-actions"><button class="pill" data-open-example="${esc(e.id)}">Open a copy ↗</button>${e.source_url?`<a href="${esc(e.source_url)}" target="_blank" rel="noopener noreferrer">Source ↗</a>`:''}</div></div></article>`).join(''):'<p class="hint">Examples will appear here when available.</p>';
-      shelf.querySelectorAll('[data-open-example]').forEach(b=>b.onclick=async()=>{try{location.hash='#/p/'+await examples.openCopy(b.dataset.openExample);}catch(error){toast(error.message);}});
-    }catch(error){toast('Examples unavailable: '+error.message);}
+      const duration=e=>{const seconds=Math.round(e.duration||0);return seconds?`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`:'';};
+      shelf.querySelector('.examples-grid').innerHTML=list.length?list.map(e=>`<article class="example-card ${e.featured?'example-featured':''}" data-example="${esc(e.id)}">${e.poster?`<img loading="lazy" src="${esc(e.poster)}" alt="${esc(e.title)} film still">`:e.featured?'<div class="example-type" aria-hidden="true">fframes<span>Original launch film</span></div>':''}<div class="tx"><div class="example-meta"><span>${esc(e.category||'Short film')}</span><span>${duration(e)}</span>${e.featured?'<span>Featured</span>':''}</div><h3>${esc(e.title)}</h3><p>${esc(e.author)} · ${esc(e.licence)}</p><p class="hint">${esc(e.credit)}</p>${e.readiness!=='available'?`<p class="example-status">${e.readiness==='awaiting-permission'?'Awaiting media permission':'Local build only'}. Build the complete film on your machine; no media is hosted here.</p><details><summary>Open locally</summary><p>From a FrameStudio checkout:</p><code class="install-command">${esc(e.localCommand||'See source for local setup')}</code><p>Then use Open a folder above to select the generated project. Rust, native build tools and a supported GPU are required.</p><a href="https://github.com/kvnloo/fframestudio/blob/main/docs/HOSTED.md#original-launch-film-local-only" target="_blank" rel="noopener noreferrer">Local setup instructions ↗</a></details>`:''}<div class="folder-actions">${e.readiness==='available'?`<button class="pill" data-open-example="${esc(e.id)}">Open a copy ↗</button>`:''}${e.source_url?`<a href="${esc(e.source_url)}" target="_blank" rel="noopener noreferrer">Source ↗</a>`:''}</div></div></article>`).join(''):'<p class="hint">Examples will appear here when available.</p>';
+      shelf.querySelectorAll('img').forEach(img=>img.onerror=()=>{img.replaceWith(Object.assign(document.createElement('p'),{className:'hint',textContent:'Poster unavailable. The project can still be opened.'}));});
+      shelf.querySelectorAll('[data-open-example]').forEach(b=>b.onclick=async()=>{b.disabled=true;b.textContent='Loading project…';try{location.hash='#/p/'+await examples.openCopy(b.dataset.openExample);}catch(error){b.disabled=false;b.textContent='Retry opening';toast(error.message);}});
+    }catch(error){shelf.querySelector('.examples-grid').innerHTML='<p role="alert">Examples unavailable. Reload this page to retry.</p>';toast('Examples unavailable: '+error.message);}
   });observer.observe(shelf);
 }
 /* ---------------- project ---------------- */
@@ -126,6 +138,7 @@ let CUR=null,AG=null,EDITOR=null;
 async function showProject(id){
  if(EDITOR?.doc.id===id)return;
  if(EDITOR?.dirty&&!confirm('Leave unsaved edits?')){location.hash='#/p/'+EDITOR.doc.id;return;}
+ libraryReference?.destroy();libraryReference=null;
  EDITOR?.destroy();AG?.session?.close();AG=null;CHAT=[];
  let j;try { j=await api.read(`projects/${id}/project.json`); }catch(error){toast(error.message);location.hash='#/';return;}
  EDITOR=new Editor($('#view'),{api,toast,onChange:d=>{CUR={...d,__abs:j.absolute};},assistant:renderAssistant});
@@ -181,8 +194,20 @@ async function sendPrompt() {
   if(!(await EDITOR.save())){BUSY=false;return;}
   const proposalPath=`${ME.root}/projects/${CUR.id}/proposals/${Date.now()}.json`;
   const ctx=`You are the assistant inside fframestudio. NEVER edit project.json or source media. Read ${CUR.__abs}, schema fframestudio.project/1. Write ONLY a proposal to ${proposalPath}. Format: {"schema":"fframestudio.proposal/1","projectId":"${CUR.id}","baseRevision":${CUR.revision},"title":"short description","commands":[...]}. Commands: edit-text {clipId,field,value}, trim {clipId,duration,sourceIn?} (INTEGER FRAMES), move {clipId,index}, split {clipId,at,newId} (at is clip-local frames), duplicate {clipId,newId}, delete {clipId}, replace {clipId,mediaId}, group {clipIds,id,name}, set-beat-lock {clipId,value}, retime {clipId,speed:{num,den}}. Every command may include videoId. Text values are strings or string arrays. Existing IDs must match. New IDs must be unique. Beat-locked timing edits require explicit unlocking. Scope is this clip unless edit-style {styleId,color} explicitly changes all clips using the style. No code in JSON. The user will Inspect, Apply or Reject. Do not claim the project changed. Selection: ${EDITOR.selection}. Video: ${EDITOR.videoId}. Be brief. Request: `;
-  try { const r = await AG.session.prompt(ctx + text); push({ kind: 'note', text: `turn ended: ${r.stopReason}` }); await EDITOR.external(proposalPath.slice(ME.root.length+1)); }
+  try { const r = await AG.session.prompt(ctx + '\nTyped registry actions (also accepted as {id,params}): '+JSON.stringify(actionManifest().filter(a=>a.command))+'\n'+text); push({ kind: 'note', text: `turn ended: ${r.stopReason}` }); await EDITOR.external(proposalPath.slice(ME.root.length+1)); }
   catch (e) { push({ kind: 'note', text: `error: ${e.message}` }); }
   BUSY = false;
 }
-boot();
+addEventListener('ffs-library-updated',async()=>{await loadLib();if(!location.hash.startsWith('#/p/'))showLibrary();});
+boot().then(async () => {
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/share-worker.js').catch(()=>{});
+  if (new URLSearchParams(location.search).has('shared')) {
+    history.replaceState(null,'',location.pathname+location.hash);
+    const { consumeSharedReference }=await import('/app/src/share-intake.js');
+    const shared=await consumeSharedReference();
+    if(shared) { const {ReferenceDesk}=await import('/app/src/reference.js');libraryReference?.destroy();libraryReference=new ReferenceDesk();libraryReference.open();
+      if(shared.file)libraryReference.importFile(shared.file).catch(e=>libraryReference.error(e));
+      else { libraryReference.q('#reference-url').value=shared.url||shared.text||'';libraryReference.status.textContent='Shared link ready. Choose Import URL to fetch a direct public video via your local bridge.'; }
+    }
+  }
+});

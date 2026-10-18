@@ -1,7 +1,7 @@
 import { fpsOf, textOf } from "./doc/project.js";
 import { FittedLayout } from "./fitted-layout.js";
 import { request, preferences as storage } from "./host.js";
-const panelTabs = ["shot", "narrative", "direction", "takes", "assistant", "source", "story"];
+const panelTabs = ["shot", "narrative", "direction", "taste", "takes", "generate", "assistant", "source", "story"];
 export const escapeHTML = (s) =>
   String(s ?? "").replace(
     /[&<>"']/g,
@@ -100,7 +100,7 @@ export class StudioView {
     tabs.innerHTML = panelTabs
       .map(
         (t) =>
-          `<button role="tab" id="tab-${t}" aria-controls="${t === "shot" ? "inspector" : t + "-pane"}" aria-selected="${t === "shot"}" data-slate-tab="${t}">${t}</button>`,
+          `<button role="tab" id="tab-${t}" aria-controls="${t === "shot" ? "inspector" : t + "-pane"}" aria-selected="${t === "shot"}" data-slate-tab="${t}">${t === "taste" ? "My Taste" : t}</button>`,
       )
       .join("");
     $("#inspector").before(tabs);
@@ -194,14 +194,27 @@ export class StudioView {
       $("#tab-" + t).tabIndex = t === tab ? 0 : -1;
       $(t === "shot" ? "#inspector" : "#" + t + "-pane").hidden = t !== tab;
     }
+    if (tab === 'generate' && !this.generation) {
+      import('./generation.js').then(({ GenerationPanel }) => {
+        if (this.dead || this.generation) return;
+        this.generation = new GenerationPanel(this.e, $('#generate-pane'));
+        this.generation.mount();
+      });
+    }
     this.e.settings.slateTab = tab;
     storage.setItem("ffs.settings", JSON.stringify(this.e.settings));
     this.inspector();
+    if (tab === "taste" && !this.taste && !this.tasteLoading) {
+      this.tasteLoading = import('./taste/inspector.js').then(({ TasteInspector }) => {
+        if (!this.e.dead) this.taste = new TasteInspector(this.e, $("#taste-pane"));
+      }).catch(error => { this.e.toast(error.message); }).finally(() => { this.tasteLoading = null; });
+    }
   }
   inspector() {
     const e = this.e,
       c = e.clip;
     if (!c) return;
+    if (this.tab === "taste") this.taste?.update();
     if (this.tab === "direction") {
       const direction = e.doc.metadata?.direction || {},
         styles = e.video.styles;
@@ -562,6 +575,9 @@ export class StudioView {
     ctx.stroke();
   }
   destroy() {
+    this.dead = true;
+    this.generation?.destroy();
+    this.taste?.destroy();
     this.layout?.destroy();
     clearTimeout(this.audioTimer);
     this.audio?.pause();
