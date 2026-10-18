@@ -22,6 +22,7 @@ import readline from 'node:readline';
 import { WebSocketServer } from 'ws';
 import { AGENTS as BUILTIN } from './agents.mjs';
 import { watchTheme, detectTheme } from './system-theme.mjs';
+import { agentWebAdapter } from './taste.mjs';
 
 const VERSION = '0.1.0';
 const argv = process.argv.slice(2);
@@ -33,6 +34,10 @@ const TOKEN = opt('--token', process.env.FFS_BRIDGE_TOKEN || randomBytes(24).toS
 const HOSTED = opt('--hosted-origin', 'https://fframestudio.vercel.app');
 const ORIGINS = new Set([HOSTED, ...all('--allow-origin')]);
 const QUIET = argv.includes('--quiet');
+// A single bridge represents its owner's authenticated user, never a caller-supplied tenant.
+const taste = agentWebAdapter({ enabled: argv.includes('--enable-agentweb-taste'), baseURL: process.env.FFS_TASTE_AGENTWEB_URL, token: process.env.FFS_TASTE_AGENTWEB_TOKEN });
+// Do not pass the service credential to ACP children or any browser configuration.
+delete process.env.FFS_TASTE_AGENTWEB_TOKEN;
 const WEB = path.resolve(opt('--web', path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'web')));
 const LIBDIR = path.join(ROOT, 'projects');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml',
@@ -134,6 +139,10 @@ const server = http.createServer(async (req, res) => {
   const auth = (req.headers.authorization || '').replace(/^Bearer /, '') || u.searchParams.get('token') || cookieTok(req); // query only for EventSource
   if (u.pathname === '/me') return send(res, 200, tokenOk(auth) ? { ok: true, root: ROOT } : { ok: false }); // lets the app show the sign-in page without a console error
   if (!tokenOk(auth)) return send(res, 401, { error: 'bad token' });
+  if (u.pathname === '/taste/profile') {
+    if (req.method !== 'GET' || u.search) return send(res, 400, { error: 'Read-only owner-scoped profile; no query parameters' });
+    return send(res, 200, await taste.getProfile());
+  }
   if (u.pathname === '/theme' && req.method === 'GET') {
     await theme.ready;
     const source = u.searchParams.get('source');
