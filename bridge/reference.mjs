@@ -21,7 +21,8 @@ export function publicAddress(address) {
     const [a,b] = address.split('.').map(Number);
     return !(a === 0 || a === 10 || a === 127 || a === 169 && b === 254 || a === 172 && b >= 16 && b <= 31 || a === 100 && b >= 64 && b <= 127 || a === 192 || a === 198 || a === 203 || a >= 224);
   }
-  return isIP(address) === 6 && /^[23][0-9a-f]{3}:/i.test(address) && !/^2001:/i.test(address);
+  // Known global RIR allocation families only; refuse transition/tunnel and special ranges.
+  return isIP(address) === 6 && /^(24|26|28|2a|2c)[0-9a-f]{2}:/i.test(address);
 }
 export async function downloadDirect(value, signal) {
   const u = directURL(value);
@@ -91,17 +92,21 @@ export function referenceAPI({ root, safePath, send }) {
       if(u.pathname === '/reference/analyze' && req.method === 'POST') {
         const id=u.searchParams.get('id'), dir=directory(id), threshold=Number(u.searchParams.get('threshold')||10), minLength=Number(u.searchParams.get('minLength')||0.3);
         if(!Number.isFinite(threshold)||threshold<1||threshold>100||!Number.isFinite(minLength)||minLength<0.1||minLength>30)throw Error('Invalid threshold or minimum shot length.');
-        const cache=safePath(`references/${id}/analysis-${threshold}-${minLength}-v1.json`,true);if(!cache)throw Error('Unsafe analysis cache');
+        const variant=`analysis-${threshold}-${minLength}-v1`;
+        const cache=safePath(`references/${id}/${variant}.json`,true);if(!cache)throw Error('Unsafe analysis cache');
+        const evidence=safePath(`references/${id}/${variant}`,true);if(!evidence)throw Error('Unsafe evidence directory');
         if(fs.existsSync(cache)) { send(res,200,{state:'done',result:JSON.parse(fs.readFileSync(cache,'utf8')),cached:true}); return true; }
+        const existing=[...jobs.entries()].find(([,j])=>j.state==='running'&&j.id===id&&j.variant===variant);
+        if(existing){send(res,202,{job:existing[0]});return true;}
         if([...jobs.values()].filter(j=>j.state==='running').length>=2)throw Error('Two analyses are already running. Cancel or wait.');
         // Bound retained status records; completed caches remain on disk.
         for(const [key,j] of jobs)if(j.state!=='running'&&jobs.size>20)jobs.delete(key);
-        const key=randomUUID(), controller=new AbortController(), job={state:'running',progress:0,stage:'Starting local ffmpeg',controller,id}; jobs.set(key,job);
+        const key=randomUUID(), controller=new AbortController(), job={state:'running',progress:0,stage:'Starting local ffmpeg',controller,id,variant}; jobs.set(key,job);
         const source=safePath(`references/${id}/source.mp4`,false);if(!source)throw Error('Unsafe source');
         const timeout=setTimeout(()=>controller.abort(),300000);
-        python([source,'--out',dir,'--threshold',String(threshold),'--min-length',String(minLength)],p=>Object.assign(job,p),controller.signal).then(result=>{
+        python([source,'--out',evidence,'--threshold',String(threshold),'--min-length',String(minLength)],p=>Object.assign(job,p),controller.signal).then(result=>{
           if(controller.signal.aborted)return;
-          result.contentHash=id;fs.writeFileSync(cache,JSON.stringify(result),{flag:'w'});Object.assign(job,{state:'done',result,progress:1});
+          result.contentHash=id;result.shots.forEach(s=>s.keyframe=variant+'/'+s.keyframe);fs.writeFileSync(cache,JSON.stringify(result),{flag:'w'});Object.assign(job,{state:'done',result,progress:1});
         }).catch(e=>Object.assign(job,{state:controller.signal.aborted?'cancelled':'error',error:controller.signal.aborted?'Analysis cancelled':e.message})).finally(()=>clearTimeout(timeout));
         send(res,202,{job:key});return true;
       }
@@ -113,7 +118,7 @@ export function referenceAPI({ root, safePath, send }) {
       }
       if(u.pathname === '/reference/media' && req.method === 'GET') {
         const id=u.searchParams.get('id');directory(id);const name=u.searchParams.get('name');
-        if(!/^(source\.mp4|shot-\d+\.jpg)$/.test(name))throw Error('Invalid evidence file');
+        if(!/^(source\.mp4|analysis-[\d.]+-[\d.]+-v1\/shot-\d+\.jpg)$/.test(name))throw Error('Invalid evidence file');
         const file=safePath(`references/${id}/${name}`,false);if(!file)throw Error('Unsafe evidence path');
         const st=fs.statSync(file);res.writeHead(200,{'Content-Type':name.endsWith('.jpg')?'image/jpeg':'video/mp4','Content-Length':st.size});fs.createReadStream(file).pipe(res);return true;
       }

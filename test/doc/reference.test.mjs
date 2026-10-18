@@ -13,7 +13,7 @@ export function generateReference(file) {
 test('direct media URL policy rejects pages, auth, social links and private networks',()=>{
  for(const url of ['file:///a.mp4','https://user:pass@example.com/a.mp4','https://example.com/watch','https://youtube.com/watch?v=a','https://x.com/a/status/1','https://tiktok.com/a.mp4'])assert.throws(()=>directURL(url));
  assert.equal(directURL('https://example.com/a.mp4?signature=value').pathname,'/a.mp4');
- for(const ip of ['127.0.0.1','10.0.0.2','172.16.1.1','169.254.169.254','192.168.1.2','::1','::ffff:127.0.0.1','fe80::1','2001:db8::1','100.64.1.1','0.0.0.0'])assert.equal(publicAddress(ip),false,ip);
+ for(const ip of ['127.0.0.1','10.0.0.2','172.16.1.1','169.254.169.254','192.168.1.2','::1','::ffff:127.0.0.1','fe80::1','2001:db8::1','2002:7f00:1::1','3fff::1','100.64.1.1','0.0.0.0'])assert.equal(publicAddress(ip),false,ip);
  assert.equal(publicAddress('8.8.8.8'),true);
 });
 test('CC0 generated three-shot tone: detected cuts ±1 frame, palette, audio, editable inverse',()=>{

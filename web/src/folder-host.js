@@ -23,6 +23,7 @@ export async function initialize() {
   if (state.handle) {
     permissionNeeded = !!state.handle.queryPermission && await state.handle.queryPermission({ mode: 'readwrite' }) !== 'granted';
     if (!permissionNeeded) await scanHandle();
+    else await discover();
   } else if (state.files) { entries = new Map(state.files); await discover(); }
   else await discover();
 }

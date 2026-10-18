@@ -786,8 +786,9 @@ export class Editor {
   }
   async select(id, seek = true) {
     if (!this.video.clips.some((c) => c.id === id)) return;
+    const previous = this.selection;
     this.selection = id;
-    this.store.commit({
+    const receipt = this.store.commit({
       type: 'select',
       clipId: id,
       videoId: this.videoId,
@@ -798,6 +799,7 @@ export class Editor {
     this.studio?.inspector();
     $('#selection-label').textContent = this.clip.name;
     if (seek) this.seek(this.clip.start);
+    return { ...receipt, inverse: { type:'select', clipId:previous } };
   }
   seek(frame) {
     this.frame = Math.max(0, Math.min(this.total - 1, Math.round(frame)));

@@ -6,7 +6,7 @@ import { CommandStore, proposalCommand } from '../../web/src/doc/commands.js';
 import { parseIntent } from '../../web/src/intent.js';
 const fixture=()=>fromV0({schema:'fframestudio.project/0',id:'p',title:'P',canvas:{fps:30},shots:[{id:'a',name:'A',t0:0,t1:4,text:{title:'Hello'}},{id:'b',name:'B',t0:4,t1:8},{id:'c',name:'C',t0:8,t1:12}]});
 function context() {
- const store=new CommandStore(fixture());return {store,get doc(){return store.doc;},get video(){return store.doc.videos[0];},selection:'a',frame:30,total:360,run:c=>store.apply(c),performAction:(id,p)=>({id,params:p})};
+ const store=new CommandStore(fixture());return {store,get doc(){return store.doc;},get video(){return store.doc.videos[0];},selection:'a',frame:30,total:360,run:c=>store.apply(c),performAction:(id,p)=>id==='select'?store.apply({type:id,...p}):({id,params:p})};
 }
 test('every registered action has typed contract, scope, flags, preview, apply and inverse',()=>{
  const manifest=actionManifest();assert.equal(new Set(manifest.map(a=>a.id)).size,manifest.length);
@@ -20,7 +20,7 @@ for(const [id,p] of Object.entries(params))test('registry inverse round trip: '+
  const ctx=context();if(id==='restore-version'){ctx.store.apply({type:'save-version',id:'saved'});ctx.store.apply({type:'trim',clipId:'a',duration:90});}
  const before=structuredClone(ctx.doc),selection=ctx.store.selection;
  const preview=ACTIONS[id].preview(ctx,p);assert.deepEqual(ctx.doc,before);assert.ok(Array.isArray(preview.diff));
- if(id==='select'){const receipt=ctx.store.apply({type:id,...p});ctx.store.apply(ACTIONS[id].inverse(receipt));assert.equal(ctx.store.selection,selection);}
+ if(id==='select'){const receipt=ACTIONS[id].apply(ctx,p);ctx.store.apply(ACTIONS[id].inverse(receipt));assert.equal(ctx.store.selection,selection);}
  else {const receipt=ACTIONS[id].apply(ctx,p);ctx.store.apply(ACTIONS[id].inverse(receipt));assert.deepEqual({...ctx.doc,revision:before.revision},before);}
 });
 test('ACP typed actions and legacy commands resolve identical registry validation and transaction',()=>{

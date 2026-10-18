@@ -15,10 +15,18 @@ test('owned reference API: authentication, file validation, progress, cache, set
   assert.equal((await request('/reference/media?id='+uploaded.id+'&name=../../secret')).status,400);
   assert.equal((await request('/reference/analyze?id='+uploaded.id+'&threshold=-1',{method:'POST'})).status,400);
   const started=await request('/reference/analyze?id='+uploaded.id,{method:'POST'}).then(r=>r.json());assert.ok(started.job);
+  const shared=await request('/reference/analyze?id='+uploaded.id,{method:'POST'}).then(r=>r.json());assert.ok(shared.job===started.job||shared.cached===true,'duplicate analysis was not shared');
   let status;const deadline=Date.now()+30000;
   do {status=await request('/reference/job?id='+started.job).then(r=>r.json());if(status.state==='running')await new Promise(r=>setTimeout(r,50));}while(status.state==='running'&&Date.now()<deadline);
   assert.equal(status.state,'done',JSON.stringify(status));assert.equal(status.result.contentHash,uploaded.id);assert.equal(status.progress,1);assert.equal(status.result.audio,null);
   const cached=await request('/reference/analyze?id='+uploaded.id,{method:'POST'}).then(r=>r.json());assert.equal(cached.cached,true);assert.deepEqual(cached.result,status.result);
+  assert.match(status.result.shots[0].keyframe,/^analysis-10-0.3-v1\/shot-1.jpg$/);
+  const thumbnail=await request('/reference/media?id='+uploaded.id+'&name='+encodeURIComponent(status.result.shots[0].keyframe));assert.equal(thumbnail.status,200);assert.equal(Buffer.from(await thumbnail.arrayBuffer()).subarray(0,2).toString('hex'),'ffd8');
+  const changed=await request('/reference/analyze?id='+uploaded.id+'&minLength=0.4',{method:'POST'}).then(r=>r.json());assert.ok(changed.job,'settings must invalidate cache');
+  let variant;
+  do{variant=await request('/reference/job?id='+changed.job).then(r=>r.json());if(variant.state==='running')await new Promise(r=>setTimeout(r,50));}while(variant.state==='running'&&Date.now()<deadline);
+  assert.equal(variant.state,'done');assert.notEqual(variant.result.shots[0].keyframe,status.result.shots[0].keyframe,'settings overwrote another analysis evidence');
+  assert.ok(fs.existsSync(path.join(root,'references',uploaded.id,status.result.shots[0].keyframe)));
   const cancelled=await request('/reference/analyze?id='+uploaded.id+'&threshold=11',{method:'POST'}).then(r=>r.json());assert.ok(cancelled.job);
   assert.equal((await request('/reference/job?id='+cancelled.job,{method:'DELETE'}).then(r=>r.json())).state,'cancelled');
   await new Promise(r=>setTimeout(r,100));assert.equal((await request('/reference/job?id='+cancelled.job).then(r=>r.json())).state,'cancelled');
