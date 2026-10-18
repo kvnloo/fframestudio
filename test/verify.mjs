@@ -12,6 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { chromium } from 'playwright';
 import { createHash } from 'node:crypto';
+import { verifyReference } from './reference-journey.mjs';
 import { verifyHosted } from './hosted-journey.mjs';
 import { makeLayoutFixture, verifyLayout } from './layout-journey.mjs';
 
@@ -591,6 +592,7 @@ try {
   });
   await journey('layout: fits and adapts across sizes', () => verifyLayout({browser, context:ctx, base, out:OUT, assert}));
   await verifyHosted({browser,source,out:OUT,root:ROOT,journey,assert});
+  await verifyReference({page,base,out:OUT,journey,assert,library:path.join(HOME,'fframestudio/projects')});
   await journey('console clean', async () => { assert(!report.console_errors.length && !report.failed_requests.length, JSON.stringify({ e: report.console_errors, r: report.failed_requests })); });
 } catch (e) {
   report.journeys.push({ name: 'setup', ok: false, error: String(e.message || e).slice(0, 800) });

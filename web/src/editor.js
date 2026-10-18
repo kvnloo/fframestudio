@@ -1,3 +1,6 @@
+import { ACTIONS, action as studioAction } from './actions.js';
+import { VoiceControl } from './voice.js';
+import { ReferenceDesk } from './reference.js';
 import { fpsOf, textOf, uid, rational } from './doc/project.js';
 import { scope, COMMANDS, CommandStore, proposalCommand, recoveryCommand } from './doc/commands.js';
 import { RecoveryJournal, fileHash } from './doc/journal.js';
@@ -36,7 +39,7 @@ export const defaults = {
   save: 'Mod+s',
   duplicate: 'Mod+d',
   add: 'Mod+Shift+a',
-  select: 'v',
+  voice: 'v',
   move: 'Mod+Shift+m',
   trim: 't',
   replace: 'r',
@@ -223,6 +226,8 @@ export class Editor {
     .join('')}</div>${button('reset-settings', 'Reset workspace')}</dialog>`;
     this.studio = new StudioView(this);
     this.studio.mount();
+    this.voice = new VoiceControl(this);
+    this.reference = new ReferenceDesk(this);
     $('#recovery').oncancel = (e) => e.preventDefault();
     this.assistant?.($('#assistant-slot', this.root));
     this.root.onclick = (e) => {
@@ -806,6 +811,7 @@ export class Editor {
       (c) => this.frame >= c.start && this.frame < c.start + c.duration,
     );
     if (c) this.studio?.preview(c);
+    this.reference?.sync();
     if (+$('#seek').value !== Math.floor(this.frame))
       $('#seek').value = Math.floor(this.frame);
     if (!c) return;
@@ -973,27 +979,10 @@ export class Editor {
     $('[data-action="apply-proposal"]').disabled = !this.proposalValid;
   }
   paletteItems() {
-    const q = $('#command-search').value.toLowerCase(),
-      names = [
-        ...COMMANDS,
-        'play',
-        'reverse',
-        'pause',
-        'forward',
-        'previousFrame',
-        'nextFrame',
-        'previousClip',
-        'nextClip',
-        'in',
-        'out',
-        'undo',
-        'redo',
-        'save',
-        'compare',
-        'settings',
-      ];
+    const q = $('#command-search').value.toLowerCase();
+    const names = Object.keys(ACTIONS).filter(n => !/^(close-|recover|discard-|keep-|reload-|inspect-|reject-|apply-)/.test(n));
     $('#command-list').innerHTML = names
-      .filter((n) => n.includes(q))
+      .filter((n) => [n, ACTIONS[n].title, ...ACTIONS[n].synonyms].join(' ').includes(q))
       .map(
         (n) =>
           `<button data-action="${n}" class="palette-row"><span>${esc(n.replaceAll('-', ' '))}</span><kbd>${esc(this.settings.keys?.[n] || defaults[n] || '—')}</kbd></button>`,
@@ -1066,7 +1055,16 @@ export class Editor {
       item('palette', 'Command palette'), item('settings', 'Workspace settings'), null, ...history,
     ] };
   }
-  async action(a, { clipId } = {}) {
+  action(id, params = {}) {
+    return Promise.resolve().then(() => studioAction(id).apply(this, params, { interactive: true }));
+  }
+  async performAction(a, params = {}) {
+    const { clipId } = params;
+    if (a === 'voice') return this.voice.toggle();
+    if (a === 'import-reference') return this.reference.open();
+    if (a === 'compare-reference') return this.reference.compareProject();
+    if (a === 'seek') return this.seek(params.frame);
+    if (a === 'open-panel') { this.studio.showTab(params.panel); return; }
     if (this.loading) return;
     if (['loop-shot','loop-film','mute','screening'].includes(a)) return this.studio.action(a);
     if (a !== 'palette' && a !== 'close-palette' && $('#palette').open)
@@ -1303,6 +1301,7 @@ export class Editor {
     }
   }
   key(e) {
+    if (this.voice?.key(e)) return;
     if (e.key === 'Escape') return;
     const typing = e.target.matches('input,textarea,select') || e.target.isContentEditable,
       mod = e.ctrlKey || e.metaKey;
@@ -1323,6 +1322,8 @@ export class Editor {
   }
   destroy() {
     this.dead = true;
+    this.voice?.destroy();
+    this.reference?.destroy();
     this.studio?.destroy();
     cancelAnimationFrame(this.raf);
     clearInterval(this.previewTimer);

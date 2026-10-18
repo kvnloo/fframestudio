@@ -24,6 +24,7 @@ export async function initialize() {
     permissionNeeded = !!state.handle.queryPermission && await state.handle.queryPermission({ mode: 'readwrite' }) !== 'granted';
     if (!permissionNeeded) await scanHandle();
   } else if (state.files) { entries = new Map(state.files); await discover(); }
+  else await discover();
 }
 export function preference(key, value) {
   if (value === undefined) return prefs[key] ?? null;
@@ -61,6 +62,10 @@ const fileOf = item => item?.kind === 'file' ? item.getFile() : Promise.resolve(
 async function content(p) { const item = entries.get(p); if (!item) throw Error('File is not in this folder: ' + p); return (await fileOf(item)).text(); }
 async function discover() {
   projects = [];
+  // Additive browser imports never replace the visitor's open folder.
+  for (const saved of await get('browser-projects') || []) {
+    for (const [p, file] of saved.files) entries.set(p, file);
+  }
   for (const [p] of entries) {
     if (!/(^|\/)project\.json$/.test(p) || p.split('/').length > 2) continue;
     try {
@@ -107,13 +112,13 @@ export async function request(url, options = {}) {
   const p = u.searchParams.get('path'), match = /^projects\/([\w.-]+)\/project\.json$/.exec(p), project = projects.find(x => x.id === match?.[1]);
   if (!project) return response({ error:'Not in this folder' }, 404);
   const key = state.scope + ':' + project.path;
-  const current = async () => await get('edit:'+key) ?? await get('import:'+state.scope) ?? await content(project.path);
+  const current = async () => await get('edit:'+key) ?? (project.path === 'project.json' ? await get('import:'+state.scope) : undefined) ?? await content(project.path);
   if (options.method === 'PUT') {
     const save = async () => {
       const old = await current(), expected = new Headers(options.headers).get('X-FFS-Expected');
       if (expected && await fileHash(old) !== expected) return response({ error:'File changed since load' }, 409);
       const body = String(options.body); fromV0(JSON.parse(body));
-      if (state.handle) {
+      if (state.handle && !(await get('browser-projects') || []).some(p=>p.id===project.id)) {
         const parts = safe(project.path); let dir = state.root;
         for (const part of parts.slice(0,-1)) dir = await dir.getDirectoryHandle(part);
         const name = parts.at(-1), tempName = name + '.ffs-' + crypto.randomUUID();
@@ -153,6 +158,18 @@ export async function saveCopy(doc, files) {
   const body=JSON.stringify(doc,null,2);await write('project.json',body);
   const saved=await (await dir.getFileHandle('project.json')).getFile();if(await saved.text()!==body)throw Error('Saved copy readback failed');
   await scanHandle();
+}
+export async function createBrowserProject(doc, files) {
+  fromV0(doc);
+  const saved=await get('browser-projects') || [], prefix=doc.id+'/';
+  if(saved.some(p=>p.id===doc.id))throw Error('Project ID already exists');
+  const body=JSON.stringify(doc,null,2);
+  const items=[[prefix+'project.json',new File([body],'project.json',{type:'application/json'})],...files.map(f=>[prefix+safe(f.path).join('/'),new File([f.blob],f.path,{type:f.blob.type})])];
+  saved.push({id:doc.id,files:items});await put('browser-projects',saved);
+  for(const [p,file] of items)entries.set(p,file);
+  await discover();
+  if(await content(prefix+'project.json')!==body)throw Error('Browser project readback failed');
+  return doc.id;
 }
 export function exportProject(id, body) {
   const url=URL.createObjectURL(new Blob([body],{type:'application/json'})), a=document.createElement('a');
