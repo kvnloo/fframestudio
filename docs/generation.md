@@ -6,7 +6,8 @@ The provider/queue contract and Studio workflow are implemented and exercised wi
 an explicitly labelled **fake test-pattern provider**. The offline LTX worker is
 experimental: **12 GB fit, real-model latency and visual quality are not yet
 qualified**. Do not interpret a fake-provider pass or an installed CUDA runtime as
-a real generation benchmark. See the qualification receipt for executed gates.
+a real generation benchmark. The [qualification receipt](evidence/generation-first-slices.json)
+retains the executed gates, including failed timing/performance runs and the busy-GPU skip.
 
 The worker runs outside the browser and has no connection to playback, the
 preview rAF, or document commands. Editing works without it. Hosted/folder and
