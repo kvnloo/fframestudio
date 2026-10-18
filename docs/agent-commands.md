@@ -46,6 +46,10 @@ Timing changes ripple the primary story and preserve declared attachments. Beat-
 clips reject direct timing edits or upstream ripple displacement. Ask permission to unlock
 or include an explicit reviewed `set-beat-lock:false` command. Never silently relax locks.
 
+## Shared typed registry
+
+The authoritative schemas and action metadata live in `web/src/actions.js`; see [actions.md](actions.md). A proposal command can also be `{ "id":"trim", "params":{ "clipId":"s01", "duration":150 } }`. Both forms use the same registry validation, preview, transaction and inverse. Transport/UI actions and internal recovery commands are not accepted from agents.
+
 ## Review lifecycle
 
 1. `/events` or ACP's write callback notices the proposal; the app reads the file.
