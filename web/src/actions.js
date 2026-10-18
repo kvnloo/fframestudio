@@ -51,6 +51,7 @@ function entry(id, schema, command = false) {
   return Object.freeze({
     id, title: id.replace(/([a-z])([A-Z])/g, '$1 $2').replaceAll('-', ' '),
     synonyms: Object.freeze(synonyms[id] || []), schema, command,
+    palette: !['seek','open-panel'].includes(id),
     scope: command ? (schema.properties.clipId ? 'selection + downstream ripple' : 'video') : 'workspace',
     destructive: destructive.has(id), bulk: bulk.has(id),
     preview(context, params) {
@@ -59,7 +60,7 @@ function entry(id, schema, command = false) {
     },
     apply(context, params = {}, { interactive = false } = {}) {
       // Interactive invocations gather missing parameters in the existing inspector/dialog.
-      if (interactive) return context.performAction(id, params);
+      if (interactive && (command || !schema.required.length)) return context.performAction(id, params);
       validateParams(schema, params);
       return command && id !== 'select' ? context.run({ type: id, ...params }) : context.performAction(id, params);
     },

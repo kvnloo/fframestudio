@@ -11,6 +11,8 @@ function context() {
 test('every registered action has typed contract, scope, flags, preview, apply and inverse',()=>{
  const manifest=actionManifest();assert.equal(new Set(manifest.map(a=>a.id)).size,manifest.length);
  for(const a of Object.values(ACTIONS)){assert.equal(a.schema.type,'object');assert.ok(a.scope);assert.equal(typeof a.destructive,'boolean');assert.equal(typeof a.bulk,'boolean');for(const name of ['preview','apply','inverse'])assert.equal(typeof a[name],'function');}
+ assert.equal(ACTIONS.seek.palette,false);assert.equal(ACTIONS['open-panel'].palette,false);
+ assert.throws(()=>ACTIONS.seek.apply(context(),{}, {interactive:true}),/required/);
  assert.throws(()=>validateCommand({type:'trim',clipId:'a',duration:'60'}),/integer/);
  assert.throws(()=>validateCommand({type:'trim',clipId:'a',duration:60,code:'evil'}),/unknown/);
  assert.throws(()=>validateCommand({type:'edit-text',clipId:'a',field:'title',value:[1]}),/string/);

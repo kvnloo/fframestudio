@@ -802,6 +802,7 @@ export class Editor {
     return { ...receipt, inverse: { type:'select', clipId:previous } };
   }
   seek(frame) {
+    if(!Number.isFinite(frame))throw Error('Choose a finite playhead frame');
     this.frame = Math.max(0, Math.min(this.total - 1, Math.round(frame)));
     this.updatePreview(true);
   }
@@ -982,7 +983,7 @@ export class Editor {
   }
   paletteItems() {
     const q = $('#command-search').value.toLowerCase();
-    const names = Object.keys(ACTIONS).filter(n => !/^(close-|recover|discard-|keep-|reload-|inspect-|reject-|apply-)/.test(n));
+    const names = Object.keys(ACTIONS).filter(n => ACTIONS[n].palette && !/^(close-|recover|discard-|keep-|reload-|inspect-|reject-|apply-)/.test(n));
     $('#command-list').innerHTML = names
       .filter((n) => [n, ACTIONS[n].title, ...ACTIONS[n].synonyms].join(' ').includes(q))
       .map(
