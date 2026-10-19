@@ -26,6 +26,7 @@ import { watchTheme, detectTheme } from './system-theme.mjs';
 import { agentWebAdapter } from './taste.mjs';
 import { GenerationQueue } from './generation/queue.mjs';
 import { providers as generationProviders } from './generation/providers.mjs';
+import { parseSocialReferences, MAX_SOCIAL_REFERENCES_BYTES } from '../web/src/taste/social-references.js';
 
 const VERSION = '0.1.0';
 const argv = process.argv.slice(2);
@@ -172,6 +173,22 @@ const server = http.createServer(async (req, res) => {
       const known = ['invalid-settings', 'invalid-prompt', 'invalid-seed', 'unsupported-timing', 'unsupported-resolution', 'unknown-provider', 'provider-unavailable', 'queue-full', 'queue-closed', 'unknown-job', 'not-retryable', 'unsafe-path'];
       return send(res, 400, { error: known.includes(e.message) ? e.message : 'generation-request-failed' });
     }
+  }
+  if (u.pathname === '/taste/import/collection') {
+    if (req.method !== 'POST' || u.search)
+      return send(res, 400, { error: 'Selected collection import requires POST without query parameters' });
+    if (String(req.headers['content-type'] || '').split(';')[0].trim() !== 'application/json')
+      return send(res, 415, { error: 'JSON body required' });
+    const chunks = []; let length = 0;
+    for await (const chunk of req) {
+      length += chunk.length;
+      if (length > MAX_SOCIAL_REFERENCES_BYTES) return send(res, 413, { error: 'Reference file exceeds 64 KiB' });
+      chunks.push(chunk);
+    }
+    let collection;
+    try { collection = parseSocialReferences(Buffer.concat(chunks).toString('utf8')); }
+    catch { return send(res, 400, { error: 'Invalid selected reference collection' }); }
+    return send(res, 200, await taste.importCollection(collection));
   }
   if (u.pathname === '/theme' && req.method === 'GET') {
     await theme.ready;

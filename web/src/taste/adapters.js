@@ -1,4 +1,5 @@
 import { parseProfile, validateProfile } from './profile.js';
+import { normalizeSocialReferences } from './social-references.js';
 
 export function mockAdapter(fixture, state = 'ready') {
   if (!['ready', 'disconnected', 'offline', 'unauthorized'].includes(state)) throw Error('Invalid adapter state');
@@ -53,7 +54,22 @@ export function indexedDBStorage() {
 
 // Only talks to the already authenticated bridge. No URL or token input in the UI.
 export function bridgeAdapter(request) {
-  return { async getProfile() {
+  return {
+    async importCollection(references) {
+      const safe = normalizeSocialReferences(references);
+      try {
+        const r = await request('/taste/import/collection', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(safe),
+        });
+        if (r.status === 401 || r.status === 403) return { state: 'unauthorized' };
+        if (!r.ok) return { state: r.status === 400 || r.status === 413 ? 'invalid' : 'offline' };
+        const result = await r.json();
+        if (result.state === 'ready') return { state: 'ready', profile: validateProfile(result.profile) };
+        return { state: ['offline','unauthorized','disconnected','invalid'].includes(result.state) ? result.state : 'invalid' };
+      } catch { return { state: 'offline' }; }
+    },
+    async getProfile() {
     try {
       const r = await request('/taste/profile');
       if (r.status === 401 || r.status === 403) return { state: 'unauthorized' };

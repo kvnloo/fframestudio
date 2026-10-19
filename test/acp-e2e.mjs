@@ -56,6 +56,16 @@ try {
   out.security.taste_disconnected = (await fetch(base+'/taste/profile',{headers:tasteHeaders}).then(r=>r.json())).state === 'disconnected';
   out.security.taste_tenant_selector_refused = await r('/taste/profile?user=other',tasteHeaders) === 400;
   out.security.taste_read_only = await fetch(base+'/taste/profile',{method:'POST',headers:tasteHeaders}).then(r=>r.status) === 400;
+  const selectedReferences = JSON.stringify({schema:'fframestudio.social-references/1',provider:'youtube',collectionId:'test',
+    items:[{url:'https://youtu.be/dQw4w9WgXcQ',title:'Demo'}]});
+  const socialPost = (body,headers={}) => fetch(base+'/taste/import/collection',{method:'POST',
+    headers:{'Content-Type':'application/json',...headers},body});
+  out.security.social_no_token = await socialPost(selectedReferences).then(r=>r.status);
+  out.security.social_disabled = (await socialPost(selectedReferences,tasteHeaders).then(r=>r.json())).state === 'disconnected';
+  out.security.social_invalid = await socialPost(JSON.stringify({schema:'fframestudio.social-references/1',provider:'youtube',
+    collectionId:'test',items:[{url:'https://localhost/secret'}]}),tasteHeaders).then(r=>r.status);
+  out.security.social_foreign_origin = await socialPost(selectedReferences,{...tasteHeaders,Origin:'https://evil.example'}).then(r=>r.status);
+
   const hosted='https://fframestudio.vercel.app';
   const allowed=await fetch(base+'/agents',{headers:{Origin:hosted,Authorization:'Bearer '+token}});
   out.security.hosted_token=allowed.status;out.security.hosted_cors=allowed.headers.get('access-control-allow-origin')===hosted;
@@ -132,7 +142,7 @@ try {
 console.log(JSON.stringify(out, null, 1));
 // fail loudly so CI and agents can rely on the exit code
 const sec = out.security, fails = [];
-const want = { taste_no_token:401,taste_disconnected:true,taste_tenant_selector_refused:true,taste_read_only:true, hosted_token:200,hosted_cors:true,hosted_no_token:401,pna_preflight:true,foreign_cors_absent:true,hosted_ws:true,foreign_ws_refused:true,hosted_bad_ws_refused:true, no_token: 401, bad_token: 401, foreign_origin: 403, rebinding_host: 403, ok: 200, path_escape: 400, symlink_read: 400, symlink_write_dangling: 400, symlink_write_dir: 400, symlink_mkdir_dir: 400, outside_untouched: true, inside_write: 200, ws_no_token: 'refused', ws_bad_token: 'refused' };
+const want = { taste_no_token:401,taste_disconnected:true,taste_tenant_selector_refused:true,taste_read_only:true, social_no_token:401,social_disabled:true,social_invalid:400,social_foreign_origin:403, hosted_token:200,hosted_cors:true,hosted_no_token:401,pna_preflight:true,foreign_cors_absent:true,hosted_ws:true,foreign_ws_refused:true,hosted_bad_ws_refused:true, no_token: 401, bad_token: 401, foreign_origin: 403, rebinding_host: 403, ok: 200, path_escape: 400, symlink_read: 400, symlink_write_dangling: 400, symlink_write_dir: 400, symlink_mkdir_dir: 400, outside_untouched: true, inside_write: 200, ws_no_token: 'refused', ws_bad_token: 'refused' };
 for (const [k, v] of Object.entries(want)) if (sec[k] !== v) fails.push(`security.${k}: got ${sec[k]}, want ${v}`);
 for (const [id, r] of Object.entries(out.agents)) if (!r.ok) fails.push(`agent ${id}: ${r.error || 'no pong'}`);
 if (out.edit && !out.edit.ok) fails.push(`edit ${out.edit.agent}: ${out.edit.error || 'file not changed as asked'}`);
