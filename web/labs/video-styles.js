@@ -1,4 +1,5 @@
 import { VIDEO_STYLE_PRESETS, ASPECTS, instantiate, evaluateRecipe, serializeRecipe, parseRecipe, validateRecipe } from '../src/video-style/components.mjs';
+import { parseCineticPicks } from '../src/video-style/cinetic.mjs';
 
 const $ = id => document.getElementById(id);
 const select = $('component'), frameControl = $('frame');
@@ -124,5 +125,53 @@ $('export').onclick = () => {
   const u = URL.createObjectURL(new Blob([serializeRecipe(recipe())],{type:'application/json'}));
   const link = document.createElement('a');link.href = u;link.download = recipe().id+'.video-style.json';link.click();setTimeout(()=>URL.revokeObjectURL(u),1000);
   $('message').textContent = 'Downloaded editable sidecar JSON — not an MP4.';
+};
+// This file picker is an intentionally *non-executing* creative planning surface.
+$('cinetic-file').onchange = async event => {
+  const input = event.currentTarget, file = input.files?.[0];
+  const status = $('cinetic-status'), list = $('cinetic-list');
+  input.value = '';
+  list.replaceChildren();
+  if (!file) { status.textContent = 'No plan selected.'; return; }
+  if (file.size > 131072) { status.textContent = 'Plan rejected: limit 128 KiB.'; return; }
+  status.textContent = 'Reading plan locally…';
+  try {
+    const plan = parseCineticPicks(await file.text());
+    const fragment = document.createDocumentFragment();
+    for (const pick of plan.picks) {
+      const item = document.createElement('li');
+      item.className = 'cinetic-item';
+      const heading = document.createElement('strong');
+      heading.textContent = pick.name;
+      const meta = document.createElement('small');
+      meta.textContent = pick.category.replaceAll('_',' ') + ' · ' + pick.role + ' · ' + pick.sourceId;
+      item.append(heading, meta);
+      if (pick.suggestion) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.cineticSuggest = pick.sourceId;
+        button.textContent = 'Preview related ' + pick.suggestion.component + ' ↗';
+        button.onclick = () => {
+          select.value = pick.suggestion.component;
+          load();
+          $('message').textContent = 'Conceptual-only suggestion for ' + pick.name +
+            '. This is a FrameStudio starting point, not an implementation of the cinetic technique.';
+        };
+        item.append(button);
+      } else {
+        const missing = document.createElement('span');
+        missing.className = 'cinetic-unmatched';
+        missing.textContent = 'Not implemented in FrameStudio';
+        item.append(missing);
+      }
+      fragment.append(item);
+    }
+    list.replaceChildren(fragment);
+    status.textContent = plan.picks.length + ' choices · seed ' + plan.provenance.seed +
+      ' · ' + (plan.provenance.format || 'selected category') + ' · ' +
+      plan.picks.filter(p => p.suggestion).length + ' conceptual previews available. No source code executed.';
+  } catch {
+    status.textContent = 'Invalid cinetic picks file. Export it using cinetic pick.py --json.';
+  }
 };
 load();

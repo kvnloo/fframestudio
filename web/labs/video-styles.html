@@ -30,7 +30,16 @@
 <div class="transport"><button id="play" aria-label="Play motion preview">▶ Play</button><label class="scrubber">FRAME<input id="frame" type="range" min="0" max="89" value="30" aria-label="Scrub frame"></label><output id="position">30 / 89</output></div>
 <div class="notes"><span id="description"></span><span class="cap">DOM / 2D ONLY</span></div>
 <div class="exports"><button id="copy-instance">Copy instance JSON</button><button id="copy-definition">Copy definition JSON</button><button id="export">Download recipe ↓</button><button id="json-toggle" aria-expanded="false" aria-controls="json-panel">Import / inspect JSON</button></div>
-<div id="json-panel" hidden><label>Portable JSON · active take<textarea id="json" spellcheck="false" aria-label="Recipe JSON"></textarea></label><button id="import">Import recipe into active take</button></div>
+<div id="json-panel" hidden>
+<label>Portable JSON · active take<textarea id="json" spellcheck="false" aria-label="Recipe JSON"></textarea></label><button id="import">Import recipe into active take</button>
+<section class="cinetic-intake" aria-label="Cinetic technique plan">
+<div class="cap">CINETIC / SOURCE-AWARE MOTION PLANS</div>
+<p>Import a local <code>pick.py --json</code> plan. Suggestions are not exact effect recreations.</p>
+<label>Selected cinetic picks JSON<input id="cinetic-file" type="file" accept=".json,application/json"></label>
+<p id="cinetic-status" role="status">No plan selected. No code executed or files uploaded.</p>
+<ol id="cinetic-list" aria-label="Imported cinetic techniques"></ol>
+<p class="cinetic-credit">Research source: <a href="https://github.com/Leonxlnx/cinetic" target="_blank" rel="noopener noreferrer">Leonxlnx/cinetic</a> (MIT skill; source films remain with their authors).</p>
+</section></div>
 <p id="message" role="status">Scrub in any order. The same frame always returns the same values.</p>
 </div>
 </section>
