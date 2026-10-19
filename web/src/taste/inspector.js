@@ -1,4 +1,5 @@
-import { KEYS, previewTaste, tasteReceipt } from './profile.js';
+import { KEYS, previewTaste, tasteReceipt, validateProfile } from './profile.js';
+import { paletteFromLocalFiles } from './image-palette.js';
 import { fileAdapter, bridgeAdapter } from './adapters.js';
 import { request } from '../host.js';
 import { parseSocialReferences, MAX_SOCIAL_REFERENCES_BYTES } from './social-references.js';
@@ -17,7 +18,7 @@ export class TasteInspector {
     this.e = editor; this.pane = pane;
     this.file = fileAdapter(); this.source = 'file'; this.result = { state:'disconnected' };
     this.on = false; this.strength = 65; this.enabled = [...KEYS]; this.scope = 'task';
-    this.socialCollection = null; this.socialStatus = '';
+    this.socialCollection = null; this.socialStatus = ''; this.imagePreview = null;
     this.render();
     this.load();
   }
@@ -35,6 +36,12 @@ export class TasteInspector {
       <div class="taste-source"><label>Profile source<select id="taste-source"><option value="file">File · browser-local</option><option value="agentweb">AgentWeb · bridge, opt-in</option></select></label>
       ${this.source === 'file' ? `<label class="taste-import">Import aggregate JSON<input id="taste-file" type="file" accept="application/json,.json"></label>` : ''}
       <div class="taste-actions"><button id="taste-retry" class="pill">Read profile</button><button id="taste-delete" class="pill" ${!p || this.source !== 'file' ? 'disabled' : ''}>Delete profile</button></div></div>
+      ${this.source === 'file' ? `<section class="taste-local-images" aria-label="Measure screenshots locally">
+        <p class="hint">Choose 1–6 screenshots from saved design boards or videos. Only colors are measured, entirely on this device. Selecting a file never saves a profile.</p>
+        <label>Analyze screenshot colors<input id="taste-images" type="file" accept="image/png,image/jpeg,image/webp" multiple></label>
+        <div id="taste-image-colors" class="taste-image-colors" aria-label="Measured palette preview"></div>
+        <p id="taste-image-status" role="status">No screenshots selected. Nothing uploaded or saved.</p>
+        <button class="pill" id="taste-image-use" disabled>Use measured palette · save locally</button></section>` : ''}
       ${this.source === 'agentweb' ? `<section class="taste-social" aria-label="Import selected social references">
         <p class="hint">Select only references you want to teach. Curated JSON links from X, Pinterest, YouTube or other collections; not direct account scraping.</p>
         <label>Curated reference JSON<input id="taste-social-file" type="file" accept=".json,application/json"></label>
@@ -49,7 +56,7 @@ export class TasteInspector {
       }).join('')}</div></fieldset>
       <section class="taste-comparison" aria-label="Direction comparison"><div class="cap">ORIGINAL → TASTE-ADJUSTED</div><div id="taste-studies"></div><ol id="taste-diff" aria-label="Explained direction diff"></ol><p class="hint">Palette and typography update shared styles. Other dials are direction tokens only: source footage, timing and music stay untouched. Brand locks always win.</p><button class="pill" id="taste-apply">Apply direction · undoable</button></section><p class="hint">Delete clears the local profile and this preview. Existing project receipts contain aggregate dials only; Undo reverses an applied direction.</p>` : ''}`;
     this.pane.querySelector('#taste-source').value = this.source;
-    this.pane.querySelector('#taste-source').onchange = e => { this.source = e.target.value; ++this.epoch; this.on = false; this.socialCollection = null; this.socialStatus = ''; this.result = {state:'disconnected'}; this.render(); };
+    this.pane.querySelector('#taste-source').onchange = e => { this.source = e.target.value; ++this.epoch; this.on = false; this.socialCollection = null; this.socialStatus = ''; this.imagePreview = null; this.result = {state:'disconnected'}; this.render(); };
     this.pane.querySelector('#taste-retry').onclick = () => this.load().catch(() => this.fail('offline'));
     if (this.source === 'file') this.pane.querySelector('#taste-file').onchange = async e => {
       try {
@@ -63,6 +70,54 @@ export class TasteInspector {
         this.source = 'file'; this.result = result; this.on = false; this.render();
       } catch { this.fail('invalid'); }
     };
+    const imageInput = this.pane.querySelector('#taste-images');
+    if (imageInput) {
+      const approve = this.pane.querySelector('#taste-image-use');
+      const status = this.pane.querySelector('#taste-image-status');
+      const swatches = this.pane.querySelector('#taste-image-colors');
+      imageInput.onchange = async e => {
+        const files = Array.from(e.target.files || []), epoch = ++this.epoch;
+        this.imagePreview = null;
+        approve.disabled = true;
+        swatches.replaceChildren();
+        status.textContent = 'Measuring screenshot pixels locally…';
+        imageInput.value = '';
+        try {
+          const profile = validateProfile(await paletteFromLocalFiles(files));
+          if (this.dead || this.source !== 'file' || epoch !== this.epoch) return;
+          this.imagePreview = profile;
+          for (const color of profile.signals.palette.value) {
+            const chip = document.createElement('i');
+            chip.style.backgroundColor = color;
+            chip.setAttribute('aria-label', color);
+            chip.title = color;
+            swatches.append(chip);
+          }
+          status.textContent = profile.provenance.itemCount + ' screenshots analyzed · '
+            + profile.signals.palette.value.length + ' colors measured. Nothing saved until approved.';
+          approve.disabled = false;
+        } catch {
+          if (this.dead || this.source !== 'file' || epoch !== this.epoch) return;
+          status.textContent = 'Unable to analyze images. Use 1–6 PNG, JPEG or WebP files under the size limits.';
+        }
+      };
+      approve.onclick = async () => {
+        if (!this.imagePreview || this.dead) return;
+        const profile = this.imagePreview, epoch = ++this.epoch;
+        this.imagePreview = null;
+        approve.disabled = true;
+        try {
+          const result = await this.file.importJSON(JSON.stringify(profile));
+          if (this.dead || this.source !== 'file' || epoch !== this.epoch) return;
+          this.result = result;
+          this.on = false; // Import never silently applies a style.
+          this.render();
+        } catch {
+          if (this.dead || epoch !== this.epoch) return;
+          status.textContent = 'Could not save the measured aggregate palette locally.';
+        }
+      };
+    }
     const socialFile = this.pane.querySelector('#taste-social-file');
     if (socialFile) {
       const consent = this.pane.querySelector('#taste-social-consent');
@@ -112,7 +167,7 @@ export class TasteInspector {
     }
     this.pane.querySelector('#taste-delete').onclick = async () => {
       ++this.epoch;
-      try { this.result = await this.file.deleteProfile(); this.on = false; this.signature = ''; this.render(); }
+      try { this.imagePreview = null; this.result = await this.file.deleteProfile(); this.on = false; this.signature = ''; this.render(); }
       catch { this.fail('offline'); }
     };
     if (!p) return;

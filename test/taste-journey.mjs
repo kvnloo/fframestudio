@@ -63,6 +63,35 @@ export async function verifyTaste({page,root,out,assert,prefix='taste'}) {
   assert(await page.evaluate(async()=>{
     const {fileAdapter}=await import('/app/src/taste/adapters.js');return (await fileAdapter().getProfile()).state;
   })==='disconnected','deleted profile reappeared');
+  // A real browser decodes pixels locally, then requires explicit approval to save.
+  await page.locator('#taste-images').setInputFiles({
+    name: 'synthetic-colors.png', mimeType: 'image/png',
+    buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGP8IOfGAANMDEgANwcARBYBXLc41sAAAAAASUVORK5CYII=', 'base64'),
+  });
+  await page.waitForFunction(() => document.querySelector('#taste-image-use')?.disabled === false);
+  assert(await page.locator('#taste-image-status').innerText().then(t=>t.includes('Nothing saved')),
+    'Selecting image silently saved profile');
+  assert(await page.evaluate(async () => {
+    const { fileAdapter } = await import('/app/src/taste/adapters.js');
+    return (await fileAdapter().getProfile()).state;
+  }) === 'disconnected', 'Palette persisted before approval');
+  assert(await page.locator('#taste-image-colors i').count() >= 1, 'No preview color swatches');
+  await page.locator('#taste-image-colors').screenshot({path:path.join(out,prefix+'-local-palette.png')});
+  await page.click('#taste-image-use');
+  await page.waitForSelector('#taste-on');
+  assert(!await page.locator('#taste-on').isChecked(), 'Imported palette enabled Taste silently');
+  const paletteProfile = await page.evaluate(async()=> {
+    const {fileAdapter}=await import('/app/src/taste/adapters.js');
+    return (await fileAdapter().getProfile()).profile;
+  });
+  assert(paletteProfile.provenance.itemCount === 1 &&
+    paletteProfile.signals.palette.value.length > 0 &&
+    paletteProfile.signals.motion.value === null &&
+    paletteProfile.signals.soundtrack.value === null,
+    'Image analysis inferred unmeasured signals or saved an invalid palette');
+  await page.click('#taste-delete');
+  await page.waitForSelector('#taste-state[data-state="disconnected"]');
+
   // Selecting a curated social reference file never uploads by itself.
   let networkImports = 0;
   const onRequest = request => { if (request.url().includes('/taste/import/collection')) networkImports++; };

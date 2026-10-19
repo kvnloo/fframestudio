@@ -163,3 +163,14 @@ Contract:
 - Once explicitly submitted, AgentWeb retains the resulting **aggregate Taste snapshot** until the user deletes it through the AgentWeb service; clearing the FrameStudio local file profile is not remote deletion. Profile acquisition still supplies no measured palette/camera/font evidence; visual dials remain unknown until the planned visual importer (#62) is implemented and qualified.
 
 This is intentionally narrower than the future direct Pinterest/YouTube OAuth integrations. Never claim a native platform connector exists from this work. Tests: `node --test test/doc/taste-social.test.mjs` and `node test/acp-e2e.mjs` (no live service or credentials required).
+
+## Local screenshot color study (issue #11)
+
+Use **My Taste → File · browser-local → Analyze screenshot colors** to select 1–6 user-owned or authorized PNG/JPEG/WebP images. This is a *local-only* pixel measurement, not Pinterest/YouTube crawling, an upload, or a full multimodal preference model. Once colors appear, choose **Use measured palette · save locally** to persist just the aggregate profile in IndexedDB. Taste remains **Off** until you separately enable it; applying a direction remains a separate, undoable action.
+
+The sampler decodes to 64×64 pixels per selected image and builds a deterministic RGB-bin histogram. Each screenshot receives equal weight; alpha-transparent pixels are ignored. Up to five sufficiently distinct dominant colors become the `palette` signal. Other values (typography, motion, cuts, framing, transitions, density, soundtrack) remain **unknown**, not inferred from static images. Its confidence field is a deliberately conservative sample-count heuristic, **not** a calibrated probability. Review colors against your actual brand, monitor gamut, and footage before applying them.
+
+Only aggregate colors, sample count and a content-derived revision are saved. No raw pixels, file names, screenshots, social URLs, cookies or source text are stored in the profile. All image processing happens inside the browser; no server or network is contacted. New selections cancel prior unsaved results; deleting the local profile clears that aggregate but does not erase any earlier, intentionally saved project receipts. Brand constraints remain authoritative.
+
+Supported input bounds: 1–6 images, up to 8 MB each and 24 MB total, with decoded samples capped at 64×64. SVGs are rejected. Animated images may contribute a decoded still frame only; this does not analyze motion or sound. Browser support requires `createImageBitmap` and Canvas 2D pixel reads. Tests: `node --test test/doc/taste-image-palette.test.mjs` and the real-browser My Taste journey.
+
