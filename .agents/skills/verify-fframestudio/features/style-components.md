@@ -10,6 +10,7 @@ The Component Lab previews portable motion recipes without changing a project's 
 - `style-compare`: independent Take A/B recipes, side-by-side desktop / stacked phone preview.
 - `style-portable`: copy instance/definition JSON, download, import and invalid-import refusal.
 - `style-parity`: actual DOM/CSS samples equal separate CLI eval output.
+- `style-cinetic`: local cinetic picker metadata, seeded provenance, conceptual component suggestions and visible unsupported techniques.
 
 ## How to get to it (user POV)
 
@@ -30,6 +31,9 @@ Preconditions: owned authenticated bridge context or a plain static build served
 - Import: fill `#json` with a validated edited recipe and click `#import` → active-take input changes. Malformed JSON → `#message` reports refusal and last valid take remains.
 - Download: wait for `download`, click `#export`, parse the file → all edited props and the embedded definition survive.
 - Prove: `test/style-components-journey.mjs` samples both takes at five frames for every component/aspect against real CLI subprocesses; includes copied JSON, changed tracks on import and downloadable readback.
+- Cinetic plan: open `#json-toggle` (collapsed by default), select a local `pick.py --json` envelope with `#cinetic-file` → `#cinetic-list` retains every technique's ID, title, category and role; `#cinetic-status` shows seed and format. The existing journey uses three owned metadata-only choices, including an unsupported camera technique.
+- Related preview: click `[data-cinetic-suggest="tr-velocity-handoff-cut"]` → `#component` selects `foreground-fly-through` and `#message` explains that it is conceptual-only, not the source technique. Edit, scrub and download this FrameStudio recipe through the existing controls; do not claim cinetic reproduction.
+- Unsupported / replacement: unsupported choices remain **Not implemented in FrameStudio** with no preview action. Select malformed or oversized JSON → the old cards/actions disappear; no earlier suggestion remains available.
 - Measure: dispatch a real scrub input at each of 121 rAF callbacks (120 intervals), retain node identity, record work and all long tasks. Screenshots at 1896×880 and 390×780 must be inspected, not only saved.
 
 ## Gotchas
@@ -40,3 +44,4 @@ Preconditions: owned authenticated bridge context or a plain static build served
 - Text wraps within its declared width. Inspect long copy against guides in every aspect; intentional motion can leave the safe region.
 - A JSON panel or phone page may scroll. Check that the actual stage fits within its mat and does not cover transport controls.
 - Keep performance reports from failed attempts. Do not change thresholds or force-click an occluded Play button.
+- Cinetic imports are metadata-only and in-memory, bounded to 128 KiB / 32 unique picks by `parseCineticPicks`. No Python/Remotion execution, source footage, upload or storage. Credit remains Leonxlnx/cinetic (MIT); source films retain their authors' rights.
