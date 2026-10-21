@@ -6,7 +6,7 @@ import { setThemeSettings, themeInfo, onTheme, shotColorSlot } from './system-th
 import { StudioView, colourSlot, clipKind, timecode, advanceFrame } from './studio.js';
 import { PosterDecoder } from './poster-decoder.js';
 import { proceduralShot, proceduralSource } from './procedural.js';
-import { request, mediaURL, isLocal, isCopy, saveCopy, exportProject, preferences as storage } from './host.js';
+import { request, mediaURL, isLocal, isCopy, saveCopy, exportProject, preferences as storage, hostFeature } from './host.js';
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
@@ -236,7 +236,7 @@ export class Editor {
       $('#canvas').append(notice);
       $('.preview-label').textContent = 'Metadata-only import · no verified video or playable proxy';
     }
-    $('.editor-tools',this.root).insertAdjacentHTML('beforeend',button('voice','Voice · hold V')+button('import-reference','Import reference')+(this.doc.metadata?.reference ? button('compare-reference','Compare reference') : ''));
+    $('.editor-tools',this.root).insertAdjacentHTML('beforeend',button('voice','Voice · hold V')+button('import-reference','Import reference')+(hostFeature('comfy') ? button('comfy','ComfyUI') : '')+(this.doc.metadata?.reference ? button('compare-reference','Compare reference') : ''));
     $('#recovery').oncancel = (e) => e.preventDefault();
     this.assistant?.($('#assistant-slot', this.root));
     this.root.onclick = (e) => {
@@ -994,7 +994,7 @@ export class Editor {
   }
   paletteItems() {
     const q = $('#command-search').value.toLowerCase();
-    const names = Object.keys(ACTIONS).filter(n => ACTIONS[n].palette);
+    const names = Object.keys(ACTIONS).filter(n => ACTIONS[n].palette && (!ACTIONS[n].requires || hostFeature(ACTIONS[n].requires)));
     $('#command-list').innerHTML = names
       .filter((n) => [n, ACTIONS[n].title, ...ACTIONS[n].synonyms].join(' ').includes(q))
       .map(
@@ -1074,6 +1074,12 @@ export class Editor {
       if(this.dead)throw Error('Editor closed');this.voice=new VoiceControl(this);return this.voice;
     });
   }
+  ensureComfy() {
+    if (!hostFeature('comfy')) return Promise.reject(Error('ComfyUI is not configured on this bridge (start it with --comfy-url).'));
+    return this.comfyLoading ||= import('./comfy.js').then(({ComfyDesk})=>{
+      if(this.dead)throw Error('Editor closed');this.comfy=new ComfyDesk(this);return this.comfy;
+    });
+  }
   ensureReference() {
     return this.referenceLoading ||= import('./reference.js').then(({ReferenceDesk})=>{
       if(this.dead)throw Error('Editor closed');this.reference=new ReferenceDesk(this);return this.reference;
@@ -1089,6 +1095,7 @@ export class Editor {
     if (a === 'apply-taste') { studioAction(a).preview(this, params); return this.run({type:a,...params}); }
     if (a === 'component-lab') return window.open('/app/labs/video-styles.html', '_blank', 'noopener,noreferrer');
     if (a === 'voice') return (await this.ensureVoice()).toggle();
+    if (a.startsWith('comfy')) return (await this.ensureComfy()).act(a, params);
     if (a === 'import-reference') return (await this.ensureReference()).open();
     if (a === 'compare-reference') return (await this.ensureReference()).compareProject();
     if (a === 'seek') return this.seek(params.frame);
@@ -1357,6 +1364,7 @@ export class Editor {
     this.dead = true;
     this.voice?.destroy();
     this.reference?.destroy();
+    this.comfy?.destroy();
     this.studio?.destroy();
     cancelAnimationFrame(this.raf);
     clearInterval(this.previewTimer);

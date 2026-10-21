@@ -1,0 +1,476 @@
+{
+ "schema": "fframestudio.evidence/comfyui-pane-1",
+ "date": "2026-10-20",
+ "comfyui": {
+  "version": "0.30.0 (git 14b05228)",
+  "launch": "owned process, 127.0.0.1:<free port>, --lowvram --reserve-vram 1.0 --preview-method none --disable-all-custom-nodes --disable-api-nodes, isolated input/output/temp/user dirs, sqlite in-memory; stopped after runs; ComfyUI tree unchanged (git status identical before/after)",
+  "comfyLogPromptExecuted": [
+   "57.36 s (cold, seed 42)",
+   "0.05 s (identical prompt+seed: ComfyUI execution cache hit, NOT a generation)",
+   "10.15 s (warm, seed 43)"
+  ]
+ },
+ "runs": {
+  "mock": {
+   "mode": "mock-comfyui",
+   "started": "2026-10-21T04:30:14.903Z",
+   "steps": [
+    {
+     "step": "toolbar+palette",
+     "palette": [
+      "comfy",
+      "comfy run",
+      "comfy variations",
+      "comfy cancel",
+      "comfy set prompt",
+      "comfy set param",
+      "comfy use template"
+     ]
+    },
+    {
+     "said": "comfy, set prompt to a lighthouse on a cliff at dusk, volumetric fog",
+     "voicePreview": "Microphone unavailable: Permission denied",
+     "comfyReceipt": "Say \u201ccomfy, set prompt to \u2026\u201d, \u201ccomfy steps 12\u201d, \u201ccomfy run\u201d, \u201cmore variations\u201d or \u201ccomfy cancel\u201d."
+    },
+    {
+     "said": "comfy steps twelve",
+     "voicePreview": "comfy set param\n[]",
+     "comfyReceipt": "steps \u2192 12"
+    },
+    {
+     "said": "comfy steps 900",
+     "voicePreview": "Steps must be between 1 and 40.",
+     "comfyReceipt": "steps \u2192 12",
+     "expectedRejection": true
+    },
+    {
+     "said": "comfy run",
+     "voicePreview": "comfy run\n[]",
+     "comfyReceipt": "Queued 1 \u00d7 FLUX.2 Klein 4B \u00b7 text to image \u00b7 seed 42"
+    },
+    {
+     "said": "give me two more variations",
+     "voicePreview": "comfy variations\n[]",
+     "comfyReceipt": "Queued variation 2 \u00d7 FLUX.2 Klein 4B \u00b7 text to image \u00b7 seed 43\u202644"
+    },
+    {
+     "said": "comfy, set prompt to [mock:slow] a very long take",
+     "voicePreview": "comfy set prompt\n[]",
+     "comfyReceipt": "Prompt \u2192 \u201c[mock:slow] a very long take\u201d"
+    },
+    {
+     "said": "comfy run",
+     "voicePreview": "comfy run\n[]",
+     "comfyReceipt": "Queued 1 \u00d7 FLUX.2 Klein 4B \u00b7 text to image \u00b7 seed 42"
+    },
+    {
+     "said": "comfy cancel",
+     "voicePreview": "comfy cancel\n[]",
+     "comfyReceipt": "Cancelled 1 job."
+    },
+    {
+     "said": "comfy frobnicate",
+     "voicePreview": "ComfyUI: say \u201cset prompt to \u2026\u201d, \u201csteps 12\u201d, \u201crun\u201d, \u201cmore variations\u201d or \u201ccancel\u201d.",
+     "comfyReceipt": "Cancelled 1 job.",
+     "expectedClarification": true
+    }
+   ],
+   "screenshots": [
+    "comfy-desk-first-mock-comfyui.png",
+    "comfy-desktop-mock-comfyui.png",
+    "comfy-phone-mock-comfyui.png"
+   ],
+   "status": "Connected \u00b7 ComfyUI 0.30.0-mock \u00b7 127.0.0.1:24463 \u00b7 10.7 of 12.0 GiB free \u00b7 queue 0",
+   "template": "flux2-klein-4b-t2i",
+   "firstRun": {
+    "clickToImageMs": 1311,
+    "startedToFinishedMs": 696,
+    "params": {
+     "prompt": "a lighthouse on a cliff at dusk, volumetric fog",
+     "negative": "",
+     "cfg": 5,
+     "width": 1024,
+     "height": 1024,
+     "steps": 12,
+     "sampler": "euler",
+     "seed": 42
+    },
+    "vramFromComfy": null,
+    "output": {
+     "file": "media/generated/comfy/d54c8c1a-5393-405c-ae7b-1128bc3b5113/output-1.png",
+     "kind": "image",
+     "bytes": 29263,
+     "sha256": "f8986048d36e513272a242afe1cb398175cb669440a103637525a41495c04fd3"
+    },
+    "nvidiaSmi": null
+   },
+   "variations": {
+    "seeds": [
+     42,
+     43,
+     44
+    ],
+    "distinctImages": 3
+   },
+   "cancel": {
+    "interrupts": 1,
+    "clears": 0
+   },
+   "layout": {
+    "desk": [
+     20,
+     210,
+     420,
+     666
+    ],
+    "canvas": [
+     302,
+     126,
+     775,
+     436
+    ]
+   },
+   "consoleErrors": [
+    "HTTP 404 /lib/library.json",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "flagOff": {
+    "button": false,
+    "paletteRows": 0,
+    "voice": "ComfyUI is not configured on this bridge.",
+    "comfyStatusHttp": 404,
+    "generateProviders": [
+     "local-ltx",
+     "hosted-experimental"
+    ]
+   },
+   "configUnchanged": true,
+   "result": "pass",
+   "finished": "2026-10-21T04:30:31.252Z"
+  },
+  "real_cold_seed42": {
+   "mode": "real-comfyui",
+   "started": "2026-10-21T04:31:41.114Z",
+   "steps": [
+    {
+     "step": "toolbar+palette",
+     "palette": [
+      "comfy",
+      "comfy run",
+      "comfy variations",
+      "comfy cancel",
+      "comfy set prompt",
+      "comfy set param",
+      "comfy use template"
+     ]
+    },
+    {
+     "said": "comfy, set prompt to a lighthouse on a cliff at dusk, volumetric fog, cinematic film still",
+     "voicePreview": "Microphone unavailable: Permission denied",
+     "comfyReceipt": "Prompt \u2192 \u201ca lighthouse on a cliff at dusk, volumetric fog, cinematic film still\u201d"
+    },
+    {
+     "said": "comfy width 512",
+     "voicePreview": "comfy set param\n[]",
+     "comfyReceipt": "width \u2192 512"
+    },
+    {
+     "said": "comfy height 512",
+     "voicePreview": "comfy set param\n[]",
+     "comfyReceipt": "height \u2192 512"
+    },
+    {
+     "said": "comfy steps 20",
+     "voicePreview": "comfy set param\n[]",
+     "comfyReceipt": "steps \u2192 20"
+    },
+    {
+     "said": "comfy steps 900",
+     "voicePreview": "Steps must be between 1 and 40.",
+     "comfyReceipt": "steps \u2192 20",
+     "expectedRejection": true
+    },
+    {
+     "said": "comfy run",
+     "voicePreview": "comfy run\n[]",
+     "comfyReceipt": "Queued 1 \u00d7 FLUX.2 Klein 4B \u00b7 text to image \u00b7 seed 42"
+    }
+   ],
+   "screenshots": [
+    "comfy-desk-first-real-comfyui.png",
+    "comfy-desktop-real-comfyui.png",
+    "comfy-phone-real-comfyui.png"
+   ],
+   "status": "Connected \u00b7 ComfyUI 0.30.0 \u00b7 127.0.0.1:49263 \u00b7 8.8 of 11.7 GiB free \u00b7 queue 0",
+   "template": "flux2-klein-4b-t2i",
+   "firstRun": {
+    "clickToImageMs": 62293,
+    "startedToFinishedMs": 61755,
+    "params": {
+     "prompt": "a lighthouse on a cliff at dusk, volumetric fog, cinematic film still",
+     "negative": "",
+     "cfg": 5,
+     "width": 512,
+     "height": 512,
+     "steps": 20,
+     "sampler": "euler",
+     "seed": 42
+    },
+    "vramFromComfy": {
+     "peakUsedMiB": 11287,
+     "totalMiB": 11955,
+     "sampledEveryMs": 1000,
+     "scope": "device-wide via /system_stats"
+    },
+    "output": {
+     "file": "media/generated/comfy/c3100c42-c109-421a-b9b6-a6bf15887370/output-1.png",
+     "kind": "image",
+     "bytes": 381186,
+     "sha256": "f33b449ece226246daad202af9f745e3880d033e7830a1a7f9fc2d3ee14b2891"
+    },
+    "nvidiaSmi": {
+     "beforeUsedMiB": 2903,
+     "peakUsedMiB": 11693,
+     "totalMiB": 12288,
+     "samples": 123,
+     "intervalMs": 500,
+     "scope": "device-wide"
+    }
+   },
+   "layout": {
+    "desk": [
+     20,
+     210,
+     420,
+     666
+    ],
+    "canvas": [
+     302,
+     126,
+     775,
+     436
+    ]
+   },
+   "consoleErrors": [],
+   "configUnchanged": true,
+   "result": "pass",
+   "finished": "2026-10-21T04:32:48.951Z"
+  },
+  "real_cache_hit_seed42": {
+   "mode": "real-comfyui",
+   "started": "2026-10-21T04:33:01.557Z",
+   "steps": [
+    {
+     "step": "toolbar+palette",
+     "palette": [
+      "comfy",
+      "comfy run",
+      "comfy variations",
+      "comfy cancel",
+      "comfy set prompt",
+      "comfy set param",
+      "comfy use template"
+     ]
+    },
+    {
+     "said": "comfy, set prompt to a lighthouse on a cliff at dusk, volumetric fog, cinematic film still",
+     "voicePreview": "Microphone unavailable: Permission denied",
+     "comfyReceipt": "Prompt \u2192 \u201ca lighthouse on a cliff at dusk, volumetric fog, cinematic film still\u201d"
+    },
+    {
+     "said": "comfy width 512",
+     "voicePreview": "comfy set param\n[]",
+     "comfyReceipt": "width \u2192 512"
+    },
+    {
+     "said": "comfy height 512",
+     "voicePreview": "comfy set param\n[]",
+     "comfyReceipt": "height \u2192 512"
+    },
+    {
+     "said": "comfy steps 20",
+     "voicePreview": "comfy set param\n[]",
+     "comfyReceipt": "steps \u2192 20"
+    },
+    {
+     "said": "comfy steps 900",
+     "voicePreview": "Steps must be between 1 and 40.",
+     "comfyReceipt": "steps \u2192 20",
+     "expectedRejection": true
+    },
+    {
+     "said": "comfy run",
+     "voicePreview": "comfy run\n[]",
+     "comfyReceipt": "Queued 1 \u00d7 FLUX.2 Klein 4B \u00b7 text to image \u00b7 seed 42"
+    }
+   ],
+   "screenshots": [
+    "comfy-desk-first-real-comfyui.png",
+    "comfy-desktop-real-comfyui.png",
+    "comfy-phone-real-comfyui.png"
+   ],
+   "status": "Connected \u00b7 ComfyUI 0.30.0 \u00b7 127.0.0.1:49263 \u00b7 1.2 of 11.7 GiB free \u00b7 queue 0",
+   "template": "flux2-klein-4b-t2i",
+   "firstRun": {
+    "clickToImageMs": 918,
+    "startedToFinishedMs": 606,
+    "params": {
+     "prompt": "a lighthouse on a cliff at dusk, volumetric fog, cinematic film still",
+     "negative": "",
+     "cfg": 5,
+     "width": 512,
+     "height": 512,
+     "steps": 20,
+     "sampler": "euler",
+     "seed": 42
+    },
+    "vramFromComfy": null,
+    "output": {
+     "file": "media/generated/comfy/bb66ea20-1862-4065-909f-df6b66585b1e/output-1.png",
+     "kind": "image",
+     "bytes": 381186,
+     "sha256": "a10cde88465b7f4bc901207e6b65e58f0a3173e94558753bb96266c00813ecc8"
+    },
+    "nvidiaSmi": {
+     "beforeUsedMiB": 10801,
+     "peakUsedMiB": 10801,
+     "totalMiB": 12288,
+     "samples": 1,
+     "intervalMs": 500,
+     "scope": "device-wide"
+    }
+   },
+   "layout": {
+    "desk": [
+     20,
+     210,
+     420,
+     666
+    ],
+    "canvas": [
+     302,
+     126,
+     775,
+     436
+    ]
+   },
+   "consoleErrors": [],
+   "configUnchanged": true,
+   "result": "pass",
+   "finished": "2026-10-21T04:33:18.782Z"
+  },
+  "real_warm_seed43": {
+   "mode": "real-comfyui",
+   "started": "2026-10-21T04:33:29.682Z",
+   "steps": [
+    {
+     "step": "toolbar+palette",
+     "palette": [
+      "comfy",
+      "comfy run",
+      "comfy variations",
+      "comfy cancel",
+      "comfy set prompt",
+      "comfy set param",
+      "comfy use template"
+     ]
+    },
+    {
+     "said": "comfy, set prompt to a lighthouse on a cliff at dusk, volumetric fog, cinematic film still",
+     "voicePreview": "Microphone unavailable: Permission denied",
+     "comfyReceipt": "Prompt \u2192 \u201ca lighthouse on a cliff at dusk, volumetric fog, cinematic film still\u201d"
+    },
+    {
+     "said": "comfy width 512",
+     "voicePreview": "comfy set param\n[]",
+     "comfyReceipt": "width \u2192 512"
+    },
+    {
+     "said": "comfy height 512",
+     "voicePreview": "comfy set param\n[]",
+     "comfyReceipt": "height \u2192 512"
+    },
+    {
+     "said": "comfy steps 20",
+     "voicePreview": "comfy set param\n[]",
+     "comfyReceipt": "steps \u2192 20"
+    },
+    {
+     "said": "comfy seed 43",
+     "voicePreview": "comfy set param\n[]",
+     "comfyReceipt": "seed \u2192 43"
+    },
+    {
+     "said": "comfy steps 900",
+     "voicePreview": "Steps must be between 1 and 40.",
+     "comfyReceipt": "seed \u2192 43",
+     "expectedRejection": true
+    },
+    {
+     "said": "comfy run",
+     "voicePreview": "comfy run\n[]",
+     "comfyReceipt": "Queued 1 \u00d7 FLUX.2 Klein 4B \u00b7 text to image \u00b7 seed 43"
+    }
+   ],
+   "screenshots": [
+    "comfy-desk-first-real-comfyui.png",
+    "comfy-desktop-real-comfyui.png",
+    "comfy-phone-real-comfyui.png"
+   ],
+   "status": "Connected \u00b7 ComfyUI 0.30.0 \u00b7 127.0.0.1:49263 \u00b7 1.2 of 11.7 GiB free \u00b7 queue 0",
+   "template": "flux2-klein-4b-t2i",
+   "firstRun": {
+    "clickToImageMs": 10848,
+    "startedToFinishedMs": 10620,
+    "params": {
+     "prompt": "a lighthouse on a cliff at dusk, volumetric fog, cinematic film still",
+     "negative": "",
+     "cfg": 5,
+     "width": 512,
+     "height": 512,
+     "steps": 20,
+     "sampler": "euler",
+     "seed": 43
+    },
+    "vramFromComfy": {
+     "peakUsedMiB": 10797,
+     "totalMiB": 11955,
+     "sampledEveryMs": 1000,
+     "scope": "device-wide via /system_stats"
+    },
+    "output": {
+     "file": "media/generated/comfy/2a979471-c3e9-46e0-b3db-412340a23717/output-1.png",
+     "kind": "image",
+     "bytes": 356593,
+     "sha256": "bca2286c7ac4e9b6577f3090760135b57fa59821738d27af5accc325c0c65bbf"
+    },
+    "nvidiaSmi": {
+     "beforeUsedMiB": 10801,
+     "peakUsedMiB": 11249,
+     "totalMiB": 12288,
+     "samples": 21,
+     "intervalMs": 500,
+     "scope": "device-wide"
+    }
+   },
+   "layout": {
+    "desk": [
+     20,
+     210,
+     420,
+     666
+    ],
+    "canvas": [
+     302,
+     126,
+     775,
+     436
+    ]
+   },
+   "consoleErrors": [],
+   "configUnchanged": true,
+   "result": "pass",
+   "finished": "2026-10-21T04:33:45.885Z"
+  }
+ }
+}

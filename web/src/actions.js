@@ -27,7 +27,16 @@ export const COMMAND_IDS = Object.freeze(Object.keys(definitions));
 const ui = ['play','reverse','pause','forward','previousFrame','nextFrame','previousClip','nextClip','in','out','undo','redo','palette','close-palette','save','compare','settings','close-settings','reset-settings','toggle-story','toggle-inspector','loop-shot','loop-film','mute','screening','play-here','seek-start','copy-timecode','recover','discard-recovery','export','export-project','save-copy','reload-external','keep-local','inspect-proposal','reject-proposal','apply-proposal','import-reference','compare-reference','voice','component-lab','taste'];
 const destructive = new Set(['delete','trim','in','out','replace','restore-version','reload-external','reset-settings']);
 const bulk = new Set(['edit-style','apply-taste','group','restore-version','apply-proposal']);
-const synonyms = { trim: ['shorten', 'trim shot'], delete: ['remove'], 'edit-text': ['change text', 'change title'], play: ['start playback'], pause: ['stop playback'], 'import-reference': ['deconstruct', 'reference video'], voice: ['dictate', 'microphone'] };
+const synonyms = { trim: ['shorten', 'trim shot'], delete: ['remove'], 'edit-text': ['change text', 'change title'], play: ['start playback'], pause: ['stop playback'], 'import-reference': ['deconstruct', 'reference video'], voice: ['dictate', 'microphone'],
+  comfy: ['comfyui', 'image generation'], 'comfy-run': ['comfy generate', 'comfy queue'], 'comfy-variations': ['more variations'], 'comfy-cancel': ['comfy stop'] };
+// ComfyUI pane: workspace actions only (never proposal commands); available only when the bridge enables ComfyUI.
+const count = { type: 'integer', minimum: 1, maximum: 4 };
+const comfy = {
+  comfy: object(), 'comfy-run': object({ count }), 'comfy-variations': object({ count }), 'comfy-cancel': object(),
+  'comfy-set-prompt': object({ prompt: { type: 'string', minLength: 1 } }),
+  'comfy-set-param': object({ name: { type: 'string', pattern: '^[a-z][a-z0-9_]{0,31}$' }, value: { type: ['string', 'number'] } }),
+  'comfy-use-template': object({ template: str }),
+};
 export function validateParams(schema, value, path = 'params') {
   const type = value === null ? 'null' : Array.isArray(value) ? 'array' : Number.isInteger(value) ? 'integer' : typeof value;
   const types = Array.isArray(schema.type) ? schema.type : [schema.type];
@@ -58,6 +67,7 @@ function entry(id, schema, command = false) {
     // Proposal/recovery lifecycle controls are contextual, not user commands.
     palette: !['seek','open-panel','recover','discard-recovery','keep-local','reload-external','inspect-proposal','reject-proposal','apply-proposal'].includes(id) && !id.startsWith('close-'),
     scope: command ? (schema.properties.clipId ? 'selection + downstream ripple' : 'video') : 'workspace',
+    requires: id.startsWith('comfy') ? 'comfy' : null,
     destructive: destructive.has(id), bulk: bulk.has(id),
     preview(context, params) {
       validateParams(schema, params);
@@ -76,6 +86,7 @@ export const ACTIONS = Object.freeze(Object.fromEntries([
   ...Object.entries(definitions).map(([id, schema]) => [id, entry(id, schema, true)]),
   ...ui.map(id => [id, entry(id, object({ clipId: str }))]),
   ['seek', entry('seek', object({ frame: int }, ['frame']))],
+  ...Object.entries(comfy).map(([id, schema]) => [id, entry(id, schema)]),
   ['open-panel', entry('open-panel', object({ panel: { type: 'string', enum: ['shot','narrative','direction','takes','assistant','source','story','taste','generate'] } }, ['panel']))],
 ]));
 export function action(id) { if (!Object.hasOwn(ACTIONS, id)) throw Error(`Unknown studio action: ${id}`); return ACTIONS[id]; }
