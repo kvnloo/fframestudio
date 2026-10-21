@@ -127,8 +127,9 @@ $('export').onclick = () => {
   $('message').textContent = 'Downloaded editable sidecar JSON — not an MP4.';
 };
 // This file picker is an intentionally *non-executing* creative planning surface.
+let cineticRead = 0;
 $('cinetic-file').onchange = async event => {
-  const input = event.currentTarget, file = input.files?.[0];
+  const input = event.currentTarget, file = input.files?.[0], read = ++cineticRead;
   const status = $('cinetic-status'), list = $('cinetic-list');
   input.value = '';
   list.replaceChildren();
@@ -136,7 +137,9 @@ $('cinetic-file').onchange = async event => {
   if (file.size > 131072) { status.textContent = 'Plan rejected: limit 128 KiB.'; return; }
   status.textContent = 'Reading plan locally…';
   try {
-    const plan = parseCineticPicks(await file.text());
+    const text = await file.text();
+    if (read !== cineticRead) return; // A newer selection owns the panel.
+    const plan = parseCineticPicks(text);
     const fragment = document.createDocumentFragment();
     for (const pick of plan.picks) {
       const item = document.createElement('li');
@@ -152,8 +155,9 @@ $('cinetic-file').onchange = async event => {
         button.dataset.cineticSuggest = pick.sourceId;
         button.textContent = 'Preview related ' + pick.suggestion.component + ' ↗';
         button.onclick = () => {
-          select.value = pick.suggestion.component;
-          load();
+          // Keep current takes if they already use this component; otherwise start fresh.
+          if (recipe().component !== pick.suggestion.component) { select.value = pick.suggestion.component; load(); }
+          if (!$('json-panel').hidden) $('json').value = serializeRecipe(recipe());
           $('message').textContent = 'Conceptual-only suggestion for ' + pick.name +
             '. This is a FrameStudio starting point, not an implementation of the cinetic technique.';
         };
@@ -171,6 +175,7 @@ $('cinetic-file').onchange = async event => {
       ' · ' + (plan.provenance.format || 'selected category') + ' · ' +
       plan.picks.filter(p => p.suggestion).length + ' conceptual previews available. No source code executed.';
   } catch {
+    if (read !== cineticRead) return;
     status.textContent = 'Invalid cinetic picks file. Export it using cinetic pick.py --json.';
   }
 };
