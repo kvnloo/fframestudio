@@ -42,6 +42,8 @@ export async function verifyFframesReview({ context, base, out, library, assert 
     const ids = await panel.locator('[data-fframes-command]').evaluateAll((n) => n.map((x) => x.dataset.fframesCommand));
     assert(JSON.stringify(ids) === JSON.stringify(['timeline', 'frame', 'strip', 'onion', 'inspect', 'render']), `commands ${ids}`);
     assert(!(await panel.textContent()).includes(' snapshot '), 'snapshot recipe offered');
+    await panel.evaluate((n) => n.scrollIntoView({ block: 'start' }));
+    await page.screenshot({ path: path.join(out, 'fframes-review-header.png') });
     await panel.locator('[data-fframes-command="strip"]').scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(out, 'fframes-review-desktop.png') });
     // A trim must update the recipes in place and keep the disclosure open.

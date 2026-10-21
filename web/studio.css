@@ -1323,6 +1323,7 @@ dialog .panel-title {
 }
 /* fframes CLI review recipes (web/src/fframes-cli.js): copy-only, wraps long argv. */
 .fframes-review { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 8px; }
+.fframes-review .hint code { font: 11px "Plex Mono"; }
 .fframes-review summary { cursor: pointer; font: 10px "Plex Mono"; color: var(--mute); text-transform: uppercase; }
 .fframes-recipes { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 10px; }
 .fframes-recipes li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; }
