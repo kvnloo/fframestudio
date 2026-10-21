@@ -113,7 +113,7 @@ test('read-only import keeps only project files and referenced media out of thou
   const folder = await import('../../web/src/folder-host.js?read-only-import');
   await folder.initialize();
   const big = new Uint8Array(64 * 1024), files = [
-    picked('cutkit-demo/projects/film/project.json', project('film', {metadata:{renders:[{label:'Master', file:'renders/master.mp4'}], source:{path:'/home/me/secret/master.mov'}}}), 'application/json'),
+    picked('cutkit-demo/projects/film/project.json', project('film', {metadata:{renders:[{label:'Master', file:'renders/master.mp4'}], source:{path:'<local>/secret/master.mov'}}}), 'application/json'),
     picked('cutkit-demo/projects/film/film.mp4', big, 'video/mp4'),
     picked('cutkit-demo/projects/film/thumbs/one.png', new Uint8Array(10), 'image/png'),
     picked('cutkit-demo/projects/film/renders/master.mp4', big, 'video/mp4'),
