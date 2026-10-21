@@ -13,7 +13,7 @@
  "runs": {
   "mock": {
    "mode": "mock-comfyui",
-   "started": "2026-10-21T04:30:14.903Z",
+   "started": "2026-10-21T04:42:12.570Z",
    "steps": [
     {
      "step": "toolbar+palette",
@@ -30,7 +30,7 @@
     {
      "said": "comfy, set prompt to a lighthouse on a cliff at dusk, volumetric fog",
      "voicePreview": "Microphone unavailable: Permission denied",
-     "comfyReceipt": "Say \u201ccomfy, set prompt to \u2026\u201d, \u201ccomfy steps 12\u201d, \u201ccomfy run\u201d, \u201cmore variations\u201d or \u201ccomfy cancel\u201d."
+     "comfyReceipt": "Prompt \u2192 \u201ca lighthouse on a cliff at dusk, volumetric fog\u201d"
     },
     {
      "said": "comfy steps twelve",
@@ -80,11 +80,11 @@
     "comfy-desktop-mock-comfyui.png",
     "comfy-phone-mock-comfyui.png"
    ],
-   "status": "Connected \u00b7 ComfyUI 0.30.0-mock \u00b7 127.0.0.1:24463 \u00b7 10.7 of 12.0 GiB free \u00b7 queue 0",
+   "status": "Connected \u00b7 ComfyUI 0.30.0-mock \u00b7 127.0.0.1:16055 \u00b7 10.7 of 12.0 GiB free \u00b7 queue 0",
    "template": "flux2-klein-4b-t2i",
    "firstRun": {
-    "clickToImageMs": 1311,
-    "startedToFinishedMs": 696,
+    "clickToImageMs": 1004,
+    "startedToFinishedMs": 631,
     "params": {
      "prompt": "a lighthouse on a cliff at dusk, volumetric fog",
      "negative": "",
@@ -97,7 +97,7 @@
     },
     "vramFromComfy": null,
     "output": {
-     "file": "media/generated/comfy/d54c8c1a-5393-405c-ae7b-1128bc3b5113/output-1.png",
+     "file": "media/generated/comfy/182fe406-c75a-4cd5-847c-617eba95f44e/output-1.png",
      "kind": "image",
      "bytes": 29263,
      "sha256": "f8986048d36e513272a242afe1cb398175cb669440a103637525a41495c04fd3"
@@ -130,10 +130,7 @@
      436
     ]
    },
-   "consoleErrors": [
-    "HTTP 404 /lib/library.json",
-    "Failed to load resource: the server responded with a status of 404 (Not Found)"
-   ],
+   "consoleErrors": [],
    "flagOff": {
     "button": false,
     "paletteRows": 0,
@@ -146,7 +143,7 @@
    },
    "configUnchanged": true,
    "result": "pass",
-   "finished": "2026-10-21T04:30:31.252Z"
+   "finished": "2026-10-21T04:42:24.203Z"
   },
   "real_cold_seed42": {
    "mode": "real-comfyui",
@@ -472,5 +469,78 @@
    "result": "pass",
    "finished": "2026-10-21T04:33:45.885Z"
   }
+ },
+ "suites": {
+  "host": "groot, run locally (not via oss-factory: browser/ffmpeg/GPU jobs), load average 8-45 during runs",
+  "npm test": "264 tests, 262 pass, 2 fail: test/theme/system-theme.test.mjs watcher tests (\"live palette not updated within 2 s\"); files untouched by this branch; reproduced 2/2 more runs in isolation",
+  "test/generation/comfyui.test.mjs + test/doc/comfy-intent.test.mjs + generation bridge/queue tests": "21/21 pass",
+  "npm run test:editor": "exit 0",
+  "npm run verify:hosted": "exit 0",
+  "npm run test:perf": "node perf tests 3/3 pass; browser perf budgets FAIL (coldOpen, commandPaintReady, commandNextFrame, scrub*, splitter*)",
+  "perf A/B (alternating, same filesystem, synthetic)": {
+   "base_origin_main": [
+    {
+     "coldOpenMs": 166,
+     "failed": [
+      "commandPaintReady",
+      "commandNextFrame",
+      "scrub60fps",
+      "layoutNoLongtasks",
+      "splitterNoLongtasks",
+      "splitter60fps"
+     ]
+    },
+    {
+     "coldOpenMs": 218,
+     "failed": [
+      "commandPaintReady",
+      "commandNextFrame"
+     ]
+    },
+    {
+     "coldOpenMs": 284,
+     "failed": [
+      "splitter60fps"
+     ]
+    }
+   ],
+   "current": [
+    {
+     "coldOpenMs": 1960,
+     "failed": [
+      "coldOpen",
+      "commandPaintReady",
+      "commandNextFrame",
+      "scrubNoLongtasks",
+      "scrub60fps",
+      "autosaveFrameWork",
+      "layoutNoLongtasks",
+      "splitterNoLongtasks",
+      "splitter60fps"
+     ]
+    },
+    {
+     "coldOpenMs": 580,
+     "failed": [
+      "coldOpen",
+      "commandPaintReady",
+      "commandNextFrame",
+      "scrubNoLongtasks",
+      "scrub60fps",
+      "autosaveFrameWork",
+      "splitterNoLongtasks",
+      "splitter60fps"
+     ]
+    },
+    {
+     "coldOpenMs": 175,
+     "failed": [
+      "splitter60fps"
+     ]
+    }
+   ],
+   "reading": "Both sides fail budgets under load; current samples 1-2 were worse, sample 3 better than base. Inconclusive; needs an unloaded rerun. ComfyUI code is lazy and inactive without --comfy-url."
+  },
+  "check-no-local-paths": "pass"
  }
 }
