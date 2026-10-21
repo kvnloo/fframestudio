@@ -1,5 +1,5 @@
 # Optional isolated worker only. Never install these into the web app or system Python.
-torch==2.8.0
+torch==2.13.0
 diffusers==0.35.2
 transformers==4.57.1
 accelerate==1.11.0
