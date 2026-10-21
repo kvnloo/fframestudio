@@ -1321,3 +1321,17 @@ dialog .panel-title {
 @media (max-width: 640px) {
   .taste-source select, .taste-controls select, .taste-actions button { min-height: 44px; }
 }
+/* fframes CLI review recipes (web/src/fframes-cli.js): copy-only, wraps long argv. */
+.fframes-review { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 8px; }
+.fframes-review summary { cursor: pointer; font: 10px "Plex Mono"; color: var(--mute); text-transform: uppercase; }
+.fframes-recipes { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 10px; }
+.fframes-recipes li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; }
+.fframes-recipes li > span { grid-column: 1 / -1; color: var(--ink); font-size: 11px; }
+.fframes-recipes code { font: 11px/1.45 "Plex Mono"; color: var(--ink); background: var(--bg2, transparent); border: 1px solid var(--line); padding: 4px 6px; overflow-wrap: anywhere; user-select: all; }
+.fframes-recipes small { grid-column: 1 / -1; color: var(--mute); font-size: 10px; }
+.fframes-recipes .pill { min-height: 32px; }
+/* Phone: layout.css floors .film-workspace buttons at 40px with !important; copy targets need 44px. */
+@media (max-width: 767px) { .film-workspace .fframes-recipes .pill { min-height: 44px !important; min-width: 44px; } }
+.fframes-upstream { border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 8px; }
+.fframes-upstream h3 { margin: 8px 0 4px; font: 10px "Plex Mono"; color: var(--mute); text-transform: uppercase; }
+.fframes-upstream ul { margin: 4px 0; padding-left: 18px; font-size: 11px; color: var(--ink); }
