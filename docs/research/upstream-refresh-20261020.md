@@ -1,6 +1,6 @@
 # Upstream refresh — 2026-10-20
 
-Scope: every upstream that fframestudio pins or registers, compared with what is pinned in this repository at `origin/main` `aba0198`. Each claim names the SHA it was read at. Collected 2026-10-20 (UTC) with `gh api` (`repos/<r>`, `compare/<pin>...HEAD`, `releases`, `pulls/<n>`, `contents/<path>?ref=<sha>`) and `npm view`. This is research plus one integration; it is **not** a qualification of any new upstream renderer.
+Scope: every upstream that fframestudio pins or registers, compared with what is pinned in this repository at `origin/main` `aba0198`. Each claim names the SHA it was read at. Collected 2026-10-20 (UTC) with `gh api` (`repos/<r>`, `compare/<pin>...HEAD`, `releases`, `pulls/<n>`, `contents/<path>?ref=<sha>`) and `npm view`. This is research plus two small UX integrations; it is **not** a qualification of any new upstream renderer.
 
 ## Factory evidence
 
@@ -23,7 +23,7 @@ Effort: **S** = under a day, inside an existing module; **M** = a new bounded mo
 
 | Lib | Pinned | Latest (default HEAD) | Notable changes since pin | UX opportunity | Effort |
 |---|---|---|---|---|---|
-| fframes | `44745c09a6c8c51071609097326a820cf59d087b` (2026-10-17, after v1.2.0) | `69174f0187b5d8e92329246898f70250b59f08f2` = tag **v1.3.0** (2026-10-20). 9 commits, 199 files. | #236 Lottie via `frame.play_lottie` (feature `lottie`); #235 `frame/strip/onion/inspect` convert frames on 1–4 threads and the **`snapshot` command is removed**; #233 `fframes::three_d` (features `3d`, `wgpu`); #221 `ctx.render_svgr` nesting svgr↔3D. The `TimelineReport`/`SceneReport` schema is **byte-identical** in `preview.rs` at both SHAs. `examples/fframes-intro` changed only its `Cargo.toml` version (1.2.0→1.3.0). | **Done here:** revision-aware CLI review recipes for the selected shot. Next: pin bump of the launch-film example (needs a rebuild to re-obtain `timeline --json`); Lottie/3D asset badges in Source. | S (done) / M (pin bump) |
+| fframes | `44745c09a6c8c51071609097326a820cf59d087b` (2026-10-17, after v1.2.0) | `69174f0187b5d8e92329246898f70250b59f08f2` = tag **v1.3.0** (2026-10-20). 9 commits, 199 files. | #236 Lottie via `frame.play_lottie` (feature `lottie`); #235 `frame/strip/onion/inspect` convert frames on 1–4 threads and the **`snapshot` command is removed**; #233 `fframes::three_d` (features `3d`, `wgpu`); #221 `ctx.render_svgr` nesting svgr↔3D. The `TimelineReport`/`SceneReport` schema is **byte-identical** in `preview.rs` at both SHAs. `examples/fframes-intro` changed only its `Cargo.toml` version (1.2.0→1.3.0). | **Done here:** revision-aware CLI review recipes for the selected shot, and an upstream-status block in Source & provenance. Next: pin bump of the launch-film example (needs a rebuild to re-obtain `timeline --json`); Lottie/3D asset badges in Source. | S (done) / M (pin bump) |
 | ff-tracking | `55abcd62a04c96eeb3ab51d7d75df64d068bd1e6` | same (2026-10-14; tag v1.0.0) | None since pin. The last PRs (#1, #3 Windows Vulkan, #4 Slab score Rust port) closed before the pin. | No refresh needed. The Linux Metal-feature build blocker in [procedural-fframes.md](../procedural-fframes.md) still applies at this SHA. | — |
 | ff-unmute | `3ba661da9b150433c277948f0c24b9033a5bfa96` | same (2026-10-10; tag v1.1.0) | None since pin. | None from upstream; #4 UX work continues on the existing sidecar. | — |
 | @agentclientprotocol/sdk | 1.9.0 (tag → `1db4d43286d993545e729376346b7f9098748159`) | **2.0.0** (tag → `c2b1a8633745dd859a2732b4e17d5ed61e869bb6`, 2026-10-19) | **Breaking:** `ClientSideConnection`/`AgentSideConnection` and legacy interfaces are removed. Use `agent()`/`client()` apps. The default import is stable-only ACP v1, and unstable features need `/unstable`. The default protocol is still v1. | Keep the 1.9.0 pin. `web/src/acp-client.mjs:4` and `tern/acp.mjs:3` import `ClientSideConnection`. A migration must audit every unstable capability/handler (per `MIGRATION_STABLE_UNSTABLE.md` @ `c2b1a86`) and re-run `npm run test:acp` plus the live ACP journey. | M |
@@ -56,9 +56,12 @@ Commits (`compare/44745c09…69174f01`): `28356c5b5473` Lottie (#236), `50923ac0
    - A trim updates the recipes in place and keeps the disclosure open.
    - The exit-code meanings (0 pass / 2 findings / other failed) are shown, because a produced report is not a passed gate.
    - Copy-only: Studio does not execute native builds.
-2. **Single pin guard.** A test requires the same fframes revision in `examples/catalog.json`, `source_url`, `tools/example_fframes_intro.py` and the verified CLI table. A future bump to v1.3.0 then fails until the CLI table and the render script move together.
+2. **Upstream status in Source & provenance** (`fframesUpstreamSource`, Source tab). For an `fframes` film it names the revision the film was built with (verified label, `unverified <sha>` or `not recorded`) and the newest verified upstream release. If the film is behind, it lists what v1.3.0 changes (Lottie, 3D, nested svgr, threaded CLI conversion, `snapshot` removed) and says that adopting it needs a rebuild and a new `timeline --json`. Studio never rebuilds or re-imports by itself. A film with no recorded revision is asked to record `provenance.revision`. Real local films such as `hermes-launch` record no revision today, so they get the common-commands fallback and this prompt. Static facts only: no network calls.
+3. **Single pin guard.** A test requires the same fframes revision in `examples/catalog.json`, `source_url`, `tools/example_fframes_intro.py` and the verified CLI table. A future bump to v1.3.0 then fails until the CLI table and the render script move together.
 
 Not changed: the pin itself. Bumping `fframes-intro` to v1.3.0 needs a rebuilt binary to re-obtain `timeline --json` and re-verify frames, audio and duration (per the long-form example rules). That was not run here.
+
+Limit: the recipes assume the film binary calls `fframes::cli::new(..).run()` (feature `cli`), which the upstream examples do. A film with its own `build.sh`/`export.sh` may not expose these commands. That is why unrecorded revisions get the `--help` warning.
 
 ## Follow-ups (not done)
 
