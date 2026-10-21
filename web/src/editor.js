@@ -415,15 +415,15 @@ export class Editor {
     }
   }
   // ff-unmute working-copy camera keys; re-rendered only when the override object changes.
-  renderCameraOverrides(error = '', field) {
+  renderCameraOverrides(error = '', field, force = false) {
     const box = $('#camera-overrides-slot');
     if (!box || this.doc.metadata?.procedural?.family !== 'ff-unmute') return;
     if (field) this.cameraField = field;
     const o = this.doc.metadata.proceduralOverrides;
-    if (!error && !field && box.firstChild && this.cameraRendered === o) return;
+    if (!error && !field && !force && box.firstChild && this.cameraRendered === o) return;
     this.cameraRendered = o;
     box.innerHTML = cameraOverrides(this.doc.metadata, { field: this.cameraField, projectPath: this.absolute, error });
-    if (!box.onchange) bindCameraOverrides(box, (cmd) => this.run(cmd), (e, f) => this.renderCameraOverrides(e, f), () => this.doc.metadata);
+    if (!box.onchange) bindCameraOverrides(box, (cmd) => this.run(cmd), (e, f, force) => this.renderCameraOverrides(e, f, force), () => this.doc.metadata);
   }
   observeThumbs(root) {
     $$('canvas[data-thumb],canvas[data-video]', root).forEach((e) => {

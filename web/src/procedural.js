@@ -65,8 +65,10 @@ export function bindCameraOverrides(box, run, rerender, metadata) {
       return send({key,changes:{[field]:v}});
     }
     if (t.dataset.cameraSnap && t.value) {
-      const [kind,index] = t.value.split(':');
-      return send({key:Number(t.dataset.cameraSnap),snap:{kind,index:Number(index)}});
+      const [kind,index] = t.value.split(':'), key = Number(t.dataset.cameraSnap), md = metadata();
+      // A different event at the same instant (e.g. bar 4 and kick 5) is a no-op, not an undo step.
+      if (eventSeconds(md.procedural,kind,Number(index)) === cameraKeys(md)[key]?.time_s) return rerender('', undefined, true);
+      return send({key,snap:{kind,index:Number(index)}});
     }
   };
   box.onclick = e => {
