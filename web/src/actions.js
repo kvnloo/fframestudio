@@ -22,12 +22,14 @@ const definitions = {
   'apply-taste': object({ videoId: str, receipt: applicationSchema }, ['receipt']),
   'save-version': object({ videoId: str, id: str, name: str }, ['id']),
   'restore-version': object({ videoId: str, id: str }, ['id']),
+  // ff-unmute working-copy camera key (0-based). snap uses 1-based source events.
+  'edit-procedural-camera': object({ videoId: str, key: int, changes: object(Object.fromEntries(['time_s','look_y','zoom','tilt_x','tilt_y','roll','dx','blur'].map(f => [f, { type: 'number' }]))), snap: object({ kind: { type: 'string', enum: ['bar','kick','clap','token'] }, index: positive }, ['kind','index']), reset: bool }, ['key']),
 };
 export const COMMAND_IDS = Object.freeze(Object.keys(definitions));
 const ui = ['play','reverse','pause','forward','previousFrame','nextFrame','previousClip','nextClip','in','out','undo','redo','palette','close-palette','save','compare','settings','close-settings','reset-settings','toggle-story','toggle-inspector','loop-shot','loop-film','mute','screening','play-here','seek-start','copy-timecode','recover','discard-recovery','export','export-project','save-copy','reload-external','keep-local','inspect-proposal','reject-proposal','apply-proposal','import-reference','compare-reference','voice','component-lab','taste'];
 const destructive = new Set(['delete','trim','in','out','replace','restore-version','reload-external','reset-settings']);
 const bulk = new Set(['edit-style','apply-taste','group','restore-version','apply-proposal']);
-const synonyms = { trim: ['shorten', 'trim shot'], delete: ['remove'], 'edit-text': ['change text', 'change title'], play: ['start playback'], pause: ['stop playback'], 'import-reference': ['deconstruct', 'reference video'], voice: ['dictate', 'microphone'] };
+const synonyms = { 'edit-procedural-camera': ['camera key', 'snap camera'], trim: ['shorten', 'trim shot'], delete: ['remove'], 'edit-text': ['change text', 'change title'], play: ['start playback'], pause: ['stop playback'], 'import-reference': ['deconstruct', 'reference video'], voice: ['dictate', 'microphone'] };
 export function validateParams(schema, value, path = 'params') {
   const type = value === null ? 'null' : Array.isArray(value) ? 'array' : Number.isInteger(value) ? 'integer' : typeof value;
   const types = Array.isArray(schema.type) ? schema.type : [schema.type];

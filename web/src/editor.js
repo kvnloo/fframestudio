@@ -5,7 +5,7 @@ import { RecoveryJournal, fileHash } from './doc/journal.js';
 import { setThemeSettings, themeInfo, onTheme, shotColorSlot } from './system-theme.js';
 import { StudioView, colourSlot, clipKind, timecode, advanceFrame } from './studio.js';
 import { PosterDecoder } from './poster-decoder.js';
-import { proceduralShot, proceduralSource } from './procedural.js';
+import { proceduralShot, proceduralSource, cameraOverrides, bindCameraOverrides } from './procedural.js';
 import { request, mediaURL, isLocal, isCopy, saveCopy, exportProject, preferences as storage } from './host.js';
 const esc = (s) =>
   String(s ?? '').replace(
@@ -208,7 +208,7 @@ export class Editor {
   <section class="inspector-panel panel"><div class="panel-title">Inspector ${button('toggle-inspector', 'Collapse')}</div><div id="inspector"></div></section></div>
   <section class="timeline-panel panel"><div class="panel-title">Timeline <span id="scope" aria-live="polite">Select a clip to edit</span><label>Zoom <input id="zoom" type="range" min="0.5" max="8" step="0.25" value="1"></label><label><input id="snap" type="checkbox" checked> Snap</label></div><div id="timeline"><div id="timeline-space"><div id="beats"></div><div id="lane"></div><div id="playhead"></div></div></div><div class="panel-foot">${button('split', 'Split · S')}${button('duplicate', 'Duplicate')}${button('delete', 'Delete')}<span class="hint">Drag story cards to reorder · drag clip edges to trim · attached layers follow</span></div></section>
   <div class="secondary-grid"><section class="panel"><div class="panel-title">Takes <span>film versions</span></div><div class="version-tools"><input id="version-name" placeholder="Name this version" aria-label="Version name">${button('save-version', 'Save version')}<select id="version-a" aria-label="Version A"></select><select id="version-b" aria-label="Version B"></select>${button('compare', 'Compare')}${button('restore-version', 'Restore A')}</div><pre id="version-diff"></pre></section><section class="panel"><div class="panel-title">Assistant proposals <span>Inspect → Apply → Undo</span></div><div id="proposals">No pending proposal. Ask the assistant for an edit.</div></section></div>
-  <details class="source-panel"><summary>Source & provenance</summary>${proceduralSource(this.doc.metadata, this.doc.metadata?.shots)}${attribution?.author ? `<p>${this.doc.metadata?.example ? 'Example copy' : 'Source'} · ${esc(attribution.author)} · ${esc(attribution.licence)}</p><p>${esc(attribution.credit)}</p>${/^https?:\/\//.test(attribution.source_url) ? `<p><a href="${esc(attribution.source_url)}" target="_blank" rel="noopener noreferrer">Original source ↗</a></p>` : ''}` : ''}<p>${esc(this.doc.metadata?.source?.path || '')}</p><p>${esc((this.doc.metadata?.notes || []).join(' · '))}</p><dl class="kv">${Object.entries(
+  <details class="source-panel"><summary>Source & provenance</summary>${proceduralSource(this.doc.metadata, this.doc.metadata?.shots)}<div id="camera-overrides-slot"></div>${attribution?.author ? `<p>${this.doc.metadata?.example ? 'Example copy' : 'Source'} · ${esc(attribution.author)} · ${esc(attribution.licence)}</p><p>${esc(attribution.credit)}</p>${/^https?:\/\//.test(attribution.source_url) ? `<p><a href="${esc(attribution.source_url)}" target="_blank" rel="noopener noreferrer">Original source ↗</a></p>` : ''}` : ''}<p>${esc(this.doc.metadata?.source?.path || '')}</p><p>${esc((this.doc.metadata?.notes || []).join(' · '))}</p><dl class="kv">${Object.entries(
     this.doc.metadata?.docs || {},
   )
     .map(
@@ -407,11 +407,23 @@ export class Editor {
     this.renderInspector();
     this.studio?.inspector();
     this.renderVersions();
+    this.renderCameraOverrides();
     this.updatePreview(true);
     if (result) {
       $('[data-action="undo"]').disabled = !result.undo;
       $('[data-action="redo"]').disabled = !result.redo;
     }
+  }
+  // ff-unmute working-copy camera keys; re-rendered only when the override object changes.
+  renderCameraOverrides(error = '', field) {
+    const box = $('#camera-overrides-slot');
+    if (!box || this.doc.metadata?.procedural?.family !== 'ff-unmute') return;
+    if (field) this.cameraField = field;
+    const o = this.doc.metadata.proceduralOverrides;
+    if (!error && !field && box.firstChild && this.cameraRendered === o) return;
+    this.cameraRendered = o;
+    box.innerHTML = cameraOverrides(this.doc.metadata, { field: this.cameraField, projectPath: this.absolute, error });
+    if (!box.onchange) bindCameraOverrides(box, (cmd) => this.run(cmd), (e, f) => this.renderCameraOverrides(e, f), () => this.doc.metadata);
   }
   observeThumbs(root) {
     $$('canvas[data-thumb],canvas[data-video]', root).forEach((e) => {
@@ -1093,6 +1105,10 @@ export class Editor {
     if (a === 'compare-reference') return (await this.ensureReference()).compareProject();
     if (a === 'seek') return this.seek(params.frame);
     if (a === 'open-panel') { this.studio.showTab(params.panel); return; }
+    if (a === 'edit-procedural-camera') { // interactive: gather values in the Source working-copy table
+      if (this.doc.metadata?.procedural?.family !== 'ff-unmute') return this.toast('Camera keys need an imported ff-unmute source');
+      this.studio.showTab('source'); $('#procedural-overrides')?.scrollIntoView({ block: 'start' }); return;
+    }
     if (this.loading) return;
     if (a === 'apply-taste') { $('#palette').close(); this.studio.showTab('taste'); return; }
     if (['loop-shot','loop-film','mute','screening'].includes(a)) return this.studio.action(a);
