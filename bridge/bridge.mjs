@@ -24,7 +24,7 @@ import { referenceAPI, stopReferenceHelpers } from './reference.mjs';
 import { AGENTS as BUILTIN } from './agents.mjs';
 import { watchTheme, detectTheme } from './system-theme.mjs';
 import { agentWebAdapter } from './taste.mjs';
-import { GenerationQueue } from './generation/queue.mjs';
+import { GenerationQueue, MAX_REFERENCE_BYTES } from './generation/queue.mjs';
 import { providers as generationProviders } from './generation/providers.mjs';
 import { parseSocialReferences, MAX_SOCIAL_REFERENCES_BYTES } from '../web/src/taste/social-references.js';
 
@@ -163,6 +163,12 @@ const server = http.createServer(async (req, res) => {
         const job = generation.list().find(j => j.id === match[1]); return send(res, job ? 200 : 404, job || { error: 'unknown-job' });
       }
       if (req.method === 'POST' && match?.[2]) return send(res, 200, await generation[match[2]](match[1]));
+      if (req.method === 'POST' && u.pathname === '/generation/references') {
+        // One captured playhead frame (PNG). Stored under a server-selected name.
+        if (String(req.headers['content-type'] || '').split(';')[0].trim() !== 'image/png') return send(res, 415, { error: 'invalid-reference' });
+        const chunks = []; let size = 0; for await (const chunk of req) { size += chunk.length; if (size > MAX_REFERENCE_BYTES) return send(res, 413, { error: 'too-big' }); chunks.push(chunk); }
+        return send(res, 201, await generation.addReference(u.searchParams.get('projectId'), Buffer.concat(chunks)));
+      }
       if (req.method === 'POST' && u.pathname === '/generation/jobs') {
         let body = '', size = 0; for await (const chunk of req) { size += chunk.length; if (size > 16384) return send(res, 413, { error: 'too-big' }); body += chunk; }
         let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'invalid-json' }); }
@@ -170,7 +176,7 @@ const server = http.createServer(async (req, res) => {
       }
       return send(res, 404, { error: 'not-found' });
     } catch (e) {
-      const known = ['invalid-settings', 'invalid-prompt', 'invalid-seed', 'unsupported-timing', 'unsupported-resolution', 'unknown-provider', 'provider-unavailable', 'queue-full', 'queue-closed', 'unknown-job', 'not-retryable', 'unsafe-path'];
+      const known = ['unsupported-mode', 'invalid-reference', 'unknown-reference', 'reference-mismatch', 'unknown-project', 'invalid-settings', 'invalid-prompt', 'invalid-seed', 'unsupported-timing', 'unsupported-resolution', 'unknown-provider', 'provider-unavailable', 'queue-full', 'queue-closed', 'unknown-job', 'not-retryable', 'unsafe-path'];
       return send(res, 400, { error: known.includes(e.message) ? e.message : 'generation-request-failed' });
     }
   }
