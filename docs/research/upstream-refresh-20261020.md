@@ -63,6 +63,29 @@ Not changed: the pin itself. Bumping `fframes-intro` to v1.3.0 needs a rebuilt b
 
 Limit: the recipes assume the film binary calls `fframes::cli::new(..).run()` (feature `cli`), which the upstream examples do. A film with its own `build.sh`/`export.sh` may not expose these commands. That is why unrecorded revisions get the `--help` warning.
 
+## Verification (2026-10-21, groot, local)
+
+Node/Chromium suites ran locally on groot. The K3s substrate runs only stdlib Python pods, so only the static scans above ran on mbp. `main` means an `origin/main` `aba0198` export run beside the branch under the same host load.
+
+| Gate | Branch | origin/main |
+|---|---|---|
+| `node --test` (part of `npm test`) | 258/260 | 249/251 |
+| Failing in both | 2 system-theme watcher tests | same 2 |
+| `test:procedural` | 9/9 OK | — |
+| `acp-e2e` | ok, discovery config bytes+mtime unchanged | — |
+| `npm run test:editor` (owned `--no-config` bridge, free `FFS_PORT`) | exit 0 | — |
+| `test/verify.mjs` run 1 | 30/33 | 30/32 (no fframes journey on main) |
+| `test/verify.mjs` run 2 | 31/33 | — |
+| `npm run verify:hosted` | 8/8, exit 0 | — |
+| `npm run test:perf` (serial, last) | 3/3 + synthetic perf exit 0 (next-frame worst 17 ms, scrub 60.0 fps) | — |
+
+Notes on the verify runs:
+- In both trees, the system-theme and context-menu journeys failed on every run. These are known baselines.
+- Branch run 1 also failed `style components`: `foreground-fly-through` lab scrub fell below the 60 Hz scheduling tolerance. Branch run 2 passed it, and main passed it once. This branch does not touch style components, but one passing rerun does not prove that the run 1 failure came from host load.
+- An earlier run, with 6 copy buttons at 40 px on phone, failed the new journey because `layout.css` floors buttons at `40px !important`. The scoped 44 px override fixed it.
+
+Screenshots inspected: [review header](../evidence/upstream-refresh/fframes-review-header.png), [phone 390 px](../evidence/upstream-refresh/fframes-review-phone.png), [Source upstream](../evidence/upstream-refresh/fframes-upstream-source.png). Not run: any native fframes build or any command shown in a recipe.
+
 ## Follow-ups (not done)
 
 - Bump the `fframes-intro` pin to `69174f01` after a local Vulkan build: re-run `npm run example:fframes-intro`, then compare the timeline JSON and ffprobe receipts with the 44745c0 receipt.
