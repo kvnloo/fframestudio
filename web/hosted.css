@@ -27,3 +27,5 @@
 .example-featured img { height:100%; }
 @media(max-width:767px) { .example-featured { grid-template-columns:1fr; } .example-type { padding:20px; font-size:48px; border-right:0; border-bottom:1px solid var(--line); } }
 @media(max-width:600px) { .local-library { padding:18px; } #bridge { font-size:9px; max-width:160px; } .examples-grid { gap:16px; } }
+.folder-summary { border-left:2px solid var(--acc); padding-left:12px; color:var(--ink)!important; }
+.folder-privacy { max-width:70ch; }

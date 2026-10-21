@@ -23,6 +23,7 @@ Preconditions: system Chromium with H.264 support, disposable files and a plain 
 
 - **Empty:** `await page.goto(base)`; `await page.waitForSelector('#open-folder')`; assert zero `.card[data-project]`, no `.gate`, and no HTTP requests beyond the static origin or to `/me`, `/fs`, `/agents`, `/events`, `/theme`.
 - **Preferences:** `await page.selectOption('#library-theme','paper')`; reload and assert the selection remains while `localStorage.getItem('ffs.settings')` is null; switch back to Studio.
+- **Read-only import footprint:** a no-`showDirectoryPicker` phone context (Android Chrome stand-in) sees only `label#open-folder` with the privacy note; `setInputFiles` a synthetic 3,000-file folder and assert IndexedDB keeps only `project.json` + referenced media, zero off-origin requests and no non-GET methods. `node tools/folder-import-footprint.mjs [--site <built-site>] [--layout library|project]` prints before/after IndexedDB bytes for any built site.
 - **Read-only folder:** `await page.locator('#folder-files').setInputFiles(fixtureDirectory)`; click `.card[data-project="visitor-film"]`; wait for `window.ffs.interactiveAt`, playable `#preview-video` and analysed `#audio-wave`.
 - **Edit/recover:** open `#tab-shot`, fill `[data-field="title"]`, dispatch `change`; reload after autosave and click `[data-action="recover"]`; verify Undo and Redo, Save, reload and persisted text. Check the original fixture file remains byte-identical.
 - **Download:** pair `page.waitForEvent('download')` with `[data-action="export-project"]`; parse the downloaded JSON and assert the edited title.
@@ -35,7 +36,7 @@ Preconditions: system Chromium with H.264 support, disposable files and a plain 
 ## Gotchas
 
 - Native picker dialogs cannot be driven headlessly here. `test/hosted/folder-host.test.mjs` exercises a directory-handle fake including permission re-request, native-style writes and conflict hashes; it does not certify native browser UI or cross-browser permissions.
-- Files chosen with `webkitdirectory` are read-only snapshots. Save must never mutate original bytes. Clearing site data removes cached files, copies, preferences and recovery history.
+- Files chosen with `webkitdirectory` are read-only snapshots; only project files and referenced media are persisted. Chrome's native “Upload N files” prompt cannot be captured headlessly. Save must never mutate original bytes. Clearing site data removes cached files, copies, preferences and recovery history.
 - A fresh visitor must never inherit a developer's demo library. Synthetic verification media is explicitly labelled; real upstream Examples remain attributed and separate.
 - A production HTTPS-to-loopback permission prompt/PNA policy can differ from a headless loopback static test. `npm test` separately exercises the real hosted Origin, PNA preflight and rejected origins/hosts/tokens.
 - Never log a real fragment link or include tokens in screenshots. Every test bridge uses `--no-config`; the ACP suite checks the real discovery file's bytes and mtime are unchanged.

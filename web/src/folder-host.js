@@ -1,7 +1,7 @@
 // Visitor-owned files only. No upload, telemetry, remote catalogue or runtime dependency.
 import { fromV0 } from './doc/project.js';
 import { fileHash } from './doc/journal.js';
-let db, state = {}, entries = new Map(), projects = [], urls = new Map(), prefs = {}, permissionNeeded = false;
+let db, state = {}, entries = new Map(), browserKeys = new Set(), projects = [], urls = new Map(), prefs = {}, permissionNeeded = false;
 const req = r => new Promise((ok, bad) => { r.onsuccess = () => ok(r.result); r.onerror = () => bad(r.error); });
 function transaction(mode, fn) {
   return new Promise((ok, bad) => {
@@ -24,14 +24,19 @@ export async function initialize() {
     permissionNeeded = !!state.handle.queryPermission && await state.handle.queryPermission({ mode: 'readwrite' }) !== 'granted';
     if (!permissionNeeded) await scanHandle();
     else await discover();
-  } else if (state.files) { entries = new Map(state.files); await discover(); }
+  } else if (state.files) {
+    entries = new Map(state.files); await discover();
+    // Older read-only imports stored every selected file; shrink them to project files once.
+    const kept = await projectFiles();
+    if (kept.length < state.files.length) { keepOnly(kept); state.summary = summary(state.summary?.selected ?? state.files.length, kept); state.files = kept; await put('folder', state); }
+  }
   else await discover();
 }
 export function preference(key, value) {
   if (value === undefined) return prefs[key] ?? null;
   prefs[key] = value; put('preferences', prefs).catch(error => alert('Preferences were not saved: ' + error.message));
 }
-export const status = () => ({ name: state.name, readOnly: !state.handle, permissionNeeded, count: projects.length });
+export const status = () => ({ name: state.name, readOnly: !state.handle, permissionNeeded, count: projects.length, imported: state.handle ? null : state.summary || null, canWrite: !!window.showDirectoryPicker });
 export async function openFolder() {
   if (!window.showDirectoryPicker) return false;
   const handle = state.handle && permissionNeeded ? state.handle : await window.showDirectoryPicker({ mode: 'readwrite', id: 'fframestudio-projects' });
@@ -52,20 +57,44 @@ async function scanHandle() {
   const imported=await get('import:'+state.scope);if(imported&&!entries.has('project.json'))entries.set('project.json',new File([imported],'project.json',{type:'application/json'}));
   await discover();
 }
+// Read-only (<input webkitdirectory>) imports. Browsers word this picker as "Upload"; nothing
+// leaves the device. Every selected File would otherwise be copied into IndexedDB, so only
+// discovered project.json files and the relative files they reference are kept (in memory and
+// in storage). Other selected files are never read; only their path is inspected.
+const IGNORED = /(^|\/)(\.[^/]*|node_modules|__pycache__)(\/|$)/;
 export async function importFiles(files) {
   clearURLs(); entries = new Map(); permissionNeeded = false;
-  for (const file of files) { const rel = file.webkitRelativePath || file.name; const p = rel.includes('/') ? rel.slice(rel.indexOf('/') + 1) : rel; safe(p); entries.set(p, file); }
+  for (const file of files) { const rel = file.webkitRelativePath || file.name; const p = rel.includes('/') ? rel.slice(rel.indexOf('/') + 1) : rel; if (IGNORED.test(p)) continue; safe(p); entries.set(p, file); }
   if([...entries.keys()].some(p=>/^projects\/[^/]+\/project\.json$/.test(p)))entries=new Map([...entries].filter(([p])=>p.startsWith('projects/')).map(([p,f])=>[p.slice(9),f]));
-  state = { name: files[0]?.webkitRelativePath.split('/')[0] || 'Selected files', scope: crypto.randomUUID(), files: [...entries] };
-  await discover(); state.files = [...entries]; await put('folder', state);
+  state = { name: files[0]?.webkitRelativePath?.split('/')[0] || 'Selected files', scope: crypto.randomUUID(), files: [] };
+  await discover();
+  const kept = await projectFiles(); keepOnly(kept);
+  state.files = kept; state.summary = summary(files.length, kept); await put('folder', state);
+  return state.summary;
+}
+const summary = (selected, kept) => ({ selected, kept: kept.length, bytes: kept.reduce((n, [, f]) => n + (f.size || 0), 0) });
+function keepOnly(kept) { entries = new Map([...kept, ...[...entries].filter(([p]) => browserKeys.has(p))]); }
+function referenced(value, prefix, out) {
+  if (typeof value === 'string') { const p = value.replace(/^\.\//, ''); try { safe(p); out.add(prefix + p); } catch { /* not a relative path */ } }
+  else if (value && typeof value === 'object') for (const v of Object.values(value)) referenced(v, prefix, out);
+}
+// Selected-folder files a discovered project uses: its project.json plus any relative path string in it.
+async function projectFiles() {
+  const keep = new Set();
+  for (const project of projects) {
+    if (browserKeys.has(project.path)) continue;
+    keep.add(project.path);
+    try { referenced(JSON.parse(await content(project.path)), project.prefix, keep); } catch { /* discovered projects parse */ }
+  }
+  return [...entries].filter(([p]) => keep.has(p) && !browserKeys.has(p));
 }
 const fileOf = item => item?.kind === 'file' ? item.getFile() : Promise.resolve(item);
 async function content(p) { const item = entries.get(p); if (!item) throw Error('File is not in this folder: ' + p); return (await fileOf(item)).text(); }
 async function discover() {
-  projects = [];
+  projects = []; browserKeys = new Set();
   // Additive browser imports never replace the visitor's open folder.
   for (const saved of await get('browser-projects') || []) {
-    for (const [p, file] of saved.files) entries.set(p, file);
+    for (const [p, file] of saved.files) { entries.set(p, file); browserKeys.add(p); }
   }
   for (const [p] of entries) {
     if (!/(^|\/)project\.json$/.test(p) || p.split('/').length > 2) continue;

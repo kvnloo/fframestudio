@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { staticSite } from './static-site.mjs';
 import { verifyStyleComponents } from './style-components-journey.mjs';
 import { verifyTaste } from './taste-journey.mjs';
+import { makeBulkyFolder, readFolderRecord } from './helpers/bulky-folder.mjs';
 export async function verifyHosted({browser,source,out,root,journey,assert}) {
   const work=fs.mkdtempSync(path.join(os.tmpdir(),'ffs-hosted-')), site=path.join(work,'site'), fixture=path.join(work,'my-projects'), examples=path.join(work,'examples');
   fs.mkdirSync(path.join(fixture,'visitor-film'),{recursive:true});fs.mkdirSync(examples);
@@ -36,6 +37,40 @@ export async function verifyHosted({browser,source,out,root,journey,assert}) {
       assert(!external.length,'empty state contacted external hosts');assert(!server.requests.some(r=>['/me','/fs','/events','/agents','/theme'].includes(r.path)),'empty state probed bridge APIs');
       assert(!server.requests.some(r=>/\.(mp4|mp3)$/.test(r.path)),'example media eagerly fetched');
       await page.screenshot({path:path.join(out,'hosted-empty-1896.png')});return {visitorProjects:0,externalHosts:external,bridgeRequests:0};
+    });
+    await journey('hosted: read-only folder import keeps only project files and sends nothing',async()=>{
+      const desktopPrivacy=await page.locator('#folder-privacy').innerText();
+      assert(desktopPrivacy.includes('Open read-only')&&desktopPrivacy.includes('upload')&&desktopPrivacy.includes('nothing is sent over the network'),'desktop picker privacy note missing');
+      const bulky=path.join(work,'cutkit-demo'), made=makeBulkyFolder(bulky,{document,video:source,total:3000});
+      // Android Chrome has no showDirectoryPicker: only the honest read-only picker is offered.
+      const phone=await browser.newContext({viewport:{width:390,height:780},isMobile:true,hasTouch:true,deviceScaleFactor:2}), mobile=await phone.newPage(), requests=[];
+      await phone.addInitScript(()=>{delete Window.prototype.showDirectoryPicker;delete window.showDirectoryPicker;});
+      phone.on('request',r=>requests.push({url:r.url(),method:r.method()}));
+      try{
+        await mobile.goto(server.base);await mobile.waitForSelector('#open-folder');await mobile.evaluate(()=>document.fonts.ready);
+        assert(await mobile.evaluate(()=>!('showDirectoryPicker' in window)),'picker shim failed');
+        assert(await mobile.locator('label#open-folder #folder-files').count()===1,'primary action is not the read-only picker');
+        const shelf=await mobile.locator('.local-library').innerText();
+        assert(!shelf.includes('Chromium can save')&&!shelf.includes('Open read-only'),'no-picker browser shown a save promise');
+        assert(shelf.includes('may ask to “upload”')&&shelf.includes('nothing is sent over the network')&&shelf.includes("kept in this browser's storage"),'pre-picker privacy copy missing');
+        await mobile.locator('.local-library').scrollIntoViewIfNeeded();await mobile.screenshot({path:path.join(out,'folder-privacy-before-390x780.png')});
+        const before=requests.length, serverBefore=server.requests.length;
+        await mobile.locator('#folder-files').setInputFiles(bulky);await mobile.waitForSelector('.card[data-project="visitor-film"]');await mobile.waitForSelector('.folder-summary');
+        await mobile.waitForTimeout(500);
+        const during=requests.slice(before), serverDuring=server.requests.slice(serverBefore);
+        const offOrigin=during.filter(r=>/^https?:/.test(r.url)&&new URL(r.url).origin!==server.base), writes=[...during,...serverDuring].filter(r=>r.method!=='GET'&&r.method!=='HEAD');
+        assert(!offOrigin.length,'folder import contacted another origin: '+JSON.stringify(offOrigin));assert(!writes.length,'folder import sent a request body: '+JSON.stringify(writes));
+        const record=await readFolderRecord(mobile);
+        assert(record.files===2&&record.paths.join()==='visitor-film/film.mp4,visitor-film/project.json','IndexedDB kept unrelated files: '+record.paths.slice(0,5));
+        assert(record.summary.selected===made.total&&record.summary.kept===2,'import summary wrong');
+        const summary=await mobile.locator('.folder-summary').innerText();
+        assert(summary.includes('Read 2 project files')&&summary.includes(`of ${made.total.toLocaleString('en-US')} selected`)&&summary.includes('nothing sent over the network'),'summary copy missing: '+summary);
+        await mobile.locator('.local-library').scrollIntoViewIfNeeded();await mobile.screenshot({path:path.join(out,'folder-privacy-after-390x780.png')});
+        await mobile.reload();await mobile.waitForSelector('.card[data-project="visitor-film"]');await mobile.click('.card[data-project="visitor-film"]');await mobile.waitForFunction(()=>window.ffs?.interactiveAt);
+        await mobile.waitForFunction(()=>document.querySelector('#preview-video').readyState>=2);
+        const overflow=await mobile.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);assert(!overflow,'phone horizontal overflow');
+        return {selected:made.total,persistedFiles:record.files,persistedBytes:record.bytes,storageUsage:record.usage,requestsDuringImport:during.length,offOrigin:0,writes:0,playableAfterReload:true};
+      }finally{await phone.close();}
     });
     await journey('hosted: open folder',async()=>{
       await page.locator('#folder-files').setInputFiles(fixture);await page.waitForSelector('.card[data-project="visitor-film"]');await page.click('.card[data-project="visitor-film"]');await ready();

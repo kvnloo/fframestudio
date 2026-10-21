@@ -55,7 +55,7 @@ async function boot() {
   try { ME = await host.initializeHost(); } catch (error) { toast(error.message); }
   if (!ME?.ok) { $('#bridge').innerHTML = '<span class="dot bad"></span>not signed in'; $('#view').innerHTML = `<div class="gate"><div class="cap">fframestudio</div><h1>Open the link the bridge printed</h1>
     <p>Start the bridge with <code>npm run bridge</code> and open the <code>/open?token=…</code> link it prints (also in <code>~/.config/fframestudio/bridge.json</code>). The link sets a same-site cookie so this page can reach your projects and agents.</p></div>`; return; }
-  $('#bridge').innerHTML = host.isLocal() ? 'Local · nothing uploaded' : '<span class="dot ok"></span>bridge connected';
+  $('#bridge').innerHTML = host.isLocal() ? 'Local · nothing sent' : '<span class="dot ok"></span>bridge connected';
   if(host.isRemote()){const b=document.createElement('button');b.className='pill';b.textContent='Disconnect';b.onclick=host.disconnectBridge;$('#bridge').append(b);}
   initSystemTheme();
   api.events(e=>{if(typeof e.path !== 'string')return;EDITOR?.external(e.path).catch(err=>{console.error(err.stack);toast(err.message);});if(e.path==='projects/library.json')loadLib();});
@@ -110,11 +110,16 @@ function showLibrary() {
   }));
 }
 
+const bytes=n=>n<1e6?Math.max(1,Math.round(n/1e3))+' KB':n<1e9?(n/1e6).toFixed(n<1e7?1:0)+' MB':(n/1e9).toFixed(1)+' GB';
+// Browsers label the read-only folder picker "Upload". Say what actually happens before and after.
+const importedText=i=>i.kept?`Read ${i.kept.toLocaleString()} project file${i.kept===1?'':'s'} (${bytes(i.bytes)}) of ${i.selected.toLocaleString()} selected; nothing sent over the network. Only these are kept in this browser's storage.`:`No fframestudio projects found in ${i.selected.toLocaleString()} selected files. Nothing was kept.`;
 function mountFolderControls() {
   const s=host.folderStatus(), section=document.createElement('section');section.className='local-library';
-  section.innerHTML=`<div><span class="cap">YOUR PROJECTS</span><h2>${s.name ? esc(s.name) : 'Your next film starts here.'}</h2><p>${s.readOnly && s.count ? 'Read-only folder · edits are cached in this browser. Export project.json to keep a portable copy.' : s.permissionNeeded ? 'Reconnect your folder to grant access again.' : 'Open your projects folder. Files stay on your device; nothing is uploaded.'}</p></div><div class="folder-actions"><button class="pill on" id="open-folder">${s.permissionNeeded ? 'Reconnect folder' : 'Open a folder'}</button><label class="pill folder-fallback">Open read-only<input id="folder-files" type="file" webkitdirectory multiple aria-label="Open a folder read-only"></label></div><p class="hint">Chromium can save directly to your folder. Firefox and Safari open read-only; Save, undo and recovery stay in IndexedDB. Video export needs the local bridge.</p>`;
+  const readOnlyInput='<input id="folder-files" type="file" webkitdirectory multiple aria-label="Choose a folder to read on this device" aria-describedby="folder-privacy">';
+  const privacy=`<p class="hint folder-privacy" id="folder-privacy">${s.canWrite?'With <b>Open read-only</b>, your browser may ask to “upload” the folder.':'Your browser may ask to “upload” the folder.'} That is its wording for letting this page read the files: they are read on this device and nothing is sent over the network. Only project.json files and the media they use are kept in this browser's storage; other files are skipped.</p>`;
+  section.innerHTML=`<div><span class="cap">YOUR PROJECTS</span><h2>${s.name ? esc(s.name) : 'Your next film starts here.'}</h2><p>${s.readOnly && s.count ? 'Read-only folder · edits are cached in this browser. Export project.json to keep a portable copy.' : s.permissionNeeded ? 'Reconnect your folder to grant access again.' : 'Open your projects folder. Files are read on this device; nothing is sent over the network.'}</p>${s.imported?`<p class="folder-summary" role="status">${esc(importedText(s.imported))}</p>`:''}</div><div class="folder-actions">${s.canWrite?`<button class="pill on" id="open-folder">${s.permissionNeeded ? 'Reconnect folder' : 'Open a folder'}</button><label class="pill folder-fallback">Open read-only${readOnlyInput}</label>`:`<label class="pill on folder-fallback" id="open-folder">Choose a folder to read${readOnlyInput}</label>`}</div>${privacy}<p class="hint">${s.canWrite?'Chromium can save directly to your folder. Firefox and Safari open read-only; Save, undo and recovery stay in IndexedDB.':'This browser cannot write to folders: Save, undo and recovery stay in this browser. Export project.json to keep a portable copy.'} Video export needs the local bridge.</p>`;
   $('.grid').before(section);
-  $('#open-folder').onclick=async()=>{try{if(!await host.openFolder()){$('#folder-files').click();return;}await loadLib();showLibrary();}catch(error){if(error.name!=='AbortError')toast(error.message);}};
+  if(s.canWrite)$('#open-folder').onclick=async()=>{try{if(!await host.openFolder()){$('#folder-files').click();return;}await loadLib();showLibrary();}catch(error){if(error.name!=='AbortError')toast(error.message);}};
   $('#folder-files').onchange=async e=>{try{if(!e.target.files.length)return;await host.importFiles([...e.target.files]);await loadLib();showLibrary();}catch(error){toast('Folder could not be opened: '+error.message);}};
 }
 function mountExamples() {
