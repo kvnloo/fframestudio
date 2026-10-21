@@ -107,7 +107,8 @@ def main():
         num_inference_steps=steps, guidance_scale=inference["guidanceScale"],
         decode_timestep=inference["decodeTimestep"],
         decode_noise_scale=inference["decodeNoiseScale"],
-        generator=torch.Generator(device="cpu").manual_seed(request["seed"]),
+        # LTXImageToVideoPipeline draws decode noise on the execution device.
+        generator=torch.Generator(device="cuda" if image is not None else "cpu").manual_seed(request["seed"]),
         callback_on_step_end=progress, output_type="pil",
     ).frames[0]
     denoised = time.monotonic()

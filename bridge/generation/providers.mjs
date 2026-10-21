@@ -14,7 +14,8 @@ export const LICENCE = Object.freeze({
 export const LTX = Object.freeze({
   schema: 'fframestudio.generation-provider/1', id: 'local-ltx', name: 'LTX Video 2B distilled · local',
   model: 'Lightricks/LTX-Video', version: 'ltxv-2b-0.9.6-distilled', weightRevision: '8984fa25007f376c1a299016d0957a37a2f797bb',
-  modes: ['t2v'], maxDuration: 5, resolutions: [[704, 480], [480, 704], [480, 480]], fps: [24],
+  // i2v: LTXImageToVideoPipeline, exercised for real on the 3080 Ti (docs/evidence).
+  modes: ['t2v', 'i2v'], maxDuration: 5, resolutions: [[704, 480], [480, 704], [480, 480]], fps: [24],
   inference: { preset: 'bf16-cpu-offload-vae-tiling', dtype: 'bfloat16', textEncoderDevice: 'cpu', steps: 8, guidanceScale: 1, decodeTimestep: 0.05, decodeNoiseScale: 0.025 },
   vram: { minimumFreeMiB: 9216, measuredPeakMiB: null, preset: 'bf16-cpu-offload-vae-tiling' },
   cost: { kind: 'local', amount: 0, currency: 'USD', note: 'No API fee; hardware/electricity and licence conditions apply.' },
