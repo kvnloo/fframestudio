@@ -10,6 +10,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 REVISION = "8984fa25007f376c1a299016d0957a37a2f797bb"
 CHECKPOINT = "ltxv-2b-0.9.6-distilled-04-25.safetensors"
+# The 0.9.6 checkpoint uses the 0.9.5 VAE/scheduler layout. Small JSON configs only.
+CONFIG_REPO = "Lightricks/LTX-Video-0.9.5"
+CONFIG_REVISION = "e58e28c39631af4d1468ee57a853764e11c1d37e"
 
 
 def main():
@@ -27,10 +30,16 @@ def main():
         allow_patterns=["model_index.json", "scheduler/*", "tokenizer/*", "text_encoder/*", "transformer/config.json", "vae/config.json"],
         local_dir=str(target / "base"), cache_dir=cache,
     )
+    snapshot_download(
+        CONFIG_REPO, revision=CONFIG_REVISION,
+        allow_patterns=["model_index.json", "scheduler/*.json", "transformer/config.json", "vae/config.json"],
+        local_dir=str(target / "config-0.9.5"), cache_dir=cache,
+    )
     for name in [CHECKPOINT, "LTX-Video-Open-Weights-License-0.X.txt"]:
         hf_hub_download("Lightricks/LTX-Video", name, revision=REVISION, local_dir=str(target), cache_dir=cache)
     (target / "model.json").write_text(json.dumps({
         "model": "Lightricks/LTX-Video", "revision": REVISION,
+        "configRepo": CONFIG_REPO, "configRevision": CONFIG_REVISION,
         "checkpoint": CHECKPOINT, "licence": "LTXV Open Weights License 0.X",
     }, indent=2))
     print("Pinned LTX weights/config downloaded outside the repository. Review licence before generation.")

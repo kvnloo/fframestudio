@@ -1,0 +1,52 @@
+{
+  "schema": "fframestudio.generation-qualification/1",
+  "date": "2026-10-20",
+  "scope": "Issue #1 follow-up: first real local LTX clips (t2v + i2v) and playhead image-to-video. Not full issue acceptance.",
+  "host": { "gpu": "NVIDIA GeForce RTX 3080 Ti", "gpuTotalMiB": 12288, "sharedGpuBaselineUsedMiB": 2647, "nvidiaSmiFreeMiBBefore": 9309, "hostRamGiB": 23, "hostRamAvailableAtStartGiB": "1-10 (shared host, varied)" },
+  "worker": { "python": "3.12", "torch": "2.8.0+cu128", "cuda": "12.8", "diffusers": "0.35.2", "transformers": "4.57.1",
+    "checkpoint": "ltxv-2b-0.9.6-distilled-04-25.safetensors @ Lightricks/LTX-Video 8984fa25007f376c1a299016d0957a37a2f797bb",
+    "config": "Lightricks/LTX-Video-0.9.5 @ e58e28c39631af4d1468ee57a853764e11c1d37e (model_index, scheduler, transformer, vae JSON only)",
+    "preset": "bf16, T5 on CPU then freed, model CPU offload, tiled VAE, 8 uniform steps, guidance 1, seed 42" },
+  "failedAttempts": [
+    { "attempt": 1, "via": "npm run gen:smoke (480x480, 2 s)", "result": "generation-failed after 34 s", "cause": "worker rechecked a hard 9 GiB on torch free memory after its own CUDA context (9309 MiB nvidia-smi -> 9053 MiB torch) and refused a run the bridge had admitted", "fix": "512 MiB context allowance against the provider's minimumFreeMiB" },
+    { "attempt": 2, "via": "gen:smoke", "result": "generation-failed", "cause": "single-file checkpoint contains no T5 weights; from_single_file raised SingleFileComponentError", "fix": "load T5EncoderModel/T5TokenizerFast from base/, encode on CPU in bf16, free before diffusion" },
+    { "attempt": "2b", "via": "direct worker debug harness", "result": "failed", "cause": "0.9.0 base VAE config cannot load 0.9.6 VAE (decoder.conv_in 512 vs 1024)", "fix": "pinned 0.9.5 config" },
+    { "attempt": "2c", "via": "debug harness", "result": "failed after 1132 s (T5 load thrashed swap while host RAM was ~1 GB available)", "cause": "diffusers 0.35 LTXPipeline always passes sigmas; custom timesteps raise ValueError", "fix": "num_inference_steps=8" },
+    { "attempt": 3, "via": "gen:smoke", "result": "generation-failed at progress 0.2375 after 245 s; peak worker 4622 MiB", "cause": "CPU prompt embeddings not moved to CUDA under model offload (traceback reproduced in debug harness)", "fix": "move embeds/mask to CUDA" },
+    { "attempt": "3b", "via": "debug harness", "result": "gpu-busy", "cause": "another process briefly held VRAM at start; worker refused correctly, no inference" },
+    { "attempt": "i2v-a", "via": "debug harness", "result": "failed", "cause": "LTXImageToVideoPipeline draws decode noise on CUDA; CPU generator rejected", "fix": "CUDA generator for i2v only (t2v receipt unchanged)" }
+  ],
+  "realModel": {
+    "t2v": {
+      "command": "FFS_GEN_SMOKE_SIZE=480x480 FFS_GEN_SMOKE_SECONDS=2 npm run gen:smoke (through GenerationQueue: ffprobe + full -xerror decode validation)",
+      "status": "passed", "jobId": "0beecc60-fb18-470b-80e8-f110b55a1e36",
+      "output": { "codec": "h264", "pixelFormat": "yuv420p", "width": 480, "height": 480, "fps": 24, "frames": 49 },
+      "wallSecondsIncludingProcessStart": 149.0,
+      "workerLatencySeconds": 130.2,
+      "phasesSeconds": { "promptEncodeCpu": 91.2, "loadDiffusion": 3.7, "denoiseAndDecode": 33.9, "encodeMp4": 1.4 },
+      "vram": { "torchPeakAllocatedMiB": 3779, "torchPeakReservedMiB": 4314, "nvidiaSmiWorkerPeakMiB": 4624, "nvidiaSmiDeviceDeltaMiB": 4630, "samplingMs": 250, "samples": 593 },
+      "contactSheetViewed": true,
+      "visual": "Coherent orange ceramic teapot on wood with rising steam; little camera motion. Second direct-harness run (shorter prompt) also coherent."
+    },
+    "i2v": {
+      "command": "FFS_GEN_SMOKE_REFERENCE=<480x480 PNG> FFS_GEN_SMOKE_SIZE=480x480 FFS_GEN_SMOKE_SECONDS=2 npm run gen:smoke (reference stored via GenerationQueue.addReference)",
+      "status": "passed", "jobId": "ba5fa450-88a6-4920-adcb-9909df4de41e",
+      "reference": "first frame of a prior real t2v run; sha256 f97a0f77649b35054d8a8a15f50301254392e7916a40f01d08d8de668d6888db",
+      "output": { "codec": "h264", "pixelFormat": "yuv420p", "width": 480, "height": 480, "fps": 24, "frames": 49 },
+      "wallSecondsIncludingProcessStart": 190.5,
+      "workerLatencySeconds": 170.2,
+      "phasesSeconds": { "promptEncodeCpu": 88.8, "loadDiffusion": 4.1, "denoiseAndDecode": 76.5, "encodeMp4": 0.8 },
+      "vram": { "torchPeakAllocatedMiB": 6253, "torchPeakReservedMiB": 6794, "nvidiaSmiWorkerPeakMiB": 7108, "nvidiaSmiDeviceDeltaMiB": 7114, "nvidiaSmiDevicePeakUsedMiB": 9761, "samplingMs": 250, "samples": 758 },
+      "contactSheetViewed": true,
+      "visual": "Follows the reference closely (same teapot, framing, wood); nearly static: low motion at 8 steps."
+    },
+    "artifacts": "Kept outside Git in the external genworker artifacts directory (smoke-20261020-*), including every failed attempt's samples.",
+    "interpretation": "One run per mode at 480x480/2 s. Prompt encoding on CPU dominates latency and depends on shared host RAM pressure (the same phase took ~17 min in a swap-bound run). 704x480 and 5 s are NOT measured; the 9216 MiB admission threshold is kept unchanged. Not a quality or throughput benchmark."
+  },
+  "notVerified": [
+    "704x480 / 3-5 s real runs, VRAM headroom for them",
+    "real i2v from a captured playhead frame in the browser (browser journey uses the fake provider)",
+    "motion quality of distilled 8-step preset; prompt-embedding cache",
+    "hosted free provider (still disabled: no verifiably free video endpoint)"
+  ]
+}

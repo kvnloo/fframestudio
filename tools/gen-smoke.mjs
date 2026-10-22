@@ -26,7 +26,13 @@ else {
     await fs.writeFile(path.join(root, 'projects/smoke/project.json'), JSON.stringify({ id: 'smoke' }));
     const q = new GenerationQueue({ root, providers: [provider] });
     try {
-      const job = await q.submit({ providerId: 'local-ltx', projectId: 'smoke', prompt: 'A small orange ceramic teapot sits on a wooden table. Warm sunlight falls from a window on the left. Steam rises slowly from the spout. The camera gently moves closer. Natural cinematic footage.', seed: 42, duration: 4, width: 704, height: 480, fps: 24 });
+      // Optional low-res/short preset for a shared GPU; still validated against the capability.
+      const [width, height] = (process.env.FFS_GEN_SMOKE_SIZE || '704x480').split('x').map(Number);
+      const duration = Number(process.env.FFS_GEN_SMOKE_SECONDS || 4);
+      // Optional real i2v: an external PNG at the smoke resolution, stored via the same reference API.
+      const refPng = process.env.FFS_GEN_SMOKE_REFERENCE;
+      const i2v = refPng ? { mode: 'i2v', reference: { id: (await q.addReference('smoke', await fs.readFile(refPng))).id, videoId: 'smoke', clipId: 'smoke-reference', clipName: 'Smoke reference', mediaId: null, frame: 0, sourceTime: 0 } } : {};
+      const job = await q.submit({ providerId: 'local-ltx', projectId: 'smoke', prompt: 'A small orange ceramic teapot sits on a wooden table. Warm sunlight falls from a window on the left. Steam rises slowly from the spout. The camera gently moves closer. Natural cinematic footage.', seed: 42, duration, width, height, fps: 24, ...i2v });
       for (;;) {
         const j = q.list().find(j => j.id === job.id);
         if (j?.state === 'failed' || j?.state === 'cancelled') throw Error('Real model smoke failed: ' + j.error);
@@ -34,8 +40,8 @@ else {
           const clip = path.join(root, 'projects/smoke', j.result.file);
           const metrics = JSON.parse(await fs.readFile(clip.replace('.mp4', '.metrics.json')));
           const sheet = path.join(root, 'contact-sheet.jpg');
-          await runProcess('ffmpeg', ['-v', 'error', '-i', clip, '-vf', 'fps=1,scale=352:240,tile=2x2', '-frames:v', '1', sheet], { timeout: 30000 });
-          const receipt = { smoke: 'local-ltx', status: 'passed', metrics, clip: path.relative(root, clip), contactSheet: 'contact-sheet.jpg', jobId: j.id };
+          await runProcess('ffmpeg', ['-v', 'error', '-i', clip, '-vf', `fps=${4 / duration},scale=-2:240,tile=2x2`, '-frames:v', '1', sheet], { timeout: 30000 });
+          const receipt = { smoke: 'local-ltx', status: 'passed', mode: j.mode, reference: j.reference, metrics, clip: path.relative(root, clip), contactSheet: 'contact-sheet.jpg', jobId: j.id };
           await fs.writeFile(path.join(root, 'smoke.json'), JSON.stringify(receipt, null, 2));
           console.log(JSON.stringify(receipt)); break;
         }
