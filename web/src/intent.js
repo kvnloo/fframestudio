@@ -1,6 +1,7 @@
 import { action, resolveClip } from './actions.js';
 import { fpsOf, uid } from './doc/project.js';
-const numbers = { zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, first:1, second:2, third:3, fourth:4, fifth:5, sixth:6, seventh:7, eighth:8, ninth:9, tenth:10 };
+import { hostFeature } from './host.js';
+const numbers = { zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, first:1, second:2, third:3, fourth:4, fifth:5, sixth:6, seventh:7, eighth:8, ninth:9, tenth:10, eleven:11, twelve:12, fifteen:15, sixteen:16, twenty:20, thirty:30, forty:40, fifty:50 };
 const number = s => numbers[s] ?? (/^\d+(\.\d+)?$/.test(s) ? Number(s) : NaN);
 const clarify = message => ({ clarification: message });
 // Anchored grammar: unsupported or compound instructions never become guessed edits.
@@ -12,6 +13,8 @@ export function parseIntent(utterance, context) {
     catch (e) { return clarify(e.message); }
   };
   if (simple[text]) return result(simple[text]);
+  const comfy = comfyIntent(raw, text);
+  if (comfy) return comfy.clarification ? comfy : hostFeature('comfy') ? result(comfy.id, comfy.params) : clarify('ComfyUI is not configured on this bridge.');
   let m;
   if ((m = /^(?:seek|go)(?: to)? ([\w.]+)\s*(?:s|seconds?)$/.exec(text))) {
     const n = number(m[1]);
@@ -45,4 +48,30 @@ export function parseIntent(utterance, context) {
     return c ? result('edit-text', { clipId:c.id, field:'title', value:m[4] }) : clarify('Select the shot whose text should change.');
   }
   return clarify('Please give one precise action: e.g. “shorten the second shot by one second” or “change the text to \'Hello\'”.');
+}
+
+// ComfyUI pane grammar. Speech has no quotes, so prompts run to the end of the utterance;
+// "comfy" is required wherever a bare verb (run, cancel, steps…) could mean an edit.
+const unquote = s => s.trim().replace(/^(['"“”‘’])([\s\S]*)\1$/, '$2').trim();
+const PARAM_ALIASES = { steps: 'steps', step: 'steps', seed: 'seed', cfg: 'cfg', guidance: 'cfg', width: 'width', height: 'height', denoise: 'denoise', frames: 'length', length: 'length', 'negative prompt': 'negative', negative: 'negative', sampler: 'sampler', scheduler: 'scheduler' };
+export function comfyIntent(raw, text) {
+  const body = text.replace(/^comfy(?:ui)?[,:]?\s+/, ''), prefixed = body !== text, rawBody = raw.replace(/^comfy(?:ui)?[,:]?\s+/i, '');
+  let m;
+  if (/^open (?:the )?comfy(?:ui)?(?: pane| panel)?$/.test(text) || (prefixed && /^(?:open|show)$/.test(body))) return { id: 'comfy', params: {} };
+  if ((m = /^(?:set |change |use )?(?:the )?prompt (?:to |as )?([\s\S]+)$/i.exec(rawBody)) && (prefixed || /^(?:set|change|use) /i.test(rawBody))) {
+    const prompt = unquote(m[1]); return prompt ? { id: 'comfy-set-prompt', params: { prompt } } : { clarification: 'What should the prompt say?' };
+  }
+  if (prefixed && (m = /^(?:set |change )?(?:the )?(negative prompt|negative|steps?|seed|cfg|guidance|width|height|denoise|frames|length|sampler|scheduler) (?:to |at )?([\s\S]+)$/i.exec(rawBody))) {
+    const name = PARAM_ALIASES[m[1].toLowerCase()], v = unquote(m[2]);
+    if (['negative', 'sampler', 'scheduler'].includes(name)) return { id: 'comfy-set-param', params: { name, value: name === 'negative' ? v : v.toLowerCase() } };
+    const n = number(v.toLowerCase()); return Number.isFinite(n) ? { id: 'comfy-set-param', params: { name, value: n } } : { clarification: `Say a number for ${m[1]}.` };
+  }
+  if ((m = /^(?:give me |make |run |generate )?(?:(\w+) )?(?:more|another|new|other) variations?$/.exec(body)) || (m = /^(?:more|another) (?:one|take|version)s?$/.exec(body))) {
+    const n = m[1] ? number(m[1]) : 1; return Number.isInteger(n) && n >= 1 && n <= 4 ? { id: 'comfy-variations', params: { count: n } } : { clarification: 'Ask for one to four variations.' };
+  }
+  if ((prefixed && /^(?:run|go|generate|render|queue(?: it)?)(?: it| this)?$/.test(body)) || /^(?:run|generate with) comfy(?:ui)?$/.test(text)) return { id: 'comfy-run', params: {} };
+  if ((prefixed && /^(?:cancel|stop|abort)(?: it| that| all| everything)?$/.test(body)) || /^(?:cancel|stop) comfy(?:ui)?$/.test(text)) return { id: 'comfy-cancel', params: {} };
+  if (prefixed && (m = /^(?:use|switch to|load) (?:the )?(?:template |workflow |model )?([\w .-]+?)(?: template| workflow| model)?$/.exec(body))) return { id: 'comfy-use-template', params: { template: m[1].trim() } };
+  if (prefixed) return { clarification: 'ComfyUI: say “set prompt to …”, “steps 12”, “run”, “more variations” or “cancel”.' };
+  return null;
 }

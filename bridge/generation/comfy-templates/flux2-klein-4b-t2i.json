@@ -1,0 +1,40 @@
+{
+  "schema": "fframestudio.comfy-template/1",
+  "id": "flux2-klein-4b-t2i",
+  "title": "FLUX.2 Klein 4B · text to image",
+  "kind": "image",
+  "model": "black-forest-labs/FLUX.2-klein-4B (fp8 Comfy-Org repack)",
+  "description": "Stills, plates and look frames. The 4B fp8 Klein graph that already runs on groot's ComfyUI with --lowvram; here as plain text-to-image (no reference latent).",
+  "vram": {
+    "minimumFreeMiB": 9000,
+    "measuredPeakMiB": 11624,
+    "evidence": "comfyui-3080ti-research results/fp8-sdpa-dynamic-refcache-off (edit variant with one reference latent, 1024x1024, 20 steps, --lowvram --reserve-vram 1.0): 109 s wall, peak 11624 MiB, 1.78 GB swap. Text-to-image is unmeasured."
+  },
+  "licence": {
+    "name": "FLUX.2 [klein] 4B model licence — verify before commercial use",
+    "url": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4B"
+  },
+  "params": {
+    "prompt": { "label": "Prompt", "voice": ["prompt"] },
+    "negative": { "label": "Negative prompt", "voice": ["negative", "negative prompt"] },
+    "width": { "minimum": 512, "maximum": 1536 },
+    "height": { "minimum": 512, "maximum": 1536 },
+    "steps": { "maximum": 40 },
+    "batch": false
+  },
+  "workflow": {
+    "1": { "class_type": "UNETLoader", "inputs": { "unet_name": "flux-2-klein-base-4b-fp8.safetensors", "weight_dtype": "default" }, "_meta": { "title": "Load Diffusion Model" } },
+    "2": { "class_type": "CLIPLoader", "inputs": { "clip_name": "qwen_3_4b.safetensors", "type": "flux2", "device": "default" } },
+    "3": { "class_type": "VAELoader", "inputs": { "vae_name": "flux2-vae.safetensors" } },
+    "4": { "class_type": "CLIPTextEncode", "inputs": { "clip": ["2", 0], "text": "A quiet film still: warm practical light across a teal studio, shallow depth of field." }, "_meta": { "title": "Positive" } },
+    "5": { "class_type": "CLIPTextEncode", "inputs": { "clip": ["2", 0], "text": "" }, "_meta": { "title": "Negative" } },
+    "6": { "class_type": "CFGGuider", "inputs": { "model": ["1", 0], "positive": ["4", 0], "negative": ["5", 0], "cfg": 5.0 } },
+    "7": { "class_type": "EmptyFlux2LatentImage", "inputs": { "width": 1024, "height": 1024, "batch_size": 1 } },
+    "8": { "class_type": "Flux2Scheduler", "inputs": { "steps": 20, "width": 1024, "height": 1024 } },
+    "9": { "class_type": "KSamplerSelect", "inputs": { "sampler_name": "euler" } },
+    "10": { "class_type": "RandomNoise", "inputs": { "noise_seed": 42 } },
+    "11": { "class_type": "SamplerCustomAdvanced", "inputs": { "noise": ["10", 0], "guider": ["6", 0], "sampler": ["9", 0], "sigmas": ["8", 0], "latent_image": ["7", 0] } },
+    "12": { "class_type": "VAEDecode", "inputs": { "samples": ["11", 0], "vae": ["3", 0] } },
+    "13": { "class_type": "SaveImage", "inputs": { "images": ["12", 0], "filename_prefix": "fframestudio/flux2-klein" } }
+  }
+}

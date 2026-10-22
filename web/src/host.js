@@ -1,6 +1,8 @@
 // One boundary for bridge transport; folder storage is loaded only on static hosts.
-let mode = 'bridge', base = '', token = null, folder, preferenceStore;
+let mode = 'bridge', base = '', token = null, folder, preferenceStore, features = {};
 export const isLocal = () => mode === 'folder';
+// Optional bridge features (e.g. ComfyUI) announced by an authenticated /me; off in folder mode.
+export const hostFeature = name => !folder && features[name] === true;
 export const isRemote = () => !!base;
 export const agentOptions = () => ({ bridge: base || location.origin, token });
 export const preferences = {
@@ -27,7 +29,7 @@ export async function initializeHost() {
   const hosted = !!document.querySelector('meta[name="ffs-hosted"]');
   if (hosted) { preferenceStore=await import('./folder-host.js'); await preferenceStore.initializePreferences(); }
   if (base || !hosted) {
-    try { const me = await request('/me').then(r => r.json()); if (typeof me.ok === 'boolean') return me; } catch (error) { if (base) throw Error('Cannot connect to the local bridge. Start it and open its hosted link again. ' + error.message); }
+    try { const me = await request('/me').then(r => r.json()); if (typeof me.ok === 'boolean') { features = me.features && typeof me.features === 'object' ? me.features : {}; return me; } } catch (error) { if (base) throw Error('Cannot connect to the local bridge. Start it and open its hosted link again. ' + error.message); }
   }
   mode = 'folder';
   folder = await import('./folder-host.js');

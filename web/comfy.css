@@ -1,0 +1,19 @@
+/* Lazy ComfyUI desk: fixed left so it never displaces the canvas or the voice desk (right). */
+.comfy-desk { position:fixed; left:20px; bottom:24px; width:min(420px,calc(100vw - 32px)); max-height:min(74dvh,820px); overflow:auto; box-sizing:border-box; padding:18px; z-index:89; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:12px; box-shadow:0 16px 80px #0008; }
+.comfy-desk[hidden], .comfy-desk [hidden] { display:none !important; }
+.comfy-desk header { position:static; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; height:auto; min-height:0; width:auto; padding:0 0 10px; background:none; }
+.comfy-desk header output { flex:1; font-size:11px; color:var(--mute); overflow-wrap:anywhere; }
+.comfy-desk label { display:grid; gap:5px; font-size:12px; }
+.comfy-desk select, .comfy-desk input, .comfy-desk textarea { width:100%; min-width:0; box-sizing:border-box; background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:6px; padding:7px; font:inherit; }
+.comfy-form { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:10px 0; }
+.comfy-form .comfy-wide { grid-column:1 / -1; }
+.comfy-actions { display:flex; flex-wrap:wrap; gap:6px; }
+.comfy-desk button { min-height:36px; padding:6px 12px; cursor:pointer; }
+.comfy-note { font-size:11px; line-height:1.5; color:var(--mute); overflow-wrap:anywhere; margin:6px 0; }
+.comfy-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:10px; }
+.comfy-card { border:1px solid var(--line); border-radius:9px; padding:8px; background:var(--bg2); min-width:0; }
+.comfy-card p { font-size:11px; margin:6px 0 0; overflow-wrap:anywhere; }
+.comfy-job-head { display:flex; justify-content:space-between; text-transform:uppercase; font-size:10px; letter-spacing:.06em; }
+.comfy-card progress { width:100%; accent-color:var(--acc); }
+.comfy-preview img, .comfy-preview video { width:100%; display:block; border-radius:5px; background:#101010; margin-top:6px; }
+@media (max-width:600px) { .comfy-desk { left:8px; right:8px; top:8px; bottom:auto; width:auto; max-height:60dvh; } .comfy-form { grid-template-columns:1fr 1fr; } .comfy-desk button { min-height:44px; } }
