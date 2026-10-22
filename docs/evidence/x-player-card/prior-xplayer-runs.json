@@ -1,0 +1,410 @@
+[
+  {
+    "receipt": "verify-out/xplayer-first/report.json",
+    "checks": [
+      {
+        "name": "route policies",
+        "embedHeaders": [
+          {
+            "url": "/launch/embed",
+            "status": 200,
+            "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+            "xFrameOptions": null
+          },
+          {
+            "url": "/launch/embed.html",
+            "status": 200,
+            "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+            "xFrameOptions": null
+          },
+          {
+            "url": "/launch/embed/",
+            "status": 200,
+            "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+            "xFrameOptions": null
+          }
+        ],
+        "protectedFiles": 89
+      }
+    ],
+    "errors": [],
+    "notVerified": [
+      "Real X card render",
+      "Physical 120 Hz phone"
+    ],
+    "ok": false,
+    "failure": "AssertionError [ERR_ASSERTION]: video downloaded before play\n\ntrue !== false\n\n    at file://<repo>/tools/verify-xplayer.mjs:48:10"
+  },
+  {
+    "receipt": "verify-out/xplayer-fourth/report.json",
+    "checks": [
+      {
+        "name": "route policies",
+        "embedHeaders": [
+          {
+            "url": "/launch/embed",
+            "status": 200,
+            "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+            "xFrameOptions": null
+          },
+          {
+            "url": "/launch/embed.html",
+            "status": 200,
+            "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+            "xFrameOptions": null
+          },
+          {
+            "url": "/launch/embed/",
+            "status": 200,
+            "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+            "xFrameOptions": null
+          }
+        ],
+        "protectedFiles": 92
+      },
+      {
+        "name": "share metadata and tap-to-play",
+        "meta": {
+          "twitter:card": "player",
+          "twitter:title": "fframestudio \u2014 launch player test",
+          "twitter:description": "A labelled 1080p120 playback test. The launch film has not been substituted yet.",
+          "twitter:image": "https://fframestudio.vercel.app/launch/media/poster.80f9d0c6c4d1.jpg",
+          "twitter:image:alt": "fframestudio \u2014 launch player test poster",
+          "twitter:player": "https://fframestudio.vercel.app/launch/embed",
+          "twitter:player:width": "640",
+          "twitter:player:height": "360",
+          "og:type": "video.other",
+          "og:title": "fframestudio \u2014 launch player test",
+          "og:description": "A labelled 1080p120 playback test. The launch film has not been substituted yet.",
+          "og:url": "https://fframestudio.vercel.app/launch",
+          "og:image": "https://fframestudio.vercel.app/launch/media/poster.80f9d0c6c4d1.jpg",
+          "og:image:width": "1920",
+          "og:image:height": "1080"
+        }
+      },
+      {
+        "name": "frame-ancestors",
+        "parent": "https://x.com",
+        "rendered": true
+      },
+      {
+        "name": "frame-ancestors",
+        "parent": "https://twitter.com",
+        "rendered": true
+      },
+      {
+        "name": "frame-ancestors",
+        "parent": "https://sub.x.com",
+        "rendered": true
+      },
+      {
+        "name": "frame-ancestors",
+        "parent": "https://evil.test",
+        "rendered": false
+      },
+      {
+        "name": "rVFC playback observation",
+        "samples": [
+          40.65,
+          40.65,
+          53.12
+        ],
+        "over100": false,
+        "playback": {
+          "src": "http://static.test/launch/media/launch-h264-120.3612b1e98ef8.mp4",
+          "width": 1920,
+          "height": 1080,
+          "time": 3.306452,
+          "quality": {
+            "totalVideoFrames": 408,
+            "droppedVideoFrames": 7
+          }
+        }
+      }
+    ],
+    "errors": [],
+    "notVerified": [
+      "Real X card render",
+      "Physical 120 Hz phone"
+    ],
+    "prePlayMediaRequests": 1,
+    "media": [
+      {
+        "fps": 120,
+        "codec": "hvc1",
+        "url": "/launch/media/launch-hevc-120.3b9f41a14edf.mp4",
+        "bytes": 1294362,
+        "codec_name": "hevc",
+        "codec_tag_string": "hvc1",
+        "width": 1920,
+        "height": 1080,
+        "level": 150,
+        "r_frame_rate": "120/1",
+        "nb_read_frames": "480"
+      },
+      {
+        "fps": 120,
+        "codec": "avc1.640033",
+        "url": "/launch/media/launch-h264-120.3612b1e98ef8.mp4",
+        "bytes": 2279392,
+        "codec_name": "h264",
+        "codec_tag_string": "avc1",
+        "width": 1920,
+        "height": 1080,
+        "level": 51,
+        "r_frame_rate": "120/1",
+        "nb_read_frames": "480"
+      },
+      {
+        "fps": 60,
+        "codec": "avc1.64002A",
+        "url": "/launch/media/launch-h264-60.05eef9fbd9f0.mp4",
+        "bytes": 1547509,
+        "codec_name": "h264",
+        "codec_tag_string": "avc1",
+        "width": 1920,
+        "height": 1080,
+        "level": 42,
+        "r_frame_rate": "60/1",
+        "nb_read_frames": "240"
+      }
+    ],
+    "frameTransport": "Virtual HTTPS origin mirrors CSP-serving static server bytes and headers; fake parents only.",
+    "ok": true
+  },
+  {
+    "receipt": "verify-out/xplayer-second/report.json",
+    "checks": [
+      {
+        "name": "route policies",
+        "embedHeaders": [
+          {
+            "url": "/launch/embed",
+            "status": 200,
+            "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+            "xFrameOptions": null
+          },
+          {
+            "url": "/launch/embed.html",
+            "status": 200,
+            "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+            "xFrameOptions": null
+          },
+          {
+            "url": "/launch/embed/",
+            "status": 200,
+            "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+            "xFrameOptions": null
+          }
+        ],
+        "protectedFiles": 89
+      },
+      {
+        "name": "share metadata and tap-to-play",
+        "meta": {
+          "twitter:card": "player",
+          "twitter:title": "fframestudio \u2014 launch player test",
+          "twitter:description": "A labelled 1080p120 playback test. The launch film has not been substituted yet.",
+          "twitter:image": "https://fframestudio.vercel.app/launch/media/poster.80f9d0c6c4d1.jpg",
+          "twitter:image:alt": "fframestudio \u2014 launch player test poster",
+          "twitter:player": "https://fframestudio.vercel.app/launch/embed",
+          "twitter:player:width": "640",
+          "twitter:player:height": "360",
+          "og:type": "video.other",
+          "og:title": "fframestudio \u2014 launch player test",
+          "og:description": "A labelled 1080p120 playback test. The launch film has not been substituted yet.",
+          "og:url": "https://fframestudio.vercel.app/launch",
+          "og:image": "https://fframestudio.vercel.app/launch/media/poster.80f9d0c6c4d1.jpg",
+          "og:image:width": "1920",
+          "og:image:height": "1080"
+        }
+      }
+    ],
+    "errors": [],
+    "notVerified": [
+      "Real X card render",
+      "Physical 120 Hz phone"
+    ],
+    "prePlayMediaRequests": 1,
+    "media": [
+      {
+        "fps": 120,
+        "codec": "hvc1",
+        "url": "/launch/media/launch-hevc-120.3b9f41a14edf.mp4",
+        "bytes": 1294362,
+        "codec_name": "hevc",
+        "codec_tag_string": "hvc1",
+        "width": 1920,
+        "height": 1080,
+        "level": 150,
+        "r_frame_rate": "120/1",
+        "nb_read_frames": "480"
+      },
+      {
+        "fps": 120,
+        "codec": "avc1.640033",
+        "url": "/launch/media/launch-h264-120.3612b1e98ef8.mp4",
+        "bytes": 2279392,
+        "codec_name": "h264",
+        "codec_tag_string": "avc1",
+        "width": 1920,
+        "height": 1080,
+        "level": 51,
+        "r_frame_rate": "120/1",
+        "nb_read_frames": "480"
+      },
+      {
+        "fps": 60,
+        "codec": "avc1.64002A",
+        "url": "/launch/media/launch-h264-60.05eef9fbd9f0.mp4",
+        "bytes": 1547509,
+        "codec_name": "h264",
+        "codec_tag_string": "avc1",
+        "width": 1920,
+        "height": 1080,
+        "level": 42,
+        "r_frame_rate": "60/1",
+        "nb_read_frames": "240"
+      }
+    ],
+    "ok": false,
+    "failure": "AssertionError [ERR_ASSERTION]: https://x.com\n\nfalse !== true\n\n    at file://<repo>/tools/verify-xplayer.mjs:71:12"
+  },
+  {
+    "receipt": "verify-out/xplayer-third/report.json",
+    "checks": [
+      {
+        "name": "route policies",
+        "embedHeaders": [
+          {
+            "url": "/launch/embed",
+            "status": 200,
+            "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+            "xFrameOptions": null
+          },
+          {
+            "url": "/launch/embed.html",
+            "status": 200,
+            "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+            "xFrameOptions": null
+          },
+          {
+            "url": "/launch/embed/",
+            "status": 200,
+            "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+            "xFrameOptions": null
+          }
+        ],
+        "protectedFiles": 89
+      },
+      {
+        "name": "share metadata and tap-to-play",
+        "meta": {
+          "twitter:card": "player",
+          "twitter:title": "fframestudio \u2014 launch player test",
+          "twitter:description": "A labelled 1080p120 playback test. The launch film has not been substituted yet.",
+          "twitter:image": "https://fframestudio.vercel.app/launch/media/poster.80f9d0c6c4d1.jpg",
+          "twitter:image:alt": "fframestudio \u2014 launch player test poster",
+          "twitter:player": "https://fframestudio.vercel.app/launch/embed",
+          "twitter:player:width": "640",
+          "twitter:player:height": "360",
+          "og:type": "video.other",
+          "og:title": "fframestudio \u2014 launch player test",
+          "og:description": "A labelled 1080p120 playback test. The launch film has not been substituted yet.",
+          "og:url": "https://fframestudio.vercel.app/launch",
+          "og:image": "https://fframestudio.vercel.app/launch/media/poster.80f9d0c6c4d1.jpg",
+          "og:image:width": "1920",
+          "og:image:height": "1080"
+        }
+      },
+      {
+        "name": "frame-ancestors",
+        "parent": "https://x.com",
+        "rendered": true
+      },
+      {
+        "name": "frame-ancestors",
+        "parent": "https://twitter.com",
+        "rendered": true
+      },
+      {
+        "name": "frame-ancestors",
+        "parent": "https://sub.x.com",
+        "rendered": true
+      },
+      {
+        "name": "frame-ancestors",
+        "parent": "https://evil.test",
+        "rendered": false
+      },
+      {
+        "name": "rVFC playback observation",
+        "samples": [
+          33.44,
+          33.44,
+          53
+        ],
+        "over100": false,
+        "playback": {
+          "src": "http://static.test/launch/media/launch-h264-120.3612b1e98ef8.mp4",
+          "width": 1920,
+          "height": 1080,
+          "time": 3.297843,
+          "quality": {
+            "totalVideoFrames": 407,
+            "droppedVideoFrames": 8
+          }
+        }
+      }
+    ],
+    "errors": [],
+    "notVerified": [
+      "Real X card render",
+      "Physical 120 Hz phone"
+    ],
+    "prePlayMediaRequests": 1,
+    "media": [
+      {
+        "fps": 120,
+        "codec": "hvc1",
+        "url": "/launch/media/launch-hevc-120.3b9f41a14edf.mp4",
+        "bytes": 1294362,
+        "codec_name": "hevc",
+        "codec_tag_string": "hvc1",
+        "width": 1920,
+        "height": 1080,
+        "level": 150,
+        "r_frame_rate": "120/1",
+        "nb_read_frames": "480"
+      },
+      {
+        "fps": 120,
+        "codec": "avc1.640033",
+        "url": "/launch/media/launch-h264-120.3612b1e98ef8.mp4",
+        "bytes": 2279392,
+        "codec_name": "h264",
+        "codec_tag_string": "avc1",
+        "width": 1920,
+        "height": 1080,
+        "level": 51,
+        "r_frame_rate": "120/1",
+        "nb_read_frames": "480"
+      },
+      {
+        "fps": 60,
+        "codec": "avc1.64002A",
+        "url": "/launch/media/launch-h264-60.05eef9fbd9f0.mp4",
+        "bytes": 1547509,
+        "codec_name": "h264",
+        "codec_tag_string": "avc1",
+        "width": 1920,
+        "height": 1080,
+        "level": 42,
+        "r_frame_rate": "60/1",
+        "nb_read_frames": "240"
+      }
+    ],
+    "frameTransport": "Virtual HTTPS origin mirrors CSP-serving static server bytes and headers; fake parents only.",
+    "ok": true
+  }
+]

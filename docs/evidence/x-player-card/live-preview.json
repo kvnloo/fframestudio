@@ -1,0 +1,109 @@
+{
+  "preview": "https://fframestudio-3s4mx1g09-kvnloos-projects.vercel.app",
+  "buildId": "4a76712ac1da92cc",
+  "unauthenticatedTwitterbot": "302 SSO redirect; NOT X-fetchable",
+  "authenticatedTwitterbot": [
+    {
+      "path": "/",
+      "redirectStatuses": [],
+      "status": 200,
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data:; media-src 'self' blob: data:; worker-src 'self' blob: data:; connect-src 'self' blob: http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "xFrameOptions": "DENY",
+      "meta": {
+        "": "",
+        "viewport": "width=device-width,initial-scale=1",
+        "ffs-hosted": "local-first"
+      }
+    },
+    {
+      "path": "/launch",
+      "redirectStatuses": [],
+      "status": 200,
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data:; media-src 'self' blob: data:; worker-src 'self' blob: data:; connect-src 'self' blob: http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "xFrameOptions": "DENY",
+      "meta": {
+        "": "",
+        "viewport": "width=device-width,initial-scale=1",
+        "ffs-launch-build": "4a76712ac1da92cc",
+        "description": "A labelled 1080p120 playback test. The launch film has not been substituted yet.",
+        "twitter:card": "player",
+        "twitter:title": "fframestudio \u2014 launch player test",
+        "twitter:description": "A labelled 1080p120 playback test. The launch film has not been substituted yet.",
+        "twitter:image": "https://fframestudio.vercel.app/launch/media/poster.80f9d0c6c4d1.jpg",
+        "twitter:image:alt": "fframestudio \u2014 launch player test poster",
+        "twitter:player": "https://fframestudio.vercel.app/launch/embed",
+        "twitter:player:width": "640",
+        "twitter:player:height": "360",
+        "og:type": "video.other",
+        "og:title": "fframestudio \u2014 launch player test",
+        "og:description": "A labelled 1080p120 playback test. The launch film has not been substituted yet.",
+        "og:url": "https://fframestudio.vercel.app/launch",
+        "og:image": "https://fframestudio.vercel.app/launch/media/poster.80f9d0c6c4d1.jpg",
+        "og:image:width": "1920",
+        "og:image:height": "1080"
+      }
+    },
+    {
+      "path": "/launch/embed",
+      "redirectStatuses": [],
+      "status": 200,
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+      "xFrameOptions": null,
+      "meta": {
+        "": "",
+        "viewport": "width=device-width,initial-scale=1",
+        "ffs-launch-build": "4a76712ac1da92cc"
+      }
+    },
+    {
+      "path": "/launch/embed.html",
+      "redirectStatuses": [
+        308
+      ],
+      "status": 200,
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+      "xFrameOptions": null,
+      "meta": {
+        "": "",
+        "viewport": "width=device-width,initial-scale=1",
+        "ffs-launch-build": "4a76712ac1da92cc"
+      }
+    },
+    {
+      "path": "/launch/embed/",
+      "redirectStatuses": [],
+      "status": 200,
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com",
+      "xFrameOptions": null,
+      "meta": {
+        "": "",
+        "viewport": "width=device-width,initial-scale=1",
+        "ffs-launch-build": "4a76712ac1da92cc"
+      }
+    },
+    {
+      "path": "/launch/embed-not",
+      "redirectStatuses": [],
+      "status": 404,
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data:; media-src 'self' blob: data:; worker-src 'self' blob: data:; connect-src 'self' blob: http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "xFrameOptions": "DENY",
+      "meta": {}
+    },
+    {
+      "path": "/launch/player.js",
+      "redirectStatuses": [],
+      "status": 200,
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data:; media-src 'self' blob: data:; worker-src 'self' blob: data:; connect-src 'self' blob: http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "xFrameOptions": "DENY",
+      "meta": {}
+    },
+    {
+      "path": "/.env.local",
+      "redirectStatuses": [],
+      "status": 404,
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data:; media-src 'self' blob: data:; worker-src 'self' blob: data:; connect-src 'self' blob: http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "xFrameOptions": "DENY",
+      "meta": {}
+    }
+  ]
+}

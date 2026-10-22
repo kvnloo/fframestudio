@@ -1,0 +1,28 @@
+{
+  "title": "fframestudio \u2014 launch player test",
+  "description": "A labelled 1080p120 playback test. The launch film has not been substituted yet.",
+  "notice": "PLACEHOLDER \u2014 4-second test pattern, not the launch film.",
+  "poster": {
+    "url": "/launch/media/poster.jpg"
+  },
+  "variants": [
+    {
+      "fps": 120,
+      "codec": "hvc1",
+      "url": "/launch/media/launch-hevc-120.mp4",
+      "bytes": 1294362
+    },
+    {
+      "fps": 120,
+      "codec": "avc1.640033",
+      "url": "/launch/media/launch-h264-120.mp4",
+      "bytes": 2279392
+    },
+    {
+      "fps": 60,
+      "codec": "avc1.64002A",
+      "url": "/launch/media/launch-h264-60.mp4",
+      "bytes": 1547509
+    }
+  ]
+}

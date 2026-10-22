@@ -1,0 +1,97 @@
+{
+  "base": "aba01983c3ce812ad22f582f81022f47ede8aa80",
+  "versions": {
+    "node": "v26.5.0",
+    "chromium": "Chromium 153.0.8010.52 Arch Linux",
+    "ffmpeg": "ffmpeg version n9.0.2 Copyright (c) 2000-2026 the FFmpeg developers"
+  },
+  "commands": [
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "nodeTests": 251,
+      "proceduralTests": 9,
+      "acp": "PASS; discovery bytes + mtime unchanged"
+    },
+    {
+      "command": "npm run verify:hosted",
+      "exitCode": 0,
+      "journeys": 8
+    },
+    {
+      "command": "npm run verify:xplayer",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run verify",
+      "exitCode": 1,
+      "note": "Latest 32/33; style scheduling gate also fails on origin/main. Earlier candidate 33/33."
+    }
+  ],
+  "fullRuns": [
+    {
+      "receipt": "2026-10-22T18-43-13-285Z",
+      "ok": true,
+      "total": 33,
+      "passed": 33,
+      "failures": []
+    },
+    {
+      "receipt": "2026-10-22T18-54-51-416Z",
+      "ok": false,
+      "total": 33,
+      "passed": 32,
+      "failures": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "ok": false,
+          "ms": 32175,
+          "error": "headline-reveal: lab scrub below existing 60 Hz scheduling tolerance"
+        }
+      ]
+    },
+    {
+      "receipt": "main-control",
+      "ok": false,
+      "total": 32,
+      "passed": 31,
+      "failures": [
+        {
+          "name": "style components: lab preview equals runtime",
+          "ok": false,
+          "ms": 17158,
+          "error": "foreground-fly-through: lab scrub below existing 60 Hz scheduling tolerance"
+        }
+      ]
+    }
+  ],
+  "execution": "Local Node/Chromium/ffmpeg; factory substrate supports only Python stdlib jobs",
+  "media": [
+    {
+      "fps": 120,
+      "codec": "hvc1",
+      "url": "/launch/media/launch-hevc-120.mp4",
+      "bytes": 1294362
+    },
+    {
+      "fps": 120,
+      "codec": "avc1.640033",
+      "url": "/launch/media/launch-h264-120.mp4",
+      "bytes": 2279392
+    },
+    {
+      "fps": 60,
+      "codec": "avc1.64002A",
+      "url": "/launch/media/launch-h264-60.mp4",
+      "bytes": 1547509
+    }
+  ],
+  "sourceMediaBytes": 5121263,
+  "siteBytes": 12367073,
+  "notVerified": [
+    "Real launch film swap (render derivatives not available)",
+    "Real X card rendering/client approval",
+    "Physical 120 Hz phone / >100 callbacks per second",
+    "Production deployment; no X post"
+  ]
+}

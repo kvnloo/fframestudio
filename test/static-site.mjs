@@ -4,13 +4,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 export async function staticSite(root) {
   const config=JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf8'));
-  const security=Object.fromEntries(config.headers[0].headers.map(h=>[h.key,h.value]));
+  const rules=config.headers.map(rule=>({
+    match:new RegExp('^'+rule.source.replace(':path*','.*').replace(':file(', '(')+'$'),
+    headers:Object.fromEntries(rule.headers.map(h=>[h.key,h.value]))
+  }));
   const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.woff2':'font/woff2','.ttf':'font/ttf','.mp4':'video/mp4','.webm':'video/webm','.mp3':'audio/mpeg','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.webp':'image/webp'};
   const requests=[];
   const server=http.createServer((req,res)=>{
     const u=new URL(req.url,'http://static.invalid');requests.push({path:u.pathname,method:req.method,hasToken:u.searchParams.has('token'),authorization:!!req.headers.authorization});
+    const security=Object.assign({},...rules.filter(rule=>rule.match.test(u.pathname)).map(rule=>rule.headers));
     let rel;try{rel=decodeURIComponent(u.pathname);}catch{res.writeHead(400);res.end();return;}
-    const file=path.resolve(root,'.'+(rel==='/'?'/index.html':rel));
+    let file=path.resolve(root,'.'+(rel==='/'?'/index.html':rel));
+    if(config.cleanUrls&&!path.extname(rel)) {
+      const candidate=file.replace(/\/$/,'')+'.html';
+      if(fs.existsSync(candidate))file=candidate;
+    }
     if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404,security);res.end();return;}
     const size=fs.statSync(file).size,range=/bytes=(\d+)-(\d*)/.exec(req.headers.range||'');
     const headers={...security,'Content-Type':mime[path.extname(file)]||'application/octet-stream','Accept-Ranges':'bytes'};
