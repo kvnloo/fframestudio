@@ -44,5 +44,18 @@ export function parseIntent(utterance, context) {
     const c = target(m[2]?.toLowerCase());
     return c ? result('edit-text', { clipId:c.id, field:'title', value:m[4] }) : clarify('Select the shot whose text should change.');
   }
+  // ff-unmute working-copy camera keys (1-based in speech, 0-based in the command).
+  if ((m = /^(?:snap|move) (?:the )?camera key ([\w]+) to (?:the )?(bar|kick|clap|token) ([\w]+)$/.exec(text))) {
+    const k = number(m[1]), n = number(m[3]);
+    return Number.isInteger(k) && k > 0 && Number.isInteger(n) && n > 0 ? result('edit-procedural-camera', { key:k-1, snap:{ kind:m[2], index:n } }) : clarify('Which camera key, and which bar, kick, clap or token?');
+  }
+  if ((m = /^set (?:the )?camera key ([\w]+) (zoom|blur|roll|look y|tilt x|tilt y|dx) to (-?\d+(?:\.\d+)?)$/.exec(text))) {
+    const k = number(m[1]);
+    return Number.isInteger(k) && k > 0 ? result('edit-procedural-camera', { key:k-1, changes:{ [m[2].replace(' ', '_')]:Number(m[3]) } }) : clarify('Which camera key?');
+  }
+  if ((m = /^reset (?:the )?camera key ([\w]+)$/.exec(text))) {
+    const k = number(m[1]);
+    return Number.isInteger(k) && k > 0 ? result('edit-procedural-camera', { key:k-1, reset:true }) : clarify('Which camera key?');
+  }
   return clarify('Please give one precise action: e.g. “shorten the second shot by one second” or “change the text to \'Hello\'”.');
 }

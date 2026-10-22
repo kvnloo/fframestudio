@@ -25,7 +25,7 @@
     "test:editor": "node tools/verify-editor.mjs",
     "test:editor-acp": "node tools/verify-editor.mjs --acp",
     "test:perf": "node --test --test-concurrency=1 test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf",
-    "test:procedural": "python3 -m unittest discover -s test -p 'test_procedural_fframes.py'"
+    "test:procedural": "python3 -m unittest discover -s test -p 'test_procedural_*.py'"
   },
   "devDependencies": {
     "@agentclientprotocol/sdk": "1.9.0",
