@@ -15,10 +15,21 @@ loopback bridge. **Examples** is a separate, lazily loaded shelf, never your lib
   `createWritable`, stages a temporary file, and compares the loaded content hash
   before replacement. Browsers without handle rename support use a final
   `createWritable` replacement; that fallback is not an atomic filesystem rename.
-- **Firefox/Safari or read-only access:** choose **Open read-only** (the
-  `webkitdirectory` file input). Files are kept in this origin's IndexedDB. Save
-  updates a browser-local copy, never the original files. **Export project.json**
-  downloads the current edited document; keep it beside the original media.
+- **Firefox/Safari, Android Chrome or read-only access:** choose **Open read-only**
+  (the `webkitdirectory` file input; browsers without `showDirectoryPicker`, such as
+  Android Chrome, show only **Choose a folder to read**). Browsers word this picker as
+  “Upload N files to this site?”, so Studio says before the picker that files are
+  read on this device and nothing is sent over the network. Only discovered
+  `project.json` files and the relative files each one references (proxy, media,
+  thumbnails, renders) are kept, in memory and in this origin's IndexedDB; every
+  other selected file is only listed by path, never read or stored. `.git`,
+  `node_modules`, `__pycache__` and dot-paths are skipped. After import the shelf
+  shows e.g. “Read 2 project files (3.4 MB) of 3,000 selected; nothing sent over the
+  network.” Older imports that stored every selected file are pruned the next time
+  Studio opens. Keeping referenced media (rather than metadata only) lets a reload
+  play the project without re-picking the folder. Save updates a browser-local copy,
+  never the original files. **Export project.json** downloads the current edited
+  document; keep it beside the original media.
 - Compatible fframes `timeline.txt` plus a master video can be imported after
   confirmation. This is an editorial project, not an execution of source code.
 
@@ -83,7 +94,7 @@ proxy and poster. It runs ffprobe/frame/audio checks and saves a receipt and con
 sheet. A default run writes only `~/.cache/fframestudio/examples/intro`; it never
 writes bridge configuration or your library. Select its **project/** subfolder with
 **Open a folder** / **Open read-only** in Studio, or use the explicit import flag.
-Do not select the build root: it also contains the large master, checkout and caches.
+Selecting the build root also works (only the project and the media it references are kept), but the project subfolder is faster to list.
 The portable package contains only the proxy, poster, document, timeline and notices. The output
 `project.json` uses the app's project/0 → project/1 migration with all 16 real scene
 boundaries and raw upstream audio timing in provenance. No beat grid is fabricated;
