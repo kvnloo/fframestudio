@@ -607,6 +607,14 @@ try {
   });
   await journey('style components: lab preview equals runtime', () => verifyStyleComponents({context:ctx,base,out:OUT,root:ROOT,assert}));
   await verifyHosted({browser,source,out:OUT,root:ROOT,journey,assert});
+  await journey('hosted: X player card and isolated embed', async () => {
+    const evidence=path.join(OUT,'xplayer');
+    const result=spawnSync(process.execPath,['tools/verify-xplayer.mjs'],{cwd:ROOT,env:{...env,FFS_EVIDENCE:evidence},encoding:'utf8',timeout:120000});
+    assert(result.status===0,result.stderr||result.error?.message||'X player qualification failed');
+    const receipt=JSON.parse(fs.readFileSync(path.join(evidence,'report.json'),'utf8'));
+    assert(receipt.ok,'X player report failed');
+    return {checks:receipt.checks,notVerified:receipt.notVerified};
+  });
   await verifyReference({page,base,out:OUT,journey,assert,library:path.join(HOME,'fframestudio/projects')});
   await journey('console clean', async () => { assert(!report.console_errors.length && !report.failed_requests.length, JSON.stringify({ e: report.console_errors, r: report.failed_requests })); });
 } catch (e) {
