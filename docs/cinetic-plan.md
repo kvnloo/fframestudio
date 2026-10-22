@@ -27,7 +27,7 @@ Open the **Component Lab** from the FrameStudio library, select **Import / inspe
 
 Each picked technique stays visible with its original name, role, category and ID. The panel displays the cinetic draw's **seed and format**. A supported creative category offers **Preview related FrameStudio component**: this selects an existing editable style recipe in the lab's screening room and lets you scrub/export it normally. It is explicitly **conceptual-only**, not a reproduction of the named cinetic effect. Unmatched techniques say **Not implemented in FrameStudio**, rather than disappearing.
 
-Invalid, too-large, or unexpected JSON clears previously displayed plan actions. Nothing from the uploaded plan is stored in IndexedDB or written to the film. Full browser tests live in `test/style-components-journey.mjs`, including preview switching, rejection, provenance and empty-state checks.
+Invalid, too-large, or unexpected JSON clears previously displayed plan actions. Nothing from the uploaded plan is stored in IndexedDB or written to the film. Full browser journey assertions in `test/style-components-journey.mjs` cover preview switching, invalid/oversized rejection, seeded provenance, the stale-read race, and active-recipe/JSON synchronization. Empty-file display and IndexedDB non-persistence were manually checked, but are not assertions in that journey.
 
 ## Security and boundaries
 
