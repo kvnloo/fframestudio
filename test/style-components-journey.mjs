@@ -78,6 +78,54 @@ export async function verifyStyleComponents({context,base,out,root,assert,mode='
     assert(parseRecipe(fs.readFileSync(await file.path(),'utf8')).props.action==='Imported action','download lost edits');
     await page.click('#copy-definition');assert(JSON.parse(await page.inputValue('#json')).id==='ui-action-result','definition copy is not a definition');
     await page.click('#json-toggle');
+    // Cinetic picks are reviewed as metadata; no technique code is executed.
+    await page.click('#json-toggle');
+    const plan = { seed:41, format:'launch', energy:'high', category:null, picks:[
+      {id:'tr-velocity-handoff-cut',name:'Velocity handoff cut',category:'transition',role:'workhorse'},
+      {id:'ty-kinetic-type',name:'Kinetic typography',category:'typography_motion',role:'accent'},
+      {id:'ca-orbit-move',name:'Camera orbit',category:'camera',role:'signature'},
+    ] };
+    await page.locator('#cinetic-file').setInputFiles({
+      name:'cinetic-picks.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(plan)),
+    });
+    await page.waitForFunction(()=>document.querySelector('#cinetic-list')?.children.length === 3);
+    assert(await page.locator('#cinetic-status').innerText().then(t=>t.includes('seed 41')),
+      'cinetic plan lost its seeded provenance');
+    assert(await page.locator('.cinetic-unmatched').count()===1,
+      'unsupported cinetic techniques were silently dropped');
+    await page.locator('[data-cinetic-suggest="tr-velocity-handoff-cut"]').click();
+    assert(await page.inputValue('#component')==='foreground-fly-through',
+      'reviewed cinetic plan did not select related style component');
+    assert((await page.locator('#message').innerText()).includes('Conceptual-only'),
+      'cinetic suggestion claims exact technique support');
+    await page.locator('#cinetic-file').setInputFiles({
+      name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{"secret":"bad"}'),
+    });
+    await page.waitForFunction(()=>document.querySelector('#cinetic-status')?.textContent.startsWith('Invalid'));
+    assert(await page.locator('#cinetic-list li').count()===0,
+      'invalid plan retained earlier technique actions');
+    // A preview of the active component keeps its edits and refreshes the open JSON.
+    await page.locator('#cinetic-file').setInputFiles({name:'cinetic-picks.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(plan))});
+    await page.waitForFunction(()=>document.querySelector('#cinetic-list')?.children.length === 3);
+    await page.locator('#primary').fill('Kept cinetic edit');await page.locator('#primary').dispatchEvent('input');
+    await page.locator('[data-cinetic-suggest="tr-velocity-handoff-cut"]').click();
+    assert(await page.inputValue('#primary')==='Kept cinetic edit','same-component cinetic preview discarded take edits');
+    assert(JSON.parse(await page.inputValue('#json')).component==='foreground-fly-through','open JSON panel kept a stale recipe');
+    await page.locator('[data-cinetic-suggest="ty-kinetic-type"]').click();
+    assert(JSON.parse(await page.inputValue('#json')).component==='headline-reveal','open JSON panel kept a stale recipe');
+    // Oversized replacement and an out-of-order slow read leave no earlier actions.
+    await page.locator('#cinetic-file').setInputFiles({name:'big.json',mimeType:'application/json',buffer:Buffer.alloc(131073,32)});
+    await page.waitForFunction(()=>document.querySelector('#cinetic-status')?.textContent.includes('128 KiB'));
+    assert(await page.locator('#cinetic-list li').count()===0,'oversized plan retained earlier technique actions');
+    await page.evaluate(async json=>{
+      const input=document.querySelector('#cinetic-file'),slow=new File([json],'slow.json',{type:'application/json'}),text=slow.text.bind(slow);
+      slow.text=()=>new Promise(resolve=>setTimeout(()=>resolve(text()),200));
+      for(const file of [slow,new File(['{"x":1}'],'bad.json',{type:'application/json'})]){const t=new DataTransfer();t.items.add(file);input.files=t.files;input.dispatchEvent(new Event('change'));}
+      await new Promise(resolve=>setTimeout(resolve,400));
+    },JSON.stringify(plan));
+    assert((await page.locator('#cinetic-status').innerText()).startsWith('Invalid')&&await page.locator('#cinetic-list li').count()===0,
+      'slow earlier plan replaced a newer invalid selection');
+    await page.click('#json-toggle');
     // Keyboard seek and playback must drive the same mounted layers.
     await page.selectOption('#component','headline-reveal');
     await page.locator('#frame').fill('30');await page.locator('#frame').press('ArrowRight');

@@ -302,6 +302,19 @@ textarea{width:100%;
   font:11px ui-monospace,monospace}
 #import{font-size:11px;
   margin-top:8px}
+.cinetic-intake{margin-top:18px;padding:14px;border:1px solid #394333;background:#171f1b;display:grid;gap:10px;min-width:0}
+.cinetic-intake p{font-size:11px;line-height:1.55;color:var(--mute);margin:0;overflow-wrap:anywhere}
+.cinetic-intake code{color:#dfb678}
+.cinetic-intake label{display:grid;gap:6px;font-size:11px;color:#d5ddd1}
+#cinetic-file{font-size:11px;padding:8px;max-width:100%}
+#cinetic-status{color:#a9c7b2;overflow-wrap:anywhere}
+#cinetic-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:8px}
+.cinetic-item{min-width:0;border:1px solid #384437;padding:10px;display:grid;gap:7px;background:#202923;align-content:start}
+.cinetic-item strong{font-size:12px;overflow-wrap:anywhere}
+.cinetic-item small{font-size:10px;line-height:1.5;color:#a9b8ab;overflow-wrap:anywhere}
+.cinetic-item button{font-size:10px;text-align:left;color:#dbf1e1;border-color:#52755d;background:#2b4637;overflow-wrap:anywhere}
+.cinetic-unmatched{font-size:10px;color:#bac2ba}
+.cinetic-credit{font-size:10px}
 footer{display:flex;
   justify-content:space-between;
   gap:20px;
