@@ -6,6 +6,7 @@ import { setThemeSettings, themeInfo, onTheme, shotColorSlot } from './system-th
 import { StudioView, colourSlot, clipKind, timecode, advanceFrame } from './studio.js';
 import { PosterDecoder } from './poster-decoder.js';
 import { proceduralShot, proceduralSource } from './procedural.js';
+import { fframesReviewShell, refreshFframesReview, fframesUpstreamSource } from './fframes-cli.js';
 import { request, mediaURL, isLocal, isCopy, saveCopy, exportProject, preferences as storage } from './host.js';
 const esc = (s) =>
   String(s ?? '').replace(
@@ -208,7 +209,7 @@ export class Editor {
   <section class="inspector-panel panel"><div class="panel-title">Inspector ${button('toggle-inspector', 'Collapse')}</div><div id="inspector"></div></section></div>
   <section class="timeline-panel panel"><div class="panel-title">Timeline <span id="scope" aria-live="polite">Select a clip to edit</span><label>Zoom <input id="zoom" type="range" min="0.5" max="8" step="0.25" value="1"></label><label><input id="snap" type="checkbox" checked> Snap</label></div><div id="timeline"><div id="timeline-space"><div id="beats"></div><div id="lane"></div><div id="playhead"></div></div></div><div class="panel-foot">${button('split', 'Split · S')}${button('duplicate', 'Duplicate')}${button('delete', 'Delete')}<span class="hint">Drag story cards to reorder · drag clip edges to trim · attached layers follow</span></div></section>
   <div class="secondary-grid"><section class="panel"><div class="panel-title">Takes <span>film versions</span></div><div class="version-tools"><input id="version-name" placeholder="Name this version" aria-label="Version name">${button('save-version', 'Save version')}<select id="version-a" aria-label="Version A"></select><select id="version-b" aria-label="Version B"></select>${button('compare', 'Compare')}${button('restore-version', 'Restore A')}</div><pre id="version-diff"></pre></section><section class="panel"><div class="panel-title">Assistant proposals <span>Inspect → Apply → Undo</span></div><div id="proposals">No pending proposal. Ask the assistant for an edit.</div></section></div>
-  <details class="source-panel"><summary>Source & provenance</summary>${proceduralSource(this.doc.metadata, this.doc.metadata?.shots)}${attribution?.author ? `<p>${this.doc.metadata?.example ? 'Example copy' : 'Source'} · ${esc(attribution.author)} · ${esc(attribution.licence)}</p><p>${esc(attribution.credit)}</p>${/^https?:\/\//.test(attribution.source_url) ? `<p><a href="${esc(attribution.source_url)}" target="_blank" rel="noopener noreferrer">Original source ↗</a></p>` : ''}` : ''}<p>${esc(this.doc.metadata?.source?.path || '')}</p><p>${esc((this.doc.metadata?.notes || []).join(' · '))}</p><dl class="kv">${Object.entries(
+  <details class="source-panel"><summary>Source & provenance</summary>${proceduralSource(this.doc.metadata, this.doc.metadata?.shots)}${fframesUpstreamSource(this.doc.metadata)}${attribution?.author ? `<p>${this.doc.metadata?.example ? 'Example copy' : 'Source'} · ${esc(attribution.author)} · ${esc(attribution.licence)}</p><p>${esc(attribution.credit)}</p>${/^https?:\/\//.test(attribution.source_url) ? `<p><a href="${esc(attribution.source_url)}" target="_blank" rel="noopener noreferrer">Original source ↗</a></p>` : ''}` : ''}<p>${esc(this.doc.metadata?.source?.path || '')}</p><p>${esc((this.doc.metadata?.notes || []).join(' · '))}</p><dl class="kv">${Object.entries(
     this.doc.metadata?.docs || {},
   )
     .map(
@@ -686,6 +687,7 @@ export class Editor {
       const range = $('[data-range]', box),
         text = `IN ${timecode(c.start, fpsOf(this.doc))} · ${c.start} f · ${this.doc.fps.num}/${this.doc.fps.den} fps`;
       if (range.textContent !== text) range.textContent = text;
+      refreshFframesReview(box, this.doc, c);
       return;
     }
     box.signature = signature;
@@ -701,7 +703,8 @@ export class Editor {
       )
       .join(
         '',
-      )}</fieldset><details><summary>Media & shared appearance</summary><label>Replace source<select id="replace-media"><option value="">Generated / none</option>${this.doc.media.map((m) => `<option value="${esc(m.id)}" ${m.id === c.mediaId ? 'selected' : ''}>${esc(m.file.split('/').pop())}</option>`).join('')}</select></label><label>Shared style: ${esc(c.styleId)} · affects every instance<input id="style-color" type="color" value="${this.video.styles[c.styleId]?.color || '#ecebe7'}"></label><p class="hint">Source range changes never modify media files.</p></details>`;
+      )}</fieldset><details><summary>Media & shared appearance</summary><label>Replace source<select id="replace-media"><option value="">Generated / none</option>${this.doc.media.map((m) => `<option value="${esc(m.id)}" ${m.id === c.mediaId ? 'selected' : ''}>${esc(m.file.split('/').pop())}</option>`).join('')}</select></label><label>Shared style: ${esc(c.styleId)} · affects every instance<input id="style-color" type="color" value="${this.video.styles[c.styleId]?.color || '#ecebe7'}"></label><p class="hint">Source range changes never modify media files.</p></details>${fframesReviewShell(this.doc)}`;
+    refreshFframesReview(box, this.doc, c);
     const act = (cmd) =>
       this.run(cmd).catch((err) => {
         this.toast(err.message);

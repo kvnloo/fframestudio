@@ -15,6 +15,7 @@ import { createHash } from 'node:crypto';
 import { verifyReference } from './reference-journey.mjs';
 import { verifyHosted } from './hosted-journey.mjs';
 import { verifyProcedural } from './procedural-journey.mjs';
+import { verifyFframesReview } from './fframes-review-journey.mjs';
 import { makeLayoutFixture, verifyLayout } from './layout-journey.mjs';
 import { verifyStyleComponents } from './style-components-journey.mjs';
 import { verifyTaste } from './taste-journey.mjs';
@@ -605,6 +606,7 @@ try {
     try { return await verifyProcedural({page:fixturePage,base,library:path.join(HOME,'fframestudio/projects'),out:OUT,assert}); }
     finally { await fixturePage.close(); }
   });
+  await journey('fframes review: revision-aware CLI recipes follow trims', () => verifyFframesReview({context:ctx,base,out:OUT,library:path.join(HOME,'fframestudio/projects'),assert}));
   await journey('style components: lab preview equals runtime', () => verifyStyleComponents({context:ctx,base,out:OUT,root:ROOT,assert}));
   await verifyHosted({browser,source,out:OUT,root:ROOT,journey,assert});
   await verifyReference({page,base,out:OUT,journey,assert,library:path.join(HOME,'fframestudio/projects')});
