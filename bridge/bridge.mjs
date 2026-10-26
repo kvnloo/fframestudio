@@ -26,6 +26,7 @@ import { watchTheme, detectTheme } from './system-theme.mjs';
 import { agentWebAdapter } from './taste.mjs';
 import { GenerationQueue } from './generation/queue.mjs';
 import { providers as generationProviders } from './generation/providers.mjs';
+import { renderProject } from './render.mjs';
 import { parseSocialReferences, MAX_SOCIAL_REFERENCES_BYTES } from '../web/src/taste/social-references.js';
 
 const VERSION = '0.1.0';
@@ -129,6 +130,7 @@ await generation.ready;
 const shutdown = async () => { theme.close(); stopReferenceHelpers(); await generation.close(); process.exit(0); };
 process.once('SIGTERM', shutdown);
 process.once('SIGINT', shutdown);
+let rendering = false;
 const handleReference = referenceAPI({ root: ROOT, safePath: fsPath, send });
 const server = http.createServer(async (req, res) => {
   cors(req, res);
@@ -210,6 +212,16 @@ const server = http.createServer(async (req, res) => {
       const tmp=p+'.ffs-'+randomBytes(6).toString('hex');
       try{fs.writeFileSync(tmp,b,{flag:NOFOLLOW_WRITE|fs.constants.O_EXCL});fs.renameSync(tmp,p);}catch(e){try{fs.unlinkSync(tmp);}catch{}return send(res,500,{error:e.message});}
       publish('change',path.relative(ROOT,p));return send(res, 200, { ok: true, absolute: p }); }
+  }
+  if (u.pathname === '/render' && req.method === 'POST') { // render the saved project.json to projects/<id>/renders/*.mp4
+    if (rendering) return send(res, 409, { error: 'a render is already running' });
+    rendering = true;
+    const projectId = u.searchParams.get('project') || '', videoId = u.searchParams.get('video') || undefined;
+    try {
+      const r = await renderProject({ root: ROOT, projectId, videoId, onProgress: (p) => { const msg = `data: ${JSON.stringify({ type: 'render', projectId, ...p })}\n\n`; watchers.forEach((w) => w.write(msg)); } });
+      log('rendered', path.relative(ROOT, r.file));
+      return send(res, 200, { ok: true, path: path.relative(ROOT, r.file), url: '/lib/' + path.relative(LIBDIR, r.file).split(path.sep).map(encodeURIComponent).join('/'), frames: r.frames, seconds: r.seconds, clips: r.clips.length });
+    } catch (e) { return send(res, 400, { error: e.message }); } finally { rendering = false; }
   }
   if (u.pathname === '/events') { res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' }); res.write(': ok\n\n'); res.write(`event: theme\ndata: ${JSON.stringify(theme.state)}\n\n`); watchers.add(res); req.on('close', () => watchers.delete(res)); return; }
   send(res, 404, { error: 'not found' });
