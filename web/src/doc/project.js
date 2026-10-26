@@ -15,9 +15,19 @@ export const fpsOf = (d) => d.fps.num / d.fps.den;
 export const frames = (seconds, fps) =>
   Math.round((seconds * fps.num) / fps.den);
 export const textOf = (c) => ({ ...c.text, ...c.textOverrides });
-/** The still the preview shows for clip `c` (a path relative to the project, or null). */
+/** The clip's own picture: its thumbnail, else its source when that source is an image. */
+export function clipImage(doc, c) {
+  if (c.thumb) return c.thumb;
+  const own = doc.media.find((m) => m.id === c.mediaId);
+  return own?.kind === 'image' ? own.file : null;
+}
+/**
+ * The still the preview shows for clip `c` (a path relative to the project, or null).
+ * The project poster is only for clips without a picture of their own; using it first made
+ * every scene of an image storyboard show the same page.
+ */
 export function clipStill(doc, c) {
-  return c.thumb || doc.preview?.poster || null;
+  return clipImage(doc, c) || doc.preview?.poster || null;
 }
 /** True when the preview plays the imported master proxy for `c` instead of showing a still. */
 export const playsProxy = (doc, c) =>
