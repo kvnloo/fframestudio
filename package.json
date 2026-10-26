@@ -16,7 +16,7 @@
     "test:acp": "node test/acp-e2e.mjs",
     "setup": "bash scripts/setup.sh",
     "doctor": "bash scripts/setup.sh --check",
-    "test": "node --test test/generation/*.test.mjs test/doc/*.test.mjs test/theme/*.test.mjs test/hosted/*.test.mjs && npm run --silent test:procedural && node test/acp-e2e.mjs",
+    "test": "node --test test/generation/*.test.mjs test/doc/*.test.mjs test/theme/*.test.mjs test/hosted/*.test.mjs && npm run --silent test:procedural && npm run --silent test:scene-frames && node test/acp-e2e.mjs",
     "test:agents": "node test/acp-e2e.mjs claude codex hermes --edit claude",
     "import": "python3 tools/import_projects.py",
     "demo": "python3 tools/make_demo.py",
@@ -25,7 +25,8 @@
     "test:editor": "node tools/verify-editor.mjs",
     "test:editor-acp": "node tools/verify-editor.mjs --acp",
     "test:perf": "node --test --test-concurrency=1 test/perf/*.test.mjs && node tools/verify-editor.mjs --synthetic --perf",
-    "test:procedural": "python3 -m unittest discover -s test -p 'test_procedural_fframes.py'"
+    "test:procedural": "python3 -m unittest discover -s test -p 'test_procedural_fframes.py'",
+    "test:scene-frames": "python3 -m unittest discover -s test -p 'test_scene_frames.py'"
   },
   "devDependencies": {
     "@agentclientprotocol/sdk": "1.9.0",

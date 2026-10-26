@@ -25,8 +25,11 @@ In the o8 storyboard of 2026-10-25, every scene also showed the same page.
    Copy the structure of an existing fframes project in the library. Do not start from an
    empty file.
 2. **Render, then check.** Run `cargo run --release -- inspect`. Write
-   `cargo run --release -- timeline > logs/timeline.txt`, a master render, and a contact
-   strip (`strip`). Look at the contact strip: each scene must look different.
+   `cargo run --release -- timeline > logs/timeline.txt` and a master render. Then run
+   `python3 tools/check_scene_frames.py target/release/<crate> --out <dir>`. It samples two
+   frames inside every scene, fails if a scene is not reached or if two scenes render the same
+   page, and writes `contact.png`. Look at the contact sheet as an animator would: fix anything
+   mechanical, cramped, rushed or unclear, then run the check again.
 3. **Import it into the user's library.** Add one entry to
    `~/.config/fframestudio/sources.json`. Use `kind: "fframes"`, `path`, `render` and
    `timeline`. Then run `npm run import -- <id>`. The importer only reads sources. It writes
