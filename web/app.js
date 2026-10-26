@@ -9,7 +9,7 @@ import * as host from '/app/src/host.js';
 import { actionManifest, action as studioAction } from '/app/src/actions.js';
 let libraryReference;
 import { preferences as storage } from '/app/src/host.js';
-const bridgeApi=()=>({read:host.read,agents:()=>host.request('/agents').then(r=>r.json()),events:fn=>host.events(fn,receiveTheme)});
+const bridgeApi=()=>({read:host.read,render:async(project,video)=>{const r=await host.request('/render?project='+encodeURIComponent(project)+(video?'&video='+encodeURIComponent(video):''),{method:'POST'});const b=await r.json().catch(()=>({}));if(!r.ok)throw Error('Render failed: '+(b.error||r.status));return b;},agents:()=>host.request('/agents').then(r=>r.json()),events:fn=>host.events(fn,receiveTheme)});
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];

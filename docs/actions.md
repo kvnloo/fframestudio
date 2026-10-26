@@ -98,8 +98,19 @@ opaque source effects became separate layers. Unsupported semantics are recorded
 **Compare reference** exposes the original and current source-mapped reconstruction at shared
 project time, plus the same editable text/look tokens. Scrubbing seeks both players and the
 editor. After trim/reorder the original retains original time while the reconstruction follows
-edited source ranges. Continuous dual-player playback and a qualified final render/export are
-not implemented here. Ordinary project Save/reopen and undo remain available.
+edited source ranges. Continuous dual-player playback is not implemented here. Ordinary project
+Save/reopen and undo remain available.
+
+## Export video
+
+**Export video** saves the document, then asks the bridge (`POST /render?project=ID[&video=ID]`)
+to render the saved `project.json` with ffmpeg into `projects/<id>/renders/<id>-r<revision>-<time>.mp4`
+plus a `.render.json` sidecar. The render follows story order, each clip's `sourceIn`, `duration`
+and `speed`; gaps and clips without media are black, image clips hold their image. Text is not
+composited: films imported from an fframes render carry their titles in the picture, and clips
+with studio text edits are listed in the sidecar under `textNotBurnedIn`. The same code runs from
+the shell: `node tools/render-project.mjs --project ID [--root DIR] [--out FILE]`. Hosted and
+example-copy projects have no bridge and cannot render.
 
 ## Speech and privacy
 

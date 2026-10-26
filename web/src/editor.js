@@ -1188,9 +1188,16 @@ export class Editor {
     if (a === 'save-copy') { try { await saveCopy(this.doc); this.toast('Copy saved to your projects folder'); } catch(error) { this.toast(error.message); } return; }
     if (a === 'export-project') { exportProject(this.doc.id, await this.rpc('serialize', this.doc)); return; }
     if (a === 'export') {
-      this.toast(
-        isLocal() ? 'Video export needs the local bridge. Export project.json to keep your edits.' : 'Video export unavailable: compositing engine is not qualified. Your project can be saved.',
-      );
+      if (isLocal() || isCopy(this.doc.id) || !this.api.render) { this.toast('Video export needs the local bridge. Export project.json to keep your edits.'); return; }
+      if (this.dirty) { await this.save(); if (this.dirty) { this.toast('Save failed; nothing rendered'); return; } }
+      $('#save-status').textContent = 'Rendering video…';
+      try {
+        const r = await this.api.render(this.doc.id, this.videoId);
+        const st = $('#save-status'); st.textContent = `Rendered ${r.seconds.toFixed(2)} s · `;
+        const link = document.createElement('a'); link.href = r.url; link.target = '_blank'; link.rel = 'noopener'; link.id = 'render-result'; link.textContent = r.path.split('/').pop(); st.append(link);
+        this.toast(`Video rendered: ${r.path}`);
+        this.lastRender = r;
+      } catch (error) { $('#save-status').textContent = 'Render failed'; this.toast(error.message); }
       return;
     }
     if (a === 'reload-external') {
