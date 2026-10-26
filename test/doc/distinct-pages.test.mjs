@@ -38,3 +38,12 @@ test('duplicateStills names scenes that would show the same page', () => {
   for (const c of doc.videos[0].clips) c.mediaId = null; // nothing of their own: all fall back
   assert.deepEqual(duplicateStills(doc), [['S01', 'S02', 'S03']]);
 });
+
+test('scenes that share a poster but carry different words are different pages', () => {
+  const doc = storyboard(2);
+  const [a, b] = doc.videos[0].clips;
+  a.mediaId = b.mediaId = null;
+  a.text = { title: 'One' };
+  b.text = { title: 'Two' };
+  assert.deepEqual(duplicateStills(doc), []);
+});

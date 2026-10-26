@@ -33,7 +33,7 @@ export function clipStill(doc, c) {
 export const playsProxy = (doc, c) =>
   !!doc.preview?.proxy && !!c.mediaId && c.mediaId === doc.media[0]?.id;
 /**
- * Groups of clip IDs (per video) whose preview would be the same still page. A storyboard
+ * Groups of clip IDs (per video) whose preview would be the same page: same still, same words. A storyboard
  * with distinct scenes must return []; anything else is the "every page is the same" bug.
  */
 export function duplicateStills(doc) {
@@ -43,7 +43,9 @@ export function duplicateStills(doc) {
     for (const c of video.clips) {
       const still = clipStill(doc, c);
       if (!still || playsProxy(doc, c)) continue;
-      byStill.set(still, [...(byStill.get(still) || []), c.id]);
+      // A page is the still plus the words drawn over it.
+      const page = JSON.stringify([still, textOf(c)]);
+      byStill.set(page, [...(byStill.get(page) || []), c.id]);
     }
     for (const ids of byStill.values()) if (ids.length > 1) groups.push(ids);
   }

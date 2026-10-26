@@ -60,7 +60,7 @@ def identical_pairs(thumbs, min_diff):
 def grey(path):
     from PIL import Image
     with Image.open(path) as im:
-        return list(im.convert("L").resize(THUMB).getdata())
+        return list(im.convert("L").resize(THUMB).tobytes())
 
 
 def main(argv=None):
