@@ -1,5 +1,5 @@
 import { ACTIONS, action as studioAction } from './actions.js';
-import { fpsOf, textOf, uid, rational } from './doc/project.js';
+import { fpsOf, textOf, uid, rational, clipStill, clipImage } from './doc/project.js';
 import { scope, COMMANDS, CommandStore, proposalCommand, recoveryCommand } from './doc/commands.js';
 import { RecoveryJournal, fileHash } from './doc/journal.js';
 import { setThemeSettings, themeInfo, onTheme, shotColorSlot } from './system-theme.js';
@@ -422,7 +422,8 @@ export class Editor {
     });
   }
   thumb(c, poster = false) {
-    const image = c.thumb ? `<canvas width="160" height="90" data-thumb="${esc(this.url(c.thumb))}" aria-label="Clip thumbnail"></canvas>` : '';
+    const own = clipImage(this.doc, c);
+    const image = own ? `<canvas width="160" height="90" data-thumb="${esc(this.url(own))}" aria-label="Clip thumbnail"></canvas>` : '';
     if (!poster) return image || '<span class="thumb-empty"></span>';
     const media = this.doc.media.find(m => m.id === c.mediaId && m.kind === 'video');
     const video = media?.file || this.doc.preview.proxy || this.doc.metadata?.renders?.[0]?.file;
@@ -567,6 +568,7 @@ export class Editor {
       const sig = JSON.stringify([
         c.name,
         c.thumb,
+        c.mediaId,
         c.attached,
         c.beatLock,
         this.scale,
@@ -840,7 +842,7 @@ export class Editor {
       $('#preview-text').style.fontFamily = fontFamily === 'IBM Plex Mono' ? 'Plex Mono' : fontFamily || '';
       $('#canvas').dataset.customInk = String(!!colour && colour !== '#ecebe7');
       const still = $('#preview-still'),
-        src = c.thumb || this.doc.preview.poster;
+        src = clipStill(this.doc, c);
       still.style.display = src ? 'block' : 'none';
       if (src && this.previewThumb !== src) {
         this.previewThumb = src;
