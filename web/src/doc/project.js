@@ -19,6 +19,26 @@ export const textOf = (c) => ({ ...c.text, ...c.textOverrides });
 export function clipStill(doc, c) {
   return c.thumb || doc.preview?.poster || null;
 }
+/** True when the preview plays the imported master proxy for `c` instead of showing a still. */
+export const playsProxy = (doc, c) =>
+  !!doc.preview?.proxy && !!c.mediaId && c.mediaId === doc.media[0]?.id;
+/**
+ * Groups of clip IDs (per video) whose preview would be the same still page. A storyboard
+ * with distinct scenes must return []; anything else is the "every page is the same" bug.
+ */
+export function duplicateStills(doc) {
+  const groups = [];
+  for (const video of doc.videos) {
+    const byStill = new Map();
+    for (const c of video.clips) {
+      const still = clipStill(doc, c);
+      if (!still || playsProxy(doc, c)) continue;
+      byStill.set(still, [...(byStill.get(still) || []), c.id]);
+    }
+    for (const ids of byStill.values()) if (ids.length > 1) groups.push(ids);
+  }
+  return groups;
+}
 export function reflow(video) {
   let start = 0;
   for (const c of video.clips) {
