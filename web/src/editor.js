@@ -1,5 +1,5 @@
 import { ACTIONS, action as studioAction } from './actions.js';
-import { fpsOf, textOf, uid, rational } from './doc/project.js';
+import { fpsOf, textOf, uid, rational, clipStill } from './doc/project.js';
 import { scope, COMMANDS, CommandStore, proposalCommand, recoveryCommand } from './doc/commands.js';
 import { RecoveryJournal, fileHash } from './doc/journal.js';
 import { setThemeSettings, themeInfo, onTheme, shotColorSlot } from './system-theme.js';
@@ -840,7 +840,7 @@ export class Editor {
       $('#preview-text').style.fontFamily = fontFamily === 'IBM Plex Mono' ? 'Plex Mono' : fontFamily || '';
       $('#canvas').dataset.customInk = String(!!colour && colour !== '#ecebe7');
       const still = $('#preview-still'),
-        src = c.thumb || this.doc.preview.poster;
+        src = clipStill(this.doc, c);
       still.style.display = src ? 'block' : 'none';
       if (src && this.previewThumb !== src) {
         this.previewThumb = src;

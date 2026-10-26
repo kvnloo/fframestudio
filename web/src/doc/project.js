@@ -15,6 +15,10 @@ export const fpsOf = (d) => d.fps.num / d.fps.den;
 export const frames = (seconds, fps) =>
   Math.round((seconds * fps.num) / fps.den);
 export const textOf = (c) => ({ ...c.text, ...c.textOverrides });
+/** The still the preview shows for clip `c` (a path relative to the project, or null). */
+export function clipStill(doc, c) {
+  return c.thumb || doc.preview?.poster || null;
+}
 export function reflow(video) {
   let start = 0;
   for (const c of video.clips) {
