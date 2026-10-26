@@ -74,7 +74,7 @@ export function plan(doc, projectDir, { videoId, probeFile = probe } = {}) {
   graph.push(`${labels.join('')}concat=n=${segs.length}:v=1:a=${withAudio ? 1 : 0}${withAudio ? '[v][a]' : '[v]'}`);
   args.push('-filter_complex', graph.join(';'), '-map', '[v]');
   if (withAudio) args.push('-map', '[a]', '-c:a', 'aac', '-b:a', '192k');
-  args.push('-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(fps), '-movflags', '+faststart');
+  args.push('-threads', '6', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(fps), '-movflags', '+faststart');
   const frames = segs.reduce((n, s) => n + s.frames, 0);
   return { video, fps, frames, segs, args, withAudio };
 }
