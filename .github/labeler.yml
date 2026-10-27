@@ -1,7 +1,7 @@
 area:docs:
   - changed-files:
     - any-glob-to-any-file:
-      - 'docs/**/*'
+      - 'docs/**'
       - '*.md'
       - 'AGENTS.md'
       - 'README.md'
@@ -9,7 +9,8 @@ area:docs:
 
 area:loop:
   - changed-files:
-    - any-glob-to-any-file: '.github/**/*'
+    - any-glob-to-any-file:
+      - '.github/**/*'
 
 area:verify:
   - changed-files:
