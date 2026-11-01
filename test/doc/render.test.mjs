@@ -69,6 +69,8 @@ test('audio attachments fail closed before any probe, for v1 and migrated v0', (
   d.media[0].kind = 'image'; d.media.push({ id: 'tone', kind: 'audio', file: 'tone.wav' });
   const old = legacy(); old.music = { file: 'tone.wav' };
   for (const input of [d, old]) assert.throws(() => plan(input, dir, { probeFile: () => assert.fail('audio must fail before probing') }), /unsupported audio attachment/i);
+  d.videos[0].clips[0].attached[0].kind = 'video';
+  assert.throws(() => plan(d, dir, { probeFile: () => assert.fail('audio media reference must fail before probing') }), /unsupported audio attachment/i);
 });
 
 test('project and relative media paths cannot escape through traversal or symlinks', async (t) => {
@@ -133,6 +135,7 @@ test('real saved v0 and edited v1 exports retain frame counts and embedded audio
     assert.ok(peak > 0.01, 'exported tone must decode to non-silent samples');
     const meta = JSON.parse(fs.readFileSync(r.sidecar, 'utf8'));
     assert.equal(meta.revision, d.revision ?? 0);
+    assert.deepEqual(meta.clips.map(c => c.clipId), ['a', 'b']);
     assert.deepEqual(meta.textNotBurnedIn, d.revision ? ['b'] : []);
     assert.equal(fs.readFileSync(path.join(dir, 'project.json'), 'utf8'), saved);
   }
