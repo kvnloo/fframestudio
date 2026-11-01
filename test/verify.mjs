@@ -397,6 +397,27 @@ try {
     await page.click('[data-action="loop-film"]');
     await page.click('[data-action="mute"]');
     assert(await page.locator('#preview-video').evaluate(v => !v.muted), 'Mute did not unmute source audio');
+    await page.evaluate(() => window.ffs.seek(0));
+    await page.click('[data-action="play"]');
+    await page.waitForFunction(() => document.querySelector('#preview-video').currentTime > 0.2);
+    const frozen = await page.evaluate(() => {
+      const video = document.querySelector('#preview-video');
+      const time = video.currentTime;
+      window.clockCorrections = 0;
+      // Freeze the observed media clock to simulate an audio startup/rebuffer
+      // wait without the player legitimately restarting an explicitly paused video.
+      Object.defineProperty(video, 'currentTime', { configurable: true,
+        get: () => time, set: () => window.clockCorrections++ });
+      const e = window.ffs, c = e.previewClock;
+      return c.start + (time * e.doc.fps.num / e.doc.fps.den - c.sourceIn) * c.speed.den / c.speed.num;
+    });
+    await page.waitForTimeout(400);
+    assert(await page.evaluate(frame => Math.abs(window.ffs.frame - frame) < 1, frozen), 'Audible proxy wait advanced the timeline into corrective seeks');
+    assert(await page.evaluate(() => window.clockCorrections === 0), 'Frozen media clock caused correction seeks');
+    await page.locator('#preview-video').evaluate(v => { delete v.currentTime; });
+    await page.waitForFunction(frame => window.ffs.frame > frame + 3, frozen);
+    await page.click('[data-action="pause"]');
+    await page.waitForFunction(() => document.querySelector('#preview-video').paused);
     await page.click('[data-action="mute"]');
     await page.click('[data-action="screening"]');
     await page.waitForFunction(() => document.fullscreenElement?.id === 'canvas');
