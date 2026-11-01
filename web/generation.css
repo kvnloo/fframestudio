@@ -14,5 +14,9 @@
 .gen-actions { display:flex; gap:6px; flex-wrap:wrap; margin:12px 0; }
 .gen-card details { font-size:11px; }
 .gen-card pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:240px; overflow:auto; }
+.gen-reference { display:grid; gap:8px; justify-items:start; }
+.gen-reference img { width:100%; max-width:320px; height:auto; border-radius:5px; border:1px solid var(--line); background:#101010; }
+.gen-from { display:flex; align-items:center; gap:8px; }
+.gen-from img { border-radius:3px; flex:none; }
 #gen-status { font-size:12px; line-height:1.6; }
 @media (max-width:600px) { .gen-actions .pill, .gen-form .pill, #gen-probe { min-height:44px; } }

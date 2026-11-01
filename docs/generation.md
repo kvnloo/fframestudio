@@ -4,8 +4,9 @@
 
 The provider/queue contract and Studio workflow are implemented and exercised with
 an explicitly labelled **fake test-pattern provider**. The offline LTX worker is
-experimental: **12 GB fit, real-model latency and visual quality are not yet
-qualified**. Do not interpret a fake-provider pass or an installed CUDA runtime as
+experimental: one short low-res t2v and one i2v clip have run for real on the shared
+12 GB GPU (measurements below); full-size fit, longer clips and visual quality are
+**not yet qualified**. Do not interpret a fake-provider pass or an installed CUDA runtime as
 a real generation benchmark. The [qualification receipt](evidence/generation-first-slices.json)
 retains the executed gates, including failed timing/performance runs and the busy-GPU skip.
 
@@ -66,10 +67,41 @@ An adapter implements:
 Availability is probed at the authenticated endpoint and again before local
 execution, not inferred from a model catalogue or free marketing tier. Capability
 responses contain public metadata only. Settings are allowlisted: providerId,
-projectId, prompt, seed, duration, width, height, fps. User-supplied URLs, executable
-paths, output paths, reference files, credential fields and unknown keys are
-rejected. The pilot advertises **t2v only** even though upstream LTX supports i2v;
-playhead capture/reference conditioning is deferred rather than silently ignored.
+projectId, prompt, seed, duration, width, height, fps, mode, reference. User-supplied
+URLs, executable paths, output paths, image bytes inside settings, credential fields
+and unknown keys are rejected.
+
+### Image-to-video from the playhead
+
+`mode` is `t2v` (default; old journals without `mode` stay valid) or `i2v`. The bridge
+accepts `i2v` **only when the provider's capability `modes` includes `i2v`**
+(`unsupported-mode` otherwise); the Generate panel disables "From playhead frame" for
+such providers instead of silently ignoring the reference. The fake test provider
+advertises both; `local-ltx` advertises i2v after one real i2v run on this host
+(480×480, see below). The browser journey exercises capture/upload/insert with the
+fake provider only.
+
+1. **Capture** reads the clip under the playhead from the document, not the preview
+   element. Own media maps through `sourceIn + (frame - start) * speed`; a master proxy
+   uses timeline frames, mirroring poster mapping. The existing detached, paused poster
+   decoder (serialized with poster work) seeks a quarter-frame into that source frame;
+   the thumbnail worker cover-crops it to the selected resolution and encodes PNG off
+   the UI thread. The playing preview is never seeked.
+2. **Upload** `POST /generation/references?projectId=<id>` (`Content-Type: image/png`,
+   ≤ 8 MiB, same token/Origin checks). The bridge checks PNG signature and IHDR size
+   (32–4096 px), decodes it fully with FFmpeg, then publishes
+   `projects/<id>/media/generated/references/<uuid>.png` with a no-overwrite link.
+   Response: `{ id, file, width, height, bytes, sha256 }`; no absolute path.
+3. **Submit** `{ ..., mode: 'i2v', reference: { id, videoId, clipId, clipName,
+   mediaId, frame, sourceTime } }`. The bridge resolves the file itself (lstat-checked
+   path), requires its dimensions to equal the requested resolution
+   (`reference-mismatch`), and records its SHA-256 in the job. Immediately before the
+   worker runs it re-hashes; changed bytes fail the job as `unknown-reference`.
+   Retry and New variation reuse the stored reference.
+4. **Provenance**: job and `result.json` gain `mode` and `reference` (file, hash,
+   dimensions, source clip/media/video, timeline frame, source seconds). Insert embeds
+   this in `media.generation`; it stays the same single undoable `import-generated`
+   transaction. Undo never deletes the generated clip or the reference PNG.
 
 ### HTTP / events
 
@@ -134,19 +166,42 @@ FFS_GEN_SMOKE_DIR="$SMOKE_DIR" npm run gen:smoke
 
 Downloads are explicit and pinned to Hugging Face revision
 `8984fa25007f376c1a299016d0957a37a2f797bb` of `Lightricks/LTX-Video`, checkpoint
-`ltxv-2b-0.9.6-distilled-04-25.safetensors`. Generation is offline-only after setup.
+`ltxv-2b-0.9.6-distilled-04-25.safetensors`. That checkpoint uses the 0.9.5 VAE and
+scheduler layout, so `prepare-generation.py` also fetches four small JSON configs from
+`Lightricks/LTX-Video-0.9.5` at `e58e28c39631af4d1468ee57a853764e11c1d37e` into
+`config-0.9.5/` (the 0.9.0 base config fails: decoder 512 vs 1024 channels). T5 is
+loaded from `base/text_encoder` because the single-file checkpoint has no T5 weights. Generation is offline-only after setup.
 No runtime web dependency is added. CUDA visibility is the first NVIDIA device;
-the pilot requires at least **9216 MiB free** and checks again in the worker.
+the pilot requires at least **9216 MiB free** (nvidia-smi) and checks again in the
+worker, allowing 512 MiB for the worker's own CUDA context (measured: 9309 MiB free
+in nvidia-smi read as 9053 MiB in torch after context creation; without the allowance
+every admitted run failed as busy).
 Busy/no-GPU/missing optional install cleanly skips `gen:smoke`; an attempted model
 inference or validation failure exits nonzero. It never falls back to fake output.
 
 Low-memory preset: bf16, CPU T5 prompt encoding, release text encoder, model CPU
-offload, tiled VAE, eight distilled timesteps, guidance=1, deterministic seed.
+offload, tiled VAE, eight uniform steps (diffusers 0.35 `LTXPipeline` derives its own
+sigmas and rejects a custom timestep list), guidance=1, deterministic seed.
 Bit-exact reproducibility across GPU/software versions is not promised. A real
 run writes latency (load + encoding + denoise + decode + encode), PyTorch peak
 allocated/reserved MiB, GPU/runtime versions and frame count to `result.metrics.json`.
 Smoke emits a validated clip and a 2×2 contact sheet; inspect the sheet before
-claiming visual qualification. This is **not yet a measured 12 GB preset**.
+claiming visual qualification. Optional smoke overrides: `FFS_GEN_SMOKE_SIZE=480x480`,
+`FFS_GEN_SMOKE_SECONDS=2`, `FFS_GEN_SMOKE_REFERENCE=<png at that size>` (real i2v).
+
+### First real measurements (2026-10-20, RTX 3080 Ti shared, one run each)
+
+[Receipt](evidence/generation-i2v-real-clip.json), including every failed attempt.
+
+| Mode | Size / frames | Worker latency | CPU prompt encode | Denoise + decode | Peak VRAM (torch alloc / nvidia-smi process) |
+| --- | --- | --- | --- | --- | --- |
+| t2v | 480×480 / 49 @ 24 fps | 130 s | 91 s | 34 s | 3779 / 4624 MiB |
+| i2v | 480×480 / 49 @ 24 fps | 170 s | 89 s | 77 s | 6253 / 7108 MiB |
+
+Both clips passed queue validation and were viewed: coherent subject, little motion.
+CPU T5 encoding dominates and depends on free host RAM (one swap-bound run spent
+~17 minutes there). 704×480 and 3–5 s remain **unmeasured**; the 9216 MiB admission
+threshold is unchanged.
 
 ## Licence and provider research
 

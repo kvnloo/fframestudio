@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
-import { GenerationQueue, safePath, settingsFor } from '../../bridge/generation/queue.mjs';
-import { LTX, providers, validateCapability } from '../../bridge/generation/providers.mjs';
+import { GenerationQueue, safePath, settingsFor, referenceFor, pngSize } from '../../bridge/generation/queue.mjs';
+import { LTX, providers, runProcess, validateCapability } from '../../bridge/generation/providers.mjs';
 import { CommandStore } from '../../web/src/doc/commands.js';
 import { fromV0, validate } from '../../web/src/doc/project.js';
 import { generatedCommand } from '../../web/src/generation.js';
@@ -119,4 +120,62 @@ test('provider exception credentials never enter events or journal', async t => 
   const j = await q.submit(settings()); await done(q, j.id);
   const serialized = JSON.stringify(events) + await fs.readFile(path.join(root, '.generation/jobs', j.id + '.json'));
   assert.equal(serialized.includes(secret), false);
+});
+// Image-to-video from a captured playhead frame (fake provider: holds the frame; not AI).
+const png = async (root, w = 704, h = 480) => {
+  const file = path.join(root, `ref-${w}x${h}.png`);
+  await runProcess('ffmpeg', ['-v', 'error', '-f', 'lavfi', '-i', `color=c=0x2a9d8f:s=${w}x${h}`, '-frames:v', '1', '-y', file], { timeout: 15000 });
+  return fs.readFile(file);
+};
+const source = id => ({ id, videoId: 'v1', clipId: 'clip-a', clipName: 'Opening', mediaId: null, frame: 12, sourceTime: 0.4 });
+test('i2v is schema-gated: only providers advertising i2v accept a reference', () => {
+  const id = crypto.randomUUID(), fake = { ...LTX, id: 'fake', modes: ['t2v', 'i2v'] };
+  assert.throws(() => settingsFor(settings({ mode: 'i2v', reference: source(id) }), { ...LTX, id: 'fake', modes: ['t2v'] }), /unsupported-mode/);
+  assert.equal(settingsFor(settings(), fake).mode, 't2v');
+  const ok = settingsFor(settings({ mode: 'i2v', reference: source(id) }), fake);
+  assert.equal(ok.mode, 'i2v'); assert.deepEqual(ok.reference, source(id));
+  for (const reference of [undefined, { ...source(id), path: '/etc/passwd' }, { ...source(id), id: '../x' }, { ...source(id), url: 'https://x' }, { ...source(id), frame: -1 }, { ...source(id), sourceTime: NaN }, { ...source(id), clipId: '../c' }])
+    assert.throws(() => settingsFor(settings({ mode: 'i2v', reference }), fake), /invalid-reference/);
+  assert.throws(() => settingsFor(settings({ reference: source(id) }), fake), /invalid-reference/);
+  assert.throws(() => settingsFor(settings({ mode: 'v2v' }), fake), /invalid-settings/);
+  assert.equal(referenceFor(source(id)).clipName, 'Opening');
+  assert.throws(() => pngSize(Buffer.from('GIF89a not a png at all, definitely not')), /invalid-reference/);
+});
+test('reference store: PNG only, server-named, no overwrite; i2v job records provenance and retry reuses it', async t => {
+  const { root, q, events } = await world(t);
+  await assert.rejects(q.addReference('p', Buffer.from('not an image')), /invalid-reference/);
+  await assert.rejects(q.addReference('../p', await png(root)), /invalid-settings/);
+  await assert.rejects(q.addReference('missing', await png(root)), /unknown-project/);
+  const bytes = await png(root), ref = await q.addReference('p', bytes);
+  assert.match(ref.file, /^media\/generated\/references\/[0-9a-f-]{36}\.png$/); assert.equal(ref.width, 704); assert.equal(ref.height, 480);
+  assert.deepEqual(await fs.readFile(path.join(root, 'projects/p', ref.file)), bytes);
+  assert.equal((await fs.readdir(path.join(root, 'projects/p/media/generated/references'))).length, 1, 'temp file left behind');
+  await assert.rejects(q.submit(settings({ mode: 'i2v', reference: source(crypto.randomUUID()) })), /unknown-reference/);
+  const small = await q.addReference('p', await png(root, 480, 480));
+  await assert.rejects(q.submit(settings({ mode: 'i2v', reference: source(small.id) })), /reference-mismatch/);
+  const j = await q.submit(settings({ mode: 'i2v', reference: source(ref.id) }));
+  assert.equal(j.mode, 'i2v'); assert.equal(j.reference.sha256, ref.sha256); assert.equal(j.reference.frame, 12);
+  const completed = await done(q, j.id); assert.equal(completed.state, 'done');
+  const sidecar = JSON.parse(await fs.readFile(path.join(root, 'projects/p', completed.result.sidecar)));
+  assert.equal(sidecar.mode, 'i2v'); assert.equal(sidecar.reference.file, ref.file); assert.equal(sidecar.reference.clipId, 'clip-a');
+  assert.equal(sidecar.reference.sourceTime, 0.4); assert.equal(sidecar.reference.sha256, ref.sha256);
+  // Fake i2v holds the reference frame: the decoded 1 s frame is the teal fill, not testsrc2.
+  const [r, g, b] = execFileSync('ffmpeg', ['-v', 'error', '-ss', '1', '-i', path.join(root, 'projects/p', completed.result.file), '-frames:v', '1', '-vf', 'scale=1:1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-']);
+  assert.ok(Math.abs(r - 0x2a) < 12 && Math.abs(g - 0x9d) < 12 && Math.abs(b - 0x8f) < 12, `reference not used: ${r},${g},${b}`);
+  // Insert carries reference provenance and is one undoable transaction.
+  const store = new CommandStore(fixture()), original = structuredClone(store.doc);
+  store.apply(generatedCommand(completed, store.doc, store.doc.videos[0].id));
+  assert.equal(store.doc.media[0].generation.reference.frame, 12); validate(JSON.parse(JSON.stringify(store.doc)));
+  store.undo(); assert.deepEqual({ ...store.doc, revision: 0 }, original);
+  const cancelled = await q.cancel((await q.submit(settings({ mode: 'i2v', reference: source(ref.id) }))).id);
+  const retry = await q.retry(cancelled.id);
+  assert.equal(retry.reference.id, ref.id); assert.equal(retry.reference.sha256, ref.sha256); assert.equal((await done(q, retry.id)).state, 'done');
+  // A reference changed after submission fails the job instead of conditioning on other bytes.
+  const front = await q.submit(settings({ seed: 8 }));
+  const swapped = await q.submit(settings({ mode: 'i2v', reference: source(ref.id), seed: 9 }));
+  await fs.writeFile(path.join(root, 'projects/p', ref.file), await png(root, 704, 480).then(() => execFileSync('ffmpeg', ['-v', 'error', '-f', 'lavfi', '-i', 'color=c=red:s=704x480', '-frames:v', '1', '-f', 'image2pipe', '-c:v', 'png', '-'])));
+  assert.equal((await done(q, front.id)).state, 'done');
+  const failed = await done(q, swapped.id);
+  assert.equal(failed.state, 'failed'); assert.equal(failed.error, 'unknown-reference'); assert.equal(failed.result, null);
+  assert.ok(events.every(e => !JSON.stringify(e).includes(root)), 'absolute paths leaked into events');
 });
