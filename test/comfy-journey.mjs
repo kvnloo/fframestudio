@@ -79,6 +79,24 @@ try {
   report.status = await page.locator('#comfy-status').textContent();
   const template = await page.locator('#comfy-template').inputValue(); report.template = template;
   assert(template === 'flux2-klein-4b-t2i', 'Flux.2 Klein template ready by default, got ' + template + ' · ' + await page.locator('#comfy-template-note').textContent());
+  // Node graph: the registered workflow renders as nodes; a tugged cable snaps back to its own port,
+  // an incompatible drop leaves wiring unchanged, and Run never sends a graph (asserted below via the mock).
+  await page.waitForSelector('#comfy-graph .ng-node');
+  const graphInfo = await page.evaluate(() => ({ nodes: document.querySelectorAll('#comfy-graph .ng-node').length, wires: document.querySelectorAll('#comfy-graph .ng-wire').length, note: document.querySelector('#comfy-graph-note').textContent, made: window.ffs?.comfy?.graph?.links.length, paths: [...document.querySelectorAll('#comfy-graph .ng-wire')].map(p => p.getAttribute('d')?.length || 0) }));
+  assert(graphInfo.nodes >= 5 && graphInfo.wires >= 4, 'template graph renders nodes and links: ' + JSON.stringify(graphInfo));
+  await page.locator('#comfy-graph-wide').click(); await page.waitForTimeout(250);
+  const linked = page.locator('#comfy-graph .ng-port.linked[data-dir="in"]').first(), box = await linked.boundingBox();
+  const c = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  await page.mouse.move(c.x, c.y); await page.mouse.down();
+  for (let i = 1; i <= 8; i++) { await page.mouse.move(c.x - i * 3, c.y + i); await page.waitForTimeout(16); }
+  const tugHalo = await page.evaluate(() => (document.querySelector('#comfy-graph .ng-halo path')?.getAttribute('d') || '').length);
+  await page.locator('#comfy-desk').screenshot({ path: path.join(out, `comfy-graph-tug-${report.mode}.png`) }); report.screenshots.push(`comfy-graph-tug-${report.mode}.png`);
+  await page.mouse.up(); await page.waitForTimeout(500);
+  const afterSnap = await page.evaluate(() => ({ wires: document.querySelectorAll('#comfy-graph .ng-wire').length, reset: document.querySelector('#comfy-graph-reset').hidden }));
+  assert(tugHalo > 0 && afterSnap.wires === graphInfo.wires && afterSnap.reset, 'tugged cable shows a halo and snaps back unchanged: ' + JSON.stringify({ graphInfo, tugHalo, afterSnap, state: await page.evaluate(() => window.ffs?.comfy?.graph?.toJSON()) }));
+  await page.locator('#comfy-desk').screenshot({ path: path.join(out, `comfy-graph-${report.mode}.png`) }); report.screenshots.push(`comfy-graph-${report.mode}.png`);
+  await page.locator('#comfy-graph-wide').click();
+  report.graph = { ...graphInfo, tugHaloPathChars: tugHalo, snappedBack: true };
   if (REAL) { await say('comfy width 512'); await say('comfy height 512'); await say('comfy steps 20'); if (opt('--seed')) await say('comfy seed ' + opt('--seed')); }
   else await say('comfy steps twelve');
   assert(await page.locator('[data-comfy-param="steps"]').inputValue() === (REAL ? '20' : '12'), 'voice set steps');
@@ -109,6 +127,7 @@ try {
     await say('comfy cancel');
     await page.waitForSelector('.comfy-card[data-state="cancelled"]', { timeout: 10000 });
     assert(mock.state.interrupts.length === 1 && mock.state.clears === 0, 'cancel = one targeted interrupt, never a queue clear');
+    assert(mock.state.prompts.length > 0, 'mock saw prompts');
     assert(mock.state.prompts.every(p => Object.values(p.prompt).filter(n => n.class_type === 'SaveImage').every(n => n.inputs.filename_prefix.startsWith('fframestudio/'))), 'bridge owns output prefix');
     report.cancel = { interrupts: mock.state.interrupts.length, clears: mock.state.clears };
     const unknown = await say('comfy frobnicate'); report.steps.at(-1).expectedClarification = true;

@@ -22,6 +22,8 @@ export class ComfyDesk {
     panel.className = 'comfy-desk panel'; panel.id = 'comfy-desk'; panel.hidden = true; panel.setAttribute('aria-label', 'ComfyUI');
     panel.innerHTML = `<header><strong>ComfyUI</strong><output id="comfy-status" role="status">Connecting…</output><button data-comfy-act="close">Close</button></header>
       <label>Template<select id="comfy-template"></select></label><p id="comfy-template-note" class="comfy-note"></p>
+      <div class="comfy-graph-bar"><span>Graph</span><output id="comfy-graph-note" class="comfy-note"></output><button data-comfy-act="graph-reset" id="comfy-graph-reset" hidden>Reset wiring</button><button data-comfy-act="graph-wide" id="comfy-graph-wide" aria-pressed="false">Expand</button></div>
+      <div id="comfy-graph" class="comfy-graph" aria-label="Template node graph"></div>
       <form id="comfy-form" class="comfy-form"></form>
       <div class="comfy-actions"><button data-comfy-act="comfy-run" id="comfy-run" class="pill">Run</button><button data-comfy-act="comfy-variations" id="comfy-variations" class="pill">More variations</button><button data-comfy-act="comfy-cancel" id="comfy-cancel" class="pill">Cancel</button><button data-comfy-act="voice" class="pill">Voice · hold V</button></div>
       <p id="comfy-heard" class="comfy-note" aria-live="polite">Say “comfy, set prompt to …”, “comfy steps 12”, “comfy run”, “more variations” or “comfy cancel”.</p>
@@ -32,6 +34,8 @@ export class ComfyDesk {
       const act = b.dataset.comfyAct;
       if (act === 'close') { panel.hidden = true; return; }
       if (act === 'voice') { this.e.action('voice').catch(e => this.say(e.message)); return; }
+      if (act === 'graph-reset') { this.showGraph(this.template); return; }
+      if (act === 'graph-wide') { const on = panel.classList.toggle('comfy-wide-graph'); b.setAttribute('aria-pressed', on); b.textContent = on ? 'Collapse' : 'Expand'; requestAnimationFrame(() => this.graph?.fitView()); return; }
       // Buttons go through the same typed action registry as voice and the palette.
       this.e.action(act, b.dataset.job ? { job: b.dataset.job } : {}).catch(e => this.say(e.message));
     });
@@ -74,7 +78,31 @@ export class ComfyDesk {
       return `<label class="${p.type === 'string' && !p.enum ? 'comfy-wide' : ''}">${esc(p.label)}${input}</label>`;
     }).join('');
     this.panel.querySelector('#comfy-run').disabled = !t.ready;
+    this.showGraph(t);
     return true;
+  }
+  // Node view of the registered workflow. Rewiring is type-checked and kept as a local draft:
+  // Run still names the template and sends typed values, never this graph.
+  async showGraph(t) {
+    const host = this.panel.querySelector('#comfy-graph'), note = this.panel.querySelector('#comfy-graph-note');
+    if (!t?.workflow) { host.hidden = true; note.textContent = 'No graph for this template.'; return; }
+    host.hidden = false; this.panel.querySelector('#comfy-graph-reset').hidden = true;
+    const { NodeGraph, graphFromWorkflow } = await (this.graphModule ||= (() => {
+      if (!document.querySelector('link[data-nodegraph-style]')) { const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/app/nodegraph.css'; css.dataset.nodegraphStyle = ''; document.head.append(css); }
+      return import('./nodegraph.js');
+    })());
+    if (this.dead || this.template !== t) return;
+    const info = Object.fromEntries(Object.entries(t.outputTypes || {}).map(([c, output]) => [c, { output }]));
+    const key = links => links.map(l => JSON.stringify([l.from, l.to])).sort().join();
+    const graph = graphFromWorkflow(t.workflow, info), base = key(graph.links);
+    this.graph?.destroy();
+    this.graph = new NodeGraph(host, graph, { onChange: s => {
+      const changed = key(s.links) !== base;
+      note.textContent = changed ? 'Wiring draft · Run still uses the registered template' : `${graph.nodes.length} nodes · ${graph.links.length} links`;
+      this.panel.querySelector('#comfy-graph-reset').hidden = !changed;
+    } });
+    note.textContent = `${graph.nodes.length} nodes · ${graph.links.length} links`;
+    requestAnimationFrame(() => this.graph?.fitView());
   }
   read(field) { const p = this.template?.params.find(p => p.name === field.dataset.comfyParam); return p && p.type !== 'string' ? Number(field.value) : field.value; }
   setValue(name, value) {
@@ -139,5 +167,5 @@ export class ComfyDesk {
       card.querySelector('.comfy-preview').append(el);
     }
   }
-  destroy() { this.dead = true; this.stop?.(); clearInterval(this.timer); this.panel.remove(); }
+  destroy() { this.dead = true; this.stop?.(); clearInterval(this.timer); this.graph?.destroy(); this.panel.remove(); }
 }

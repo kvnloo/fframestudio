@@ -1,0 +1,159 @@
+{
+  "mode": "mock-comfyui",
+  "started": "2026-11-01T22:43:44.907Z",
+  "steps": [
+    {
+      "step": "toolbar+palette",
+      "palette": [
+        "comfy",
+        "comfy run",
+        "comfy variations",
+        "comfy cancel",
+        "comfy set prompt",
+        "comfy set param",
+        "comfy use template"
+      ]
+    },
+    {
+      "said": "comfy, set prompt to a lighthouse on a cliff at dusk, volumetric fog",
+      "voicePreview": "Microphone unavailable: Permission denied",
+      "comfyReceipt": "Prompt → “a lighthouse on a cliff at dusk, volumetric fog”"
+    },
+    {
+      "said": "comfy steps twelve",
+      "voicePreview": "comfy set param\n[]",
+      "comfyReceipt": "steps → 12"
+    },
+    {
+      "said": "comfy steps 900",
+      "voicePreview": "Steps must be between 1 and 40.",
+      "comfyReceipt": "steps → 12",
+      "expectedRejection": true
+    },
+    {
+      "said": "comfy run",
+      "voicePreview": "comfy run\n[]",
+      "comfyReceipt": "Queued 1 × FLUX.2 Klein 4B · text to image · seed 42"
+    },
+    {
+      "said": "give me two more variations",
+      "voicePreview": "comfy variations\n[]",
+      "comfyReceipt": "Queued variation 2 × FLUX.2 Klein 4B · text to image · seed 43…44"
+    },
+    {
+      "said": "comfy, set prompt to [mock:slow] a very long take",
+      "voicePreview": "comfy set prompt\n[]",
+      "comfyReceipt": "Prompt → “[mock:slow] a very long take”"
+    },
+    {
+      "said": "comfy run",
+      "voicePreview": "comfy run\n[]",
+      "comfyReceipt": "Queued 1 × FLUX.2 Klein 4B · text to image · seed 42"
+    },
+    {
+      "said": "comfy cancel",
+      "voicePreview": "comfy cancel\n[]",
+      "comfyReceipt": "Cancelled 1 job."
+    },
+    {
+      "said": "comfy frobnicate",
+      "voicePreview": "ComfyUI: say “set prompt to …”, “steps 12”, “run”, “more variations” or “cancel”.",
+      "comfyReceipt": "Cancelled 1 job.",
+      "expectedClarification": true
+    }
+  ],
+  "screenshots": [
+    "comfy-graph-tug-mock-comfyui.png",
+    "comfy-graph-mock-comfyui.png",
+    "comfy-desk-first-mock-comfyui.png",
+    "comfy-desktop-mock-comfyui.png",
+    "comfy-phone-mock-comfyui.png"
+  ],
+  "status": "Connected · ComfyUI 0.30.0-mock · 127.0.0.1:29113 · 10.7 of 12.0 GiB free · queue 0",
+  "template": "flux2-klein-4b-t2i",
+  "graph": {
+    "nodes": 13,
+    "wires": 13,
+    "note": "13 nodes · 13 links",
+    "made": 13,
+    "paths": [
+      32,
+      32,
+      28,
+      32,
+      38,
+      38,
+      34,
+      38,
+      32,
+      32,
+      33,
+      33,
+      32
+    ],
+    "tugHaloPathChars": 161,
+    "snappedBack": true
+  },
+  "firstRun": {
+    "clickToImageMs": 980,
+    "startedToFinishedMs": 619,
+    "params": {
+      "prompt": "a lighthouse on a cliff at dusk, volumetric fog",
+      "negative": "",
+      "cfg": 5,
+      "width": 1024,
+      "height": 1024,
+      "steps": 12,
+      "sampler": "euler",
+      "seed": 42
+    },
+    "vramFromComfy": null,
+    "output": {
+      "file": "media/generated/comfy/72ed7867-4e4d-4109-b134-78bf3bbc5b81/output-1.png",
+      "kind": "image",
+      "bytes": 29222,
+      "sha256": "5d21df5bf9976dc334404affa723221321e8572871d4219bb2fe24fc9a54e0ef"
+    },
+    "nvidiaSmi": null
+  },
+  "variations": {
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "distinctImages": 3
+  },
+  "cancel": {
+    "interrupts": 1,
+    "clears": 0
+  },
+  "layout": {
+    "desk": [
+      20,
+      210,
+      420,
+      666
+    ],
+    "canvas": [
+      302,
+      126,
+      775,
+      436
+    ]
+  },
+  "consoleErrors": [],
+  "flagOff": {
+    "button": false,
+    "paletteRows": 0,
+    "voice": "ComfyUI is not configured on this bridge.",
+    "comfyStatusHttp": 404,
+    "generateProviders": [
+      "local-ltx",
+      "hosted-experimental"
+    ]
+  },
+  "configUnchanged": true,
+  "result": "pass",
+  "finished": "2026-11-01T22:43:54.453Z"
+}

@@ -16,4 +16,10 @@
 .comfy-job-head { display:flex; justify-content:space-between; text-transform:uppercase; font-size:10px; letter-spacing:.06em; }
 .comfy-card progress { width:100%; accent-color:var(--acc); }
 .comfy-preview img, .comfy-preview video { width:100%; display:block; border-radius:5px; background:#101010; margin-top:6px; }
+.comfy-graph-bar { display:flex; align-items:center; gap:8px; margin:8px 0 6px; font-size:12px; }
+.comfy-graph-bar output { flex:1; margin:0; }
+.comfy-graph-bar button { min-height:28px; padding:3px 10px; font-size:11px; }
+.comfy-graph { height:280px; border-radius:10px; overflow:hidden; border:1px solid var(--line); }
+.comfy-desk.comfy-wide-graph { width:min(1040px,calc(100vw - 32px)); }
+.comfy-desk.comfy-wide-graph .comfy-graph { height:min(52dvh,460px); }
 @media (max-width:600px) { .comfy-desk { left:8px; right:8px; top:8px; bottom:auto; width:auto; max-height:60dvh; } .comfy-form { grid-template-columns:1fr 1fr; } .comfy-desk button { min-height:44px; } }

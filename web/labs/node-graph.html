@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Node graph lab · fframestudio</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/app/nodegraph.css">
+<style>
+  html, body { margin: 0; height: 100%; background: #131313; }
+  #graph { position: fixed; inset: 0; }
+  .note { position: fixed; left: 16px; bottom: 14px; z-index: 5; font: 12px/1.5 Inter, system-ui, sans-serif; color: #6d6d6d; pointer-events: none; }
+  .note b { color: #9a9a9a; font-weight: 500; }
+  .speakers { display: flex; gap: 8px; padding-top: 6px; }
+  .speakers i { width: 30px; height: 30px; border-radius: 50%; box-shadow: inset 0 0 0 2px #e9d9d4, inset 0 0 0 7px #1b1b1b, inset 0 0 0 9px #e9d9d4; background: radial-gradient(circle, #e9d9d4 0 3px, transparent 3.5px); }
+  .speakers i:first-child { background: radial-gradient(circle, #e5735f 0 6px, #1b1b1b 6.5px 9px, transparent 9px); box-shadow: inset 0 0 0 2px #f4ece9, inset 0 0 0 4px #e5735f; }
+  .glow { height: 96px; border-radius: 8px; background: radial-gradient(60% 90% at 50% 0%, #ffd8a0, #f06aa8 30%, transparent 62%), linear-gradient(90deg, #233b74, #5b54b4 60%, #4a63c4); position: relative; }
+  .glow::after { content: '30 images'; position: absolute; right: 6px; bottom: 6px; font-size: 9px; color: #ddd; background: rgba(0,0,0,.6); padding: 2px 5px; border-radius: 4px; }
+  .prompt { margin-top: 8px; font-size: 10px; color: #555; background: #222; border-radius: 6px; padding: 7px 8px; }
+  .faders { display: flex; gap: 18px; justify-content: center; padding-top: 10px; }
+  .faders i { width: 3px; height: 54px; background: repeating-linear-gradient(#3a3a3a 0 1px, transparent 1px 5px); position: relative; }
+  .faders i::after { content: ''; position: absolute; left: -5px; width: 13px; height: 5px; border-radius: 2px; top: var(--y); background: var(--c); }
+  .wire-art { display: block; margin: 0 auto; }
+  .preview { height: 120px; border-radius: 8px; background: #dfe46f; }
+</style>
+</head><body>
+<div id="graph" aria-label="Node graph lab"></div>
+<p class="note"><b>Drag from a port.</b> Ports only accept their own colour. Pull a connected input to tug it loose. Scroll to zoom, drag the canvas to pan.</p>
+<script type="module">
+import { NodeGraph } from '/app/src/nodegraph.js';
+const params = new URLSearchParams(location.search);
+const graph = {
+  nodes: [
+    { id: 'mapping', title: 'Mapping', icon: '⤢', x: 330, y: 60, w: 210, h: 92,
+      inputs: [{ id: 'in', type: 'audio', y: 46 }], outputs: [{ id: 'out', type: 'control', y: 46 }],
+      body: '<svg class="wire-art" width="170" height="48" viewBox="0 0 170 48"><path d="M0 16H60q5-8 10 0t10 0t10 0t10 0H170" stroke="#d8d8d8" fill="none" stroke-width="1.2"/><rect x="80" y="20" width="10" height="16" rx="2" fill="none" stroke="#d8d8d8"/><path d="M85 36v10" stroke="#d8d8d8"/></svg>' },
+    { id: 'aphex', title: 'Aphex Twin', icon: '🔈︎', x: 60, y: 200, w: 160, h: 96,
+      outputs: [{ id: 'out', type: 'audio', y: 56 }], body: '<div class="speakers"><i></i><i></i></div>' },
+    { id: 'glow', title: 'Glow Head', icon: '◫', x: 290, y: 330, w: 250,
+      h: 186, inputs: [{ id: 'in', type: 'audio', y: 90 }], outputs: [{ id: 'out', type: 'video', y: 90 }], body: '<div class="glow"></div><div class="prompt">Describe media to create</div>' },
+    { id: 'mixer', title: 'Mixer', icon: '⚌', x: 630, y: 200, w: 150, h: 120,
+      inputs: [{ id: 'v', type: 'video', y: 46 }, { id: 'a', type: 'audio', y: 72 }, { id: 'c', type: 'control', y: 98 }],
+      outputs: [{ id: 'out', type: 'video', y: 72 }],
+      body: '<div class="faders"><i style="--y:40%;--c:#dfe46f"></i><i style="--y:30%;--c:#e5735f"></i><i style="--y:20%;--c:#a9b4dc"></i></div>' },
+    { id: 'preview', title: 'Preview', icon: '▶', x: 860, y: 190, w: 180, h: 200,
+      inputs: [{ id: 'v', type: 'video', y: 82 }, { id: 'a', type: 'audio', y: 150 }], body: '<div class="preview"></div>' },
+  ],
+  links: [
+    { from: ['mapping', 'out'], to: ['mixer', 'c'] },
+    { from: ['glow', 'out'], to: ['mixer', 'v'] },
+    { from: ['mixer', 'out'], to: ['preview', 'v'] },
+  ],
+};
+const ng = window.ng = new NodeGraph(document.getElementById('graph'), graph, { onChange: s => (window.ngState = s) });
+const k = Number(params.get('zoom') || 1); ng.view = { x: Number(params.get('x') || 0), y: Number(params.get('y') || 0), k }; ng.fit();
+</script>
+</body></html>

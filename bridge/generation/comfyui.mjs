@@ -304,7 +304,9 @@ export async function loadTemplates(dirs = [TEMPLATE_DIR]) {
 export function publicTemplate(t, status = {}) {
   const params = Object.values(t.schema.params).map(({ targets, ...p }) => ({ ...p, voice: p.voice || [p.name] }));
   return { id: t.id, title: t.title, kind: t.kind, description: t.description || '', model: t.model || null, licence: t.licence, vram: t.vram || null,
-    workflowSha256: t.workflowSha256, models: t.schema.models, classes: t.schema.classes, params, ...status };
+    workflowSha256: t.workflowSha256, models: t.schema.models, classes: t.schema.classes, params,
+    // Read-only graph for the desk's node view; Run still sends only the template id and typed values.
+    workflow: t.workflow, ...status };
 }
 // Ask the server, not the template, whether nodes and weights exist.
 export async function checkDependencies(client, t) {
@@ -363,7 +365,7 @@ export class ComfyRunner {
       const deps = hit && Date.now() - hit.at < 30000 ? hit.deps : await checkDependencies(this.client, t).catch(() => null);
       if (deps) this.cache.set(t.id, { at: Date.now(), deps });
       if (deps) refineSchema(t.schema, deps.objectInfo);
-      return publicTemplate(t, { ready: !!deps?.ready, missingNodes: deps?.missingNodes || [], missingModels: deps?.missingModels || [], reason: !deps ? 'Dependency check failed.' : deps.ready ? null : 'Missing ' + [...deps.missingNodes, ...deps.missingModels.map(m => m.folder + '/' + m.name)].join(', ') });
+      return publicTemplate(t, { ready: !!deps?.ready, missingNodes: deps?.missingNodes || [], missingModels: deps?.missingModels || [], outputTypes: Object.fromEntries(Object.entries(deps?.objectInfo || {}).map(([c, i]) => [c, i?.output || []])), reason: !deps ? 'Dependency check failed.' : deps.ready ? null : 'Missing ' + [...deps.missingNodes, ...deps.missingModels.map(m => m.folder + '/' + m.name)].join(', ') });
     }));
   }
   list(projectId) { return structuredClone([...this.jobs.values()].filter(j => !projectId || j.projectId === projectId)); }
