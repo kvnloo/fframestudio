@@ -31,7 +31,8 @@ try {
     assert.equal(response.headers.get('x-frame-options'),'DENY',url);
   }
   report.checks.push({name:'route policies',embedHeaders,protectedFiles:files.length-1});
-  browser=await chromium.launch({executablePath:process.env.CHROMIUM||'/usr/bin/chromium',args:['--autoplay-policy=no-user-gesture-required']});
+  const channel=process.env.PW_CHANNEL;
+  browser=await chromium.launch({channel,executablePath:channel?undefined:process.env.CHROMIUM||'/usr/bin/chromium',args:['--autoplay-policy=no-user-gesture-required']});
   const context=await browser.newContext();const page=await context.newPage();
   page.on('pageerror',e=>report.errors.push(e.message));
   report.expectedFrameBlocks=[];
@@ -51,7 +52,8 @@ try {
   await page.waitForSelector('#film source',{state:'attached'});
   assert.equal(await page.locator('#film').evaluate(v=>v.paused&&!v.autoplay&&v.muted&&v.playsInline),true);
   assert.equal(await page.locator('#fps').isVisible(),false);
-  await page.waitForFunction(()=>document.querySelector('#film').readyState>=1);
+  // preload=none may leave HAVE_NOTHING until Play. Metadata is asserted after
+  // activation below, rather than requiring speculative loading before a tap.
   assert.match(await page.locator('#status').innerText(),/Tap play to watch/);
   report.prePlayMediaRequests=requests.filter(u=>u.endsWith('.mp4')).length; // preload=none is advisory.
   for(const viewport of [{width:412,height:915},{width:1440,height:900}]){
@@ -89,6 +91,7 @@ try {
   }
   await page.goto(server.base+'/launch/embed?debug=1');await page.waitForSelector('#film source',{state:'attached'});
   await page.locator('#film').evaluate(v=>v.play());
+  await page.waitForFunction(()=>document.querySelector('#film').readyState>=1);
   await page.waitForFunction(()=>document.querySelector('#fps').dataset.fps,{timeout:15000});
   const samples=[];for(let i=0;i<3;i++){samples.push(Number(await page.locator('#fps').getAttribute('data-fps')));await page.waitForTimeout(750);}
   const playback=await page.locator('#film').evaluate(v=>({src:v.currentSrc,width:v.videoWidth,height:v.videoHeight,time:v.currentTime,quality:v.getVideoPlaybackQuality().toJSON?.()||{totalVideoFrames:v.getVideoPlaybackQuality().totalVideoFrames,droppedVideoFrames:v.getVideoPlaybackQuality().droppedVideoFrames}}));
