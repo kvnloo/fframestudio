@@ -1,0 +1,18 @@
+{
+  "platform": "showcase-120",
+  "width": 1920,
+  "height": 1080,
+  "fps": 120,
+  "conform": "decimate",
+  "scale": "lanczos",
+  "fit": "pad",
+  "prefilter": "none",
+  "encoder": "libx264",
+  "quality": 14,
+  "maxrate_kbps": 100000,
+  "gop_seconds": 0.5,
+  "audio_lufs": -14,
+  "audio_true_peak": -1.5,
+  "audio_kbps": 192,
+  "qualification": "UNVERIFIED: 100000 kbps maxrate is 4x the YouTube 1080p30 profile's 25000 kbps, extrapolated linearly for 120 fps; it is a provisional rate-control ceiling, not a measured bitrate need or accepted upload limit. libx264 CRF14 targets high quality but is not numerically equivalent to NVENC CQ14. 120 fps output, quality, upload acceptance and 120 Hz playback have not been qualified."
+}

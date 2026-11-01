@@ -445,7 +445,7 @@ def main():
     exp.add_argument("output")
     exp.add_argument(
         "--platform",
-        choices=["youtube", "shorts", "tiktok", "reels", "x"],
+        choices=sorted(path.stem for path in (HERE / "profiles").glob("*.json")),
         required=True,
     )
     exp.add_argument("--profile", type=Path)
@@ -468,7 +468,7 @@ def main():
     sim.add_argument(
         "--platform",
         required=True,
-        choices=["youtube", "shorts", "tiktok", "reels", "x"],
+        choices=sorted(json.loads((HERE / "platforms.json").read_text())["platforms"]),
     )
     sim.add_argument("--config", type=Path, default=HERE / "platforms.json")
     sim.add_argument("--multiplier", type=float, default=1)
