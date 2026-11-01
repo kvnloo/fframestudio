@@ -26,6 +26,7 @@ import { watchTheme, detectTheme } from './system-theme.mjs';
 import { agentWebAdapter } from './taste.mjs';
 import { GenerationQueue } from './generation/queue.mjs';
 import { providers as generationProviders } from './generation/providers.mjs';
+import { comfyFeature } from './comfy-api.mjs';
 import { parseSocialReferences, MAX_SOCIAL_REFERENCES_BYTES } from '../web/src/taste/social-references.js';
 
 const VERSION = '0.1.0';
@@ -42,6 +43,9 @@ const QUIET = argv.includes('--quiet');
 const taste = agentWebAdapter({ enabled: argv.includes('--enable-agentweb-taste'), baseURL: process.env.FFS_TASTE_AGENTWEB_URL, token: process.env.FFS_TASTE_AGENTWEB_TOKEN });
 // Do not pass the service credential to ACP children or any browser configuration.
 delete process.env.FFS_TASTE_AGENTWEB_TOKEN;
+// ComfyUI is opt-in (--comfy-url or FFS_COMFY_URL). The Comfy Cloud key never reaches ACP children.
+const COMFY_URL = opt('--comfy-url', process.env.FFS_COMFY_URL), COMFY_KEY = process.env.FFS_COMFY_API_KEY || null;
+delete process.env.FFS_COMFY_API_KEY;
 const WEB = path.resolve(opt('--web', path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'web')));
 const LIBDIR = path.join(ROOT, 'projects');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml',
@@ -123,10 +127,12 @@ const themeOptions = { home: THEME_HOME, source: opt('--theme-source', undefined
 const theme = watchTheme({ ...themeOptions, onChange: state => {
   const msg = `event: theme\ndata: ${JSON.stringify(state)}\n\n`; watchers.forEach(r => r.write(msg));
 } });
-const generation = new GenerationQueue({ root: ROOT, providers: generationProviders({ fake: argv.includes('--generation-fake') }),
+const comfy = await comfyFeature({ url: COMFY_URL, apiKey: COMFY_KEY, templateDirs: all('--comfy-templates'), root: ROOT,
+  publish: data => { const msg = `data: ${JSON.stringify(data)}\n\n`; watchers.forEach(r => r.write(msg)); } });
+const generation = new GenerationQueue({ root: ROOT, providers: [...generationProviders({ fake: argv.includes('--generation-fake') }), ...comfy.providers],
   publish: data => { const msg = `data: ${JSON.stringify(data)}\n\n`; watchers.forEach(r => r.write(msg)); } });
 await generation.ready;
-const shutdown = async () => { theme.close(); stopReferenceHelpers(); await generation.close(); process.exit(0); };
+const shutdown = async () => { theme.close(); stopReferenceHelpers(); await generation.close(); await comfy.close(); process.exit(0); };
 process.once('SIGTERM', shutdown);
 process.once('SIGINT', shutdown);
 const handleReference = referenceAPI({ root: ROOT, safePath: fsPath, send });
@@ -147,16 +153,17 @@ const server = http.createServer(async (req, res) => {
     return serveFile(req, res, f);
   }
   const auth = (req.headers.authorization || '').replace(/^Bearer /, '') || u.searchParams.get('token') || cookieTok(req); // query only for EventSource
-  if (u.pathname === '/me') return send(res, 200, tokenOk(auth) ? { ok: true, root: ROOT } : { ok: false }); // lets the app show the sign-in page without a console error
+  if (u.pathname === '/me') return send(res, 200, tokenOk(auth) ? { ok: true, root: ROOT, features: { comfy: comfy.enabled } } : { ok: false }); // lets the app show the sign-in page without a console error
   if (!tokenOk(auth)) return send(res, 401, { error: 'bad token' });
   if (await handleReference(req, res, u)) return;
   if (u.pathname === '/taste/profile') {
     if (req.method !== 'GET' || u.search) return send(res, 400, { error: 'Read-only owner-scoped profile; no query parameters' });
     return send(res, 200, await taste.getProfile());
   }
+  if (await comfy.handle(req, res, u)) return;
   if (u.pathname.startsWith('/generation/')) {
     try {
-      if (req.method === 'GET' && u.pathname === '/generation/providers') return send(res, 200, { providers: await generation.capabilities() });
+      if (req.method === 'GET' && u.pathname === '/generation/providers') return send(res, 200, { providers: (await generation.capabilities()).filter(p => !p.hidden) });
       if (req.method === 'GET' && u.pathname === '/generation/jobs') return send(res, 200, { jobs: generation.list(u.searchParams.get('projectId')) });
       const match = /^\/generation\/jobs\/([\w-]+)(?:\/(cancel|retry))?$/.exec(u.pathname);
       if (req.method === 'GET' && match && !match[2]) {
