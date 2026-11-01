@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { getEventListeners } from 'node:events';
 import { startMockComfy, MOCK_MODELS, MOCK_CLASSES } from '../helpers/mock-comfyui.mjs';
 import { ComfyClient, ComfyRunner, comfyEndpoint, loadTemplates, applyParams, extractSchema, comfyGenerationProviders, execute } from '../../bridge/generation/comfyui.mjs';
 import { GenerationQueue } from '../../bridge/generation/queue.mjs';
@@ -154,6 +155,134 @@ test('video templates plug into the existing GenerationQueue provider interface 
     const [p] = comfyGenerationProviders({ client: new ComfyClient({ endpoint: comfyEndpoint(low.url) }), templates });
     const s = await p.probe(); assert.equal(s.available, false); assert.match(s.reason, /missing wan2\.2_ti2v_5B_fp16/);
   } finally { await low.close(); await fs.rm(root, { recursive: true, force: true }); }
+});
+
+const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; };
+async function bounded(promise, ms = 200) {
+  let timer;
+  try { return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(Error(`pending after ${ms} ms`)), ms); })]); }
+  finally { clearTimeout(timer); }
+}
+function fakeSocket() {
+  const ws = new EventTarget(); ws.closes = 0;
+  ws.close = () => { ws.closes++; ws.dispatchEvent(new Event('close')); };
+  return ws;
+}
+function setupClient(socket) {
+  const calls = { submits: 0, cancels: [], histories: 0 };
+  return { calls, endpoint: { label: 'fake', cloud: false }, socket,
+    submit: async () => { calls.submits++; return 'owned-prompt'; },
+    cancel: async id => { calls.cancels.push(id); },
+    history: async () => { calls.histories++; return {}; },
+  };
+}
+
+test('execute cancellation: pre-aborted input never opens a socket or submits', async () => {
+  let sockets = 0;
+  const client = setupClient(async () => { sockets++; return null; });
+  const ac = new AbortController(); ac.abort();
+  await assert.rejects(bounded(execute(client, {}, { signal: ac.signal, pollMs: 1 })), /^Error: cancelled$/);
+  assert.equal(sockets, 0); assert.equal(client.calls.submits, 0);
+  assert.deepEqual(client.calls.cancels, []);
+  assert.equal(getEventListeners(ac.signal, 'abort').length, 0);
+});
+
+for (const socket of [null, fakeSocket()]) test(`execute cancellation: during socket setup (${socket ? 'WS' : 'polling'}) settles before setup resolves`, async () => {
+  const gate = deferred(), entered = deferred(), ac = new AbortController();
+  const client = setupClient(() => { entered.resolve(); return gate.promise; });
+  const outcome = assert.rejects(bounded(execute(client, {}, { signal: ac.signal, pollMs: 1 })), /^Error: cancelled$/);
+  await entered.promise; ac.abort();
+  try { await outcome; }
+  finally { gate.resolve(socket); await sleep(0); }
+  assert.equal(client.calls.submits, 0); assert.deepEqual(client.calls.cancels, []);
+  assert.equal(client.calls.histories, 0);
+  assert.equal(getEventListeners(ac.signal, 'abort').length, 0);
+  if (socket) {
+    assert.equal(socket.closes, 1);
+    for (const event of ['message', 'close']) assert.equal(getEventListeners(socket, event).length, 0);
+  }
+});
+
+test('execute cancellation: during prompt POST cancels only the eventual owned prompt', async () => {
+  const gate = deferred(), entered = deferred(), ac = new AbortController(), ws = fakeSocket();
+  const client = setupClient(async () => ws);
+  client.submit = async () => { client.calls.submits++; entered.resolve(); return gate.promise; };
+  const outcome = assert.rejects(bounded(execute(client, {}, { signal: ac.signal })), /^Error: cancelled$/);
+  await entered.promise; ac.abort();
+  assert.deepEqual(client.calls.cancels, [], 'do not guess an ID while POST is pending');
+  gate.resolve('owned-prompt'); await outcome;
+  assert.deepEqual(client.calls.cancels, ['owned-prompt']); assert.equal(client.calls.submits, 1);
+  assert.equal(client.calls.histories, 0); assert.equal(ws.closes, 1);
+  assert.equal(getEventListeners(ac.signal, 'abort').length, 0);
+  for (const event of ['message', 'close']) assert.equal(getEventListeners(ws, event).length, 0);
+});
+
+for (const action of ['cancel', 'close']) test(`runner cancellation: ${action} during socket setup settles and never submits`, async () => {
+  const root = await fixture(), gate = deferred(), entered = deferred();
+  const client = setupClient(() => { entered.resolve(); return gate.promise; });
+  const runner = new ComfyRunner({ root, client, templates });
+  try {
+    const [job] = await runner.submit({ projectId: 'p', templateId: 'sdxl-base-t2i', params: { prompt: 'setup cancellation' } });
+    await entered.promise;
+    await bounded(action === 'close' ? runner.close() : runner.cancel(job.id));
+    assert.equal(runner.list().find(j => j.id === job.id).state, 'cancelled');
+    assert.equal(runner.active, null); assert.equal(client.calls.submits, 0);
+  } finally { gate.resolve(null); await bounded(runner.close()); await fs.rm(root, { recursive: true, force: true }); }
+});
+
+function trackTimers(t) {
+  const active = new Set(), schedule = globalThis.setTimeout, clear = globalThis.clearTimeout;
+  t.mock.method(globalThis, 'setTimeout', (fn, ms, ...args) => {
+    const timer = schedule(() => { active.delete(timer); fn(...args); }, ms);
+    active.add(timer); return timer;
+  });
+  t.mock.method(globalThis, 'clearTimeout', timer => { active.delete(timer); clear(timer); });
+  t.after(() => { for (const timer of active) clear(timer); });
+  return active;
+}
+
+for (const outcome of ['success', 'execution_error', 'abort', 'submit-error']) test(`execute cleanup: ${outcome} removes poll timer and listeners`, async t => {
+  const timers = trackTimers(t), ac = new AbortController(), ws = fakeSocket(), posted = deferred();
+  const client = setupClient(async () => ws);
+  client.submit = async () => {
+    posted.resolve();
+    if (outcome === 'submit-error') throw Error('comfy-unreachable');
+    return 'owned-prompt';
+  };
+  client.history = async () => ({ 'owned-prompt': { outputs: {} } });
+  const execution = execute(client, {}, { signal: ac.signal, pollMs: 60000 });
+  const result = outcome === 'success' ? bounded(execution) : assert.rejects(bounded(execution), outcome === 'abort' ? /cancelled/ : outcome === 'submit-error' ? /comfy-unreachable/ : /execution-error/);
+  await posted.promise;
+  if (outcome !== 'submit-error') {
+    ws.dispatchEvent(new Event('close')); // start the recovery poll before termination
+    assert.equal(timers.size, 2, 'bounded deadline plus pending poll');
+    if (outcome === 'abort') ac.abort();
+    else ws.dispatchEvent(new MessageEvent('message', { data: JSON.stringify({ type: outcome === 'success' ? 'execution_success' : outcome, data: { prompt_id: 'owned-prompt' } }) }));
+  }
+  await result;
+  assert.equal(timers.size, 0);
+  assert.equal(getEventListeners(ac.signal, 'abort').length, 0);
+  for (const event of ['message', 'close']) assert.equal(getEventListeners(ws, event).length, 0);
+  assert.deepEqual(client.calls.cancels, outcome === 'abort' ? ['owned-prompt'] : []);
+  assert.equal(ws.closes, 1);
+});
+
+for (const event of ['open', 'error', 'close', 'abort', 'timeout']) test(`socket setup cleans listeners and timer after ${event}`, async t => {
+  const timers = trackTimers(t), ac = new AbortController(); let ws;
+  class Socket extends EventTarget {
+    constructor() { super(); ws = this; this.closes = 0; }
+    close() { this.closes++; this.dispatchEvent(new Event('close')); }
+  }
+  const client = new ComfyClient({ endpoint: comfyEndpoint('http://127.0.0.1:8188'), WebSocket: Socket });
+  const opening = client.socket('client-id', ac.signal);
+  if (event === 'abort') ac.abort();
+  else if (event !== 'timeout') ws.dispatchEvent(new Event(event));
+  const socket = await bounded(opening, event === 'timeout' ? 4000 : 200);
+  assert.equal(socket, event === 'open' ? ws : null);
+  assert.equal(ws.closes, event === 'open' ? 0 : 1);
+  for (const name of ['open', 'error', 'close']) assert.equal(getEventListeners(ws, name).length, 0);
+  assert.equal(getEventListeners(ac.signal, 'abort').length, 0);
+  assert.equal(timers.size, 0);
 });
 
 test('execute() surfaces node_errors from POST /prompt without submitting a run', async () => {

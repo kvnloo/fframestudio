@@ -88,15 +88,24 @@ export class ComfyClient {
     if (!running) await this.request('/queue', { method: 'POST', body: { delete: [promptId] } }).catch(() => {});
   }
   // Opens before submission so no event is missed; resolves null when WS is unavailable.
-  socket(clientId) {
-    if (!this.WebSocket) return Promise.resolve(null);
+  socket(clientId, signal) {
+    if (!this.WebSocket || signal?.aborted) return Promise.resolve(null);
     const u = new URL(this.url('/ws')); u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:'; u.searchParams.set('clientId', clientId);
     if (this.apiKey && this.endpoint.cloud) u.searchParams.set('token', this.apiKey);
     return new Promise(resolve => {
       let ws; try { ws = new this.WebSocket(u); } catch { return resolve(null); }
-      const t = setTimeout(() => { try { ws.close(); } catch {} resolve(null); }, 3000);
-      ws.addEventListener('open', () => { clearTimeout(t); resolve(ws); }, { once: true });
-      ws.addEventListener('error', () => { clearTimeout(t); resolve(null); }, { once: true });
+      const finish = opened => {
+        clearTimeout(t);
+        ws.removeEventListener('open', onOpen); ws.removeEventListener('error', onFailure); ws.removeEventListener('close', onFailure);
+        signal?.removeEventListener('abort', onFailure);
+        if (!opened) { try { ws.close(); } catch {} }
+        resolve(opened ? ws : null);
+      };
+      const onOpen = () => finish(true), onFailure = () => finish(false);
+      const t = setTimeout(onFailure, 3000);
+      ws.addEventListener('open', onOpen); ws.addEventListener('error', onFailure); ws.addEventListener('close', onFailure);
+      signal?.addEventListener('abort', onFailure, { once: true });
+      if (signal?.aborted) onFailure();
     });
   }
 }
@@ -109,14 +118,20 @@ function nodeErrorSummary(details) {
 
 // Run one API-format graph to completion. Returns history outputs (refs, not bytes).
 export async function execute(client, workflow, { signal, onProgress = () => {}, pollMs = 1000 } = {}) {
+  if (signal?.aborted) throw Error('cancelled');
   const clientId = randomUUID();
-  const ws = await client.socket(clientId);
-  let promptId, settle, fail, finished = false, done = new Promise((res, rej) => { settle = res; fail = rej; });
-  done.catch(() => {}); // awaited below; avoid an unhandled rejection if it fails before then
+  let ws, promptId, resolveDone, rejectDone, finished = false, settled = false, pollTimer, wakePoll;
+  const done = new Promise((res, rej) => { resolveDone = res; rejectDone = rej; });
+  done.catch(() => {}); // cancellation may arrive while setup or POST is still pending
+  const stopPoll = () => { clearTimeout(pollTimer); wakePoll?.(); wakePoll = null; };
+  const settle = () => { if (!settled) { settled = true; stopPoll(); resolveDone(); } };
+  const fail = e => { if (!settled) { settled = true; stopPoll(); rejectDone(e); } };
   const onAbort = () => fail(Error('cancelled'));
   signal?.addEventListener('abort', onAbort, { once: true });
+  const checkAbort = () => { if (signal?.aborted) throw Error('cancelled'); };
   const early = [];
   const handle = msg => {
+    if (settled || finished) return;
     if (!msg || typeof msg !== 'object' || msg.data?.prompt_id !== promptId) { if (!promptId && msg?.data?.prompt_id) early.push(msg); return; }
     const { type, data } = msg;
     if (type === 'progress' && Number.isFinite(data.value) && data.max > 0) onProgress(Math.min(1, data.value / data.max), data.node);
@@ -124,30 +139,50 @@ export async function execute(client, workflow, { signal, onProgress = () => {},
     else if (type === 'execution_error') { const e = Error(/OutOfMemory|OOM/i.test(String(data.exception_type)) ? 'out-of-memory' : 'execution-error'); e.summary = [`${data.node_id || '?'} ${String(data.node_type || '').slice(0, 60)}: ${String(data.exception_type || '').slice(0, 80)}`]; fail(e); }
     else if (type === 'execution_interrupted') fail(Error('cancelled'));
   };
-  ws?.addEventListener('message', ev => { if (typeof ev.data !== 'string') return; try { handle(JSON.parse(ev.data)); } catch {} });
-  ws?.addEventListener('close', () => { poll(); });
+  const onMessage = ev => { if (typeof ev.data !== 'string') return; try { handle(JSON.parse(ev.data)); } catch {} };
+  const onClose = () => { poll(); };
   let polling = false;
   // History polling is the fallback for no WS and the recovery lane after a dropped socket.
   async function poll() {
-    if (polling) return; polling = true;
-    while (!signal?.aborted && !finished) {
-      await new Promise(r => setTimeout(r, pollMs));
-      if (!promptId || finished) continue;
+    if (polling || settled || finished) return; polling = true;
+    while (!settled && !finished) {
+      await new Promise(r => { wakePoll = r; pollTimer = setTimeout(r, pollMs); });
+      if (settled || finished) break;
+      if (!promptId) continue;
       const h = await client.history(promptId).catch(() => null), entry = h?.[promptId];
+      if (settled || finished) break;
       if (entry?.status?.status_str === 'error') { const e = Error('execution-error'); e.summary = ['history reported an execution error']; fail(e); }
       else if (entry?.status?.completed || (entry?.outputs && Object.keys(entry.outputs).length && entry.status?.status_str === 'success')) settle();
     }
   }
   try {
+    // Also close a late socket from clients that do not support aborting setup.
+    const opening = Promise.resolve(client.socket(clientId, signal)).then(socket => {
+      if (finished || signal?.aborted) { try { socket?.close(); } catch {} return null; }
+      return ws = socket;
+    });
+    await Promise.race([opening, done]);
+    checkAbort();
+    ws?.addEventListener('message', onMessage); ws?.addEventListener('close', onClose);
+    // Do not abort POST: its response is needed to cancel exactly the accepted prompt.
     promptId = await client.submit(workflow, clientId);
+    checkAbort();
     early.splice(0).forEach(handle);
     if (!ws) poll();
-    try { await done; }
-    catch (e) { if (e.message === 'cancelled') await client.cancel(promptId); throw e; }
+    await done;
+    checkAbort();
     const history = await client.history(promptId);
+    checkAbort();
     return { promptId, outputs: history?.[promptId]?.outputs || {} };
+  } catch (e) {
+    fail(e);
+    if ((signal?.aborted || e.message === 'cancelled') && promptId) await client.cancel(promptId);
+    throw signal?.aborted ? Error('cancelled') : e;
   } finally {
-    finished = true; signal?.removeEventListener('abort', onAbort); try { ws?.close(); } catch {}
+    finished = true; stopPoll(); early.length = 0;
+    signal?.removeEventListener('abort', onAbort);
+    ws?.removeEventListener('message', onMessage); ws?.removeEventListener('close', onClose);
+    try { ws?.close(); } catch {}
   }
 }
 // Never trust server-supplied filenames for local paths: classify by extension only.
