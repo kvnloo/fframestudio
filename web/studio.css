@@ -1270,6 +1270,31 @@ dialog .panel-title {
 .source-no-render { position: absolute; inset: 0; z-index: 4; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; background: var(--bg); color: var(--ink); }
 .source-no-render strong { font-size: clamp(20px, 2vw, 36px); margin: 12px 0; }
 .source-no-render p { font-size: 12px; line-height: 1.6; opacity: .7; }
+/* ff-unmute working-copy camera keys: visibly an override, never the source film. */
+.procedural-overrides { margin-top: 18px; padding: 12px; border: 1px dashed var(--acc); border-radius: 6px; font-size: 12px; line-height: 1.5; }
+.procedural-overrides h3 { font-size: 13px; margin: 6px 0; }
+.cam-status { margin: 0 0 8px; }
+.cam-error { color: var(--warn, #e5c16c); margin: 0 0 8px; }
+.cam-field { display: inline-flex; gap: 6px; align-items: center; font-size: 11px; }
+.cam-curve { width: 100%; height: 96px; display: block; margin: 6px 0 2px; background: var(--surface); }
+.cam-curve polyline { fill: none; stroke-width: 1.5; }
+.cam-curve .cam-source { stroke: var(--mute); stroke-dasharray: 4 3; }
+.cam-curve .cam-remix { stroke: var(--acc); }
+.cam-curve circle { fill: var(--acc); }
+.cam-curve line { stroke-width: 1; stroke: var(--line); }
+.cam-curve .cam-tick-bar { stroke: var(--ink); }
+.cam-curve .cam-tick-kick { stroke: #f19a72; }
+.cam-curve .cam-tick-clap { stroke: #e5c16c; }
+.cam-curve .cam-tick-token { stroke: #77cfc4; }
+.cam-table-wrap { overflow-x: auto; }
+.cam-table { border-collapse: collapse; font-size: 11px; }
+.cam-table th, .cam-table td { padding: 2px 3px; text-align: left; white-space: nowrap; }
+.cam-table th small { display: block; opacity: .7; font-weight: normal; }
+.procedural-overrides .cam-table input { width: 60px; padding: 3px 5px; font: inherit; font-family: var(--mono); }
+.procedural-overrides .cam-table input[data-camera-field="time_s"] { width: 74px; }
+.procedural-overrides .cam-table select { width: 136px; padding: 3px 5px; font: inherit; }
+.cam-table td.changed input { outline: 1px solid var(--acc); }
+.cam-export pre { white-space: pre-wrap; }
 /* My Taste uses the existing film slate, not a second editing surface. */
 #taste-pane { font-size: 13px; }
 #taste-pane .slate-heading p, #taste-pane .hint { font-size: 12px; line-height: 1.5; }
@@ -1321,3 +1346,18 @@ dialog .panel-title {
 @media (max-width: 640px) {
   .taste-source select, .taste-controls select, .taste-actions button { min-height: 44px; }
 }
+/* fframes CLI review recipes (web/src/fframes-cli.js): copy-only, wraps long argv. */
+.fframes-review { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 8px; }
+.fframes-review .hint code { font: 11px "Plex Mono"; }
+.fframes-review summary { cursor: pointer; font: 10px "Plex Mono"; color: var(--mute); text-transform: uppercase; }
+.fframes-recipes { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 10px; }
+.fframes-recipes li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; }
+.fframes-recipes li > span { grid-column: 1 / -1; color: var(--ink); font-size: 11px; }
+.fframes-recipes code { font: 11px/1.45 "Plex Mono"; color: var(--ink); background: var(--bg2, transparent); border: 1px solid var(--line); padding: 4px 6px; overflow-wrap: anywhere; user-select: all; }
+.fframes-recipes small { grid-column: 1 / -1; color: var(--mute); font-size: 10px; }
+.fframes-recipes .pill { min-height: 32px; }
+/* Phone: layout.css floors .film-workspace buttons at 40px with !important; copy targets need 44px. */
+@media (max-width: 767px) { .film-workspace .fframes-recipes .pill { min-height: 44px !important; min-width: 44px; } }
+.fframes-upstream { border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 8px; }
+.fframes-upstream h3 { margin: 8px 0 4px; font: 10px "Plex Mono"; color: var(--mute); text-transform: uppercase; }
+.fframes-upstream ul { margin: 4px 0; padding-left: 18px; font-size: 11px; color: var(--ink); }

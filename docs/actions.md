@@ -98,8 +98,37 @@ opaque source effects became separate layers. Unsupported semantics are recorded
 **Compare reference** exposes the original and current source-mapped reconstruction at shared
 project time, plus the same editable text/look tokens. Scrubbing seeks both players and the
 editor. After trim/reorder the original retains original time while the reconstruction follows
-edited source ranges. Continuous dual-player playback and a qualified final render/export are
-not implemented here. Ordinary project Save/reopen and undo remain available.
+edited source ranges. Continuous dual-player playback is not implemented here. Ordinary project
+Save/reopen and undo remain available.
+
+## Export video
+
+**Export video** saves the document, then asks the bridge (`POST /render?project=ID[&video=ID]`)
+to render the saved `project.json` with ffmpeg into `projects/<id>/renders/<id>-r<revision>-<time>.mp4`
+plus a `.render.json` sidecar. The render follows story order, each clip's `sourceIn`, `duration`
+and `speed`; clips without media are black, image clips hold their image. Text is not
+composited: films imported from an fframes render carry their titles in the picture, and clips
+with studio text edits are listed in the sidecar under `textNotBurnedIn`. The same code runs from
+the shell: `node tools/render-project.mjs --project ID [--root DIR] [--out FILE]`. Hosted and
+example-copy projects have no bridge and cannot render.
+
+Saved v0 projects are canonically migrated in memory before export; saved v1 projects are
+validated too. Export does not rewrite `project.json`. The story lane must be contiguous;
+clips without media still render black. Embedded video audio follows the source trims and
+speed. **Separate audio attachments (soundtracks/voice-overs) are not mixed yet: export fails
+with an explicit “Unsupported audio attachment” error before probing/rendering, rather than
+silently dropping them.** This includes soundtracks migrated from v0 projects.
+
+The local renderer accepts regular-file media, rejects relative path/symlink escapes, and
+retains support for absolute media paths explicitly stored in the project (local trusted
+sources, not a filesystem sandbox). Network protocols and playlist demuxers are disallowed.
+Default output directories must remain in the project; an explicit shell `--out` is an
+intentional external output path. Limits: even canvas dimensions with at most 3840×2160
+pixels, 1–240 fps, 4096 clips, six hours of story; one decoder/filter thread and two encoder
+threads. Probes have a 10-second per-file / 30-second aggregate deadline; encoding has a
+10-minute deadline (programmatic override up to 30 minutes). Timeout kills the child and
+removes its partial MP4. There is no user cancellation endpoint or shutdown coordination
+in this renderer yet; filesystem checks do not sandbox concurrent hostile local writers.
 
 ## Speech and privacy
 

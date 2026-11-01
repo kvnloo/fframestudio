@@ -15,6 +15,7 @@ import { createHash } from 'node:crypto';
 import { verifyReference } from './reference-journey.mjs';
 import { verifyHosted } from './hosted-journey.mjs';
 import { verifyProcedural } from './procedural-journey.mjs';
+import { verifyFframesReview } from './fframes-review-journey.mjs';
 import { makeLayoutFixture, verifyLayout } from './layout-journey.mjs';
 import { verifyStyleComponents } from './style-components-journey.mjs';
 import { verifyTaste } from './taste-journey.mjs';
@@ -626,8 +627,17 @@ try {
     try { return await verifyProcedural({page:fixturePage,base,library:path.join(HOME,'fframestudio/projects'),out:OUT,assert}); }
     finally { await fixturePage.close(); }
   });
+  await journey('fframes review: revision-aware CLI recipes follow trims', () => verifyFframesReview({context:ctx,base,out:OUT,library:path.join(HOME,'fframestudio/projects'),assert}));
   await journey('style components: lab preview equals runtime', () => verifyStyleComponents({context:ctx,base,out:OUT,root:ROOT,assert}));
   await verifyHosted({browser,source,out:OUT,root:ROOT,journey,assert});
+  await journey('hosted: X player card and isolated embed', async () => {
+    const evidence=path.join(OUT,'xplayer');
+    const result=spawnSync(process.execPath,['tools/verify-xplayer.mjs'],{cwd:ROOT,env:{...env,FFS_EVIDENCE:evidence},encoding:'utf8',timeout:120000});
+    assert(result.status===0,result.stderr||result.error?.message||'X player qualification failed');
+    const receipt=JSON.parse(fs.readFileSync(path.join(evidence,'report.json'),'utf8'));
+    assert(receipt.ok,'X player report failed');
+    return {checks:receipt.checks,notVerified:receipt.notVerified};
+  });
   await verifyReference({page,base,out:OUT,journey,assert,library:path.join(HOME,'fframestudio/projects')});
   await journey('console clean', async () => { assert(!report.console_errors.length && !report.failed_requests.length, JSON.stringify({ e: report.console_errors, r: report.failed_requests })); });
 } catch (e) {

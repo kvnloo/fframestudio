@@ -1,0 +1,154 @@
+{
+ "schema": "fframestudio.fframes-cli-surface/1",
+ "source": "fframes/src/renderer/cli.rs",
+ "collected_at": "2026-10-20",
+ "revisions": {
+  "44745c09a6c8c51071609097326a820cf59d087b": {
+   "url": "https://github.com/dmtrKovalenko/fframes/blob/44745c09a6c8c51071609097326a820cf59d087b/fframes/src/renderer/cli.rs",
+   "sha256": "2dbf0eb30e5d3a9140b2ca5ba268b604422869b52ced87b53e241ba299eb2d77",
+   "commands": [
+    "render",
+    "frame",
+    "strip",
+    "onion",
+    "svg",
+    "timeline",
+    "inspect",
+    "snapshot",
+    "audio",
+    "preview"
+   ],
+   "args": {
+    "frame": [
+     "at",
+     "output",
+     "svg",
+     "crop",
+     "zoom",
+     "ids"
+    ],
+    "strip": [
+     "range",
+     "count",
+     "columns",
+     "width",
+     "output",
+     "crop"
+    ],
+    "onion": [
+     "range",
+     "count",
+     "output"
+    ],
+    "inspect": [
+     "range",
+     "every",
+     "all-frames",
+     "info",
+     "fail-on",
+     "pops"
+    ],
+    "render": [
+     "range",
+     "output",
+     "draft"
+    ]
+   },
+   "inspect_exit_findings": 2,
+   "global": [
+    "json",
+    "scale",
+    "renderer"
+   ],
+   "short": {
+    "frame": [
+     "output"
+    ],
+    "strip": [
+     "count",
+     "output"
+    ],
+    "onion": [
+     "count",
+     "output"
+    ],
+    "render": [
+     "output"
+    ]
+   }
+  },
+  "69174f0187b5d8e92329246898f70250b59f08f2": {
+   "url": "https://github.com/dmtrKovalenko/fframes/blob/69174f0187b5d8e92329246898f70250b59f08f2/fframes/src/renderer/cli.rs",
+   "sha256": "b502c073ba8d01b75bad48841276a1f1bdf34f18c9ab04a1988b154183ae4d31",
+   "commands": [
+    "render",
+    "frame",
+    "strip",
+    "onion",
+    "svg",
+    "timeline",
+    "inspect",
+    "audio",
+    "preview"
+   ],
+   "args": {
+    "frame": [
+     "at",
+     "output",
+     "svg",
+     "crop",
+     "zoom",
+     "ids"
+    ],
+    "strip": [
+     "range",
+     "count",
+     "columns",
+     "width",
+     "output",
+     "crop"
+    ],
+    "onion": [
+     "range",
+     "count",
+     "output"
+    ],
+    "inspect": [
+     "range",
+     "every",
+     "all-frames",
+     "info",
+     "fail-on",
+     "pops"
+    ],
+    "render": [
+     "range",
+     "output",
+     "draft"
+    ]
+   },
+   "inspect_exit_findings": 2,
+   "global": [
+    "json",
+    "scale",
+    "renderer"
+   ],
+   "short": {
+    "frame": [
+     "output"
+    ],
+    "strip": [
+     "count",
+     "output"
+    ],
+    "onion": [
+     "count",
+     "output"
+    ],
+    "render": [
+     "output"
+    ]
+   }
+  }
+ }
+}

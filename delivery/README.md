@@ -46,6 +46,14 @@ H.264 NVENC uses p6 / HQ / VBR CQ14 / spatial+temporal AQ / 20-frame lookahead. 
 
 Each successful export writes `OUTPUT.receipt.json` with the exact command, resolved profile, input/output ffprobe metadata, decoded frame count, audio analysis and wall time. Large outputs belong outside Git or under ignored `delivery/out/`.
 
+### 120 fps showcase master
+
+```sh
+python delivery/deliver.py export master.mkv delivery/out/showcase-120.mp4 --platform showcase-120
+```
+
+The `showcase-120` profile exports 1920×1080 progressive SDR H.264 at 120 fps with portable `libx264` CRF14, a closed 60-frame GOP, BT.709 and the YouTube profile's AAC audio policy. `--encoder h264_nvenc` remains an explicit override. Default `decimate` sampling does not add motion; `--conform blend` requires an integral source/120 ratio, and `--conform interpolate` synthesizes motion. The 100000 kbps maxrate is a fourfold extrapolation from YouTube's 30 fps profile, **UNVERIFIED** for quality or platform upload limits. Verify actual frames, bitrate, playback support and device refresh rate; 120 fps encoded does not prove 120 Hz displayed.
+
 ## Simulate and measure
 
 ```sh

@@ -1,4 +1,5 @@
 import { validateApplication, validateSchema, constraintsSchema } from '../taste/profile.js';
+import { validateOverrides } from '../procedural-camera.js';
 export const SCHEMA = 'fframestudio.project/1';
 export const clone = (value) => structuredClone(value);
 export const uid = (prefix = 'id') =>
@@ -15,6 +16,42 @@ export const fpsOf = (d) => d.fps.num / d.fps.den;
 export const frames = (seconds, fps) =>
   Math.round((seconds * fps.num) / fps.den);
 export const textOf = (c) => ({ ...c.text, ...c.textOverrides });
+/** The clip's own picture: its thumbnail, else its source when that source is an image. */
+export function clipImage(doc, c) {
+  if (c.thumb) return c.thumb;
+  const own = doc.media.find((m) => m.id === c.mediaId);
+  return own?.kind === 'image' ? own.file : null;
+}
+/**
+ * The still the preview shows for clip `c` (a path relative to the project, or null).
+ * The project poster is only for clips without a picture of their own; using it first made
+ * every scene of an image storyboard show the same page.
+ */
+export function clipStill(doc, c) {
+  return clipImage(doc, c) || doc.preview?.poster || null;
+}
+/** True when the preview plays the imported master proxy for `c` instead of showing a still. */
+export const playsProxy = (doc, c) =>
+  !!doc.preview?.proxy && !!c.mediaId && c.mediaId === doc.media[0]?.id;
+/**
+ * Groups of clip IDs (per video) whose preview would be the same page: same still, same words. A storyboard
+ * with distinct scenes must return []; anything else is the "every page is the same" bug.
+ */
+export function duplicateStills(doc) {
+  const groups = [];
+  for (const video of doc.videos) {
+    const byStill = new Map();
+    for (const c of video.clips) {
+      const still = clipStill(doc, c);
+      if (!still || playsProxy(doc, c)) continue;
+      // A page is the still plus the words drawn over it.
+      const page = JSON.stringify([still, textOf(c)]);
+      byStill.set(page, [...(byStill.get(page) || []), c.id]);
+    }
+    for (const ids of byStill.values()) if (ids.length > 1) groups.push(ids);
+  }
+  return groups;
+}
 export function reflow(video) {
   let start = 0;
   for (const c of video.clips) {
@@ -158,6 +195,7 @@ export function validate(d) {
   ok(integer(d.revision), 'Invalid revision');
   if (d.metadata?.tasteDirection) validateSchema(d.metadata.tasteDirection, constraintsSchema);
   if (d.metadata?.tasteBrandConstraints) validateSchema(d.metadata.tasteBrandConstraints, constraintsSchema);
+  if (d.metadata?.proceduralOverrides) validateOverrides(d.metadata.proceduralOverrides, d.metadata.procedural);
   if (d.metadata?.tasteApplications) {
     ok(Array.isArray(d.metadata.tasteApplications), 'Invalid Taste receipts');
     d.metadata.tasteApplications.forEach(validateApplication);

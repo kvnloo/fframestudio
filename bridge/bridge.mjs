@@ -24,8 +24,10 @@ import { referenceAPI, stopReferenceHelpers } from './reference.mjs';
 import { AGENTS as BUILTIN } from './agents.mjs';
 import { watchTheme, detectTheme } from './system-theme.mjs';
 import { agentWebAdapter } from './taste.mjs';
-import { GenerationQueue } from './generation/queue.mjs';
+import { GenerationQueue, MAX_REFERENCE_BYTES } from './generation/queue.mjs';
 import { providers as generationProviders } from './generation/providers.mjs';
+import { renderProject } from './render.mjs';
+import { comfyFeature } from './comfy-api.mjs';
 import { parseSocialReferences, MAX_SOCIAL_REFERENCES_BYTES } from '../web/src/taste/social-references.js';
 
 const VERSION = '0.1.0';
@@ -42,6 +44,9 @@ const QUIET = argv.includes('--quiet');
 const taste = agentWebAdapter({ enabled: argv.includes('--enable-agentweb-taste'), baseURL: process.env.FFS_TASTE_AGENTWEB_URL, token: process.env.FFS_TASTE_AGENTWEB_TOKEN });
 // Do not pass the service credential to ACP children or any browser configuration.
 delete process.env.FFS_TASTE_AGENTWEB_TOKEN;
+// ComfyUI is opt-in (--comfy-url or FFS_COMFY_URL). The Comfy Cloud key never reaches ACP children.
+const COMFY_URL = opt('--comfy-url', process.env.FFS_COMFY_URL), COMFY_KEY = process.env.FFS_COMFY_API_KEY || null;
+delete process.env.FFS_COMFY_API_KEY;
 const WEB = path.resolve(opt('--web', path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'web')));
 const LIBDIR = path.join(ROOT, 'projects');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml',
@@ -123,12 +128,15 @@ const themeOptions = { home: THEME_HOME, source: opt('--theme-source', undefined
 const theme = watchTheme({ ...themeOptions, onChange: state => {
   const msg = `event: theme\ndata: ${JSON.stringify(state)}\n\n`; watchers.forEach(r => r.write(msg));
 } });
-const generation = new GenerationQueue({ root: ROOT, providers: generationProviders({ fake: argv.includes('--generation-fake') }),
+const comfy = await comfyFeature({ url: COMFY_URL, apiKey: COMFY_KEY, templateDirs: all('--comfy-templates'), root: ROOT,
+  publish: data => { const msg = `data: ${JSON.stringify(data)}\n\n`; watchers.forEach(r => r.write(msg)); } });
+const generation = new GenerationQueue({ root: ROOT, providers: [...generationProviders({ fake: argv.includes('--generation-fake') }), ...comfy.providers],
   publish: data => { const msg = `data: ${JSON.stringify(data)}\n\n`; watchers.forEach(r => r.write(msg)); } });
 await generation.ready;
-const shutdown = async () => { theme.close(); stopReferenceHelpers(); await generation.close(); process.exit(0); };
+const shutdown = async () => { theme.close(); stopReferenceHelpers(); await generation.close(); await comfy.close(); process.exit(0); };
 process.once('SIGTERM', shutdown);
 process.once('SIGINT', shutdown);
+let rendering = false;
 const handleReference = referenceAPI({ root: ROOT, safePath: fsPath, send });
 const server = http.createServer(async (req, res) => {
   cors(req, res);
@@ -147,22 +155,29 @@ const server = http.createServer(async (req, res) => {
     return serveFile(req, res, f);
   }
   const auth = (req.headers.authorization || '').replace(/^Bearer /, '') || u.searchParams.get('token') || cookieTok(req); // query only for EventSource
-  if (u.pathname === '/me') return send(res, 200, tokenOk(auth) ? { ok: true, root: ROOT } : { ok: false }); // lets the app show the sign-in page without a console error
+  if (u.pathname === '/me') return send(res, 200, tokenOk(auth) ? { ok: true, root: ROOT, features: { comfy: comfy.enabled } } : { ok: false }); // lets the app show the sign-in page without a console error
   if (!tokenOk(auth)) return send(res, 401, { error: 'bad token' });
   if (await handleReference(req, res, u)) return;
   if (u.pathname === '/taste/profile') {
     if (req.method !== 'GET' || u.search) return send(res, 400, { error: 'Read-only owner-scoped profile; no query parameters' });
     return send(res, 200, await taste.getProfile());
   }
+  if (await comfy.handle(req, res, u)) return;
   if (u.pathname.startsWith('/generation/')) {
     try {
-      if (req.method === 'GET' && u.pathname === '/generation/providers') return send(res, 200, { providers: await generation.capabilities() });
+      if (req.method === 'GET' && u.pathname === '/generation/providers') return send(res, 200, { providers: (await generation.capabilities()).filter(p => !p.hidden) });
       if (req.method === 'GET' && u.pathname === '/generation/jobs') return send(res, 200, { jobs: generation.list(u.searchParams.get('projectId')) });
       const match = /^\/generation\/jobs\/([\w-]+)(?:\/(cancel|retry))?$/.exec(u.pathname);
       if (req.method === 'GET' && match && !match[2]) {
         const job = generation.list().find(j => j.id === match[1]); return send(res, job ? 200 : 404, job || { error: 'unknown-job' });
       }
       if (req.method === 'POST' && match?.[2]) return send(res, 200, await generation[match[2]](match[1]));
+      if (req.method === 'POST' && u.pathname === '/generation/references') {
+        // One captured playhead frame (PNG). Stored under a server-selected name.
+        if (String(req.headers['content-type'] || '').split(';')[0].trim() !== 'image/png') return send(res, 415, { error: 'invalid-reference' });
+        const chunks = []; let size = 0; for await (const chunk of req) { size += chunk.length; if (size > MAX_REFERENCE_BYTES) return send(res, 413, { error: 'too-big' }); chunks.push(chunk); }
+        return send(res, 201, await generation.addReference(u.searchParams.get('projectId'), Buffer.concat(chunks)));
+      }
       if (req.method === 'POST' && u.pathname === '/generation/jobs') {
         let body = '', size = 0; for await (const chunk of req) { size += chunk.length; if (size > 16384) return send(res, 413, { error: 'too-big' }); body += chunk; }
         let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'invalid-json' }); }
@@ -170,7 +185,7 @@ const server = http.createServer(async (req, res) => {
       }
       return send(res, 404, { error: 'not-found' });
     } catch (e) {
-      const known = ['invalid-settings', 'invalid-prompt', 'invalid-seed', 'unsupported-timing', 'unsupported-resolution', 'unknown-provider', 'provider-unavailable', 'queue-full', 'queue-closed', 'unknown-job', 'not-retryable', 'unsafe-path'];
+      const known = ['unsupported-mode', 'invalid-reference', 'unknown-reference', 'reference-mismatch', 'unknown-project', 'invalid-settings', 'invalid-prompt', 'invalid-seed', 'unsupported-timing', 'unsupported-resolution', 'unknown-provider', 'provider-unavailable', 'queue-full', 'queue-closed', 'unknown-job', 'not-retryable', 'unsafe-path'];
       return send(res, 400, { error: known.includes(e.message) ? e.message : 'generation-request-failed' });
     }
   }
@@ -210,6 +225,16 @@ const server = http.createServer(async (req, res) => {
       const tmp=p+'.ffs-'+randomBytes(6).toString('hex');
       try{fs.writeFileSync(tmp,b,{flag:NOFOLLOW_WRITE|fs.constants.O_EXCL});fs.renameSync(tmp,p);}catch(e){try{fs.unlinkSync(tmp);}catch{}return send(res,500,{error:e.message});}
       publish('change',path.relative(ROOT,p));return send(res, 200, { ok: true, absolute: p }); }
+  }
+  if (u.pathname === '/render' && req.method === 'POST') { // render the saved project.json to projects/<id>/renders/*.mp4
+    if (rendering) return send(res, 409, { error: 'a render is already running' });
+    rendering = true;
+    const projectId = u.searchParams.get('project') || '', videoId = u.searchParams.get('video') || undefined;
+    try {
+      const r = await renderProject({ root: ROOT, projectId, videoId, onProgress: (p) => { const msg = `data: ${JSON.stringify({ type: 'render', projectId, ...p })}\n\n`; watchers.forEach((w) => w.write(msg)); } });
+      log('rendered', path.relative(ROOT, r.file));
+      return send(res, 200, { ok: true, path: path.relative(ROOT, r.file), url: '/lib/' + path.relative(LIBDIR, r.file).split(path.sep).map(encodeURIComponent).join('/'), frames: r.frames, seconds: r.seconds, clips: r.clips.length });
+    } catch (e) { return send(res, 400, { error: e.message }); } finally { rendering = false; }
   }
   if (u.pathname === '/events') { res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' }); res.write(': ok\n\n'); res.write(`event: theme\ndata: ${JSON.stringify(theme.state)}\n\n`); watchers.add(res); req.on('close', () => watchers.delete(res)); return; }
   send(res, 404, { error: 'not found' });

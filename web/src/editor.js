@@ -1,12 +1,13 @@
 import { ACTIONS, action as studioAction } from './actions.js';
-import { fpsOf, textOf, uid, rational } from './doc/project.js';
+import { fpsOf, textOf, uid, rational, clipStill, clipImage } from './doc/project.js';
 import { scope, COMMANDS, CommandStore, proposalCommand, recoveryCommand } from './doc/commands.js';
 import { RecoveryJournal, fileHash } from './doc/journal.js';
 import { setThemeSettings, themeInfo, onTheme, shotColorSlot } from './system-theme.js';
 import { StudioView, colourSlot, clipKind, timecode, advanceFrame } from './studio.js';
 import { PosterDecoder } from './poster-decoder.js';
-import { proceduralShot, proceduralSource } from './procedural.js';
-import { request, mediaURL, isLocal, isCopy, saveCopy, exportProject, preferences as storage } from './host.js';
+import { proceduralShot, proceduralSource, cameraOverrides, bindCameraOverrides } from './procedural.js';
+import { request, mediaURL, isLocal, isCopy, saveCopy, exportProject, preferences as storage, hostFeature } from './host.js';
+import { fframesReviewShell, refreshFframesReview, fframesUpstreamSource } from './fframes-cli.js';
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
@@ -208,7 +209,7 @@ export class Editor {
   <section class="inspector-panel panel"><div class="panel-title">Inspector ${button('toggle-inspector', 'Collapse')}</div><div id="inspector"></div></section></div>
   <section class="timeline-panel panel"><div class="panel-title">Timeline <span id="scope" aria-live="polite">Select a clip to edit</span><label>Zoom <input id="zoom" type="range" min="0.5" max="8" step="0.25" value="1"></label><label><input id="snap" type="checkbox" checked> Snap</label></div><div id="timeline"><div id="timeline-space"><div id="beats"></div><div id="lane"></div><div id="playhead"></div></div></div><div class="panel-foot">${button('split', 'Split · S')}${button('duplicate', 'Duplicate')}${button('delete', 'Delete')}<span class="hint">Drag story cards to reorder · drag clip edges to trim · attached layers follow</span></div></section>
   <div class="secondary-grid"><section class="panel"><div class="panel-title">Takes <span>film versions</span></div><div class="version-tools"><input id="version-name" placeholder="Name this version" aria-label="Version name">${button('save-version', 'Save version')}<select id="version-a" aria-label="Version A"></select><select id="version-b" aria-label="Version B"></select>${button('compare', 'Compare')}${button('restore-version', 'Restore A')}</div><pre id="version-diff"></pre></section><section class="panel"><div class="panel-title">Assistant proposals <span>Inspect → Apply → Undo</span></div><div id="proposals">No pending proposal. Ask the assistant for an edit.</div></section></div>
-  <details class="source-panel"><summary>Source & provenance</summary>${proceduralSource(this.doc.metadata, this.doc.metadata?.shots)}${attribution?.author ? `<p>${this.doc.metadata?.example ? 'Example copy' : 'Source'} · ${esc(attribution.author)} · ${esc(attribution.licence)}</p><p>${esc(attribution.credit)}</p>${/^https?:\/\//.test(attribution.source_url) ? `<p><a href="${esc(attribution.source_url)}" target="_blank" rel="noopener noreferrer">Original source ↗</a></p>` : ''}` : ''}<p>${esc(this.doc.metadata?.source?.path || '')}</p><p>${esc((this.doc.metadata?.notes || []).join(' · '))}</p><dl class="kv">${Object.entries(
+  <details class="source-panel"><summary>Source & provenance</summary>${proceduralSource(this.doc.metadata, this.doc.metadata?.shots)}<div id="camera-overrides-slot"></div>${fframesUpstreamSource(this.doc.metadata)}${attribution?.author ? `<p>${this.doc.metadata?.example ? 'Example copy' : 'Source'} · ${esc(attribution.author)} · ${esc(attribution.licence)}</p><p>${esc(attribution.credit)}</p>${/^https?:\/\//.test(attribution.source_url) ? `<p><a href="${esc(attribution.source_url)}" target="_blank" rel="noopener noreferrer">Original source ↗</a></p>` : ''}` : ''}<p>${esc(this.doc.metadata?.source?.path || '')}</p><p>${esc((this.doc.metadata?.notes || []).join(' · '))}</p><dl class="kv">${Object.entries(
     this.doc.metadata?.docs || {},
   )
     .map(
@@ -236,7 +237,7 @@ export class Editor {
       $('#canvas').append(notice);
       $('.preview-label').textContent = 'Metadata-only import · no verified video or playable proxy';
     }
-    $('.editor-tools',this.root).insertAdjacentHTML('beforeend',button('voice','Voice · hold V')+button('import-reference','Import reference')+(this.doc.metadata?.reference ? button('compare-reference','Compare reference') : ''));
+    $('.editor-tools',this.root).insertAdjacentHTML('beforeend',button('voice','Voice · hold V')+button('import-reference','Import reference')+(hostFeature('comfy') ? button('comfy','ComfyUI') : '')+(this.doc.metadata?.reference ? button('compare-reference','Compare reference') : ''));
     $('#recovery').oncancel = (e) => e.preventDefault();
     this.assistant?.($('#assistant-slot', this.root));
     this.root.onclick = (e) => {
@@ -417,11 +418,23 @@ export class Editor {
     this.renderInspector();
     this.studio?.inspector();
     this.renderVersions();
+    this.renderCameraOverrides();
     this.updatePreview(true);
     if (result) {
       $('[data-action="undo"]').disabled = !result.undo;
       $('[data-action="redo"]').disabled = !result.redo;
     }
+  }
+  // ff-unmute working-copy camera keys; re-rendered only when the override object changes.
+  renderCameraOverrides(error = '', field, force = false) {
+    const box = $('#camera-overrides-slot');
+    if (!box || this.doc.metadata?.procedural?.family !== 'ff-unmute') return;
+    if (field) this.cameraField = field;
+    const o = this.doc.metadata.proceduralOverrides;
+    if (!error && !field && !force && box.firstChild && this.cameraRendered === o) return;
+    this.cameraRendered = o;
+    box.innerHTML = cameraOverrides(this.doc.metadata, { field: this.cameraField, projectPath: this.absolute, error });
+    if (!box.onchange) bindCameraOverrides(box, (cmd) => this.run(cmd), (e, f, force) => this.renderCameraOverrides(e, f, force), () => this.doc.metadata);
   }
   observeThumbs(root) {
     $$('canvas[data-thumb],canvas[data-video]', root).forEach((e) => {
@@ -432,7 +445,8 @@ export class Editor {
     });
   }
   thumb(c, poster = false) {
-    const image = c.thumb ? `<canvas width="160" height="90" data-thumb="${esc(this.url(c.thumb))}" aria-label="Clip thumbnail"></canvas>` : '';
+    const own = clipImage(this.doc, c);
+    const image = own ? `<canvas width="160" height="90" data-thumb="${esc(this.url(own))}" aria-label="Clip thumbnail"></canvas>` : '';
     if (!poster) return image || '<span class="thumb-empty"></span>';
     const media = this.doc.media.find(m => m.id === c.mediaId && m.kind === 'video');
     const video = media?.file || this.doc.preview.proxy || this.doc.metadata?.renders?.[0]?.file;
@@ -577,6 +591,7 @@ export class Editor {
       const sig = JSON.stringify([
         c.name,
         c.thumb,
+        c.mediaId,
         c.attached,
         c.beatLock,
         this.scale,
@@ -696,6 +711,7 @@ export class Editor {
       const range = $('[data-range]', box),
         text = `IN ${timecode(c.start, fpsOf(this.doc))} · ${c.start} f · ${this.doc.fps.num}/${this.doc.fps.den} fps`;
       if (range.textContent !== text) range.textContent = text;
+      refreshFframesReview(box, this.doc, c);
       return;
     }
     box.signature = signature;
@@ -711,7 +727,8 @@ export class Editor {
       )
       .join(
         '',
-      )}</fieldset><details><summary>Media & shared appearance</summary><label>Replace source<select id="replace-media"><option value="">Generated / none</option>${this.doc.media.map((m) => `<option value="${esc(m.id)}" ${m.id === c.mediaId ? 'selected' : ''}>${esc(m.file.split('/').pop())}</option>`).join('')}</select></label><label>Shared style: ${esc(c.styleId)} · affects every instance<input id="style-color" type="color" value="${this.video.styles[c.styleId]?.color || '#ecebe7'}"></label><p class="hint">Source range changes never modify media files.</p></details>`;
+      )}</fieldset><details><summary>Media & shared appearance</summary><label>Replace source<select id="replace-media"><option value="">Generated / none</option>${this.doc.media.map((m) => `<option value="${esc(m.id)}" ${m.id === c.mediaId ? 'selected' : ''}>${esc(m.file.split('/').pop())}</option>`).join('')}</select></label><label>Shared style: ${esc(c.styleId)} · affects every instance<input id="style-color" type="color" value="${this.video.styles[c.styleId]?.color || '#ecebe7'}"></label><p class="hint">Source range changes never modify media files.</p></details>${fframesReviewShell(this.doc)}`;
+    refreshFframesReview(box, this.doc, c);
     const act = (cmd) =>
       this.run(cmd).catch((err) => {
         this.toast(err.message);
@@ -851,7 +868,7 @@ export class Editor {
       $('#preview-text').style.fontFamily = fontFamily === 'IBM Plex Mono' ? 'Plex Mono' : fontFamily || '';
       $('#canvas').dataset.customInk = String(!!colour && colour !== '#ecebe7');
       const still = $('#preview-still'),
-        src = c.thumb || this.doc.preview.poster;
+        src = clipStill(this.doc, c);
       still.style.display = src ? 'block' : 'none';
       if (src && this.previewThumb !== src) {
         this.previewThumb = src;
@@ -1006,7 +1023,7 @@ export class Editor {
   }
   paletteItems() {
     const q = $('#command-search').value.toLowerCase();
-    const names = Object.keys(ACTIONS).filter(n => ACTIONS[n].palette);
+    const names = Object.keys(ACTIONS).filter(n => ACTIONS[n].palette && (!ACTIONS[n].requires || hostFeature(ACTIONS[n].requires)));
     $('#command-list').innerHTML = names
       .filter((n) => [n, ACTIONS[n].title, ...ACTIONS[n].synonyms].join(' ').includes(q))
       .map(
@@ -1086,6 +1103,12 @@ export class Editor {
       if(this.dead)throw Error('Editor closed');this.voice=new VoiceControl(this);return this.voice;
     });
   }
+  ensureComfy() {
+    if (!hostFeature('comfy')) return Promise.reject(Error('ComfyUI is not configured on this bridge (start it with --comfy-url).'));
+    return this.comfyLoading ||= import('./comfy.js').then(({ComfyDesk})=>{
+      if(this.dead)throw Error('Editor closed');this.comfy=new ComfyDesk(this);return this.comfy;
+    });
+  }
   ensureReference() {
     return this.referenceLoading ||= import('./reference.js').then(({ReferenceDesk})=>{
       if(this.dead)throw Error('Editor closed');this.reference=new ReferenceDesk(this);return this.reference;
@@ -1101,10 +1124,15 @@ export class Editor {
     if (a === 'apply-taste') { studioAction(a).preview(this, params); return this.run({type:a,...params}); }
     if (a === 'component-lab') return window.open('/app/labs/video-styles.html', '_blank', 'noopener,noreferrer');
     if (a === 'voice') return (await this.ensureVoice()).toggle();
+    if (a.startsWith('comfy')) return (await this.ensureComfy()).act(a, params);
     if (a === 'import-reference') return (await this.ensureReference()).open();
     if (a === 'compare-reference') return (await this.ensureReference()).compareProject();
     if (a === 'seek') return this.seek(params.frame);
     if (a === 'open-panel') { this.studio.showTab(params.panel); return; }
+    if (a === 'edit-procedural-camera') { // interactive: gather values in the Source working-copy table
+      if (this.doc.metadata?.procedural?.family !== 'ff-unmute') return this.toast('Camera keys need an imported ff-unmute source');
+      this.studio.showTab('source'); $('#procedural-overrides')?.scrollIntoView({ block: 'start' }); return;
+    }
     if (this.loading) return;
     if (a === 'apply-taste') { $('#palette').close(); this.studio.showTab('taste'); return; }
     if (['loop-shot','loop-film','mute','screening'].includes(a)) return this.studio.action(a);
@@ -1200,9 +1228,16 @@ export class Editor {
     if (a === 'save-copy') { try { await saveCopy(this.doc); this.toast('Copy saved to your projects folder'); } catch(error) { this.toast(error.message); } return; }
     if (a === 'export-project') { exportProject(this.doc.id, await this.rpc('serialize', this.doc)); return; }
     if (a === 'export') {
-      this.toast(
-        isLocal() ? 'Video export needs the local bridge. Export project.json to keep your edits.' : 'Video export unavailable: compositing engine is not qualified. Your project can be saved.',
-      );
+      if (isLocal() || isCopy(this.doc.id) || !this.api.render) { this.toast('Video export needs the local bridge. Export project.json to keep your edits.'); return; }
+      if (this.dirty) { await this.save(); if (this.dirty) { this.toast('Save failed; nothing rendered'); return; } }
+      $('#save-status').textContent = 'Rendering video…';
+      try {
+        const r = await this.api.render(this.doc.id, this.videoId);
+        const st = $('#save-status'); st.textContent = `Rendered ${r.seconds.toFixed(2)} s · `;
+        const link = document.createElement('a'); link.href = r.url; link.target = '_blank'; link.rel = 'noopener'; link.id = 'render-result'; link.textContent = r.path.split('/').pop(); st.append(link);
+        this.toast(`Video rendered: ${r.path}`);
+        this.lastRender = r;
+      } catch (error) { $('#save-status').textContent = 'Render failed'; this.toast(error.message); }
       return;
     }
     if (a === 'reload-external') {
@@ -1369,6 +1404,7 @@ export class Editor {
     this.dead = true;
     this.voice?.destroy();
     this.reference?.destroy();
+    this.comfy?.destroy();
     this.studio?.destroy();
     cancelAnimationFrame(this.raf);
     clearInterval(this.previewTimer);
