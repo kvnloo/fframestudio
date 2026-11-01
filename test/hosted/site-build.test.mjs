@@ -29,7 +29,12 @@ test('static builder omits absent examples, versions assets and emits local-only
     assert.equal(headers['x-content-type-options'],'nosniff');
     assert.equal(headers['cache-control'],'public, max-age=0, must-revalidate');
     assert.equal(headers['x-frame-options'],'DENY');
-    const immutable=config.headers.slice(1);
+    const embed=config.headers[1];
+    assert.equal(new RegExp('^'+config.headers[0].source+'$').test('/launch/embed'),false);
+    assert.equal(new RegExp('^'+embed.source+'$').test('/launch/embed'),true);
+    assert.ok(!embed.headers.some(h=>h.key==='X-Frame-Options'));
+    assert.match(embed.headers.find(h=>h.key==='Content-Security-Policy').value,/frame-ancestors 'self' https:\/\/x.com/);
+    const immutable=config.headers.slice(2);
     assert.equal(immutable.length,2);
     assert.ok(immutable.every(h=>h.headers.some(x=>x.key==='Cache-Control'&&x.value==='public, max-age=31536000, immutable')));
     const version=fs.readdirSync(path.join(site,'app')).find(n=>/^assets-v[0-9a-f]{12}$/.test(n));

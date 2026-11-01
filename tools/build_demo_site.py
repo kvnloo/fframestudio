@@ -12,6 +12,7 @@ import shutil
 import os
 import subprocess
 import tempfile
+from build_launch import build_launch
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -145,8 +146,13 @@ def build(output, examples=None, allow_unlisted_media=()):
     manifest.sort(key=lambda e: not e.get('featured', False))
     (target / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' blob: data:; media-src 'self' blob: data:; worker-src 'self' blob: data:; connect-src 'self' blob: http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    build_launch(output)
+    # Security policies are disjoint: no global DENY can leak onto the player.
+    embed_csp = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com"
+    common = [{'key':'X-Content-Type-Options','value':'nosniff'}, {'key':'Referrer-Policy','value':'no-referrer'}, {'key':'Permissions-Policy','value':'camera=(), microphone=(), geolocation=()'}, {'key':'Cache-Control','value':'public, max-age=0, must-revalidate'}]
     config = {'cleanUrls': True, 'headers': [
-        {'source': '/(.*)', 'headers': [{'key':'Content-Security-Policy','value':csp}, {'key':'X-Content-Type-Options','value':'nosniff'}, {'key':'Referrer-Policy','value':'no-referrer'}, {'key':'X-Frame-Options','value':'DENY'}, {'key':'Permissions-Policy','value':'camera=(), microphone=(self), geolocation=()'}, {'key':'Cache-Control','value':'public, max-age=0, must-revalidate'}]},
+        {'source': '/((?!launch/embed(?:\\.html)?/?$).*)', 'headers': [{'key':'Content-Security-Policy','value':csp}, {'key':'X-Content-Type-Options','value':'nosniff'}, {'key':'Referrer-Policy','value':'no-referrer'}, {'key':'X-Frame-Options','value':'DENY'}, {'key':'Permissions-Policy','value':'camera=(), microphone=(self), geolocation=()'}, {'key':'Cache-Control','value':'public, max-age=0, must-revalidate'}]},
+        {'source': '/(launch/embed(?:\\.html)?/?)', 'headers': [{'key':'Content-Security-Policy','value':embed_csp}, *common]},
         {'source': '/app/' + assets + '/:path*', 'headers':[{'key':'Cache-Control','value':'public, max-age=31536000, immutable'}]},
         {'source': '/examples/:file(.*\\.[0-9a-f]{12}\\.[a-z0-9]+)', 'headers':[{'key':'Cache-Control','value':'public, max-age=31536000, immutable'}]},
     ]}

@@ -11,6 +11,7 @@
     "example:fframes-intro": "python3 tools/example_fframes_intro.py",
     "verify:intro": "node tools/verify-intro.mjs",
     "verify:hosted": "node tools/verify-hosted.mjs",
+    "verify:xplayer": "node tools/verify-xplayer.mjs",
     "bridge": "node bridge/bridge.mjs",
     "build:acp": "esbuild web/src/acp-client.mjs --bundle --format=esm --target=es2022 --minify --outfile=web/dist/acp-client.js",
     "test:acp": "node test/acp-e2e.mjs",

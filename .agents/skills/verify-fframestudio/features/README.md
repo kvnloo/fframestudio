@@ -58,6 +58,7 @@ When you change a feature, update its file and the matching journey in `test/ver
 | --- | --- | --- |
 | Procedural source inspector | [procedural.md](./procedural.md) | `procedural: ff-tracking 12 shots, ff-unmute one take + markers` |
 | Reference / typed actions / voice | [reference-voice.md](./reference-voice.md) | `actions:`, `reference:`, `voice:` journeys and hosted reference-file journey |
+| X Player Card launch film | [xplayer.md](./xplayer.md) | `hosted: X player card and isolated embed`; standalone `npm run verify:xplayer` |
 | Hosted local-first Studio | [hosted.md](./hosted.md) | five `hosted:` journeys in `test/hosted-journey.mjs`, included by `test/verify.mjs` |
 | Video Style Components | [style-components.md](./style-components.md) | `style components: lab preview equals runtime`; `hosted: style component lab equals runtime` |
 | My Taste | [taste.md](./taste.md) | `taste: import file profile -> preview diff -> apply -> undo -> delete`; `hosted taste:` in `test/hosted-journey.mjs` |
