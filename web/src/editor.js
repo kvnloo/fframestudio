@@ -346,20 +346,30 @@ export class Editor {
     this.measure();
     this.refresh();
     this.tick = 0;
-    const playhead = $('#playhead');
+    const playhead = $('#playhead'), previewVideo = $('#preview-video');
     const loop = (t) => {
       if (this.dead) return;
       const delta = this.tick ? Math.min(t - this.tick, 100) : 0;
       this.tick = t;
-      if (this.rate) {
-        this.frame = advanceFrame(this.frame, delta * this.rate * fpsOf(this.doc) / 1000, this.total, this.studio.loop ? this.studio.bounds() : null);
-      }
+      this.advancePlayback(delta, previewVideo);
       // No layout reads, text changes, reconciliation, or decoding in the animation loop.
       playhead.style.transform = `translateX(${this.frame * this.scale}px)`;
       this.raf = requestAnimationFrame(loop);
     };
     this.raf = requestAnimationFrame(loop);
     this.previewTimer = setInterval(() => this.updatePreview(), 100);
+  }
+  advancePlayback(delta, video) {
+    if (!this.rate) return;
+    const fps = fpsOf(this.doc), clock = this.previewClock;
+    let step = delta * this.rate * fps / 1000;
+    if (this.rate > 0 && clock) {
+      // Audible media can wait at startup or while buffering. Chasing wall time
+      // with seeks restarts that wait; let the proxy own forward playback time.
+      if (video.seeking) return;
+      step = clock.start + (video.currentTime * fps - clock.sourceIn) * clock.speed.den / clock.speed.num - this.frame;
+    }
+    this.frame = advanceFrame(this.frame, step, this.total, this.studio.loop ? this.studio.bounds() : null);
   }
   saveSettings() {
     storage.setItem('ffs.settings', JSON.stringify(this.settings));
@@ -817,8 +827,9 @@ export class Editor {
   }
   updatePreview(force = false) {
     if (!this.doc) return;
-    if (!force && this.lastFrame === Math.floor(this.frame)) return;
+    if (!force && this.lastFrame === Math.floor(this.frame) && this.lastRate === this.rate) return;
     this.lastFrame = Math.floor(this.frame);
+    this.lastRate = this.rate;
     const c = this.video.clips.find(
       (c) => this.frame >= c.start && this.frame < c.start + c.duration,
     );
@@ -826,7 +837,7 @@ export class Editor {
     this.reference?.sync();
     if (+$('#seek').value !== Math.floor(this.frame))
       $('#seek').value = Math.floor(this.frame);
-    if (!c) return;
+    if (!c) { this.previewClock = null; return; }
     const sig = JSON.stringify([c.id, textOf(c), this.video.styles[c.styleId]]);
     if (sig !== this.previewSignature) {
       this.previewSignature = sig;
@@ -854,6 +865,7 @@ export class Editor {
     // Imported master proxies can be mapped by original source frames. Independent sources use stills.
     const useProxy = proxy && c.mediaId === this.doc.media[0]?.id;
     video.hidden = !useProxy;
+    this.previewClock = useProxy ? c : null;
     if (useProxy) {
       const src = this.url(proxy);
       if (video.getAttribute('src') !== src) video.src = src;
