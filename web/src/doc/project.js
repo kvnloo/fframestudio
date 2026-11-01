@@ -1,4 +1,5 @@
 import { validateApplication, validateSchema, constraintsSchema } from '../taste/profile.js';
+import { validateOverrides } from '../procedural-camera.js';
 export const SCHEMA = 'fframestudio.project/1';
 export const clone = (value) => structuredClone(value);
 export const uid = (prefix = 'id') =>
@@ -158,6 +159,7 @@ export function validate(d) {
   ok(integer(d.revision), 'Invalid revision');
   if (d.metadata?.tasteDirection) validateSchema(d.metadata.tasteDirection, constraintsSchema);
   if (d.metadata?.tasteBrandConstraints) validateSchema(d.metadata.tasteBrandConstraints, constraintsSchema);
+  if (d.metadata?.proceduralOverrides) validateOverrides(d.metadata.proceduralOverrides, d.metadata.procedural);
   if (d.metadata?.tasteApplications) {
     ok(Array.isArray(d.metadata.tasteApplications), 'Invalid Taste receipts');
     d.metadata.tasteApplications.forEach(validateApplication);
