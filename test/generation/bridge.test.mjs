@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -60,7 +60,21 @@ test('authenticated HTTP/SSE, no-secret responses/logs/bundles and real bridge c
     for (const rel of ['src/generation.js', 'generation.css', 'dist/acp-client.js']) {
       const bundle = await fetch(base + '/app/' + rel).then(r => r.text()); assert.equal(bundle.includes(secret), false);
     }
-    const states = await call('/generation/jobs'); assert.equal(states.data.jobs.length, 5);
+    // i2v over HTTP: PNG-only upload, server-named reference, provenance in the job.
+    const png = execFileSync('ffmpeg', ['-v', 'error', '-f', 'lavfi', '-i', 'color=c=0x2a9d8f:s=704x480', '-frames:v', '1', '-f', 'image2pipe', '-c:v', 'png', '-']);
+    const upload = (body, type = 'image/png', project = 'p') => fetch(base + '/generation/references?projectId=' + project, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': type }, body });
+    assert.equal((await fetch(base + '/generation/references?projectId=p', { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: png })).status, 401);
+    assert.equal((await upload(png, 'image/jpeg')).status, 415);
+    assert.equal((await upload(Buffer.from('not png'))).status, 400);
+    assert.equal((await upload(png, 'image/png', '..%2Fp')).status, 400);
+    const ref = await upload(png); assert.equal(ref.status, 201);
+    const reference = await ref.json(); assert.match(reference.file, /^media\/generated\/references\/[0-9a-f-]{36}\.png$/);
+    assert.equal(JSON.stringify(reference).includes(root), false, 'absolute path leaked');
+    const source = { id: reference.id, videoId: 'v', clipId: 'c', clipName: 'Shot', mediaId: null, frame: 3, sourceTime: 0.1 };
+    assert.equal((await call('/generation/jobs', 'POST', { ...settings, mode: 'i2v', reference: { ...source, path: '/etc/passwd' } })).data.error, 'invalid-reference');
+    const i2v = await call('/generation/jobs', 'POST', { ...settings, mode: 'i2v', reference: source }); assert.equal(i2v.status, 202);
+    const i2vDone = await poll(i2v.data.id); assert.equal(i2vDone.state, 'done'); assert.equal(i2vDone.result.provenance.reference.frame, 3);
+    const states = await call('/generation/jobs'); assert.equal(states.data.jobs.length, 6);
   } finally {
     controller?.abort(); await stop('SIGTERM');
     assert.deepEqual(await snapshot(config), before, 'test bridge changed shared discovery config');

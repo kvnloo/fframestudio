@@ -9,6 +9,8 @@ for (let i = 1; i <= 5; i++) {
 // Only available behind a bridge CLI test flag. Never called an AI result.
 if (s.prompt === '[test:fail]') { console.error(process.env.FFS_TEST_SECRET || 'test failure'); process.exit(1); }
 if (s.prompt === '[test:invalid]') { const fs = await import('node:fs'); fs.writeFileSync(s.output, 'not a video'); process.exit(0); }
-const child = spawn('ffmpeg', ['-v', 'error', '-nostdin', '-f', 'lavfi', '-i', `testsrc2=size=${s.width}x${s.height}:rate=${s.fps}`, '-t', String(s.duration), '-an', '-c:v', 'libx264', '-threads', '2', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-n', s.output], { stdio: 'ignore' });
+// Fake i2v holds the server-resolved reference frame still: visibly derived, not AI motion.
+const input = s.referencePath ? ['-loop', '1', '-framerate', String(s.fps), '-i', s.referencePath, '-vf', `scale=${s.width}:${s.height}`] : ['-f', 'lavfi', '-i', `testsrc2=size=${s.width}x${s.height}:rate=${s.fps}`];
+const child = spawn('ffmpeg', ['-v', 'error', '-nostdin', ...input, '-t', String(s.duration), '-an', '-c:v', 'libx264', '-threads', '2', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-n', s.output], { stdio: 'ignore' });
 process.on('SIGTERM', () => child.kill('SIGTERM'));
 child.on('error', () => process.exit(1)); child.on('close', c => process.exit(c ?? 1));
