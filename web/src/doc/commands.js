@@ -2,6 +2,7 @@ import { clone, validate, reflow, uid } from './project.js';
 import { COMMAND_IDS, validateCommand } from '../actions.js';
 export const COMMANDS = COMMAND_IDS;
 import { validateApplication, validateSchema, constraintsSchema } from '../taste/profile.js';
+import { editCamera } from '../procedural-camera.js';
 export function diff(a, b, path = '') {
   if (a === b) return [];
   if (
@@ -42,6 +43,8 @@ export function applyPatches(doc, patches) {
 }
 export function scope(c) {
   if (c.type === 'batch') return c.commands.map(scope).join('; ');
+  if (c.type === 'edit-procedural-camera')
+    return `Studio working copy: camera key ${c.key + 1} · source untouched · needs Rust rebuild → flat → lens`;
   if (c.type === 'edit-style')
     return `Shared style: ${c.styleId} — all clips using this style`;
   if (['move', 'trim', 'split', 'delete', 'retime'].includes(c.type))
@@ -318,6 +321,14 @@ function mutate(d, c, depth = 0) {
         if (receipt.changedSignals.includes('palette')) s.color = receipt.dials.palette[0];
         if (receipt.changedSignals.includes('typography')) s.fontFamily = receipt.dials.typography;
       }
+      break;
+    }
+    case 'edit-procedural-camera': {
+      need(Object.keys(c).every(k => ['type', 'videoId', 'key', 'changes', 'snap', 'reset'].includes(k)), 'Camera override fields only');
+      const overrides = editCamera(d.metadata, c), metadata = { ...d.metadata };
+      if (overrides) metadata.proceduralOverrides = overrides;
+      else delete metadata.proceduralOverrides;
+      d.metadata = metadata;
       break;
     }
     case 'edit-style':

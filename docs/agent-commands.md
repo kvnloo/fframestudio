@@ -41,6 +41,7 @@ except the explicit destination of `move`/`add`.
 | edit-style | `styleId`, hex `color` — **all clips using that shared style** |
 | save-version | `id`, `name` |
 | restore-version | `id` |
+| edit-procedural-camera | ff-unmute only: `key` (0-based camera key), optional `changes` (`time_s`, `look_y`, `zoom`, `tilt_x`, `tilt_y`, `roll`, `dx`, `blur`), optional `snap: {kind: bar\|kick\|clap\|token, index}` (1-based source event), optional `reset` — **studio working-copy override; source and film are not changed or rendered** |
 
 Timing changes ripple the primary story and preserve declared attachments. Beat-locked
 clips reject direct timing edits or upstream ripple displacement. Ask permission to unlock

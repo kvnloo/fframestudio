@@ -168,7 +168,7 @@ def inspect(root, video_info=None, artifacts=None):
         metadata["bpm"] = float(bpm[1])
         metadata["bpm_origin"] = "music/score.py via generated.rs; measured tempo is a separate cross-check"
         metadata["event_origins"] = {"kick": "Measured kick-stem onsets", "clap": "Synthesized score event timestamps", "token": "Synthesized score event timestamps (count measured)", "bar": "4/4 authored score grid"}
-        metadata["event_frames"]["bar"] = [round(i * 4 * 60 / metadata["bpm"] * fps) for i in range(math.ceil(length / fps / (4 * 60 / metadata["bpm"])))]
+        metadata["event_frames"]["bar"] = [math.floor(i * 4 * 60 / metadata["bpm"] * fps + 0.5) for i in range(math.ceil(length / fps / (4 * 60 / metadata["bpm"])))]
         metadata["bar_origin"] = "4/4 score grid at generated BPM; bars are not detected kick onsets"
         metadata["waveform"] = _numbers(source, "WAVE") or []
         if any(v > 1 for v in metadata["waveform"]):
@@ -176,7 +176,7 @@ def inspect(root, video_info=None, artifacts=None):
         keys = _tuples(hud, "KEYS", 8)
         if not keys or keys[0][0] != 0 or any(a[0] >= b[0] for a, b in zip(keys, keys[1:])) or keys[-1][0] > length / fps:
             raise ValueError("Invalid camera KEYS")
-        metadata["camera_keyframes"] = [dict(zip(["time_s", "look_y", "zoom", "tilt_x", "tilt_y", "roll", "dx", "blur"], k), frame=round(k[0] * fps)) for k in keys]
+        metadata["camera_keyframes"] = [dict(zip(["time_s", "look_y", "zoom", "tilt_x", "tilt_y", "roll", "dx", "blur"], k), frame=math.floor(k[0] * fps + 0.5)) for k in keys]
         metadata["camera_interpolation"] = "Catmull–Rom (hud::camera); source keys, not sampled motion"
         metadata["measurement_sources"] = [p for p in ("out/measured.json", "out/events.json") if (data_root / p).is_file()]
         shots = [{"id": "s01", "name": "Continuous camera take", "t0": 0,
@@ -220,7 +220,11 @@ def inspect(root, video_info=None, artifacts=None):
     metadata["source_url"] = "https://github.com/mrsarac/" + metadata["family"]
     metadata["measurement_sha256"] = {p: hashlib.sha256((data_root / p).read_bytes()).hexdigest() for p in metadata.get("measurement_sources", [])}
     metadata["source_sha256"] = {p: hashlib.sha256((root / p).read_bytes()).hexdigest() for p in metadata["source_files"]}
-    revision = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True, text=True)
-    metadata["source_revision"] = revision.stdout.strip() if revision.returncode == 0 else None
+    # Only the source's own checkout names its revision; a copy nested in another
+    # repository (e.g. a remix working copy) must not inherit that parent's HEAD.
+    top = subprocess.run(["git", "-C", str(root), "rev-parse", "--show-toplevel", "HEAD"], capture_output=True, text=True)
+    lines = top.stdout.splitlines()
+    own = top.returncode == 0 and len(lines) == 2 and Path(lines[0]).resolve() == root.resolve()
+    metadata["source_revision"] = lines[1] if own else None
     metadata["future_write_surface"] = ["text", "palette", "camera", "focus / tracker"] if metadata["family"] == "ff-tracking" else ["score", "camera keyframes", "palettes", "audio response"]
     return {"shots": shots, "metadata": metadata}
