@@ -53,6 +53,10 @@ class StudioMusicTest(unittest.TestCase):
         self.assertEqual(self.source.read_bytes(), b"hi")
         self.assertEqual(music, {"id": "t1", "title": "X"})
         self.assertIsNot(result, music)
+        self.assertEqual(
+            [path.relative_to(self.project) for path in self.project.rglob("*")],
+            [Path("media"), Path("media/soundtrack.mp3")],
+        )
 
     def test_root_level_studio_missing_file(self):
         music = {"id": "t1"}
