@@ -43,18 +43,24 @@ class ImportProjectsParsersTest(unittest.TestCase):
         except BaseException:
             cls.tearDownClass()
             raise
+        finally:
+            cls._restore_process_globals()
 
     @classmethod
-    def tearDownClass(cls):
-        sys.modules.pop("import_projects", None)
-        if cls._old_module is not None:
-            sys.modules["import_projects"] = cls._old_module
+    def _restore_process_globals(cls):
         if cls._old_sources is None:
             os.environ.pop("FFS_SOURCES", None)
         else:
             os.environ["FFS_SOURCES"] = cls._old_sources
         sys.argv = cls._old_argv
         sys.path[:] = cls._old_path
+
+    @classmethod
+    def tearDownClass(cls):
+        sys.modules.pop("import_projects", None)
+        if cls._old_module is not None:
+            sys.modules["import_projects"] = cls._old_module
+        cls._restore_process_globals()
         cls._temp.cleanup()
 
     def test_import_safe(self):
