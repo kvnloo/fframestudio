@@ -63,12 +63,18 @@ function referenced() {
 function serveFile(req, res, file) {
   let st; try { st = fs.statSync(file); if (!st.isFile()) throw 0; } catch { return send(res, 404, { error: 'not found' }); }
   const type = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
+  // A file can disappear after stat (e.g. fixture rewrites). Keep a failed stream local to its response.
+  const streamFile = options => {
+    const stream = fs.createReadStream(file, options);
+    stream.on('error', () => res.destroy());
+    return stream.pipe(res);
+  };
   const range = /bytes=(\d*)-(\d*)/.exec(req.headers.range || '');
   if (range) { const a = range[1] ? +range[1] : Math.max(0, st.size - +range[2]), z = range[1] && range[2] ? Math.min(+range[2], st.size - 1) : st.size - 1;
     if (a >= st.size) { res.writeHead(416, { 'Content-Range': `bytes */${st.size}` }); return res.end(); }
     res.writeHead(206, { 'Content-Type': type, 'Content-Range': `bytes ${a}-${z}/${st.size}`, 'Accept-Ranges': 'bytes', 'Content-Length': z - a + 1, 'Cache-Control': 'no-cache' });
-    return fs.createReadStream(file, { start: a, end: z }).pipe(res); }
-  res.writeHead(200, { 'Content-Type': type, 'Content-Length': st.size, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-cache' }); fs.createReadStream(file).pipe(res);
+    return streamFile({ start: a, end: z }); }
+  res.writeHead(200, { 'Content-Type': type, 'Content-Length': st.size, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-cache' }); return streamFile();
 }
 fs.mkdirSync(ROOT, { recursive: true });
 // ~/.config/fframestudio/agents.json: { "<id>": { "args": [...] | "append": [...], "env": {...}, "cmd", "name", "check", "login" } }
