@@ -89,6 +89,32 @@ class StudioMusicTest(unittest.TestCase):
             before,
         )
 
+    def test_symlink_components_cannot_escape_source_tree(self):
+        """A catalogue's file and directory symlinks cannot import external music."""
+        outside_dir = self.root / "outside-dir"
+        outside_dir.mkdir()
+        external_track = outside_dir / "secret.MP3"
+        external_track.write_bytes(b"private")
+
+        page_dir = self.base / "sub"
+        (page_dir / "linked-file.MP3").symlink_to(external_track)
+        (page_dir / "linked-dir").symlink_to(outside_dir, target_is_directory=True)
+        tracks = json.loads(self.catalogue.read_text(encoding="utf-8"))
+        tracks.extend([
+            {"id": "file-link", "full": "linked-file.MP3"},
+            {"id": "dir-link", "full": "linked-dir/secret.MP3"},
+        ])
+        self.catalogue.write_text(json.dumps(tracks), encoding="utf-8")
+
+        for track_id in ("file-link", "dir-link"):
+            with self.subTest(track=track_id):
+                music = {"id": track_id}
+                result = resolve_music(self.base, music, self.project, "sub/page.html")
+                self.assertEqual(result, music)
+                self.assertIsNot(result, music)
+                self.assertEqual(list(self.project.iterdir()), [])
+        self.assertEqual(external_track.read_bytes(), b"private")
+
     def test_unknown_id_and_none(self):
         music = {"id": "zz"}
         result = resolve_music(self.base, music, self.project, "sub/page.html")
