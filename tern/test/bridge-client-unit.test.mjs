@@ -31,7 +31,9 @@ test('validateBridge rejects non-loopback or decorated URLs', () => {
   ]) {
     assert.throws(() => validateBridge({ ...ok, url }), /HTTP loopback origin/, url);
   }
-  assert.throws(() => validateBridge({ ...ok, url: 'nope' }), /Invalid bridge URL/);
+  for (const url of ['nope', '://127.0.0.1', 'http://127.0.0.1:bad/', 'http://[::1']) {
+    assert.throws(() => validateBridge({ ...ok, url }), /Invalid bridge URL/, String(url));
+  }
 });
 
 test('validateBridge rejects invalid discovery fields', () => {
@@ -65,9 +67,10 @@ test('requestJSON rejects invalid routes without invoking fetch', async () => {
       calls += 1;
       throw new Error('Unexpected fetch');
     };
-    for (const route of ['//x', 'x']) {
+    for (const route of ['//x', 'x', 'http://127.0.0.1:4100/health']) {
       await assert.rejects(requestJSON(ok, route), /Invalid bridge route/);
     }
+    await assert.rejects(requestJSON({ ...ok, url: 'not a URL' }, '/health'), /Invalid bridge URL/);
     assert.equal(calls, 0);
   } finally {
     globalThis.fetch = originalFetch;
@@ -83,9 +86,9 @@ test('requestJSON handles HTTP, transport, JSON and success responses', async ()
     globalThis.fetch = async () => { throw new Error('Network unavailable'); };
     await assert.rejects(requestJSON(ok, '/health'), /check the local bridge/);
 
-    globalThis.fetch = async () => ({
-      ok: true,
-      json: async () => { throw new SyntaxError('bad JSON'); },
+    globalThis.fetch = async () => new Response('<!doctype html><title>not JSON</title>', {
+      status: 200,
+      headers: { 'content-type': 'text/html' },
     });
     await assert.rejects(requestJSON(ok, '/health'), /invalid JSON/);
 
