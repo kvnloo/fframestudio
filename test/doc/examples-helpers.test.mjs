@@ -31,15 +31,12 @@ test('assetPath resolves files below /examples/', () => {
 });
 
 test('assetPath rejects escapes and URL query or fragment components', () => {
-  for (const value of [
-    '../x.png',
-    'https://evil.test/examples/a',
-    '/examples/a?x=1',
-    '/examples/a#h',
-    '/examples/../x',
-  ]) {
-    assert.throws(() => assetPath(value), /same-origin files under \/examples\//, value);
-  }
+  const message = /same-origin files under \/examples\//;
+  assert.throws(() => assetPath('../x.png'), message);
+  assert.throws(() => assetPath('https://evil.test/examples/a'), message);
+  assert.throws(() => assetPath('/examples/a?x=1'), message);
+  assert.throws(() => assetPath('/examples/a#h'), message);
+  assert.throws(() => assetPath('/examples/../x'), message);
 });
 
 test('sourceLink preserves HTTP(S) source URLs', () => {
