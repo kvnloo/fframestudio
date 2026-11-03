@@ -193,6 +193,16 @@ def import_one(s):
             t += d
         P.update(canvas={"width": 3840, "height": 2160, "fps": 60}, duration_s=round(t, 3), media={"poster": P["shots"][0].get("thumb") if P["shots"] else None})
         P["edit_in"] = {"app": "fframestudio", "local": str(base)}
+    else:
+        # Any other engine (Remotion, HyperFrames, a browser recording): import the finished render with cut detection.
+        render = pathlib.Path(s["render"]) if s.get("render", "").startswith("/") else base / s.get("render", "")
+        if not (s.get("render") and render.is_file()): return {"id": s["id"], "skipped": f"{k}: render missing"}
+        info = probe(render); P.update(canvas={"width": info["width"], "height": info["height"], "fps": info["fps"]}, duration_s=info["duration_s"])
+        P["renders"].append({"label": "master", "file": str(render), **info})
+        P["shots"] = cuts(render, info["duration_s"])
+        P["media"] = media_for(pdir, render, P["shots"], info)
+        P["notes"].append(f"Made with {k}; shots come from cut detection on the render, not the source.")
+        P["edit_in"] = {"app": k, "local": str(base), "build": s.get("build")}
     (pdir / "project.json").write_text(json.dumps(P, indent=1))
     return {"id": s["id"], "title": s["title"], "kind": k, "tags": P["tags"], "duration_s": P.get("duration_s"), "shots": len(P["shots"]), "renders": len(P["renders"]),
             "poster": f"{s['id']}/{P['media']['poster']}" if P.get("media", {}).get("poster") else None, "updated": now}
