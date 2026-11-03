@@ -98,7 +98,7 @@ export function validateDefinition(d) {
   exact(d,['schema','id','version','title','description','author','license','provenance','capabilities','requiredAssets','renderCapabilities','units','fps','durationFrames','controls','timingControls','lookTokens','variants','anchors','layers','cues'],'definition');
   check(d.schema === DEFINITION_SCHEMA && typeof d.id === 'string' && identifier.test(d.id) && typeof d.version === 'string' && /^\d+\.\d+\.\d+$/.test(d.version),'Unknown definition/version');
   for (const k of ['title','description','author','license']) check(typeof d[k] === 'string' && d[k].length > 0 && d[k].length <= 1000,'Invalid metadata: '+k);
-  check(Array.isArray(d.provenance) && d.provenance.length <= 20,'Invalid provenance');
+  check(Array.isArray(d.provenance) && d.provenance.length > 0 && d.provenance.length <= 20,'Invalid provenance');
   for(const p of d.provenance){exact(p,['url','author','license','usage'],'provenance');check(Object.values(p).every(v=>typeof v === 'string' && v.length>0 && v.length<=2000) && /^https:\/\//.test(p.url),'Invalid provenance');}
   check(Array.isArray(d.capabilities) && d.capabilities.length <= 32 && d.capabilities.every(s => typeof s === 'string' && s.length>0 && s.length<=1000),'Invalid capabilities');
   check(Array.isArray(d.requiredAssets) && !d.requiredAssets.length,'Assets unsupported in dom-2d slice');
