@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { parseCineticPicks } from '../../web/src/video-style/cinetic.mjs';
 import { VIDEO_STYLE_PRESETS, ASPECTS, instantiate, evaluateRecipe, serializeRecipe, parseRecipe, interpolate, validateDefinition, joinComponents, evaluateComposition } from '../../web/src/video-style/components.mjs';
 
 const names = ['headline-reveal','foreground-fly-through','ui-action-result'];
@@ -110,4 +111,112 @@ test('minimal composition checks explicit carry positions at the cut across all 
     assert.throws(()=>joinComponents(a,b,{fromAnchor:'missing'}),/anchor/);
   }
   assert.throws(()=>joinComponents(instantiate(names[0]),instantiate(names[1],{},{fps:{num:60,den:1}})),/same aspect and fps/);
+});
+
+const cineticPicks = seed => JSON.stringify({ seed, format: 'launch', energy: 'high', category: null, picks: [
+  { id: 'tr-velocity-handoff-cut', name: 'Velocity handoff cut', category: 'transition', role: 'workhorse' },
+  { id: 'ty-kinetic-type', name: 'Animated typography', category: 'typography_motion', role: 'accent' },
+  { id: 'ui-cursor-ripple', name: 'Cursor ripple', category: 'ui_choreography', role: 'accent' },
+  { id: 'ca-orbit-move', name: '3D orbit', category: 'camera', role: 'signature' },
+] });
+const projectFrom = (plan, aspect) => plan.picks.filter(p => p.suggestion).map(p => serializeRecipe(instantiate(p.suggestion.component,
+  { accent: '#c0ffee', motionScale: 1.25 }, { id: p.sourceId, aspect, durationFrames: 61, fps: { num: 24000, den: 1001 } })));
+
+test('same recipe and seed yield a byte-identical editable project whose edits stay independent', () => {
+  for (const aspect of Object.keys(ASPECTS)) {
+    const first = projectFrom(parseCineticPicks(cineticPicks(7)), aspect), second = projectFrom(parseCineticPicks(cineticPicks(7)), aspect);
+    assert.equal(first.length, 3);
+    assert.deepEqual(second, first);
+    for (const text of first) {
+      const a = parseRecipe(text), b = parseRecipe(text);
+      for (let f = 0; f < a.durationFrames; f++) assert.deepEqual(evaluateRecipe(a, f), evaluateRecipe(b, f));
+      a.props.background = '#000000'; a.definition.layers[0].tracks.y[0][1] = .3;
+      const edited = serializeRecipe(a);
+      assert.notEqual(edited, text);
+      assert.equal(serializeRecipe(b), text);
+      assert.deepEqual(parseRecipe(edited), a);
+      assert.equal(evaluateRecipe(parseRecipe(edited), 0).background, '#000000');
+    }
+  }
+});
+
+test('invalid duration and parameter ranges reject with specific errors at their boundaries', () => {
+  for (const durationFrames of [1, 36001, 2.5, '90', -2]) assert.throws(() => instantiate('headline-reveal', {}, { durationFrames }), /Invalid frame duration/);
+  for (const durationFrames of [2, 36000]) assert.equal(instantiate('headline-reveal', {}, { durationFrames }).durationFrames, durationFrames);
+  for (const motionScale of [.49, 1.51, NaN, Infinity]) assert.throws(() => instantiate('headline-reveal', { motionScale }), /Invalid number: motionScale/);
+  for (const motionScale of [.5, 1.5]) assert.equal(instantiate('headline-reveal', { motionScale }).props.motionScale, motionScale);
+  assert.throws(() => instantiate('headline-reveal', {}, { fps: { num: 241, den: 1 } }), /Invalid fps/);
+  assert.throws(() => instantiate('headline-reveal', {}, { fps: { num: 1, den: 2 } }), /Invalid fps/);
+  assert.equal(instantiate('headline-reveal', {}, { fps: { num: 240, den: 1 } }).fps.num, 240);
+  const rejects = (mutate, message) => {
+    const r = instantiate('headline-reveal'); mutate(r);
+    assert.throws(() => serializeRecipe(r), message);
+    assert.throws(() => parseRecipe(JSON.stringify(r)), message);
+  };
+  rejects(r => { r.durationFrames = 0; }, /Invalid frame duration/);
+  rejects(r => { r.durationFrames = 36001; }, /Invalid frame duration/);
+  rejects(r => { r.definition.durationFrames = 1; }, /Invalid frame duration/);
+  rejects(r => { r.definition.layers[1].tracks.x.at(-1)[0] = r.definition.durationFrames; }, /Invalid keyframe\/easing/);
+  rejects(r => { r.definition.layers[1].tracks.x[1][0] = r.definition.layers[1].tracks.x[0][0]; }, /Invalid keyframe\/easing/);
+  rejects(r => { r.definition.layers[1].tracks.opacity[0][1] = 1.01; }, /Invalid opacity/);
+  rejects(r => { r.definition.layers[1].tracks.scale[0][1] = 0; }, /Invalid scale/);
+  rejects(r => { r.definition.cues[0].frame = r.definition.durationFrames; }, /Invalid cues/);
+  rejects(r => { r.definition.controls.motionScale.max = 2; }, /Invalid motionScale/);
+  rejects(r => { r.definition.variants['16:9'].safeArea.left = .41; }, /Invalid safe area\/text width/);
+  const r = instantiate('headline-reveal', {}, { durationFrames: 2 });
+  assert.throws(() => evaluateRecipe(r, 2), /Frame out of bounds/);
+  assert.equal(evaluateRecipe(r, 1).frame, 1);
+});
+
+test('missing or incomplete provenance rejects instead of exporting uncredited components', () => {
+  const rejects = (mutate, message) => {
+    const r = instantiate('foreground-fly-through'); mutate(r.definition);
+    assert.throws(() => serializeRecipe(r), message);
+    assert.throws(() => parseRecipe(JSON.stringify(r)), message);
+    assert.throws(() => validateDefinition(r.definition), message);
+  };
+  rejects(d => { delete d.provenance; }, /Invalid definition fields/);
+  rejects(d => { d.provenance = []; }, /Invalid provenance/);
+  rejects(d => { d.provenance = null; }, /Invalid provenance/);
+  rejects(d => { d.provenance = { ...d.provenance[0] }; }, /Invalid provenance/);
+  rejects(d => { delete d.provenance[0].author; }, /Invalid provenance fields/);
+  rejects(d => { delete d.provenance[0].license; }, /Invalid provenance fields/);
+  rejects(d => { d.provenance[0].author = ''; }, /Invalid provenance/);
+  rejects(d => { d.provenance[0].usage = ''; }, /Invalid provenance/);
+  rejects(d => { d.provenance[0].url = 'http://github.com/echris6/motion-video-kit'; }, /Invalid provenance/);
+  rejects(d => { d.author = ''; }, /Invalid metadata: author/);
+  rejects(d => { d.license = ''; }, /Invalid metadata: license/);
+  const exported = parseRecipe(serializeRecipe(instantiate('foreground-fly-through')));
+  assert.deepEqual(exported.definition.provenance, VIDEO_STYLE_PRESETS['foreground-fly-through'].provenance);
+});
+
+test('conceptual cinetic picks stay suggestions and never become implemented effects', () => {
+  const plan = parseCineticPicks(cineticPicks(41));
+  assert.deepEqual(parseCineticPicks(cineticPicks(41)), plan);
+  assert.equal(parseCineticPicks(cineticPicks(42)).provenance.seed, 42);
+  assert.deepEqual(plan.picks.map(p => [p.status, p.suggestion]), [
+    ['suggested', { component: 'foreground-fly-through', fidelity: 'conceptual-only' }],
+    ['suggested', { component: 'headline-reveal', fidelity: 'conceptual-only' }],
+    ['suggested', { component: 'ui-action-result', fidelity: 'conceptual-only' }],
+    ['needs-implementation', null],
+  ]);
+  assert.deepEqual(Object.keys(VIDEO_STYLE_PRESETS), names);
+  for (const p of plan.picks) {
+    assert.ok(!Object.hasOwn(p, 'recipe') && !Object.hasOwn(p, 'definition'));
+    assert.throws(() => instantiate(p.sourceId), /Unknown component/);
+    if (!p.suggestion) continue;
+    const recipe = instantiate(p.suggestion.component), text = serializeRecipe(recipe);
+    assert.deepEqual(recipe, instantiate(p.suggestion.component));
+    assert.deepEqual(recipe.definition, VIDEO_STYLE_PRESETS[p.suggestion.component]);
+    for (const leaked of [p.sourceId, p.name, 'cinetic', 'conceptual-only']) assert.ok(!text.includes(leaked), leaked);
+    assert.ok(recipe.definition.renderCapabilities.unsupported.includes('fframes'));
+    const rejects = (mutate, message) => { const r = structuredClone(recipe); mutate(r); assert.throws(() => serializeRecipe(r), message); };
+    rejects(r => { r.definition.renderCapabilities.supported.push(p.sourceId); }, /Unsupported render contract/);
+    rejects(r => { r.definition.renderCapabilities.unsupported = r.definition.renderCapabilities.unsupported.filter(x => x !== 'fframes'); }, /Unsupported render contract/);
+    rejects(r => { r.definition.layers[0].tracks.x[0][2] = p.sourceId; }, /Invalid keyframe\/easing/);
+    rejects(r => { r.definition.layers[0].role = p.category; }, /Invalid layer/);
+    rejects(r => { r.cinetic = p; }, /Invalid recipe fields/);
+    rejects(r => { r.definition.cinetic = p; }, /Invalid definition fields/);
+    assert.throws(() => instantiate(p.suggestion.component, { [p.sourceId.replace(/-./g, m => m[1].toUpperCase())]: 1 }), /Unsupported prop/);
+  }
 });
