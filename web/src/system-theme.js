@@ -3,7 +3,7 @@ import { request as hostRequest, preferences as storage } from './host.js';
 export const TOKENS = Object.freeze({ bg: 'bg', bg2: 'surface', bg3: 'surface2', ink: 'fg', mute: 'muted', faint: 'muted', line: 'border', line2: 'border', acc: 'accent', acc2: 'accent2', bad: 'danger', success: 'success', warn: 'warning', paper: 'paper', 'paper-ink': 'paperInk', 'paper-mute': 'paperMute', 'poster-accent': 'posterAccent', 'poster-lines': 'posterLines', 'wave-ink': 'muted', teal: 'ansi6', amber: 'ansi3', yellow: 'ansi5', coral: 'ansi1', green: 'ansi2', 'shot-1': 'ansi1', 'shot-2': 'ansi2', 'shot-3': 'ansi3', 'shot-4': 'ansi4', 'shot-5': 'ansi5', 'shot-6': 'ansi6' });
 const rgb = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
 const color = a => '#' + a.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
-export function luminance(c) { return rgb(c).map(v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0); }
+function luminance(c) { return rgb(c).map(v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0); }
 export function contrast(a, b) { const x = luminance(a), y = luminance(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
 // Minimal quantized sRGB lightness shift toward white/black. Binary-search both
 // directions and retain the nearest passing color; never change the background.
@@ -65,7 +65,7 @@ export function themeInfo() {
   return { ...response, choice: choiceOf(), label: p ? p.source === 'omarchy' ? `Omarchy · ${p.name}` : p.name : 'Browser', adjustments: lastPalette?.adjustments || [] };
 }
 let lastPalette;
-export function applyTheme(next = settings) {
+function applyTheme(next = settings) {
   settings = next;
   if (typeof document === 'undefined') return;
   performance.mark('system-theme-start');
@@ -96,7 +96,7 @@ export function setThemeSettings(next) {
   applyTheme(next);
   if (source !== selectedSource) { selectedSource = source; refreshTheme(); }
 }
-export async function refreshTheme() {
+async function refreshTheme() {
   const id = ++request;
   try {
     const r = await hostRequest('/theme' + (selectedSource ? '?source=' + encodeURIComponent(selectedSource) : ''));
@@ -105,12 +105,12 @@ export async function refreshTheme() {
     response = next; applyTheme();
   } catch { /* An absent bridge retains the fixed theme or browser fallback. */ }
 }
-export function receiveTheme(next) {
+function receiveTheme(next) {
   if (selectedSource) return refreshTheme();
   // Supersede an in-flight initial GET so an older reply cannot undo an SSE update.
   ++request; response = next; applyTheme();
 }
-export function initSystemTheme() {
+function initSystemTheme() {
   try { settings = JSON.parse(storage.getItem('ffs.settings') || '{}'); } catch { settings = {}; }
   selectedSource = settings.theme?.startsWith('system:') ? settings.theme.slice(7) : '';
   media = matchMedia('(prefers-color-scheme: dark)'); media.addEventListener('change', () => applyTheme());
