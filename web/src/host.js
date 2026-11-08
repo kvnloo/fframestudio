@@ -3,8 +3,8 @@ let mode = 'bridge', base = '', token = null, folder, preferenceStore, features 
 export const isLocal = () => mode === 'folder';
 // Optional bridge features (e.g. ComfyUI) announced by an authenticated /me; off in folder mode.
 export const hostFeature = name => !folder && features[name] === true;
-const isRemote = () => !!base;
-const agentOptions = () => ({ bridge: base || location.origin, token });
+export const isRemote = () => !!base;
+export const agentOptions = () => ({ bridge: base || location.origin, token });
 export const preferences = {
   getItem: key => preferenceStore ? preferenceStore.preference(key) : localStorage.getItem(key),
   setItem: (key, value) => preferenceStore ? preferenceStore.preference(key, value) : localStorage.setItem(key, value),
@@ -14,7 +14,7 @@ const validBridge = value => {
   if (u.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(u.hostname) || u.username || u.password || u.pathname !== '/' || u.search || u.hash) throw Error('Bridge must be a loopback HTTP URL');
   return u.origin;
 };
-async function initializeHost() {
+export async function initializeHost() {
   const fragment = new URLSearchParams(location.hash.slice(1));
   if (fragment.has('bridge')) {
     // Clear secrets before any request or route handling. Never persist the token to disk.
@@ -53,8 +53,8 @@ export function mediaURL(project, p, encoded = true) {
   return base ? remoteMedia.get(url) || '' : url;
 }
 const remoteMedia = new Map();
-function libraryPoster(p) { return folder ? folder.mediaURL('', p) : base ? remoteMedia.get('/lib/' + p) || '' : '/lib/' + p; }
-async function library() {
+export function libraryPoster(p) { return folder ? folder.mediaURL('', p) : base ? remoteMedia.get('/lib/' + p) || '' : '/lib/' + p; }
+export async function library() {
   const lib = await request('/lib/library.json').then(r => r.ok ? r.json() : { projects: [] });
   if (base) await Promise.all(lib.projects.filter(p => p.poster).map(p => cacheMedia('/lib/' + p.poster)));
   return lib;
@@ -67,7 +67,7 @@ export async function prepareMedia(project, file) {
   if (base) await cacheMedia('/lib/' + encodeURIComponent(project) + '/' + file.split('/').map(encodeURIComponent).join('/'));
   return mediaURL(project, file);
 }
-async function read(p) {
+export async function read(p) {
   const r = await request('/fs?path=' + encodeURIComponent(p));
   if (!r.ok) throw Error('Read failed: ' + r.status);
   const file = await r.json();
@@ -103,9 +103,9 @@ export function events(onEvent, onTheme) {
   }).catch(() => {});
   return () => controller.abort();
 }
-const openFolder = () => folder.openFolder();
-const importFiles = files => folder.importFiles(files);
-const folderStatus = () => folder?.status();
+export const openFolder = () => folder.openFolder();
+export const importFiles = files => folder.importFiles(files);
+export const folderStatus = () => folder?.status();
 export const isCopy = id => String(id).startsWith('example-copy-');
 export const exportProject = async (id, body) => (folder || await import('./folder-host.js')).exportProject(id, body);
 export async function saveCopy(document) {
@@ -142,4 +142,4 @@ export async function createProject(doc, files = []) {
   if((await request('/fs?path=projects%2Flibrary.json').then(r=>r.json())).content!==libraryBody)throw Error('Library readback failed');
   return doc.id;
 }
-async function disconnectBridge() { sessionStorage.removeItem('ffs.bridge'); location.href = location.pathname; }
+export async function disconnectBridge() { sessionStorage.removeItem('ffs.bridge'); location.href = location.pathname; }

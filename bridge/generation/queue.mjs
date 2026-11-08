@@ -44,7 +44,7 @@ export function referenceFor(r) {
   need(r.clipName == null || (typeof r.clipName === 'string' && r.clipName.length <= 200), 'invalid-reference');
   return Object.fromEntries(referenceKeys.filter(k => r[k] !== undefined).map(k => [k, r[k]]));
 }
-const referenceFile = id => `media/generated/references/${id}.png`;
+export const referenceFile = id => `media/generated/references/${id}.png`;
 export function settingsFor(input, capability) {
   const allowed = ['providerId', 'projectId', 'prompt', 'seed', 'duration', 'width', 'height', 'fps', 'mode', 'reference'];
   need(input && typeof input === 'object' && !Array.isArray(input) && Object.keys(input).every(k => allowed.includes(k)), 'invalid-settings');
@@ -71,7 +71,7 @@ export function pngSize(bytes) {
   return { width, height };
 }
 export const MAX_REFERENCE_BYTES = 8 * 1024 * 1024;
-async function validateMedia(file, settings, signal) {
+export async function validateMedia(file, settings, signal) {
   const raw = await runProcess('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', file], { signal, timeout: 15000 });
   let info; try { info = JSON.parse(raw); } catch { throw Error('invalid-media'); }
   const streams = info.streams || [], v = streams.find(s => s.codec_type === 'video');

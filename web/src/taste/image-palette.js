@@ -1,6 +1,6 @@
 // On-device pixel statistics from explicitly selected images. No upload or raw pixels persisted.
 // Only measured palette colors are inferred; text, motion, genre and audio remain unknown.
-const MAX_TASTE_IMAGES = 6;
+export const MAX_TASTE_IMAGES = 6;
 const SIDE = 64;
 const SIGNAL_NAMES = ['palette', 'typography', 'framing', 'motion', 'pacing', 'transition', 'density', 'soundtrack'];
 const ALLOWED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);

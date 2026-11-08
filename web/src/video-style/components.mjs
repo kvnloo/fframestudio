@@ -1,6 +1,6 @@
 // Pure, seekable motion grammar. All spatial coordinates are canvas fractions.
 // These data-only components are not a replacement for a video renderer.
-const VIDEO_STYLE_SCHEMA = 'fframestudio.video-style/1';
+export const VIDEO_STYLE_SCHEMA = 'fframestudio.video-style/1';
 
 const mechanisms = {
   'headline-reveal': {
@@ -44,8 +44,8 @@ const mechanisms = {
   },
 };
 
-const DEFINITION_SCHEMA = 'fframestudio.style-component/1';
-const EASINGS = Object.freeze(['linear', 'hold', 'in-cubic', 'out-cubic', 'in-out-cubic']);
+export const DEFINITION_SCHEMA = 'fframestudio.style-component/1';
+export const EASINGS = Object.freeze(['linear', 'hold', 'in-cubic', 'out-cubic', 'in-out-cubic']);
 export const ASPECTS = Object.freeze({'16:9': {width:1920,height:1080}, '9:16': {width:1080,height:1920}, '1:1': {width:1080,height:1080}});
 const TRACKS = ['x','y','scale','opacity'];
 const identifier = /^[a-z0-9][a-z0-9-]{0,99}$/;
@@ -141,7 +141,7 @@ export function validateDefinition(d) {
   for(const c of d.cues){exact(c,['frame','kind','label'],'cue');check(integer(c.frame,0,d.durationFrames-1) && typeof c.kind === 'string' && typeof c.label === 'string','Invalid cues');}
   return d;
 }
-function validateRecipe(v) {
+export function validateRecipe(v) {
   exact(v,['schema','id','component','version','definition','fps','size','aspect','durationFrames','props'],'recipe');
   check(v.schema === VIDEO_STYLE_SCHEMA && typeof v.id === 'string' && identifier.test(v.id),'Unknown video style schema/id');
   const d = validateDefinition(v.definition); check(v.component === d.id && v.version === d.version,'Component identity/version mismatch');
