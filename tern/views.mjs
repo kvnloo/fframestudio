@@ -2,7 +2,7 @@ import { ui, html } from '@stencil-hq/tern';
 
 export const text = (key, value) => ui.text({ key, text: String(value ?? '') });
 export const button = (key, label, action) => html.button({ key, text: label, onClick: action, class: 'ffs-button' });
-const time = seconds => {
+export const time = seconds => {
   const t = Math.max(0, Number(seconds) || 0);
   return `${Math.floor(t / 60)}:${(t % 60).toFixed(2).padStart(5, '0')}`;
 };

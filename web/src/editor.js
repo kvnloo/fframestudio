@@ -20,7 +20,7 @@ const $ = (s, r = document) => r.querySelector(s),
   $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const button = (action, label) =>
   `<button class="pill" data-action="${action}">${label}</button>`;
-const defaults = {
+export const defaults = {
   play: 'Space',
   reverse: 'j',
   pause: 'k',

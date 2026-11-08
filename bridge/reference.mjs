@@ -7,7 +7,7 @@ import { isIP } from 'node:net';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import readline from 'node:readline';
-const MAX_REFERENCE_BYTES = 60_000_000;
+export const MAX_REFERENCE_BYTES = 60_000_000;
 const helper = new URL('./analyze-reference.py', import.meta.url).pathname;
 const social = /(^|\.)(youtube\.com|youtu\.be|x\.com|twitter\.com|tiktok\.com|instagram\.com)$/i;
 export function directURL(value) {
@@ -24,7 +24,7 @@ export function publicAddress(address) {
   // Known global RIR allocation families only; refuse transition/tunnel and special ranges.
   return isIP(address) === 6 && /^(24|26|28|2a|2c)[0-9a-f]{2}:/i.test(address);
 }
-async function downloadDirect(value, signal) {
+export async function downloadDirect(value, signal) {
   const u = directURL(value);
   const host = u.hostname.replace(/^\[|\]$/g,'');
   const addresses = isIP(host) ? [{address:host,family:isIP(host)}] : await lookup(host,{all:true});

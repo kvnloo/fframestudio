@@ -186,7 +186,7 @@ export async function execute(client, workflow, { signal, onProgress = () => {},
   }
 }
 // Never trust server-supplied filenames for local paths: classify by extension only.
-function outputRefs(outputs) {
+export function outputRefs(outputs) {
   const refs = [];
   for (const [node, out] of Object.entries(outputs || {})) for (const key of ['images', 'videos', 'video', 'gifs']) for (const ref of [].concat(out?.[key] || [])) {
     if (!ref || typeof ref.filename !== 'string' || ref.type === 'temp') continue;
@@ -217,7 +217,7 @@ const SIMPLE = [
 const DEFAULT_RANGE = { seed: [0, 4294967295], steps: [1, 150], cfg: [0, 30], denoise: [0, 1], guidance: [0, 30], width: [64, 2048], height: [64, 2048], length: [1, 241], batch: [1, 4], fps: [1, 60] };
 const LOADERS = { CheckpointLoaderSimple: [['ckpt_name', 'checkpoints']], UNETLoader: [['unet_name', 'diffusion_models']], CLIPLoader: [['clip_name', 'text_encoders']], DualCLIPLoader: [['clip_name1', 'text_encoders'], ['clip_name2', 'text_encoders']], VAELoader: [['vae_name', 'vae']], LoraLoader: [['lora_name', 'loras']], LoraLoaderModelOnly: [['lora_name', 'loras']], ControlNetLoader: [['control_net_name', 'controlnet']], UpscaleModelLoader: [['model_name', 'upscale_models']] };
 
-function isApiFormat(w) {
+export function isApiFormat(w) {
   return w && typeof w === 'object' && !Array.isArray(w) && Object.keys(w).length > 0 && !('nodes' in w && 'links' in w) &&
     Object.entries(w).every(([k, n]) => /^[\w.:-]{1,64}$/.test(k) && n && typeof n.class_type === 'string' && n.inputs && typeof n.inputs === 'object');
 }
@@ -256,7 +256,7 @@ export function extractSchema(workflow, overrides = {}) {
   return { params, models, classes };
 }
 // Live /object_info refinement: combo options become enums, numeric widgets bring their own range.
-function refineSchema(schema, objectInfo) {
+export function refineSchema(schema, objectInfo) {
   for (const p of Object.values(schema.params)) for (const [node, input] of p.targets.slice(0, 1)) {
     const cls = schema.nodeClasses?.[node]; const info = objectInfo?.[cls]?.input; const spec = info?.required?.[input] || info?.optional?.[input];
     if (!spec) continue;
@@ -280,7 +280,7 @@ export function applyParams(template, values = {}) {
   }
   return { workflow: w, params: resolved };
 }
-function validateParam(p, v) {
+export function validateParam(p, v) {
   const bad = () => { throw Error('invalid-param:' + p.name); };
   if (p.type === 'string') { if (typeof v !== 'string' || v.length > (p.maxLength || 4000) || (p.name === 'prompt' && !v.trim())) bad(); if (p.enum && !p.enum.includes(v)) bad(); return; }
   if (typeof v !== 'number' || !Number.isFinite(v) || (p.type === 'integer' && !Number.isSafeInteger(v))) bad();
@@ -301,13 +301,13 @@ export async function loadTemplates(dirs = [TEMPLATE_DIR]) {
   }
   return templates;
 }
-function publicTemplate(t, status = {}) {
+export function publicTemplate(t, status = {}) {
   const params = Object.values(t.schema.params).map(({ targets, ...p }) => ({ ...p, voice: p.voice || [p.name] }));
   return { id: t.id, title: t.title, kind: t.kind, description: t.description || '', model: t.model || null, licence: t.licence, vram: t.vram || null,
     workflowSha256: t.workflowSha256, models: t.schema.models, classes: t.schema.classes, params, ...status };
 }
 // Ask the server, not the template, whether nodes and weights exist.
-async function checkDependencies(client, t) {
+export async function checkDependencies(client, t) {
   const missingNodes = [], missingModels = [], info = {};
   for (const cls of t.schema.classes) { const r = await client.objectInfo(cls).catch(e => e); if (r instanceof Error) { if (r.message === 'comfy-unreachable') throw r; missingNodes.push(cls); } else if (!r?.[cls]) missingNodes.push(cls); else Object.assign(info, r); }
   const lists = {};
@@ -319,7 +319,7 @@ async function checkDependencies(client, t) {
   }
   return { ready: !missingNodes.length && !missingModels.length, missingNodes, missingModels, objectInfo: info };
 }
-function vramOf(stats) {
+export function vramOf(stats) {
   const d = (stats?.devices || []).find(d => d.type === 'cuda') || stats?.devices?.[0];
   return d ? { name: String(d.name || '').slice(0, 80), freeMiB: Math.round((d.vram_free || 0) / 1048576), totalMiB: Math.round((d.vram_total || 0) / 1048576) } : null;
 }

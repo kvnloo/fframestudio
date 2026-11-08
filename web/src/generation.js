@@ -12,7 +12,7 @@ export function generatedCommand(job, doc, videoId) {
 // Source frame under the playhead, from the timeline document (not the preview
 // element). Mirrors poster mapping: own media uses source frames; a master proxy
 // uses timeline frames. Returns null when nothing decodable is under the playhead.
-function playheadSource(doc, video, at) {
+export function playheadSource(doc, video, at) {
   const frame = Math.floor(at), fps = fpsOf(doc);
   const clip = video.clips.find(c => frame >= c.start && frame < c.start + c.duration);
   if (!clip) return null;

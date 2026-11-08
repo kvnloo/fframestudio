@@ -3,7 +3,7 @@
 // The imported source sidecar (metadata.procedural) is never mutated; overrides
 // live beside it and are only written to Rust by tools/procedural_overrides.py
 // into an isolated copy. Nothing here renders or claims a rendered result.
-const OVERRIDE_SCHEMA = 'fframestudio.procedural-overrides/0';
+export const OVERRIDE_SCHEMA = 'fframestudio.procedural-overrides/0';
 export const CAMERA_FIELDS = Object.freeze(['time_s', 'look_y', 'zoom', 'tilt_x', 'tilt_y', 'roll', 'dx', 'blur']);
 export const EVENT_KINDS = Object.freeze(['bar', 'kick', 'clap', 'token']);
 // Camera keys feed hud::track (flat's tracker boxes) and hud::shot (lens), not the
@@ -31,7 +31,7 @@ export function sourceKeys(p) {
 export function cameraKeys(metadata) {
   return metadata?.proceduralOverrides?.camera_keyframes || sourceKeys(metadata?.procedural);
 }
-function validateCameraKeys(keys, p) {
+export function validateCameraKeys(keys, p) {
   const n = p.camera_keyframes.length, end = p.total_frames / p.fps;
   if (!Array.isArray(keys) || keys.length !== n) fail(`Camera overrides must keep the source's ${n} keys`);
   keys.forEach((k, i) => {

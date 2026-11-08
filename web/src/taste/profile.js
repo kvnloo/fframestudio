@@ -1,5 +1,5 @@
 // Aggregate-only vocabulary: no free-form text, source identifiers or URLs.
-const SIGNALS = {
+export const SIGNALS = {
   palette: { type: 'array', minItems: 1, maxItems: 5, items: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' } },
   typography: { enum: ['Instrument Sans', 'Archivo Black', 'Instrument Serif', 'IBM Plex Mono'] },
   framing: { enum: ['wide', 'centered', 'close'] },
@@ -15,10 +15,10 @@ const count = { type: 'integer', minimum: 0, maximum: 1000000 };
 const confidence = { type: 'number', minimum: 0, maximum: 1 };
 const revision = { type: 'string', pattern: '^[a-zA-Z0-9_-]{1,64}$' };
 const provenance = object({ sourceCount: count, itemCount: count });
-const dialsSchema = object(SIGNALS);
+export const dialsSchema = object(SIGNALS);
 // Partial direction/brand constraints share the same bounded vocabulary.
 export const constraintsSchema = { ...dialsSchema, required: [] };
-const profileSchema = {
+export const profileSchema = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   ...object({
     schema: { const: 'fframestudio.taste-profile/1' }, revision,
@@ -88,7 +88,7 @@ export function parseProfile(text) {
   return structuredClone(validateProfile(JSON.parse(text)));
 }
 export const emptySignals = () => Object.fromEntries(KEYS.map(k => [k, { value: null, evidenceCount: 0, confidence: 0 }]));
-const DEFAULT_DIALS = Object.freeze({ palette: ['#ecebe7'], typography: 'Archivo Black', framing: 'centered', motion: 40, pacing: 50, transition: 'cut', density: 40, soundtrack: 'calm' });
+export const DEFAULT_DIALS = Object.freeze({ palette: ['#ecebe7'], typography: 'Archivo Black', framing: 'centered', motion: 40, pacing: 50, transition: 'cut', density: 40, soundtrack: 'calm' });
 
 // Overlay order is user -> brand -> project -> task; brand locks win last.
 export function resolveScopes(user, { brand, project, task, constraints = {} } = {}) {

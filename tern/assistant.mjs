@@ -23,7 +23,7 @@ export function assistantView(state, actions) {
   };
 }
 
-async function runAssistant(info, id) {
+export async function runAssistant(info, id) {
   const project = await requestJSON(info, `/lib/${id}/project.json`);
   const agents = (await requestJSON(info, '/agents')).agents;
   const state = { title: project.title, agents, messages: [], status: 'Choose an agent', draft: '', cursor: 0, permission: null };
