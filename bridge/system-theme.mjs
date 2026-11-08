@@ -21,7 +21,7 @@ function fields(text) {
 const rgb = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
 const blend = (a, b, t) => '#' + rgb(a).map((v, i) => Math.round(v * (1 - t) + rgb(b)[i] * t).toString(16).padStart(2, '0')).join('');
 const isDark = c => rgb(c).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0) < 128;
-export function normalize(source, name, values) {
+function normalize(source, name, values) {
   const bg = hex(values.bg), fg = hex(values.fg); if (!bg || !fg) return null;
   const dark = values.dark ?? isDark(bg), edge = dark ? '#ffffff' : '#000000';
   const ansi = Array.from({ length: 16 }, (_, i) => hex(values.ansi?.[i]) || [bg, '#e75e78', '#89b482', '#d8bc75', '#82aaff', '#c099ff', '#7dcfff', fg][i % 8]);

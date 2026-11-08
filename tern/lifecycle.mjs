@@ -7,7 +7,7 @@ import { readBridge, requestJSON } from './bridge-client.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const delay = ms => new Promise(r => setTimeout(r, ms));
-export function alive(pid) {
+function alive(pid) {
   try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
 }
 async function healthy(info) {

@@ -30,7 +30,7 @@ export function fileAdapter(storage = indexedDBStorage()) {
     },
   };
 }
-export function indexedDBStorage() {
+function indexedDBStorage() {
   const open = () => new Promise((resolve, reject) => {
     const req = indexedDB.open('fframestudio.taste', 1);
     req.onupgradeneeded = () => req.result.createObjectStore('aggregate');

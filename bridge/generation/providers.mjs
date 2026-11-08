@@ -5,7 +5,7 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-export const LICENCE = Object.freeze({
+const LICENCE = Object.freeze({
   name: 'LTXV Open Weights License 0.X',
   url: 'https://huggingface.co/Lightricks/LTX-Video/blob/main/LTX-Video-Open-Weights-License-0.X.txt',
   commercial: 'conditional',

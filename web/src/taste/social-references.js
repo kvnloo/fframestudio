@@ -1,6 +1,6 @@
 // Explicitly supplied reference links only. Never fetches, scrapes, stores or logs them.
 // The normalized collection can be sent to AgentWeb only after a separate user action.
-export const SOCIAL_REFERENCES_SCHEMA = 'fframestudio.social-references/1';
+const SOCIAL_REFERENCES_SCHEMA = 'fframestudio.social-references/1';
 export const MAX_SOCIAL_REFERENCES_BYTES = 65536;
 const PROVIDERS = new Set(['x', 'pinterest', 'youtube', 'collection']);
 const exact = (value, keys) => value !== null && typeof value === 'object' &&
