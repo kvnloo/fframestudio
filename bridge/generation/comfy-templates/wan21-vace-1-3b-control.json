@@ -1,0 +1,216 @@
+{
+  "schema": "fframestudio.comfy-template/1",
+  "id": "wan21-vace-1-3b-control",
+  "title": "Wan 2.1 VACE 1.3B \u00b7 layout-locked video (control + reference)",
+  "kind": "video",
+  "model": "Wan-AI/Wan2.1-VACE-1.3B (Comfy-Org repack)",
+  "description": "Frame-conditioned video for the factory's generate station: upload a Blender depth/edge pass as input/control.mp4 (exact target frame count, 16 fps) and an appearance still as input/reference.png. Output keeps the layout's frame count one-to-one (MOTION_SYNC_GATE). Weights live in project-artifacts/content-factory/models via bin/factory-comfy. Not a plain t2v provider (needs uploaded control + reference), so it has no provider block.",
+  "vram": {
+    "minimumFreeMiB": 8000,
+    "measuredPeakMiB": null,
+    "evidence": "Unmeasured on groot; 1.3B fp16 + umt5 fp8 is the 12 GB-card VACE tier."
+  },
+  "licence": {
+    "name": "Apache-2.0 (verify model card)",
+    "url": "https://huggingface.co/Wan-AI/Wan2.1-VACE-1.3B"
+  },
+  "params": {
+    "width": {
+      "minimum": 480,
+      "maximum": 832,
+      "multipleOf": 16
+    },
+    "height": {
+      "minimum": 480,
+      "maximum": 832,
+      "multipleOf": 16
+    },
+    "length": {
+      "label": "Frames",
+      "minimum": 5,
+      "maximum": 81
+    },
+    "steps": {
+      "maximum": 40
+    }
+  },
+  "workflow": {
+    "1": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "wan2.1_vace_1.3B_fp16.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+        "type": "wan",
+        "device": "default"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "wan_2.1_vae.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "ModelSamplingSD3",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "shift": 8.0
+      }
+    },
+    "5": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": "Sunlit forest pavilion, cinematic, soft volumetric haze, natural materials."
+      }
+    },
+    "6": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": "static, blurry, low quality, watermark, text, distorted geometry"
+      }
+    },
+    "7": {
+      "class_type": "LoadVideo",
+      "inputs": {
+        "file": "control.mp4"
+      }
+    },
+    "8": {
+      "class_type": "GetVideoComponents",
+      "inputs": {
+        "video": [
+          "7",
+          0
+        ]
+      }
+    },
+    "9": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "reference.png"
+      }
+    },
+    "10": {
+      "class_type": "WanVaceToVideo",
+      "inputs": {
+        "positive": [
+          "5",
+          0
+        ],
+        "negative": [
+          "6",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ],
+        "width": 832,
+        "height": 480,
+        "length": 49,
+        "batch_size": 1,
+        "strength": 1.0,
+        "control_video": [
+          "8",
+          0
+        ],
+        "reference_image": [
+          "9",
+          0
+        ]
+      }
+    },
+    "11": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "4",
+          0
+        ],
+        "positive": [
+          "10",
+          0
+        ],
+        "negative": [
+          "10",
+          1
+        ],
+        "latent_image": [
+          "10",
+          2
+        ],
+        "seed": 42,
+        "steps": 20,
+        "cfg": 6.0,
+        "sampler_name": "uni_pc",
+        "scheduler": "simple",
+        "denoise": 1.0
+      }
+    },
+    "12": {
+      "class_type": "TrimVideoLatent",
+      "inputs": {
+        "samples": [
+          "11",
+          0
+        ],
+        "trim_amount": [
+          "10",
+          3
+        ]
+      }
+    },
+    "13": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "12",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "14": {
+      "class_type": "CreateVideo",
+      "inputs": {
+        "images": [
+          "13",
+          0
+        ],
+        "fps": 16.0
+      }
+    },
+    "15": {
+      "class_type": "SaveVideo",
+      "inputs": {
+        "video": [
+          "14",
+          0
+        ],
+        "filename_prefix": "factory/wan-vace",
+        "format": "auto",
+        "codec": "auto"
+      }
+    }
+  }
+}
