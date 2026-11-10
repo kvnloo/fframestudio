@@ -3,7 +3,6 @@
 import importlib.util
 import json
 import sys
-import time
 from pathlib import Path
 
 import pytest
@@ -34,6 +33,7 @@ def factory(tmp_path, monkeypatch):
     launcher.write_text('#!/bin/sh\ncase "$1" in status) echo \'{"running":false,"free_vram_mb":5600}\';;\n'
                         'render) printf \'{"state":"done","started":1,"finished":5,"exit":0}\' > "$2/render.json";; esac\n')
     launcher.chmod(0o755)
+    monkeypatch.setenv("FACTORY_DATA_DIR", str(tmp_path / "plugin-data"))
     monkeypatch.setenv("FACTORY_RUNS", str(runs))
     monkeypatch.setenv("FACTORY_SCENES", str(scenes))
     monkeypatch.setattr(core, "LAUNCHER", launcher)
@@ -59,15 +59,9 @@ def test_scenes_ranks_by_words_and_skips_scenes_without_takes(factory):
     assert call('scenes {"query": "nothing-matches"}')["hits"] == []
 
 
-def test_render_starts_the_launcher_detached_and_the_run_finishes(factory):
-    assert call('render {"run": "shot-a"}')["state"] == "queued"
-    mark = factory / "shot-a" / "render.json"
-    for _ in range(100):
-        if mark.exists() and json.loads(mark.read_text() or "{}").get("state") == "done":
-            break
-        time.sleep(0.05)
-    assert call("runs")["runs"][0]["state"] == "done"
-    assert call("runs")["runs"][0]["seconds"] == 4
+def test_render_without_canonical_approval_does_not_start_launcher(factory):
+    assert "approval" in call('render {"run": "shot-a"}')["error"].lower()
+    assert not (factory / "shot-a" / "render.json").exists()
 
 
 @pytest.mark.parametrize("run", ["../shot-a", "not-a-run", "", "/etc"])
@@ -99,7 +93,8 @@ def test_direction_drops_asset_sheets_and_keeps_the_shot():
     assert core.direction(None) == ""
 
 
-def test_register_adds_the_command():
+def test_register_adds_the_command(monkeypatch):
+    monkeypatch.setattr(core, "_plugin_data_dir", None)
     seen = {}
     plugin.register(type("Ctx", (), {"register_command": lambda self, name, fn, description: seen.update({name: fn})})())
     assert seen == {"factory": core.command}

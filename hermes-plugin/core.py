@@ -2,8 +2,9 @@
 for card frontends (the same seam glide uses, so it works on cores without plugin gateway methods).
 
 Reads only: runs under FACTORY_RUNS, the reference scene corpus FACTORY_SCENES, `factory-comfy status`.
-Writes only by `render`, which starts `factory-comfy render RUN_DIR` detached; that script owns the GPU
-gate, the service pause/restore and RUN_DIR/render.json.
+`suggest` reconciles proposals through canonical IntentService or fails closed. `render` requires an
+exact canonical approval and durable execution claim before starting `factory-comfy render RUN_DIR`.
+The launcher owns the GPU gate, service pause/restore and RUN_DIR/render.json.
 reuse-checked: fframestudio tern/ -- closed-beta Tern terminal UI, not Hermes; glide -- corrections memory,
   only its `/x json <verb>` card seam is reused; factory-loop/factory-watchdog -- OSS PR factory, unrelated.
 """
@@ -13,13 +14,33 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from subprocess import Popen
 from pathlib import Path
+
+from . import intents
 
 LAUNCHER = Path(__file__).resolve().parents[1] / "tools" / "factory-comfy"
 USAGE = """/factory              status: ComfyUI, GPU, recent runs
 /factory runs         recent renders with their verdicts
 /factory scenes WORDS search the studied reference scenes (prompts and takes)
-/factory render RUN   re-run RUN's workflow (pauses GPU services, restores them after)"""
+/factory suggest      next actions as pending AODL proposals, or an explicit unavailable reason
+/factory render RUN CONTRACT_ID   run only with matching canonical Kevin approval"""
+
+
+_plugin_data_dir: Path | None = None
+
+
+def configure_data_dir(directory: Path | None) -> None:
+    global _plugin_data_dir
+    _plugin_data_dir = Path(directory).expanduser() if directory is not None else None
+
+
+def _data_root() -> Path:
+    if os.environ.get("FACTORY_DATA_DIR"):
+        return Path(os.environ["FACTORY_DATA_DIR"]).expanduser()
+    if _plugin_data_dir is not None:
+        return _plugin_data_dir
+    return Path(os.environ.get("HERMES_HOME", "~/.hermes")).expanduser() / "plugin-data" / "factory"
 
 
 def _runs_root() -> Path:
@@ -48,7 +69,7 @@ def run_info(d: Path) -> dict:
             "compare": str(d / "compare-sheet.png") if (d / "compare-sheet.png").exists() else None}
 
 
-def runs(limit: int = 10) -> list[dict]:
+def runs(limit: int | None = 10) -> list[dict]:
     root = _runs_root()
     dirs = [d for d in root.iterdir() if (d / "workflow_api.json").is_file()] if root.is_dir() else []
     dirs.sort(key=lambda d: d.stat().st_mtime, reverse=True)
@@ -96,36 +117,69 @@ def scenes(query: str, limit: int = 5) -> list[dict]:
     return sorted(hits.values(), key=lambda h: (-h["score"], -h["videos"]))[:limit]
 
 
-def render(run: str) -> dict:
+def _run_directory(run: str) -> Path:
     root = _runs_root().resolve()
     d = (root / run).resolve()
-    if d.parent != root or not (d / "workflow_api.json").is_file():
+    if d.parent != root or d.name != run or not (d / "workflow_api.json").is_file():
         raise ValueError(f"no run named {run!r} under {root}")
+    return d
+
+
+def suggest(session_id: str | None) -> dict:
+    recent = runs(None)
+    result = {"runs": recent, "suggestions": [], "running_count": sum(r["state"] == "running" for r in recent)}
+    try:
+        intents.identity(session_id, "session_id")
+        store = intents.ActionIntents(_data_root())
+        for run in recent:
+            action = {"ready": "render", "failed": "render", "done": "review"}.get(run["state"])
+            if action:
+                scope = intents.action_scope(_run_directory(run["run"]), action, session_id)
+                result["suggestions"].append(store.ensure(scope))
+    except (ValueError, OSError) as error:
+        result.update(error=str(error).splitlines()[0], fail_closed=True)
+    return result
+
+
+def render(run: str, session_id: str | None = None, contract_id: str | None = None) -> dict:
+    d = _run_directory(run)
     if run_info(d)["state"] == "running":
         raise ValueError(f"{run} is already rendering")
-    # The launcher marks render.json and holds a lock; a launch that fails early leaves its reason in render.log.
-    with open(d / "render.log", "ab") as log:
-        subprocess.Popen([str(LAUNCHER), "render", str(d)], stdout=log, stderr=log, stdin=subprocess.DEVNULL,
-                         start_new_session=True)
+    intents.identity(session_id, "session_id")
+    intents.identity(contract_id, "contract_id")
+    scope = intents.action_scope(d, "render", session_id)
+    with intents.ActionIntents(_data_root()).execution(scope, contract_id):
+        # Recheck after acquiring the interprocess claim lock, before launch.
+        if intents.action_scope(d, "render", session_id) != scope or run_info(d)["state"] == "running":
+            raise ValueError("Canonical approval is stale; run/workflow state changed")
+        with open(d / "render.log", "ab") as log:
+            Popen([str(LAUNCHER), "render", str(d)], stdout=log, stderr=log, stdin=subprocess.DEVNULL,
+                  start_new_session=True)
     return {"run": d.name, "state": "queued", "log": str(d / "render.log")}
 
 
 VERBS = {
-    "status": lambda p: status(),
-    "runs": lambda p: {"runs": runs(int(p.get("limit", 10)))},
-    "scenes": lambda p: {"hits": scenes(str(p.get("query", "")), int(p.get("limit", 5)))},
-    "render": lambda p: render(str(p.get("run", ""))),
+    "status": lambda p, sid: status(),
+    "runs": lambda p, sid: {"runs": runs(int(p.get("limit", 10)))},
+    "scenes": lambda p, sid: {"hits": scenes(str(p.get("query", "")), int(p.get("limit", 5)))},
+    "suggest": lambda p, sid: suggest(sid),
+    "render": lambda p, sid: render(str(p.get("run", "")), sid, p.get("contract_id")),
 }
 
 
-def _json_call(rest: str) -> str:
+def _json_call(rest: str, session_id: str | None) -> str:
     verb, _, raw = rest.strip().partition(" ")
     try:
         if verb not in VERBS:
             raise ValueError(f"unknown factory verb: {verb or '(none)'}")
-        return json.dumps(VERBS[verb](json.loads(raw or "{}")))
+        params = json.loads(raw or "{}")
+        if not isinstance(params, dict):
+            raise ValueError("factory parameters must be a JSON object")
+        if "session_id" in params and params["session_id"] != session_id:
+            raise ValueError("factory session_id must match the authenticated command session")
+        return json.dumps(VERBS[verb](params, session_id))
     except (ValueError, TypeError, OSError) as error:
-        return json.dumps({"error": str(error).splitlines()[0]})
+        return json.dumps({"error": str(error).splitlines()[0], "fail_closed": True})
 
 
 def _run_line(r: dict) -> str:
@@ -138,7 +192,7 @@ def command(raw_args: str = "", session_id: str | None = None) -> str:
     verb = verb.lower()
     try:
         if verb == "json":
-            return _json_call(rest)
+            return _json_call(rest, session_id)
         if verb in ("help", "-h", "--help"):
             return USAGE
         if verb == "runs":
@@ -148,8 +202,15 @@ def command(raw_args: str = "", session_id: str | None = None) -> str:
                 return "Usage: /factory scenes <words>"
             return "\n".join(f"- {h['scene']} ({h['model']}, {h['duration']}s, {h['videos']} videos)\n  {h['direction'][:300]}\n  "
                              + "\n  ".join(map(str, h["takes"])) for h in scenes(rest)) or "No matching scene."
+        if verb == "suggest":
+            result = suggest(session_id)
+            if "error" in result:
+                return "/factory: " + result["error"]
+            return "\n".join(f"- {s['title']} · {s['status']} · {s['contract_id']}\n  {s['review']['reason']}"
+                             for s in result["suggestions"]) or "No suggested actions."
         if verb == "render":
-            r = render(rest.strip())
+            parts = rest.strip().split()
+            r = render(parts[0] if parts else "", session_id, parts[1] if len(parts) == 2 else None)
             return f"Rendering {r['run']} in the background. Log: {r['log']}. Check with /factory runs."
         if verb:
             return USAGE
