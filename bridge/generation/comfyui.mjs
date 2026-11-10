@@ -199,7 +199,7 @@ export function outputRefs(outputs) {
 // ---------------------------------------------------------------- typed parameter introspection
 const TEXT = { CLIPTextEncode: 'text', CLIPTextEncodeFlux: 't5xxl', CLIPTextEncodeSD3: 't5xxl', TextEncodeQwenImageEdit: 'prompt' };
 const GUIDE = { KSampler: ['positive', 'negative'], KSamplerAdvanced: ['positive', 'negative'], CFGGuider: ['positive', 'negative'], DualCFGGuider: ['cond1', 'negative'], BasicGuider: ['conditioning', null] };
-const PASS = { ReferenceLatent: 'conditioning', FluxGuidance: 'conditioning', ConditioningZeroOut: 'conditioning', WanImageToVideo: 'positive', Reroute: '' };
+const PASS = { ReferenceLatent: 'conditioning', FluxGuidance: 'conditioning', ConditioningZeroOut: 'conditioning', WanImageToVideo: ['positive', 'negative'], WanVaceToVideo: ['positive', 'negative'], Reroute: '' }; // arrays: input per output slot
 const SIMPLE = [
   ['seed', ['KSampler', 'seed'], ['KSamplerAdvanced', 'noise_seed'], ['RandomNoise', 'noise_seed'], ['SamplerCustom', 'noise_seed']],
   ['steps', ['KSampler', 'steps'], ['KSamplerAdvanced', 'steps'], ['BasicScheduler', 'steps'], ['Flux2Scheduler', 'steps']],
@@ -208,9 +208,9 @@ const SIMPLE = [
   ['sampler', ['KSampler', 'sampler_name'], ['KSamplerSelect', 'sampler_name']],
   ['scheduler', ['KSampler', 'scheduler'], ['BasicScheduler', 'scheduler']],
   ['guidance', ['FluxGuidance', 'guidance']],
-  ['width', ...['EmptyLatentImage', 'EmptySD3LatentImage', 'EmptyFlux2LatentImage', 'EmptyHunyuanLatentVideo', 'EmptyLTXVLatentVideo', 'Wan22ImageToVideoLatent', 'WanImageToVideo', 'Flux2Scheduler', 'ModelSamplingFlux'].map(c => [c, 'width'])],
-  ['height', ...['EmptyLatentImage', 'EmptySD3LatentImage', 'EmptyFlux2LatentImage', 'EmptyHunyuanLatentVideo', 'EmptyLTXVLatentVideo', 'Wan22ImageToVideoLatent', 'WanImageToVideo', 'Flux2Scheduler', 'ModelSamplingFlux'].map(c => [c, 'height'])],
-  ['length', ['EmptyHunyuanLatentVideo', 'length'], ['EmptyLTXVLatentVideo', 'length'], ['Wan22ImageToVideoLatent', 'length'], ['WanImageToVideo', 'length']],
+  ['width', ...['EmptyLatentImage', 'EmptySD3LatentImage', 'EmptyFlux2LatentImage', 'EmptyHunyuanLatentVideo', 'EmptyLTXVLatentVideo', 'Wan22ImageToVideoLatent', 'WanImageToVideo', 'WanVaceToVideo', 'Flux2Scheduler', 'ModelSamplingFlux'].map(c => [c, 'width'])],
+  ['height', ...['EmptyLatentImage', 'EmptySD3LatentImage', 'EmptyFlux2LatentImage', 'EmptyHunyuanLatentVideo', 'EmptyLTXVLatentVideo', 'Wan22ImageToVideoLatent', 'WanImageToVideo', 'WanVaceToVideo', 'Flux2Scheduler', 'ModelSamplingFlux'].map(c => [c, 'height'])],
+  ['length', ['EmptyHunyuanLatentVideo', 'length'], ['EmptyLTXVLatentVideo', 'length'], ['Wan22ImageToVideoLatent', 'length'], ['WanImageToVideo', 'length'], ['WanVaceToVideo', 'length']],
   ['batch', ['EmptyLatentImage', 'batch_size'], ['EmptySD3LatentImage', 'batch_size'], ['EmptyFlux2LatentImage', 'batch_size']],
   ['fps', ['CreateVideo', 'fps']],
 ];
@@ -226,7 +226,7 @@ function traceText(w, link, seen = new Set()) {
   if (!isLink(link) || seen.has(link[0])) return null; seen.add(link[0]);
   const n = w[link[0]]; if (!n) return null;
   if (TEXT[n.class_type] && typeof n.inputs[TEXT[n.class_type]] === 'string') return [link[0], TEXT[n.class_type]];
-  if (n.class_type in PASS) return traceText(w, PASS[n.class_type] ? n.inputs[PASS[n.class_type]] : Object.values(n.inputs).find(isLink), seen);
+  if (n.class_type in PASS) { const p = PASS[n.class_type], input = Array.isArray(p) ? p[link[1]] : p; return traceText(w, input ? n.inputs[input] : Object.values(n.inputs).find(isLink), seen); }
   return null;
 }
 export function extractSchema(workflow, overrides = {}) {
