@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# One way to run the existing ComfyUI install for every factory consumer (fframestudio bridge, comfyui skill
+# scripts, storyboard-director, garden_room). Never reinstalls; never writes inside /mnt/zer0models/comfyui.
+#   factory-comfy up [--force]   start on 127.0.0.1:${FACTORY_COMFY_PORT:-8188}, refuses under 6 GB free VRAM
+#   factory-comfy status         JSON: url, running, free VRAM, installed video/image models
+#   factory-comfy down           stop the instance this script started
+#   factory-comfy env            print exports (FFS_COMFY_URL for fframestudio, COMFY_URL for skill scripts)
+#   factory-comfy render RUN_DIR run RUN_DIR/workflow_api.json once: pause $FACTORY_COMFY_PAUSE user units,
+#                                up, run, down, restore (EXIT trap). Progress in RUN_DIR/render.json.
+# reuse-checked: garden_room/server.py and LOCAL-STACK.md launch the same .venv ad hoc; this only names one
+#   port, state dir and VRAM gate so consumers stop guessing.
+set -euo pipefail
+ROOT=/mnt/zer0models/comfyui
+PORT=${FACTORY_COMFY_PORT:-8188}
+URL=http://127.0.0.1:$PORT
+STATE=${FACTORY_COMFY_STATE:-/mnt/zer0models/project-artifacts/content-factory/comfy}
+PIDF=$STATE/comfy.pid
+MODELS=${FACTORY_COMFY_MODELS:-/mnt/zer0models/project-artifacts/content-factory/models}
+MIN_FREE_MB=${FACTORY_COMFY_MIN_FREE_MB:-6000}
+
+free_mb() { nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits | head -1 | tr -d ' '; }
+running() { curl -sf -m 3 "$URL/system_stats" >/dev/null; }
+models() { for d in "$ROOT/models" "$MODELS"; do ( cd "$d" 2>/dev/null && ls diffusion_models checkpoints unet 2>/dev/null | grep -E '\.(safetensors|gguf|ckpt)$' ); done | tr '\n' ',' | sed 's/,$//'; }
+
+case "${1:-status}" in
+  up)
+    if running; then echo "already up: $URL"; exit 0; fi
+    f=$(free_mb)
+    if [[ "${2:-}" != --force && "$f" -lt "$MIN_FREE_MB" ]]; then
+      echo "refusing: ${f} MB VRAM free < ${MIN_FREE_MB} MB. GPU holders:" >&2
+      nvidia-smi --query-compute-apps=pid,used_memory,process_name --format=csv,noheader >&2
+      echo "free the GPU (sleep idle llama servers) or pass --force for small image jobs" >&2; exit 3
+    fi
+    mkdir -p "$STATE"/{input,output,temp,user}
+    # factory-owned weights (Wan VACE etc.) live outside the install tree
+    printf 'factory:\n  base_path: %s\n  diffusion_models: diffusion_models\n  text_encoders: text_encoders\n  vae: vae\n  loras: loras\n  checkpoints: checkpoints\n' "$MODELS" >"$STATE/extra_model_paths.yaml"
+    env -u PYTHONPATH -u PYTHONHOME setsid "$ROOT/.venv/bin/python" "$ROOT/main.py" --listen 127.0.0.1 --port "$PORT" \
+      --extra-model-paths-config "$STATE/extra_model_paths.yaml" \
+      --input-directory "$STATE/input" --output-directory "$STATE/output" --temp-directory "$STATE/temp" \
+      --user-directory "$STATE/user" --disable-auto-launch >"$STATE/comfy.log" 2>&1 < /dev/null &
+    echo $! >"$PIDF"
+    for _ in $(seq 90); do running && { echo "up: $URL (pid $(cat "$PIDF"), log $STATE/comfy.log)"; exit 0; }; sleep 2; done
+    echo "did not come up in 180 s; tail of log:" >&2; tail -20 "$STATE/comfy.log" >&2; exit 1 ;;
+  down)
+    [[ -f "$PIDF" ]] && kill "$(cat "$PIDF")" 2>/dev/null && rm -f "$PIDF" && echo "stopped" || echo "not started by factory-comfy" ;;
+  env)
+    echo "export FFS_COMFY_URL=$URL COMFY_URL=$URL" ;;
+  render)
+    RUN=$(realpath -e "${2:?usage: factory-comfy render RUN_DIR}"); [[ -f "$RUN/workflow_api.json" ]] || { echo "no $RUN/workflow_api.json" >&2; exit 2; }
+    RUNNER=${FACTORY_COMFY_RUNNER:-$HOME/.hermes/profiles/clean/skills/creative/comfyui/scripts/run_workflow.py}
+    mkdir -p "$STATE"; exec 9>"$STATE/render.lock"; flock -n 9 || { echo "another render is running" >&2; exit 4; }
+    t0=$(date +%s); mark() { printf '{"state":"%s","started":%s,"finished":%s,"exit":%s}\n' "$1" "$t0" "${2:-null}" "${3:-null}" >"$RUN/render.json"; }
+    mark running; paused=(); started=0
+    restore() { local rc=$?; ((started)) && "$0" down >/dev/null; for u in "${paused[@]}"; do systemctl --user start "$u"; done
+      mark "$( ((rc)) && echo failed || echo done)" "$(date +%s)" "$rc"; }
+    trap restore EXIT
+    for u in ${FACTORY_COMFY_PAUSE-z0-farm-llama.service d1-decision-server.service}; do
+      systemctl --user is-active -q "$u" && systemctl --user stop "$u" && paused+=("$u"); done
+    running || { "$0" up; started=1; }
+    python3 -I "$RUNNER" --workflow "$RUN/workflow_api.json" --host "$URL" --output-dir "$RUN/out" \
+      --timeout 1800 --overwrite >"$RUN/result.json" ;;
+  status)
+    printf '{"url":"%s","running":%s,"free_vram_mb":%s,"state":"%s","models":"%s"}\n' \
+      "$URL" "$(running && echo true || echo false)" "$(free_mb)" "$STATE" "$(models)" ;;
+  *) sed -n '2,8p' "$0"; exit 2 ;;
+esac
