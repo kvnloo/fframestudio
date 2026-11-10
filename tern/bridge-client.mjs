@@ -28,7 +28,7 @@ export async function requestJSON(info, route) {
   validateBridge(info);
   if (!route.startsWith('/') || route.startsWith('//')) throw new Error('Invalid bridge route');
   let response;
-  try { response = await fetch(info.url + route, { headers: { Authorization: `Bearer ${info.token}` }, redirect: 'error', signal: AbortSignal.timeout(5000) }); }
+  try { response = await fetch(new URL(info.url).origin + route, { headers: { Authorization: `Bearer ${info.token}` }, redirect: 'error', signal: AbortSignal.timeout(5000) }); }
   catch { throw new Error('Bridge request failed; check the local bridge'); }
   if (!response.ok) throw new Error(`Bridge request failed (HTTP ${response.status})`);
   try { return await response.json(); } catch { throw new Error('Bridge returned invalid JSON'); }

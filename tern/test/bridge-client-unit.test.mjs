@@ -99,6 +99,9 @@ test('requestJSON handles HTTP, transport, JSON and success responses', async ()
       return { ok: true, status: 200, json: async () => body };
     };
     assert.strictEqual(await requestJSON(ok, '/health'), body);
+    assert.equal(captured.url, 'http://127.0.0.1:4100/health');
+    assert.strictEqual(await requestJSON({ ...ok, url: 'http://127.0.0.1:4100' }, '/health'), body);
+    assert.equal(captured.url, 'http://127.0.0.1:4100/health');
     assert.deepEqual(captured.options.headers, { Authorization: 'Bearer abc-123' });
     assert.equal(captured.options.redirect, 'error');
   } finally {
