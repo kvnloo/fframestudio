@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+<meta name="theme-color" content="#0d1112" />
+<meta name="robots" content="noindex" />
+<title>Sound Atlas · free music by feel</title>
+<link rel="icon" href="data:," />
+<style>
+@font-face { font-family: "Archivo Black"; src: url(../fonts/ArchivoBlack-Regular.ttf); font-display: swap; }
+@font-face { font-family: "Instrument Sans"; src: url(../fonts/InstrumentSans-Regular.ttf); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Instrument Sans"; src: url(../fonts/InstrumentSans-Bold.ttf); font-weight: 600 700; font-display: swap; }
+@font-face { font-family: "Instrument Serif"; src: url(../fonts/InstrumentSerif-Italic.ttf); font-style: italic; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono"; src: url(../fonts/IBMPlexMono-Regular.ttf); font-display: swap; }
+</style>
+<link rel="stylesheet" href="../src/music-atlas/style.css" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+</head>
+<body>
+<canvas id="atlas" aria-label="Music atlas: tracks filed by feel, family and style; slower tracks sit inside, faster outside"></canvas>
+<header class="top">
+  <div class="row1">
+    <a class="brand" href="./"><span class="dot"></span><b>Sound Atlas</b><small id="count"></small></a>
+    <div class="search">
+      <svg viewBox="0 0 20 20" class="mag"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M13 13l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="Search a vibe…" autocomplete="off" enterkeyhint="search" spellcheck="false" />
+      <span id="ai" class="ai" data-state="idle" title="Semantic search loads when you search">AI</span>
+      <button id="clear" aria-label="Clear">×</button>
+    </div>
+  </div>
+  <nav id="chips" class="chips"></nav>
+</header>
+<section id="sheet" class="sheet">
+  <div class="grab"><i></i></div>
+  <div id="player" class="player">
+    <button id="pv" class="ib sm" aria-label="Previous"><svg viewBox="0 0 20 20"><path d="M14 5v10l-7-5zM5 5h2v10H5z" fill="currentColor"/></svg></button>
+    <button id="pp" class="ib pp" aria-label="Play"></button>
+    <button id="pn" class="ib sm" aria-label="Next"><svg viewBox="0 0 20 20"><path d="M6 5v10l7-5zM13 5h2v10h-2z" fill="currentColor"/></svg></button>
+    <div id="pt" class="pt"></div>
+    <button id="ph" class="ib sm heart" aria-label="Pick"><svg viewBox="0 0 20 20"><path d="M10 16.5s-6-3.7-6-8.2A3.3 3.3 0 0 1 10 6a3.3 3.3 0 0 1 6 2.3c0 4.5-6 8.2-6 8.2z" fill="currentColor"/></svg></button>
+    <button id="ps" class="ib sm" aria-label="Share picks"><svg viewBox="0 0 20 20"><path d="M10 3v10M6 7l4-4 4 4M4 12v4h12v-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="scrub"><div class="track"><div id="bar" class="bar"></div><span id="thumb" class="thumbw"><i class="thumb"></i></span></div><span id="tc" class="tc">0:00 / –:––</span></div>
+  </div>
+  <div id="body" class="body"></div>
+</section>
+<div id="toast" class="toast" role="status"></div>
+<audio id="audio" preload="none"></audio>
+<script type="module" src="../src/music-atlas/app.js"></script>
+</body>
+</html>
