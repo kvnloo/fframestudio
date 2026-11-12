@@ -209,11 +209,19 @@ def e2e(card):
         p = subprocess.run([sys.executable, str(HERE / f"{name}_e2e.py"), URL, str(OUT)], capture_output=True, text=True, timeout=240)
         try: card["e2e"][name] = json.loads(p.stdout[p.stdout.index("{"):])
         except ValueError: card["e2e"][name] = {"errors": ["no json: " + (p.stderr or p.stdout)[-300:]]}
-    s, c = card["e2e"]["steer"], card["cases"]
-    c["steer_switches_song_mid_drag"] = s.get("mid_drag", {}).get("sel") not in (None, s.get("before", {}).get("sel")) and bool(s.get("mid_drag_slider_alive"))
-    c["steer_no_entrance_replay"] = not (set((s.get("flash") or {}).get("anims", {"?": 1})) - set(RUBRIC["meaningful_anims"]))
-    c["scrub_follows_finger"] = (s.get("scrub") or {}).get("max_lag", 1) < 0.03 and (s.get("scrub") or {}).get("seeks_during_drag", 9) <= 1
-    c["hand_pick_ends_tune"] = bool(s.get("manual_pick_ends_tune"))
+    runs = [card["e2e"]["steer"]]  # the steer timing checks sit near one frame of lag: majority of 3 runs
+    for _ in range(2):
+        p = subprocess.run([sys.executable, str(HERE / "steer_e2e.py"), URL, str(OUT)], capture_output=True, text=True, timeout=240)
+        try: runs.append(json.loads(p.stdout[p.stdout.index("{"):]))
+        except ValueError: pass
+    def steer_cases(s): return {
+        "steer_switches_song_mid_drag": s.get("mid_drag", {}).get("sel") not in (None, s.get("before", {}).get("sel")) and bool(s.get("mid_drag_slider_alive")),
+        "steer_no_entrance_replay": not (set((s.get("flash") or {}).get("anims", {"?": 1})) - set(RUBRIC["meaningful_anims"])),
+        "scrub_follows_finger": (s.get("scrub") or {}).get("max_lag", 1) < 0.03 and (s.get("scrub") or {}).get("seeks_during_drag", 9) <= 1,
+        "hand_pick_ends_tune": bool(s.get("manual_pick_ends_tune"))}
+    per = [steer_cases(s) for s in runs]
+    for k in per[0]: card["cases"][k] = majority([x[k] for x in per])
+    card["steer_scrub_lags"] = [(s.get("scrub") or {}).get("max_lag") for s in runs]
     card["gates"]["e2e_errors"] = {k: v.get("errors", []) for k, v in card["e2e"].items() if v.get("errors")}
 
 

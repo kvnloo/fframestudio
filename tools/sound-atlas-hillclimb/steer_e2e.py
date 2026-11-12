@@ -56,7 +56,9 @@ with sync_playwright() as p:
     c.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": xs[0], "y": sy}]}); follow = []
     for x in xs[1:]:
         c.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x, "y": sy}]}); time.sleep(0.016)
-        follow.append(round(pg.evaluate("(() => { const r = document.querySelector('#thumb .thumb').getBoundingClientRect(), t = document.querySelector('.scrub .track').getBoundingClientRect(); return (r.left + r.width / 2 - t.left) / t.width; })()"), 3))
+        # read after the next painted frame: the thumb moves in rAF, so a fixed 16 ms sleep races it
+        # and reads exactly one step (0.04) behind under host load
+        follow.append(round(pg.evaluate("new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(() => { const r = document.querySelector('#thumb .thumb').getBoundingClientRect(), t = document.querySelector('.scrub .track').getBoundingClientRect(); ok((r.left + r.width / 2 - t.left) / t.width); })))"), 3))
     c.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []}); time.sleep(0.8)
     want = [round(0.1 + 0.8 * i / 20, 3) for i in range(1, 21)]
     res["scrub_follow"] = follow; res["scrub"] = {"max_lag": round(max(abs(a - b) for a, b in zip(follow, want)), 3), "seeks_during_drag": pg.evaluate("window.__seeks"), "landed": round(pg.evaluate("__sa.audio.currentTime / __sa.audio.duration"), 3), "playing": pg.evaluate("!__sa.audio.paused")}
