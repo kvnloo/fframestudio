@@ -21,7 +21,7 @@ Aural's soundstage (side/mid width, L/R correlation, octave bands, low/mid/high 
 tags (z-scored across the catalogue, so "piano" means more piano than usual) and a 512-d audio
 embedding, written as int8 to <out>.clap.bin for "sounds like" neighbours.
 """
-import json, subprocess, sys, concurrent.futures as cf, argparse
+import json, math, subprocess, sys, concurrent.futures as cf, argparse
 import numpy as np
 
 SR = 22050
@@ -35,6 +35,11 @@ INSTRUMENTS = ["piano", "acoustic guitar", "electric guitar", "synth lead", "syn
 TIMBRE = ["clean and polished", "lo-fi and dusty", "distorted and gritty", "warm and soft", "bright and sparkly",
           "dark and heavy", "airy and spacious", "punchy and tight"]
 
+
+
+def finite(x, nd):
+    x = float(x)
+    return round(x, nd) if math.isfinite(x) else None
 
 def decode(url, dur):
     start = 30 if (dur or 0) > 75 else 0
@@ -131,7 +136,7 @@ def features(x):
         "tempo": bpm, "tempoConf": bconf,
         "key": f"{PC[root]} {mode}", "camelot": camelot, "keyConf": round(float(kc), 2),
         "bright": round(cen), "clarity": round(float(np.mean(contrast)), 1) if contrast else None,
-        "width": round(rms(side) / rms(mid), 3), "corr": round(float(np.corrcoef(L, Rr)[0, 1]), 3),
+        "width": round(rms(side) / rms(mid), 3), "corr": finite(np.corrcoef(L, Rr)[0, 1], 3),  # one silent channel -> undefined, not NaN
         "busy": round(onsets(flux, fps) / secs, 2),
         "busyBands": {k: round(onsets(v, fps) / secs, 2) for k, v in flux_b.items()},
         "crest": round(float(20 * np.log10(np.abs(mid).max() / rms(mid) + 1e-9)), 1),  # float(): float32 rounding leaks digits into JSON
@@ -218,7 +223,8 @@ def main():
         emb = clap.finish(keep)
         q = np.clip(np.round(emb * 127 / np.abs(emb).max(1, keepdims=True)), -127, 127).astype(np.int8)
         open(a.out + ".clap.bin", "wb").write(q.tobytes())
-    json.dump({"ids": ids, "dims": 512 if a.clap else 0, "features": out}, open(a.out, "w"), default=float)
+    # allow_nan=False: browsers reject the whole file on one NaN, so fail here instead.
+    json.dump({"ids": ids, "dims": 512 if a.clap else 0, "features": out}, open(a.out, "w"), default=float, allow_nan=False)
     print(f"done {len(ids)}/{len(todo)}", file=sys.stderr)
 
 

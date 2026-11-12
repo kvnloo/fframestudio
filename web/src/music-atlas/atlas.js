@@ -282,7 +282,7 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
         const x1 = X(m), y1 = Y(m), bx = (x0 + x1) * 0.22, by = (y0 + y1) * 0.22; // control point pulled to the hub
         // de Casteljau split at linkK draws the arc in from the source.
         const k = linkK, ax = x0 + (bx - x0) * k, ay = y0 + (by - y0) * k, cx2 = bx + (x1 - bx) * k, cy2 = by + (y1 - by) * k;
-        ctx.globalAlpha = 0.25 + 0.6 * w; ctx.strokeStyle = lens?.(m.t) ?? col(m.feel); ctx.lineWidth = (1 + 1.6 * w) / Math.max(s, 0.35);
+        ctx.globalAlpha = 0.25 + 0.6 * w; ctx.strokeStyle = (lens && lens(m.t)) || col(m.feel); ctx.lineWidth = (1 + 1.6 * w) / Math.max(s, 0.35);
         ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(ax, ay, ax + (cx2 - ax) * k, ay + (cy2 - ay) * k); ctx.stroke();
       }
     }
@@ -294,7 +294,7 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
       const x = n.dx * g4, y = n.dy * g4; if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue;
       const a = n.al ?? 1; if (a < 0.02) continue;
       const on = a > 0.5, r = (n.t.src === "shortlist" && on ? DOT * 1.25 : DOT) * (0.6 + 0.4 * a);
-      const k = (on ? (lens?.(n.t) ?? col(n.feel)) : P.dim) + "|" + (on ? Math.round(a * 8) / 8 : 0.55);
+      const k = (on ? (lens ? lens(n.t) ?? P.mute : col(n.feel)) : P.dim) + "|" // under a lens, unmeasured tracks go neutral + (on ? Math.round(a * 8) / 8 : 0.55);
       let b = buckets.get(k); if (!b) buckets.set(k, (b = []));
       b.push(x, y, r);
       if (n.t.src === "web" && on) rings.push(x, y, r);

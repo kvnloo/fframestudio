@@ -26,7 +26,7 @@ const pct = (k, v) => { const a = sorted[k]; if (!a?.length || v == null) return
 
 export async function loadSound(base, tracks) {
   const [js, buf] = await Promise.all([
-    fetch(base + "sound.json").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    fetch(base + "sound.json").then((r) => (r.ok ? r.json() : null)).catch((e) => (console.warn("sound.json unusable", e), null)),
     fetch(base + "sound.bin").then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null),
   ]);
   if (!js) return false;
@@ -142,7 +142,7 @@ export function profileHTML(t) {
     <div class="big">
       <div><b>${bpmOf(t)}</b><small>bpm</small><small>${src}</small></div>
       <div><b>${esc(f.camelot)}</b><small>${esc(f.key)}${f.keyConf < 0.5 ? " · ambiguous" : ""}</small><small>mixes with ${mixesWith(f.camelot).join(" ")}</small></div>
-      <div class="spec" title="Tonal balance, 32 Hz–16 kHz octaves">${bands}<small>32 Hz · tonal balance · 16k</small></div>
+      <div class="spec" title="Tonal balance, 32 Hz–16 kHz octaves">${bands}<small>32 Hz – 16 kHz</small></div>
     </div>
     ${inst || f.timbre ? `<div class="inst">${inst}${f.timbre ? `<em>${esc(f.timbre)}</em>` : ""}</div>` : ""}
     <div class="meters">${METERS.map(meter).join("")}</div>

@@ -154,14 +154,14 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; } }
 
 /* --- lens row: what the dots' colour means -------------------------------------------------- */
-.lens { display: flex; gap: 4px; align-items: center; overflow-x: auto; padding: 0 12px 10px; margin: -4px -12px 0; scrollbar-width: none; }
+.lens { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; overflow-x: auto; padding: 0 12px 10px; margin: -4px -12px 0; scrollbar-width: none; }
 .lens:empty { display: none; }
 .lens::-webkit-scrollbar { display: none; }
 .lens .lk { flex: none; font: 10px "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); margin-right: 4px; }
-.lens button { flex: none; height: 26px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line2); background: var(--panel); color: #cfcac0; font: 600 12px "Instrument Sans", sans-serif; transition: transform .2s var(--spring), background .2s, color .2s; }
+.lens button { flex: none; height: 26px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--line2); background: var(--panel); color: #cfcac0; font: 600 12px "Instrument Sans", sans-serif; transition: transform .2s var(--spring), background .2s, color .2s; }
 .lens button:active { transform: scale(.93); }
 .lens button.on { background: var(--ink); color: #0d1112; border-color: var(--ink); }
-.lens .lg { flex: none; display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; font: 10px "IBM Plex Mono", monospace; color: var(--mute); animation: rise .35s var(--ease) backwards; }
+.lens .lg { flex: 1 0 100%; display: inline-flex; align-items: center; gap: 6px; margin: 2px 0 0; font: 10px "IBM Plex Mono", monospace; color: var(--mute); animation: rise .35s var(--ease) backwards; }
 .lens .lg i { width: 44px; height: 6px; border-radius: 3px; }
 .lg-key i { background: linear-gradient(90deg, hsl(0 60% 58%), hsl(60 60% 58%), hsl(120 60% 58%), hsl(180 60% 58%), hsl(240 60% 58%), hsl(300 60% 58%), hsl(360 60% 58%)); }
 .lg-tempo i, .lg-width i { background: linear-gradient(90deg, #4078dc, #5fd3dc, #ece8df, #f4b25a, #ea5c54); }
@@ -176,7 +176,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .snd .big small { display: block; font: 10px "IBM Plex Mono", monospace; color: var(--mute); margin-top: 4px; white-space: nowrap; }
 .spec { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; height: 46px; align-items: end; }
 .spec i { height: 100%; border-radius: 2px; background: color-mix(in srgb, var(--c) 75%, transparent); transform: scaleY(var(--h)); transform-origin: bottom; animation: grow .6s var(--ease) backwards; animation-delay: calc(var(--n, 0) * 30ms); }
-.spec small { grid-column: 1 / -1; text-align: center; }
+.spec small { grid-column: 1 / -1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @keyframes grow { from { transform: scaleY(0); } }
 .inst { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-top: 12px; }
 .inst span { font: 600 11px "Instrument Sans", sans-serif; padding: 3px 8px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--c) 45%, var(--line2)); }
