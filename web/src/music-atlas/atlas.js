@@ -67,13 +67,18 @@ export function layout(tracks, org = null) {
   return { root, byId, leaves, styles, R4, radii, step, outer: R4 + 14 + ROWS * SPACING, colors: org?.byId ?? null };
 }
 
-export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent, onLayer }) {
+export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent, onLayer, lite = false }) {
   // Two layers: `layer` caches the static atlas (bands, edges, dots, nodes, labels) and is only
   // redrawn when the camera, data or an animation changes it; playback then costs one blit plus
   // the beat ring and pills per frame.
   const screen = canvas.getContext("2d"), layer = document.createElement("canvas"), lctx = layer.getContext("2d");
   let ctx = screen, layerKey = "", gen = 0;
-  let g = layout([]), dpr = 1, W = 0, H = 0, theme = "dark";
+  // A TV dancing: the map holds still on this canvas and only the tracks redraw, on a clear canvas laid over it, so the
+  // compositor never re-rasters the full-screen map (QN85B probe: 16.9 ms frames split vs 23.2 ms blitting one canvas).
+  const fly = lite ? document.createElement("canvas") : null, fctx = fly?.getContext("2d");
+  if (fly) { fly.className = "atlas-fly"; fly.setAttribute("aria-hidden", "true"); canvas.after(fly); }
+  let flyOn = false, step = false;
+  let dots = null, g = layout([]), dpr = 1, W = 0, H = 0, theme = "dark";
   const cam = { x: 0, y: 0, s: 0.3 };
   let lens = null, links = null, linkK = 1;
   const wedge = { id: null, g: null, a0: 0, a1: 0 };
@@ -102,6 +107,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     const r = canvas.getBoundingClientRect();
     dpr = Math.min(devicePixelRatio || 1, 3); W = r.width; H = r.height;
     canvas.width = layer.width = Math.round(W * dpr); canvas.height = layer.height = Math.round(H * dpr);
+    if (fly) { fly.width = canvas.width; fly.height = canvas.height; flyOn = false; layerKey = ""; }
     gen++; kick();
   }
   new ResizeObserver(resize).observe(canvas);
@@ -337,10 +343,14 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     dk += ((live ? 1 : 0) - dk) * (1 - Math.exp(-dt / 260));
     if (!live && dk < 0.003) dk = 0;
     const dm = (1 - fe) * dk * zoomDamp(cam.s, Math.min(W, H) * 0.95 / (2 * (g.outer + 30))); // vs the whole-map scale: zoomed in, settle and stop forcing redraws
-    lblK = (1 - clamp(dm * 4, 0, 1)) * (1 - fe); // dancing: labels step aside; paused, motion off or zoomed in: back
+    lblK = lite ? 1 - fe : (1 - clamp(dm * 4, 0, 1)) * (1 - fe); // dancing: labels step aside; paused, motion off or zoomed in: back (a TV's skeleton holds still, so its labels stay)
+    const settled = !busy; // nothing but the dance moves this frame
     if (dm < 0.003) poses = null; else { poses = dancePoses(dm); busy = true; }
+    // ...and it steps every other frame: the tracks' JS is ~11 ms a frame on the QN85B's CPU, so stepping every frame
+    // dropped every other one anyway (24 ms frames); stepping on alternate frames holds the screen at 60 fps (16.8 ms).
+    if (fly && poses && settled && flyOn && (step = !step)) { kick(); return; }
     place(bt);
-    draw(now, bt, busy);
+    draw(now, bt, busy, settled);
     if (busy || (playing && !playing.paused)) kick();
   }
 
@@ -365,9 +375,10 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   function place(bt) {
     const gl = [0, 1, 2, 3, 4].map((l) => grow(bt, l));
     for (const n of g.byId.values()) {
-      const x = n.dx * gl[n.level], y = n.dy * gl[n.level], P = poses && n.level > 0 ? poses.get(n.feel) : null;
+      const x = n.dx * gl[n.level], y = n.dy * gl[n.level], P = poses && (lite ? n.level === 4 : n.level > 0) ? poses.get(n.feel) : null;
       if (!P) { n.vx = x; n.vy = y; n.va = n.a; n.vr = 1; continue; }
-      let r = Math.hypot(x, y) * P.k, a = Math.atan2(y, x);
+      if (n.px !== x || n.py !== y) { n.px = x; n.py = y; n.pr = Math.hypot(x, y); n.pa = Math.atan2(y, x); }
+      let r = n.pr * P.k, a = n.pa;
       a += P.da + wrap(a - P.ac) * P.spread;
       n.va = n.a == null ? a : n.a + P.da + wrap(n.a - P.ac) * P.spread; n.vr = 1;
       let jx = 0, jy = 0;
@@ -388,10 +399,17 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     }
   }
 
-  function draw(now, bt, busy) {
+  function draw(now, bt, busy, settled) {
     const key = [cam.x, cam.y, cam.s, W, H, dpr, gen, focusId, hoverId].join("|");
     // Moving frames draw straight to the screen (caching them would raster twice); once settled the
     // static layer is cached and later frames (playback pulse) only blit it.
+    if (fly && poses && settled) { // a TV dancing: the still skeleton (glow, bands, edges, nodes, labels) stays put; only the tracks redraw (QN85B: the skeleton was ~60 of 70 ms a frame)
+      if (key + "|base" !== layerKey) { const pz = poses; poses = null; ctx = screen; drawStatic(bt, "base"); poses = pz; layerKey = key + "|base"; }
+      ctx = fctx; fctx.setTransform(1, 0, 0, 1, 0, 0); fctx.clearRect(0, 0, fly.width, fly.height); flyOn = true;
+      drawStatic(bt, "dots"); if (fe < 0.05) drawOverlay(bt);
+      ctx = screen; return;
+    }
+    if (flyOn) { fctx.setTransform(1, 0, 0, 1, 0, 0); fctx.clearRect(0, 0, fly.width, fly.height); flyOn = false; }
     if (busy) { ctx = screen; drawStatic(bt); layerKey = ""; }
     else {
       if (key !== layerKey) { ctx = lctx; drawStatic(bt); ctx = screen; layerKey = key; }
@@ -401,20 +419,23 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   }
   const grow = (bt, lvl) => clamp(easeOutBack(clamp((bt - lvl * 0.11) / 0.75, 0, 1)), 0, 1.2);
 
-  function drawStatic(bt) {
+  function drawStatic(bt, part = "all") { // part: "base" (everything but the tracks), "dots" (only the tracks) or "all"
     const P = pal(), { cx, cy } = centre(), s = cam.s;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1;
+    if (part !== "dots") {
     ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H);
     // Soft vignette glow behind the ring.
     const gx = cx - cam.x * s, gy = cy - cam.y * s, gr = Math.max(60, g.outer * s * 1.05);
     const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
     grad.addColorStop(0, theme === "dark" ? "rgba(95,211,220,.06)" : "rgba(47,111,214,.05)"); grad.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    }
     const F = fe ? formGeom() : null, fo = 1 - fe; // fo: everything that isn't the code fades out
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (cx - cam.x * s), dpr * (cy - cam.y * s));
     const gr4 = (lvl) => grow(bt, lvl);
     const X = (n) => n.vx, Y = (n) => n.vy;
     const vx0 = cam.x - cx / s - 40, vx1 = cam.x + (W - cx) / s + 40, vy0 = cam.y - cy / s - 40, vy1 = cam.y + (H - cy) / s + 40;
+    if (part !== "dots") {
     // Style bands: a tinted annular sector under each style's tracks.
     const inner = g.R4 + 6, outer = g.outer + 2;
     for (const st of g.styles) {
@@ -448,11 +469,17 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
         ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(ax, ay, ax + (cx2 - ax) * k, ay + (cy2 - ay) * k); ctx.stroke();
       }
     }
+    }
+    if (part !== "base") {
     // Tracks. Dim ones are grey; lit ones carry their feel colour (or the lens colour).
     const g4 = gr4(4);
     // Batched: one path per colour and alpha step instead of a fill per dot (~1.8k dots).
-    const buckets = new Map(), rings = [];
-    for (const n of g.leaves) {
+    let buckets = new Map(), rings = [];
+    const keep = part === "dots" ? dots && dots.key === layerKey && dots : null, rec = part === "dots" && !keep ? (dots = { key: layerKey, b: new Map(), rings: [] }) : null;
+    if (keep) { // QN85B: the per-dot colour key and Map lookup were ~4 of the ~13 ms a dancing frame took
+      for (const [k, ns] of keep.b) { const b = []; for (const n of ns) b.push(n.vx, n.vy, n.br * n.vr); buckets.set(k, b); }
+      for (const n of keep.rings) rings.push(n.vx, n.vy, n.br * n.vr);
+    } else for (const n of g.leaves) {
       const x = n.vx, y = n.vy; if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue;
       const a0 = n.al ?? 1, fm = F && n.fm, a = !F ? a0 : fm ? a0 + (1 - a0) * fe : a0 * fo; if (a < 0.02) continue;
       const on = a > 0.5;
@@ -465,6 +492,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       let b = buckets.get(k); if (!b) buckets.set(k, (b = []));
       b.push(x, y, r);
       if (n.t.src === "web" && on && !fm) rings.push(x, y, r);
+      if (rec) { n.br = r / n.vr; let ns = rec.b.get(k); if (!ns) rec.b.set(k, (ns = [])); ns.push(n); if (n.t.src === "web" && on && !fm) rec.rings.push(n); }
     }
     // Dots under ~2.5 device px can't read as round (least of all from a sofa), and squares of the same area
     // rasterise far cheaper than arcs: on a TV the zoomed-out map is all such dots, ~1.8k a frame while dancing.
@@ -481,6 +509,8 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     }
     if (F) drawFinders(F);
     if (rings.length) { ctx.globalAlpha = 0.9; ctx.strokeStyle = P.ink; ctx.lineWidth = 1 / Math.max(s, 0.5); ctx.beginPath(); for (let i = 0; i < rings.length; i += 3) { ctx.moveTo(rings[i] + rings[i + 2], rings[i + 1]); ctx.arc(rings[i], rings[i + 1], rings[i + 2], 0, TAU); } ctx.stroke(); }
+    }
+    if (part !== "dots") {
     // Structural nodes.
     for (const n of g.byId.values()) {
       if (n.level === 4) continue;
@@ -510,6 +540,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       if (n.level === 1) { ctx.font = "13px 'Archivo Black', sans-serif"; text(n.name.toUpperCase(), x + ux * 38 * Math.min(1, 0.55 + s), y + uy * 30 * Math.min(1, 0.55 + s), ux, col(n.feel), P.bg); }
       else if (n.level === 2) { ctx.font = "600 12px 'Instrument Sans', sans-serif"; text(n.name, x + ux * 18, y + uy * 18, ux, P.ink, P.bg); }
       else { ctx.font = "11px 'IBM Plex Mono', monospace"; text(n.name, x + ux * 14, y + uy * 14, ux, P.mute, P.bg); }
+    }
     }
   }
 

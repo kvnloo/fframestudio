@@ -44,6 +44,9 @@ await ph.click('.castmenu button[data-c="samsung"]');
 await until(() => tv.evaluate((id) => window.__sa.state.sel === id && !window.__sa.audio.paused, a), 20000, "TV plays the phone's song").catch(async (e) => { console.log(JSON.stringify({ tv: await tv.evaluate(() => ({ sel: window.__sa.state.sel, paused: window.__sa.audio.paused, src: window.__sa.audio.src, err: window.__sa.audio.error?.code, toast: document.querySelector("#toast").textContent })), ph: await ph.evaluate(() => ({ sel: window.__sa.state.sel, toast: document.querySelector("#toast").textContent, paused: window.__sa.audio.paused, err: window.__sa.audio.error?.code, tv: localStorage.getItem("sa-tv") })), errs })); throw e; });
 await until(() => ph.evaluate(() => document.querySelector("#pc").classList.contains("on") && window.__sa.audio.muted), 10000, "phone shows casting, muted");
 await until(() => tv.evaluate(() => !document.querySelector("#tvcode").classList.contains("on")), 5000, "code hides once linked");
+// A TV dances its tracks on a clear canvas over the still map (a full-map redraw per frame ran at ~14 fps on the QN85B).
+await until(() => tv.evaluate(() => { const f = document.querySelector(".atlas-fly"); if (!f || !f.width) return false; const d = f.getContext("2d").getImageData(0, 0, f.width, f.height).data; for (let i = 3; i < d.length; i += 4) if (d[i]) return true; return false; }), 10000, "TV dances its tracks on the overlay canvas");
+assert.equal(await ph.evaluate(() => !!document.querySelector(".atlas-fly")), false, "phones keep one canvas");
 assert.equal(JSON.parse(await ph.evaluate(() => localStorage.getItem("sa-tv"))).room, room, "phone remembers the TV");
 await wait(1500); if (shots) { await tv.screenshot({ path: `${shots}/tv-playing.png` }); await ph.screenshot({ path: `${shots}/phone-casting.png` }); }
 

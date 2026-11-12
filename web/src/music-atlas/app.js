@@ -102,7 +102,7 @@ function sheetPointer() {
 
 // --- atlas --------------------------------------------------------------------------------------
 const A = createAtlas({
-  canvas,
+  canvas, lite: cast.isTV,
   region: () => {
     const top = geo.top;
     if (wide()) return { x: 0, y: top, w: geo.left, h: geo.H - top };
