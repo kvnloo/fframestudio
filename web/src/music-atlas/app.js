@@ -775,7 +775,34 @@ const spotify = { on: false };
 // (tools/sound-atlas-api/ccm.js). Catalogue paths are relative to the catalogue.
 const CCM = "https://ccmixter.org/content/";
 const proxied = !/^(localhost|127\.|\[::1\])/.test(location.hostname) && location.protocol === "https:";
-const streamUrl = (t) => (proxied && t.audio.startsWith(CCM) ? "/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)) : new URL(t.audio, new URL(base, document.baseURI)).href);
+// With Aural on, the page's Web Audio graph needs CORS-readable media, so both hosts stream through it.
+const INC = "https://incompetech.com/music/";
+const streamUrl = (t) => ((proxied || auralOn()) && t.audio.startsWith(CCM) ? "/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)) : auralOn() && t.audio.startsWith(INC) ? "/api/ccm?u=" + encodeURIComponent(t.audio) : new URL(t.audio, new URL(base, document.baseURI)).href);
+
+// --- Aural (hidden audiophile pane, aural-pane.js) ----------------------------------------------------
+// Type "aural", open #aural, or long-press the logo. Loaded only then, or at boot when it was left on.
+const auralOn = () => { try { return !!JSON.parse(localStorage.getItem("sa-aural"))?.on; } catch { return false; } };
+let auralMod = null;
+const aural = () => import("./aural-pane.js").then((m) => {
+  if (!auralMod) {
+    auralMod = m;
+    m.attach({ audio, A, toast, track: () => byId.get(state.sel), reroute() {
+      if (audio.crossOrigin === "anonymous") return;
+      const t = byId.get(state.sel), at = audio.currentTime, was = !audio.paused;
+      audio.crossOrigin = "anonymous";
+      if (t?.audio) { audio.src = streamUrl(t); audio.addEventListener("loadedmetadata", () => { audio.currentTime = at; if (was) audio.play().catch(() => {}); }, { once: true }); audio.load(); }
+    } });
+  }
+  return m;
+});
+if (auralOn()) audio.crossOrigin = "anonymous"; // before the first src: the graph can only read CORS media
+const openAural = () => aural().then((m) => (m.isOpen() ? m.close() : m.open()));
+{ let typed = ""; addEventListener("keydown", (e) => { if (e.target.closest?.("input, textarea") || e.key.length !== 1) return; typed = (typed + e.key.toLowerCase()).slice(-5); if (typed === "aural") { typed = ""; openAural(); } }); }
+{ const brand = $(".brand"); let lp = 0, fired = false;
+  brand?.addEventListener("pointerdown", () => { fired = false; lp = setTimeout(() => { fired = true; haptic("tick"); openAural(); }, 650); });
+  for (const ev of ["pointerup", "pointercancel", "pointerleave"]) brand?.addEventListener(ev, () => clearTimeout(lp));
+  brand?.addEventListener("click", (e) => { if (fired) e.preventDefault(); });
+  brand?.addEventListener("contextmenu", (e) => e.preventDefault()); }
 function select(id, { play = false, fly = false, keepScroll = false, from = null, view = null, tuned = false } = {}) {
   const t = byId.get(id); if (!t) return;
   if (!tuned && tune && id !== state.sel) tune = null; // picking a song by hand ends the tune
@@ -788,6 +815,7 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   if (changed && spotify.on && t.provider !== "spotify") { spotify.on = false; byom().then((B) => B.spotifyPause()); }
   if (changed && t.src === "mine" && cast.send.on) { cast.stop(); toast("Your own music plays on this device; the TV has the shared catalogue"); }
   if (changed) { if (t.audio) { audio.src = streamUrl(t); audio.load(); } else { audio.pause(); audio.removeAttribute("src"); audio.load(); } }
+  if (changed && auralMod) auralMod.onTrack(t);
   if (play && t.provider === "spotify") spotifyGo(t);
   else if (play) audio.play().catch((e) => { if (e.name !== "AbortError") toast("Tap ▶ to play"); });
   if (changed) {
@@ -1195,5 +1223,6 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
     const s = await B.sources(); if (!(s.dir || s.files || s.plex || s.spotify)) return;
     const r = await B.restore(); mine.regrant = r.needsFolder; addMine(r, mine.spotifyNew ? "Spotify" : null); r.errors.forEach((m) => toast(m));
   }).catch((e) => toast("Your music: " + e.message));
-  window.__sa = { party, mine, addMine, slugs: () => slugs, social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
+  if (auralOn() || location.hash === "#aural") { aural().then((m) => { if (location.hash === "#aural") m.open(); }); }
+  window.__sa = { aural, party, mine, addMine, slugs: () => slugs, social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
 })();

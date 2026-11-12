@@ -31,6 +31,10 @@ const SCHEMA = [
   `create table if not exists ${S}.sa_playlist (id text primary key, sid text not null, name text not null, tracks jsonb not null, at timestamptz not null default now(), plays int not null default 0)`,
   `create table if not exists ${S}.sa_playlist_like (sid text not null, pid text not null, primary key (sid, pid))`,
   `create table if not exists ${S}.sa_cast (room text primary key, cmd jsonb, cseq int not null default 0, cat timestamptz, tv jsonb, tat timestamptz)`,
+  // Aural: community evolution of filter-song combos. A combo is a soundscape plus its evolve EQ at 0.5 dB
+  // (web/src/music-atlas/aural.js comboKey). seen = auditioned in a round, keeps = picked; one keep per listener.
+  `create table if not exists ${S}.sa_combo (track text not null, combo text not null, seen int not null default 0, keeps int not null default 0, primary key (track, combo))`,
+  `create table if not exists ${S}.sa_combo_keep (sid text not null, track text not null, combo text not null, at timestamptz not null default now(), primary key (sid, track, combo))`,
 ];
 let ready = null; // first request on a cold isolate makes sure the tables exist (idempotent)
 const ensure = () => (ready ??= sql(SCHEMA.map((q) => [q])).catch((e) => { ready = null; throw e; }));
@@ -74,6 +78,13 @@ const castRow = (room) => [`select cmd, cseq, tv, (extract(epoch from now() - ca
   (extract(epoch from now() - tat) * 1000)::int as tage from ${S}.sa_cast where room = $1`, [room]];
 const castOut = (r) => (r ? { cseq: r.cseq, cmd: r.cmd, cage: r.cage, tv: r.tv, tage: r.tage } : { cseq: 0, cmd: null, tv: null });
 const small = (o) => { if (o == null || typeof o !== "object") return null; const j = JSON.stringify(o); return j.length <= 2000 ? j : null; };
+const COMBO = /^[a-z0-9-]{1,24}\|-?\d{1,2}\.\d(,-?\d{1,2}\.\d){4}$/;
+// Ranked by kept share with a +1/+2 prior, so one lucky keep does not outrank a combo kept 30 times in 40.
+const COMBOS = (track) => [
+  [`select combo, keeps, seen from ${S}.sa_combo where track = $1 order by (keeps + 1)::float / (seen + 2) desc, keeps desc limit 6`, [track]],
+  [`select split_part(combo, '|', 1) as scape, sum(keeps)::int as keeps, count(distinct track)::int as songs from ${S}.sa_combo group by 1 having sum(keeps) > 0 order by keeps desc limit 8`],
+];
+const combos = ([best, scapes]) => ({ best: best.map((r) => ({ combo: r.combo, keeps: r.keeps, seen: r.seen })), scapes: scapes.map((r) => ({ scape: r.scape, keeps: r.keeps, songs: r.songs })) });
 const rid = () => Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => "abcdefghijkmnpqrstuvwxyz23456789"[b & 31]).join("");
 
 export async function handle(op, b) {
@@ -152,6 +163,22 @@ export async function handle(op, b) {
         const o = castOut(r[2][0]); return out(o.cseq > +(b.after ?? 0) ? o : { cseq: o.cseq });
       }
       return out(castOut((await sql([castRow(room)]))[0][0]));
+    }
+    case "combos": if (!track) return bad("track"); return out(combos(await sql(COMBOS(track))));
+    case "combo": { // a finished evolve round: every variant heard, at most one kept
+      if (!track) return bad("track");
+      const heard = (Array.isArray(b.heard) ? [...new Set(b.heard.map(String))] : []).filter((c) => COMBO.test(c)).slice(0, 10);
+      const kept = b.kept == null ? null : String(b.kept);
+      if (kept !== null && !COMBO.test(kept)) return bad("combo");
+      if (kept && !heard.includes(kept)) heard.push(kept);
+      if (!heard.length) return bad("combo");
+      const r = await sql([
+        ...heard.map((c) => [`insert into ${S}.sa_combo (track, combo, seen) values ($1, $2, 1) on conflict (track, combo) do update set seen = ${S}.sa_combo.seen + 1`, [track, c]]),
+        ...(kept ? [[`with k as (insert into ${S}.sa_combo_keep (sid, track, combo) values ($1, $2, $3) on conflict do nothing returning 1)
+          update ${S}.sa_combo set keeps = keeps + (select count(*) from k) where track = $2 and combo = $3`, [sid, track, kept]]] : []),
+        ...COMBOS(track),
+      ]);
+      return out(combos(r.slice(-2)));
     }
     case "pplay": await sql([[`update ${S}.sa_playlist set plays = plays + 1 where id = $1`, [String(b.id ?? "")]]]); return out({ ok: true });
   }

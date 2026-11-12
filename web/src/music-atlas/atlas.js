@@ -577,6 +577,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
           ctx.globalAlpha = env * 0.18; ctx.lineWidth = 1.5 * px; ctx.beginPath(); ctx.arc(0, 0, g.R4 * (0.98 + 0.04 * (1 - env)) * g4, 0, TAU); ctx.stroke();
         }
       }
+      if (stageOf && !playing.paused) drawStage(stageOf(), x, y, c, px);
       ctx.globalAlpha = 1; ctx.lineWidth = 2.6 * px; ctx.strokeStyle = P.line;
       const rr = DOT + 4.5; ctx.beginPath(); ctx.arc(x, y, rr, 0, TAU); ctx.stroke();
       ctx.strokeStyle = c; ctx.beginPath(); ctx.arc(x, y, rr, -Math.PI / 2, -Math.PI / 2 + TAU * clamp(playing.progress?.() ?? 0, 0, 1)); ctx.stroke();
@@ -598,6 +599,25 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       ctx.beginPath(); ctx.roundRect(bx, by, w, h, 11); ctx.fill(); ctx.stroke();
       ctx.fillStyle = P.ink; ctx.textAlign = "left"; ctx.fillText(label, bx + 8, by + h / 2 + 0.5);
     }
+  }
+  // Aural's soundstage, seen from above with the listener on the playing dot and the front at 12 o'clock.
+  // Each of the 24 log bands (aural.js field: what is actually coming out of the DSP graph) is placed by
+  // its pan across the front arc (±60°, the speakers' ±30° doubled so it reads at map scale), low bands
+  // close in, high bands further out; size is level, and the arc each one smears over is its diffuseness.
+  let stageOf = null;
+  function drawStage(F, x, y, c, px) {
+    if (!F?.length) return;
+    // 12 bands (pairs merged) on rings 6 px apart: each band reads as its own arc, not a haze
+    const B = []; for (let i = 0; i + 1 < F.length; i += 2) { const p = F[i], q = F[i + 1], lp = 10 ** (p.db / 10), lq = 10 ** (q.db / 10); B.push({ db: 10 * Math.log10((lp + lq) / 2 + 1e-20), pan: (p.pan * lp + q.pan * lq) / (lp + lq + 1e-20), diffuse: (p.diffuse + q.diffuse) / 2 }); }
+    const n = B.length, u = Math.max(px, 0.35); // screen-constant size, but never smaller than the dot at deep zoom
+    ctx.lineCap = "round";
+    B.forEach((b, i) => {
+      const lv = clamp((b.db + 90) / 55, 0, 1); if (lv < 0.04) return;
+      const a = -Math.PI / 2 + b.pan * (Math.PI / 3), r = DOT + 12 * u + i * 6 * u, w = (0.1 + b.diffuse * 0.8) / 2;
+      ctx.globalAlpha = 0.25 + 0.6 * lv; ctx.strokeStyle = c; ctx.lineWidth = (0.9 + 2.1 * lv) * u;
+      ctx.beginPath(); ctx.arc(x, y, r, a - w, a + w); ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
   }
   // Each layer is a ring; one turn = the whole song from 12 o'clock, tick length = that layer's loudness.
   // The played part is solid, the rest faint, a muted layer fades out; a hand marks the playhead.
@@ -652,6 +672,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     setMotion(v) { motion = !!v; kick(); }, get motion() { return motion; }, get labels() { return lblK; },
     setFormation, get formation() { return !!form?.on; },
     setTracks, setLit, setFeatured, setPlaying, setTheme, setLens, setLinks, setLayers, zoomOn, focus, flyToIds, fitAll, kick, resize,
+    setStage(fn) { stageOf = fn; kick(); },
     flyCam(c, ms) { flyTo({ ...c }, ms); }, get layerK() { return layerK(); },
     get focusId() { return focusId; }, set focusId(v) { focusId = v; kick(); },
   };
