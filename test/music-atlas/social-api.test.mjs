@@ -52,6 +52,23 @@ test("heals when its tables vanish under a warm instance", { skip: !url && "no D
   assert.equal(r.status, 200); assert.equal(r.views, 0);
 });
 
+test("cast room: the phone commands, the TV follows and reports back", { skip: !url && "no DATABASE_URL" }, async () => {
+  const room = "tv2abc";
+  let r = await call("tvpoll", { sid: B, room, after: 0, tv: { t: null, playing: false, name: "Samsung TV" } });
+  assert.equal(r.status, 200); assert.equal(r.cseq, 0); assert.equal(r.cmd, undefined, "no command yet");
+  r = await call("castpeek", { sid: A, room: "TV2ABC" }); // codes are typed in either case
+  assert.equal(r.tv.name, "Samsung TV"); assert.ok(r.tage >= 0 && r.tage < 5000, "fresh TV heartbeat");
+  r = await call("cast", { sid: A, room, cmd: { t: "inc:x", pos: 12.5, playing: true } }); assert.equal(r.cseq, 1);
+  r = await call("tvpoll", { sid: B, room, after: 0, tv: { t: null, playing: false } });
+  assert.equal(r.cseq, 1); assert.deepEqual(r.cmd, { t: "inc:x", pos: 12.5, playing: true }); assert.ok(r.cage >= 0 && r.cage < 5000);
+  r = await call("tvpoll", { sid: B, room, after: 1, tv: { t: "inc:x", pos: 13, playing: true } });
+  assert.equal(r.cseq, 1); assert.equal(r.cmd, undefined, "a command is delivered once");
+  r = await call("castpeek", { sid: A, room }); assert.deepEqual(r.tv, { t: "inc:x", pos: 13, playing: true });
+  assert.equal((await call("cast", { sid: A, room: "../x", cmd: { t: 1 } })).status, 400);
+  assert.equal((await call("cast", { sid: A, room, cmd: { big: "x".repeat(3000) } })).status, 400);
+  assert.equal((await call("tvpoll", { sid: B, room })).status, 400, "a TV poll carries its state");
+});
+
 test("rejects bad input", { skip: !url && "no DATABASE_URL" }, async () => {
   assert.equal((await call("hello", { sid: "x" })).status, 400);
   assert.equal((await call("like", { sid: A, track: "../../etc", on: true })).status, 400);

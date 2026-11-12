@@ -60,7 +60,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   box-shadow: 0 -18px 50px rgba(0, 0, 0, .45); transform: translate3d(0, 100vh, 0); }
 .grab { height: 22px; display: grid; place-items: center; touch-action: none; cursor: grab; flex: none; }
 .grab i { width: 38px; height: 5px; border-radius: 3px; background: var(--line2); }
-.player { --c: var(--acc); display: grid; grid-template-columns: auto auto auto 1fr auto auto auto; grid-template-rows: auto auto; gap: 4px 6px; align-items: center; padding: 0 12px 10px; touch-action: none; flex: none; contain: layout paint; }
+.player { --c: var(--acc); display: grid; grid-template-columns: auto auto auto 1fr auto auto auto auto; grid-template-rows: auto auto; gap: 4px 6px; align-items: center; padding: 0 12px 10px; touch-action: none; flex: none; contain: layout paint; }
 .ib { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; transition: transform .3s var(--spring), background .2s; }
 .ib:active { transform: scale(.88); }
 .ib svg { width: 20px; height: 20px; }
@@ -357,3 +357,42 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .lane b em { display: block; font: italic 400 10px "Instrument Serif", serif; color: var(--l); overflow: hidden; text-overflow: ellipsis; }
 .lane button[data-lmix="swap"].on { color: var(--bg); background: var(--l); border-color: var(--l); }
 .lane.solo button[data-lmix="solo"] { color: var(--bg); background: var(--l); border-color: var(--l); }
+
+/* --- cast: the phone's Cast button + picker ------------------------------------------------------ */
+.ib.castb.on { color: var(--c); background: rgba(95, 211, 220, .16); }
+.castmenu { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; display: grid; align-items: end; justify-items: center; padding: 12px 12px calc(var(--sab) + 12px); background: rgba(5, 7, 8, 0); transition: background .25s var(--ease); }
+.castmenu.on { background: rgba(5, 7, 8, .55); }
+.castmenu .cm { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 22px; background: var(--panel); border: 1px solid var(--line2); box-shadow: 0 20px 60px rgba(0, 0, 0, .55); transform: translate3d(0, 30px, 0); opacity: 0; transition: transform .3s var(--spring), opacity .2s; }
+.castmenu.on .cm { transform: none; opacity: 1; }
+.castmenu b { font: 13px "Archivo Black", sans-serif; text-transform: uppercase; letter-spacing: .03em; padding: 2px 4px 6px; }
+.castmenu button { display: flex; gap: 12px; align-items: center; text-align: left; min-height: 58px; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--line2); }
+.castmenu button:active { transform: scale(.97); }
+.castmenu button:disabled { opacity: .45; }
+.castmenu button i { font-style: normal; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(95, 211, 220, .14); color: var(--acc); font-size: 18px; flex: none; }
+.castmenu button span { display: flex; flex-direction: column; font: 600 15px "Instrument Sans", sans-serif; }
+.castmenu button small { font: 11px "IBM Plex Mono", monospace; color: var(--mute); font-weight: 400; }
+.castmenu button.ghost { min-height: 40px; justify-content: center; border-color: transparent; color: var(--mute); font: 12px "IBM Plex Mono", monospace; }
+
+/* --- TV view: what a cast lands on. 10-foot: big type, no touch chrome, the map is the wallpaper ---- */
+html.tv .dock, html.tv .views, html.tv .grab, html.tv #ps, html.tv #pc, html.tv #ph, html.tv #pr, html.tv .rail, html.tv .motion, html.tv .live { display: none !important; }
+html.tv #atlas { top: 0; left: 0; right: 0; bottom: 0; cursor: none; } /* longhands: Tizen 6.5 (Chromium 85) has no `inset` */
+html.tv .scrub .thumbw { top: 0; left: 0; right: 0; bottom: 0; }
+html.tv .sheet { left: auto; right: 24px; top: 24px; bottom: 24px; width: 400px; height: auto; border-radius: 22px; border-bottom: 1px solid var(--line2); transform: none !important; background: rgba(21, 26, 27, .88); }
+html.tv .top { right: 448px; /* stays clear of the panel at 1x; zoomed TVs scale both */ background: none; padding: 26px 30px; }
+html.tv .brand b { font-size: 16px; } html.tv .brand small { font-size: 13px; }
+html.tv .player { padding: 18px 16px 10px; grid-template-columns: auto auto auto 1fr; }
+html.tv .pt b { font-size: 26px; -webkit-line-clamp: 3; } html.tv .pt small { font-size: 12.5px; white-space: normal; }
+html.tv .body { padding-bottom: 24px; overflow: hidden; -webkit-mask-image: linear-gradient(#000 82%, transparent); } /* no scrolling on a TV: the panel fades out instead of clipping */
+html.tv .toast { top: auto; bottom: 40px; font-size: 18px; }
+@media (min-width: 1600px) { html.tv .sheet, html.tv .top, html.tv .tvcode, html.tv .toast { zoom: 1.65; } } /* 1080p TVs (Tizen apps are 1920 wide); 720p Cast screens stay 1x */
+@media (max-width: 1100px) { html.tv .sheet { width: 340px; } html.tv .top { right: 388px; } } /* Nest Hub, 1024x600 */
+.tvcode { position: fixed; left: 32px; bottom: 32px; z-index: 6; display: flex; gap: 22px; align-items: center; padding: 18px 24px 18px 18px; border-radius: 22px; background: rgba(13, 17, 18, .92); border: 1px solid var(--line2); box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+  opacity: 0; transform: translate3d(0, 20px, 0); transition: opacity .4s var(--ease), transform .4s var(--ease); pointer-events: none; max-width: 640px; }
+.tvcode.on { opacity: 1; transform: none; }
+.tvcode .qr { width: 150px; height: 150px; flex: none; border-radius: 10px; background: #ece8df; overflow: hidden; }
+.tvcode .qr svg { width: 100%; height: 100%; display: block; }
+.tvcode > div:last-child { display: flex; flex-direction: column; }
+.tvcode b { font: 18px "Archivo Black", sans-serif; text-transform: uppercase; letter-spacing: .03em; margin-bottom: 4px; }
+.tvcode span { color: #c9c4ba; font-size: 15px; } .tvcode em { font-style: normal; color: var(--acc); font-weight: 700; }
+.tvcode code { font: 600 44px/1.1 "IBM Plex Mono", monospace; letter-spacing: .14em; color: var(--ink); margin: 8px 0 4px; }
+.tvcode small { font: 12px "IBM Plex Mono", monospace; color: var(--mute); }

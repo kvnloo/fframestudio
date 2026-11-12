@@ -7,6 +7,7 @@ import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLin
 import { loadSound, soundReady, neighbours, tuneMatch, profileHTML, ord, LENSES, bpmOf, organise, beatAt } from "./sound.js";
 import { haptic, pressable, pressRing, HOLD, SLOP, FORCE } from "./gestures.js";
 import * as social from "./social.js";
+import * as cast from "./cast.js";
 import { loadLayers, layersOf, layerCount, STEMS, laneColor, createMixer, stemUrl, lenders } from "./layers.js";
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -659,7 +660,7 @@ function step(d) {
     const t = social.radioNext({ kind: state.radio, cur: byId.get(state.sel), all: search(all, { feels: state.feels, bands: state.bands, cc0: state.cc0 }).hits.map((h) => h.t), byId, playedIds, neighbours });
     if (t) { radioTrail.push(t.id); return select(t.id, { play: true, fly: true, keepScroll: true }); }
   }
-  if (state.radio && d < 0 && radioTrail.length > 1) { radioTrail.pop(); return select(radioTrail.at(-1), { play: true, fly: true, keepScroll: true }); }
+  if (state.radio && d < 0 && radioTrail.length > 1) { radioTrail.pop(); return select(radioTrail[radioTrail.length - 1], { play: true, fly: true, keepScroll: true }); }
   if (state.plist) { const L = state.plist.ids, i = L.indexOf(state.sel); return select(L[(i + d + L.length) % L.length], { play: true, fly: true, keepScroll: true }); }
   stepList(d);
 }
@@ -716,6 +717,7 @@ $("#pv").onclick = (e) => { e.stopPropagation(); step(-1); };
 $("#ph").onclick = (e) => { e.stopPropagation(); if (state.sel) pick(state.sel); };
 $("#ps").onclick = (e) => { e.stopPropagation(); shareLink(); };
 $("#pr").onclick = (e) => { e.stopPropagation(); startRadio(state.radio ?? "ear"); };
+$("#pc").onclick = (e) => { e.stopPropagation(); buzz(5); castMenu(); };
 $("#live").onclick = () => { buzz(5); setView("community"); };
 // Motion: the map dances to the playing beat (labels step aside while it does). Remembered per device;
 // hidden when the system asks for reduced motion, which already keeps the map still.
@@ -738,6 +740,10 @@ $("#body").addEventListener("submit", async (e) => {
 }
 addEventListener("keydown", (e) => {
   if (e.target === q) return;
+  if (cast.isTV) { // TV remote: OK / play-pause keys, channel or up/down for songs, left/right to seek
+    const k = { 13: " ", 415: " ", 19: " ", 10252: " ", 417: "ArrowDown", 412: "ArrowUp", 427: "ArrowDown", 428: "ArrowUp" }[e.keyCode]; if (k && k !== e.key) { e.preventDefault(); if (k === " ") return togglePlay(); return step(k === "ArrowDown" ? 1 : -1); }
+    if (e.key === "Enter") { e.preventDefault(); return togglePlay(); }
+  }
   if (e.key === "/") { e.preventDefault(); q.focus(); }
   if (e.key === " ") { e.preventDefault(); togglePlay(); }
   if (e.key === "ArrowDown" || e.key === "j") step(1);
@@ -801,7 +807,7 @@ addEventListener("resize", () => { measure(); if (!wide()) { sh.y = snaps()[sh.t
 // anywhere asks for it. Skipped when installed (the manifest already launches fullscreen). Leaving it
 // (back gesture / swipe) is respected on the spot; the hint comes back with the next touch, so the tap
 // after that restores fullscreen. "Never mind" turns it off on this device. The hint's text lets taps through.
-if (matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fullscreen), (display-mode: standalone)").matches && document.documentElement.requestFullscreen) {
+if (!cast.isTV && matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fullscreen), (display-mode: standalone)").matches && document.documentElement.requestFullscreen) {
   const off = () => localStorage.getItem("sa-fs") === "no";
   const fsHint = (delay, armNow) => {
     if (off() || document.fullscreenElement || $(".fsh")) return;
@@ -824,6 +830,50 @@ if (matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fulls
   document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && !off()) addEventListener("pointerdown", back, true); else removeEventListener("pointerdown", back, true); });
 }
 
+// --- casting: phone -> TV (cast.js) ---------------------------------------------------------------
+function castMenu() {
+  if (cast.send.on) return cast.stop();
+  const m = document.createElement("div"); m.className = "castmenu"; const tv = cast.savedTV();
+  m.innerHTML = `<div class="cm"><b>Play on a TV</b>
+    <button data-c="samsung"><i>▣</i><span>${esc(tv?.name ?? "Samsung TV")}<small>${tv ? "Smart View · paired" : "Smart View · pair once"}</small></span></button>
+    <button data-c="google" ${cast.castSDKReady() ? "" : "disabled"}><i>⌁</i><span>Chromecast · Google TV<small>${cast.castSDKReady() ? "Picks a Cast screen" : window.chrome ? "Loading Cast…" : "Needs Chrome"}</small></span></button>
+    ${tv ? `<button data-c="forget" class="ghost">Forget ${esc(tv.name ?? "this TV")}</button>` : ""}</div>`;
+  document.body.append(m); requestAnimationFrame(() => m.classList.add("on"));
+  const close = () => { m.classList.remove("on"); setTimeout(() => m.remove(), 250); };
+  m.onclick = (e) => {
+    const b = e.target.closest("button"); if (!b && e.target !== m) return; close(); if (!b) return; buzz(5);
+    if (b.dataset.c === "samsung") cast.castSamsung(); // Smart View: the Sound Atlas TV app
+    if (b.dataset.c === "google") cast.castGoogle(); // must start inside this tap: it opens the Cast picker
+    if (b.dataset.c === "forget") { cast.forgetTV(); toast("TV forgotten"); }
+  };
+}
+function castFollow(tv, tage) { // the TV moved on by itself: the phone (muted) catches up
+  if (tv.t && tv.t !== state.sel && byId.has(tv.t)) select(tv.t, { play: tv.playing, fly: true, keepScroll: true });
+  const pos = (tv.pos ?? 0) + (tv.playing ? tage / 1000 : 0);
+  if (Math.abs(audio.currentTime - pos) > 3 && isFinite(pos)) audio.currentTime = pos;
+  if (tv.playing && audio.paused) audio.play().catch(() => {}); else if (!tv.playing && !audio.paused) audio.pause();
+}
+function tvApply(cmd, cage) { // the phone said play this, here
+  if (cmd.t && cmd.t !== state.sel && byId.has(cmd.t)) select(cmd.t, { fly: true, view: "track" });
+  const pos = (cmd.pos ?? 0) + (cmd.playing ? cage / 1000 : 0), go = () => { if (isFinite(pos) && Math.abs(audio.currentTime - pos) > 1.5) audio.currentTime = pos; };
+  if (audio.readyState >= 1) go(); else audio.addEventListener("loadedmetadata", go, { once: true });
+  if (cmd.playing) audio.play().catch((e) => { if (e.name !== "AbortError") toast("The TV blocked autoplay · press OK on the remote"); }); else audio.pause();
+}
+function tvBadge({ room, linked, ok }) { // unpaired: say how to cast here; QR = pairing link for the phone
+  const el = $("#tvcode") ?? document.body.appendChild(Object.assign(document.createElement("div"), { id: "tvcode", className: "tvcode" }));
+  el.classList.toggle("on", !linked);
+  const key = `${room}|${ok}`; if (el.dataset.k === key) return; el.dataset.k = key;
+  if (!room) { el.innerHTML = `<b>Sound Atlas TV</b><span>No cast room in the link.</span>`; return; }
+  const p = new URLSearchParams(location.search), link = `${share?.base ?? location.origin + location.pathname}#tvpair=${[room, p.get("ip") ?? "", p.get("app") ?? "", p.get("name") ?? "TV"].join("~")}`;
+  el.innerHTML = `<div class="qr"></div><div><b>Cast from your phone</b><span>Open Sound Atlas on your phone, tap <em>Cast</em>, pick this TV and enter</span><code>${room.toUpperCase()}</code><small>${ok ? "or scan to pair this phone" : "Reconnecting…"}</small></div>`;
+  qr(link).then((svg) => { const q = el.querySelector(".qr"); if (q && svg) q.innerHTML = svg; });
+}
+async function qr(text) { // only the TV draws a QR, so the library loads only there
+  if (!window.qrcode) await new Promise((ok) => document.head.append(Object.assign(document.createElement("script"), { src: "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js", onload: ok, onerror: ok })));
+  if (!window.qrcode) return null; const c = qrcode(0, "M"); c.addData(text); c.make(); return c.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+}
+if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind);
+
 (async function boot() {
   measure(); sheetPointer();
   sh.y = innerHeight; sheetTo("peek");
@@ -840,6 +890,8 @@ if (matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fulls
   if (t && byId.has(t)) select(t, { fly: true, view: v0 === "library" ? "track" : v0 }); else renderViews();
   if (state.q) warmModel(); else if (!matchMedia("(pointer: coarse)").matches) setTimeout(warmModel, 2500); // phones load the model on first search focus
   renderPlayer();
+  if (cast.isTV) { if (state.view === "library") setView("track", false); cast.receive({ sid: social.sid, audio, current: () => state.sel, apply: tvApply, next: () => step(1), onStatus: tvBadge }); }
+  else cast.attach({ sid: social.sid, audio, current: () => state.sel, follow: castFollow, toast, haptic, onChange: () => { $("#pc").classList.toggle("on", cast.send.on); $("#pc").title = cast.send.on ? `Casting to ${cast.send.name} · tap to stop` : "Play on a TV"; } });
   social.join(() => ({ track: state.sel, playing: !audio.paused })).then(async () => {
     renderBody(false);
     if (pendingPlist) { await social.loadPlaylists(); if (social.room.playlists.some((p) => p.id === pendingPlist)) { setView("community"); const p = social.room.playlists.find((x) => x.id === pendingPlist); state.plist = { id: p.id, name: p.name, ids: p.tracks.filter((x) => byId.has(x)) }; toast(`“${p.name}” · tap ▶ to play`); renderBody(false); } }

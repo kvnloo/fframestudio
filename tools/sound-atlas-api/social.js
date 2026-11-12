@@ -30,6 +30,7 @@ const SCHEMA = [
   `create table if not exists ${S}.sa_play (track text primary key, n bigint not null default 0)`,
   `create table if not exists ${S}.sa_playlist (id text primary key, sid text not null, name text not null, tracks jsonb not null, at timestamptz not null default now(), plays int not null default 0)`,
   `create table if not exists ${S}.sa_playlist_like (sid text not null, pid text not null, primary key (sid, pid))`,
+  `create table if not exists ${S}.sa_cast (room text primary key, cmd jsonb, cseq int not null default 0, cat timestamptz, tv jsonb, tat timestamptz)`,
 ];
 let ready = null; // first request on a cold isolate makes sure the tables exist (idempotent)
 const ensure = () => (ready ??= sql(SCHEMA.map((q) => [q])).catch((e) => { ready = null; throw e; }));
@@ -66,6 +67,13 @@ const playlist = (r) => ({ id: r.id, name: r.name, tracks: r.tracks, plays: r.pl
 
 const out = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 const bad = (msg) => out({ error: msg }, 400);
+const ROOM_ID = /^[a-z0-9]{6}$/;
+// A cast room: the phone writes commands (cmd, numbered by cseq), the TV writes where it is (tv).
+// Ages come from the database clock, so phone, TV and edge never compare their own clocks.
+const castRow = (room) => [`select cmd, cseq, tv, (extract(epoch from now() - cat) * 1000)::int as cage,
+  (extract(epoch from now() - tat) * 1000)::int as tage from ${S}.sa_cast where room = $1`, [room]];
+const castOut = (r) => (r ? { cseq: r.cseq, cmd: r.cmd, cage: r.cage, tv: r.tv, tage: r.tage } : { cseq: 0, cmd: null, tv: null });
+const small = (o) => { if (o == null || typeof o !== "object") return null; const j = JSON.stringify(o); return j.length <= 2000 ? j : null; };
 const rid = () => Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => "abcdefghijkmnpqrstuvwxyz23456789"[b & 31]).join("");
 
 export async function handle(op, b) {
@@ -125,6 +133,25 @@ export async function handle(op, b) {
         [`select count(*)::int as n from ${S}.sa_playlist_like where pid = $1`, [pid]],
       ]);
       return out({ id: pid, likes: r[1][0].n, on: !!b.on });
+    }
+    case "cast": case "castpeek": case "tvpoll": {
+      const room = String(b.room ?? "").toLowerCase(); if (!ROOM_ID.test(room)) return bad("room");
+      if (op === "cast") {
+        const cmd = small(b.cmd); if (!cmd) return bad("cmd");
+        const r = await sql([[`insert into ${S}.sa_cast (room, cmd, cseq, cat) values ($1, $2::jsonb, 1, now())
+          on conflict (room) do update set cmd = excluded.cmd, cseq = ${S}.sa_cast.cseq + 1, cat = now()`, [room, cmd]], castRow(room)]);
+        return out(castOut(r[1][0]));
+      }
+      if (op === "tvpoll") {
+        const tv = small(b.tv); if (!tv) return bad("tv");
+        const r = await sql([
+          [`insert into ${S}.sa_cast (room, tv, tat) values ($1, $2::jsonb, now()) on conflict (room) do update set tv = excluded.tv, tat = now()`, [room, tv]],
+          [`delete from ${S}.sa_cast where coalesce(tat, cat) < now() - interval '30 days'`],
+          castRow(room),
+        ]);
+        const o = castOut(r[2][0]); return out(o.cseq > +(b.after ?? 0) ? o : { cseq: o.cseq });
+      }
+      return out(castOut((await sql([castRow(room)]))[0][0]));
     }
     case "pplay": await sql([[`update ${S}.sa_playlist set plays = plays + 1 where id = $1`, [String(b.id ?? "")]]]); return out({ ok: true });
   }

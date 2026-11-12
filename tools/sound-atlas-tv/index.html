@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Sound Atlas</title>
+<script src="$WEBAPIS/webapis/webapis.js"></script>
+<style>html,body{margin:0;height:100%;background:#0d1112;color:#8f8a80;font:28px sans-serif;display:grid;place-items:center}</style></head>
+<body>Sound Atlas…
+<script>
+// The Samsung TV end of the Cast button: keep one room code on this TV, then open the hosted TV view
+// in it. The phone launches this app over the LAN (ip + app id ride along so it can pair).
+var SITE = "https://glide-music-picker.vercel.app/";
+var room = localStorage.getItem("room");
+if (!/^[a-z0-9]{6}$/.test(room || "")) {
+  var A = "abcdefghijkmnpqrstuvwxyz23456789", b = crypto.getRandomValues(new Uint8Array(6)); room = "";
+  for (var i = 0; i < 6; i++) room += A[b[i] & 31];
+  localStorage.setItem("room", room);
+}
+function get(f) { try { return f(); } catch (e) { return ""; } }
+var ip = get(function () { return webapis.network.getIp(); });
+var app = get(function () { return tizen.application.getCurrentApplication().appInfo.id; });
+var name = get(function () { return webapis.productinfo.getRealModel(); });
+try { ["MediaPlayPause", "MediaPlay", "MediaPause", "MediaFastForward", "MediaRewind", "ChannelUp", "ChannelDown"].forEach(function (k) { tizen.tvinputdevice.registerKey(k); }); } catch (e) {}
+location.replace(SITE + "?tv=samsung&name=" + encodeURIComponent(name ? "Samsung " + name : "Samsung TV") + "&ip=" + encodeURIComponent(ip) + "&app=" + encodeURIComponent(app) + "#room=" + room);
+</script></body></html>
