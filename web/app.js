@@ -139,13 +139,16 @@ function mountExamples() {
   });observer.observe(shelf);
 }
 /* ---------------- project ---------------- */
-let CUR=null,AG=null,EDITOR=null;
+let CUR=null,AG=null,EDITOR=null,OPENING=0;
 async function showProject(id){
- if(EDITOR?.doc.id===id)return;
+ if(EDITOR?.doc?.id===id)return;
+ // Boot route + hashchange can overlap; only the newest open may mount, else two editors share element IDs.
+ const seq=++OPENING;
  if(EDITOR?.dirty&&!confirm('Leave unsaved edits?')){location.hash='#/p/'+EDITOR.doc.id;return;}
  libraryReference?.destroy();libraryReference=null;
  EDITOR?.destroy();AG?.session?.close();AG=null;CHAT=[];
- let j;try { j=await api.read(`projects/${id}/project.json`); }catch(error){toast(error.message);location.hash='#/';return;}
+ let j;try { j=await api.read(`projects/${id}/project.json`); }catch(error){if(seq===OPENING){toast(error.message);location.hash='#/';}return;}
+ if(seq!==OPENING)return;
  EDITOR=new Editor($('#view'),{api,toast,onChange:d=>{CUR={...d,__abs:j.absolute};},assistant:renderAssistant});
  await EDITOR.open(j.content,j.absolute);window.ffs=EDITOR;
  if (document.querySelector('meta[name="ffs-hosted"]')) window.scrollTo({top:0,left:0,behavior:'instant'});

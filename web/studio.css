@@ -1361,3 +1361,12 @@ dialog .panel-title {
 .fframes-upstream { border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 8px; }
 .fframes-upstream h3 { margin: 8px 0 4px; font: 10px "Plex Mono"; color: var(--mute); text-transform: uppercase; }
 .fframes-upstream ul { margin: 4px 0; padding-left: 18px; font-size: 11px; color: var(--ink); }
+
+/* Soundtrack audition picker (preview-only; never edits the project). */
+.screening-tools .soundtrack-pick { gap: 4px; max-width: 260px; }
+.screening-tools .soundtrack-pick[hidden] { display: none; }
+.soundtrack-pick select { min-width: 0; max-width: 220px; background: transparent; color: inherit; border: 0; font: inherit; text-overflow: ellipsis; }
+.soundtrack-pick select option { background: var(--bg, #111); color: var(--ink, #eee); }
+.film-workspace .screening-tools .soundtrack-pick { grid-column: 1 / -1; max-width: none; }
+.film-workspace .screening-tools .soundtrack-pick select { max-width: none; flex: 1; }
+#zoom-value { min-width: 2.6em; font-variant-numeric: tabular-nums; }

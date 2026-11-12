@@ -207,7 +207,7 @@ export class Editor {
   <div class="editor-grid"><section class="story-panel panel"><div class="panel-title">Story <span id="clip-count"></span>${button('toggle-story', 'Collapse')}</div><div id="story" tabindex="0" aria-label="Story clips"><div id="story-space"></div></div><div class="panel-foot">${button('add', 'Add clip')}${button('group', 'Group with next')}</div></section>
   <section class="canvas-panel panel"><div class="panel-title">Canvas <span id="selection-label"></span></div><div class="player" id="canvas" tabindex="0" aria-label="Canvas"><video id="preview-video" muted playsinline preload="metadata"></video><canvas id="preview-still" width="960" height="540"></canvas><div id="preview-text"></div></div><div class="preview-label">Editorial preview · source proxy / thumbnail + text. Final compositing not available.</div><div class="transport">${button('reverse', 'J ◀')}${button('play', 'Space · Play')}${button('pause', 'K ■')}${button('forward', 'L ▶')}<output id="time">0 f</output><input id="seek" type="range" min="0" value="0" aria-label="Playhead frame"></div></section>
   <section class="inspector-panel panel"><div class="panel-title">Inspector ${button('toggle-inspector', 'Collapse')}</div><div id="inspector"></div></section></div>
-  <section class="timeline-panel panel"><div class="panel-title">Timeline <span id="scope" aria-live="polite">Select a clip to edit</span><label>Zoom <input id="zoom" type="range" min="0.5" max="8" step="0.25" value="1"></label><label><input id="snap" type="checkbox" checked> Snap</label></div><div id="timeline"><div id="timeline-space"><div id="beats"></div><div id="lane"></div><div id="playhead"></div></div></div><div class="panel-foot">${button('split', 'Split · S')}${button('duplicate', 'Duplicate')}${button('delete', 'Delete')}<span class="hint">Drag story cards to reorder · drag clip edges to trim · attached layers follow</span></div></section>
+  <section class="timeline-panel panel"><div class="panel-title">Timeline <span id="scope" aria-live="polite">Select a clip to edit</span><label>Zoom <input id="zoom" type="range" min="0" max="6" step="0.25" value="0" aria-label="Timeline zoom (1× fits the film)"><output id="zoom-value">1×</output></label><label><input id="snap" type="checkbox" checked> Snap</label></div><div id="timeline"><div id="timeline-space"><div id="beats"></div><div id="lane"></div><div id="playhead"></div></div></div><div class="panel-foot">${button('split', 'Split · S')}${button('duplicate', 'Duplicate')}${button('delete', 'Delete')}<span class="hint">Drag story cards to reorder · drag clip edges to trim · attached layers follow</span></div></section>
   <div class="secondary-grid"><section class="panel"><div class="panel-title">Takes <span>film versions</span></div><div class="version-tools"><input id="version-name" placeholder="Name this version" aria-label="Version name">${button('save-version', 'Save version')}<select id="version-a" aria-label="Version A"></select><select id="version-b" aria-label="Version B"></select>${button('compare', 'Compare')}${button('restore-version', 'Restore A')}</div><pre id="version-diff"></pre></section><section class="panel"><div class="panel-title">Assistant proposals <span>Inspect → Apply → Undo</span></div><div id="proposals">No pending proposal. Ask the assistant for an edit.</div></section></div>
   <details class="source-panel"><summary>Source & provenance</summary>${proceduralSource(this.doc.metadata, this.doc.metadata?.shots)}<div id="camera-overrides-slot"></div>${fframesUpstreamSource(this.doc.metadata)}${attribution?.author ? `<p>${this.doc.metadata?.example ? 'Example copy' : 'Source'} · ${esc(attribution.author)} · ${esc(attribution.licence)}</p><p>${esc(attribution.credit)}</p>${/^https?:\/\//.test(attribution.source_url) ? `<p><a href="${esc(attribution.source_url)}" target="_blank" rel="noopener noreferrer">Original source ↗</a></p>` : ''}` : ''}<p>${esc(this.doc.metadata?.source?.path || '')}</p><p>${esc((this.doc.metadata?.notes || []).join(' · '))}</p><dl class="kv">${Object.entries(
     this.doc.metadata?.docs || {},
@@ -257,11 +257,36 @@ export class Editor {
       this.timelineScroll = e.target.scrollLeft;
       this.renderTimeline();
     };
-    $('#zoom').oninput = (e) => {
-      this.zoom = +e.target.value;
-      this.updateScale();
-      this.renderTimeline();
+    // Slider is log2(zoom): 1× fits the whole film, 64× reaches single frames.
+    $('#zoom').oninput = (e) => this.setZoom(2 ** +e.target.value);
+    $('#timeline').addEventListener('wheel', (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      this.setZoom(this.zoom * 2 ** (-e.deltaY / 300), e.clientX - $('#timeline').getBoundingClientRect().left);
+    }, { passive: false });
+    let pinch = null;
+    this.gestures = new AbortController();
+    const signal = this.gestures.signal;
+    const span = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY) || 1;
+    // Touch moves are dispatched to the touched node even after re-rendering detaches it
+    // (and then never bubble), so pinch listens on the touch targets themselves.
+    const move = (e) => {
+      if (!pinch || e.touches.length !== 2) return;
+      e.preventDefault();
+      const r = $('#timeline').getBoundingClientRect();
+      this.setZoom(pinch.z * span(e.touches) / pinch.d, (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left);
     };
+    const end = (e) => { if (e.touches.length < 2) pinch = null; if (!e.touches.length) this.pinching = false; };
+    $('#timeline').addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 2) return;
+      pinch = { d: span(e.touches), z: this.zoom };
+      this.pinching = true;
+      this.cancelTrim?.();
+      for (const t of new Set([...e.touches].map((t) => t.target))) {
+        t.addEventListener('touchmove', move, { passive: false, signal });
+        for (const k of ['touchend', 'touchcancel']) t.addEventListener(k, end, { signal });
+      }
+    }, { passive: true, signal });
     $('#seek').oninput = (e) => this.seek(+e.target.value);
     $('#video-choice').onchange = (e) => {
       this.videoId = e.target.value;
@@ -399,8 +424,25 @@ export class Editor {
     this.updateScale();
   }
   updateScale() {
+    // Zoom 1× always fits the film to the timeline (phones included); zoom in for handles.
     this.scale =
-      Math.max(innerWidth < 768 ? 80 / Math.max(1, Math.min(...this.video.clips.map(c => c.duration))) : this.video.clips.length > 100 ? 0.4 : 0.02, this.timelineWidth / Math.max(this.total, 1)) * this.zoom;
+      Math.max(innerWidth >= 768 && this.video.clips.length > 100 ? 0.4 : 0.02, this.timelineWidth / Math.max(this.total, 1)) * this.zoom;
+  }
+  // Zoom around an anchor (pointer, else the visible playhead, else the centre) so the
+  // frame under it stays put instead of the view snapping back to frame 0.
+  setZoom(zoom, anchor) {
+    const t = $('#timeline'), w = this.timelineWidth || t.clientWidth, old = this.scale;
+    const head = this.frame * old - t.scrollLeft;
+    if (anchor === undefined) anchor = head >= 0 && head <= w ? head : w / 2;
+    const at = (t.scrollLeft + anchor) / old;
+    this.zoom = Math.min(64, Math.max(1, zoom));
+    $('#zoom').value = String(Math.log2(this.zoom));
+    $('#zoom-value').value = `${this.zoom < 10 ? this.zoom.toFixed(1).replace(/\.0$/, '') : Math.round(this.zoom)}×`;
+    this.updateScale();
+    $('#timeline-space').style.width = `${Math.max(this.total * this.scale, w)}px`;
+    t.scrollLeft = Math.max(0, at * this.scale - anchor);
+    this.timelineScroll = t.scrollLeft;
+    this.renderTimeline();
   }
   refresh(result) {
     if ($('.ph-title h1').textContent !== this.doc.title)
@@ -635,12 +677,16 @@ export class Editor {
     if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
-    const x = e.clientX,
+    if (this.pinching) return;
+    this.cancelTrim?.();
+    const id = e.pointerId,
+      x = e.clientX,
       scale = this.scale;
     let cmd;
     const scopeNode = $('#scope');
     scopeNode.textContent = `${scope({ type: 'trim', clipId: c.id })} · release to apply`;
     const move = (ev) => {
+      if (ev.pointerId !== id) return;
       let delta = Math.round((ev.clientX - x) / scale);
       let boundary = (edge === 'out' ? c.start + c.duration : c.start) + delta;
       if ($('#snap').checked) {
@@ -668,14 +714,28 @@ export class Editor {
       };
       scopeNode.textContent = `${scope(cmd)} · ${cmd.duration} f`;
     };
-    const up = () => {
+    // Only the pointer that grabbed the handle trims; a second finger (pinch) cancels it.
+    const stop = () => {
       removeEventListener('pointermove', move);
       removeEventListener('pointerup', up);
+      removeEventListener('pointercancel', cancel);
+      this.cancelTrim = null;
+    };
+    const cancel = (ev) => {
+      if (ev && ev.pointerId !== id) return;
+      stop();
+      scopeNode.textContent = 'Trim cancelled';
+    };
+    const up = (ev) => {
+      if (ev.pointerId !== id) return;
+      stop();
       if (cmd) this.run(cmd).catch((err) => this.toast(err.message));
       else this.select(c.id).catch((err) => this.toast(err.message));
     };
+    this.cancelTrim = () => cancel();
     addEventListener('pointermove', move);
-    addEventListener('pointerup', up, { once: true });
+    addEventListener('pointerup', up);
+    addEventListener('pointercancel', cancel);
   }
   renderInspector() {
     const c = this.clip,
@@ -1135,7 +1195,7 @@ export class Editor {
     }
     if (this.loading) return;
     if (a === 'apply-taste') { $('#palette').close(); this.studio.showTab('taste'); return; }
-    if (['loop-shot','loop-film','mute','screening'].includes(a)) return this.studio.action(a);
+    if (['loop-shot','loop-film','mute','screening','next-soundtrack'].includes(a)) return this.studio.action(a);
     if (a !== 'palette' && a !== 'close-palette' && $('#palette').open)
       $('#palette').close();
     if (a === 'recover' || a === 'discard-recovery') return this.recover(a === 'discard-recovery');
@@ -1402,6 +1462,7 @@ export class Editor {
   }
   destroy() {
     this.dead = true;
+    this.gestures?.abort();
     this.voice?.destroy();
     this.reference?.destroy();
     this.comfy?.destroy();
