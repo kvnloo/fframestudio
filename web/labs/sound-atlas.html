@@ -26,6 +26,7 @@
 <header class="top">
   <div class="row1">
     <a class="brand" href="./"><span class="dot"></span><b>Sound Atlas</b><small id="count"></small></a>
+    <button id="live" class="live" hidden aria-label="Community: who is here"></button>
   </div>
 </header>
 <section id="sheet" class="sheet">
@@ -45,11 +46,12 @@
     <button id="pn" class="ib sm" aria-label="Next"><svg viewBox="0 0 20 20"><path d="M6 5v10l7-5zM13 5h2v10h-2z" fill="currentColor"/></svg></button>
     <div id="pt" class="pt"></div>
     <button id="ph" class="ib sm heart" aria-label="Pick"><svg viewBox="0 0 20 20"><path d="M10 16.5s-6-3.7-6-8.2A3.3 3.3 0 0 1 10 6a3.3 3.3 0 0 1 6 2.3c0 4.5-6 8.2-6 8.2z" fill="currentColor"/></svg></button>
+    <button id="pr" class="ib sm radio" aria-label="Radio"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="1.8" fill="currentColor"/><path d="M6.5 6.5a5 5 0 0 0 0 7M13.5 6.5a5 5 0 0 1 0 7M4 4a8.5 8.5 0 0 0 0 12M16 4a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
     <button id="ps" class="ib sm" aria-label="Share picks"><svg viewBox="0 0 20 20"><path d="M10 3v10M6 7l4-4 4 4M4 12v4h12v-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="scrub"><div class="track"><div id="bar" class="bar"></div><span id="thumb" class="thumbw"><i class="thumb"></i></span></div><span id="tc" class="tc">0:00 / –:––</span></div>
   </div>
   <nav id="views" class="views" role="tablist" aria-label="Sheet view">
-    <button data-view="track" role="tab">Track</button><button data-view="similar" role="tab">Similar</button><button data-view="library" role="tab">Library<small id="vn"></small></button><i class="vk"></i>
+    <button data-view="track" role="tab">Track</button><button data-view="similar" role="tab">Similar</button><button data-view="library" role="tab">Library<small id="vn"></small></button><button data-view="community" role="tab">Community</button><i class="vk"></i>
   </nav>
   <div id="body" class="body"></div>
 </section>

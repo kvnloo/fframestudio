@@ -60,7 +60,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   box-shadow: 0 -18px 50px rgba(0, 0, 0, .45); transform: translate3d(0, 100vh, 0); }
 .grab { height: 22px; display: grid; place-items: center; touch-action: none; cursor: grab; flex: none; }
 .grab i { width: 38px; height: 5px; border-radius: 3px; background: var(--line2); }
-.player { --c: var(--acc); display: grid; grid-template-columns: auto auto auto 1fr auto auto; grid-template-rows: auto auto; gap: 4px 6px; align-items: center; padding: 0 12px 10px; touch-action: none; flex: none; contain: layout paint; }
+.player { --c: var(--acc); display: grid; grid-template-columns: auto auto auto 1fr auto auto auto; grid-template-rows: auto auto; gap: 4px 6px; align-items: center; padding: 0 12px 10px; touch-action: none; flex: none; contain: layout paint; }
 .ib { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; transition: transform .3s var(--spring), background .2s; }
 .ib:active { transform: scale(.88); }
 .ib svg { width: 20px; height: 20px; }
@@ -86,13 +86,13 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .tc { font: 11px "IBM Plex Mono", monospace; color: var(--mute); flex: none; width: 92px; height: 16px; text-align: right; contain: strict; font-variant-numeric: tabular-nums; }
 /* Views: a segmented switch paired under the player. Its sliding key moves by transform only; the tab
    playing the queue wears a small beat-dot so you can see where next/prev will go. */
-.views { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 12px 2px; padding: 3px; border-radius: 13px; background: rgba(255, 255, 255, .045); border: 1px solid var(--line); flex: none; }
+.views { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); margin: 0 12px 2px; padding: 3px; border-radius: 13px; background: rgba(255, 255, 255, .045); border: 1px solid var(--line); flex: none; }
 .views button { position: relative; z-index: 1; height: 32px; border-radius: 10px; font: 600 12.5px "Instrument Sans", sans-serif; color: var(--mute); transition: color .25s; display: flex; align-items: center; justify-content: center; gap: 5px; }
 .views button.on { color: var(--ink); }
 .views button:disabled { opacity: .35; }
 .views button small { font: 10.5px "IBM Plex Mono", monospace; color: var(--mute); }
 .views button.queue::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--c, var(--acc)); box-shadow: 0 0 8px var(--c, var(--acc)); }
-.views .vk { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / 3); border-radius: 10px; background: rgba(255, 255, 255, .09); border: 1px solid var(--line2);
+.views .vk { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / 4); border-radius: 10px; background: rgba(255, 255, 255, .09); border: 1px solid var(--line2);
   transform: translate3d(calc(var(--k, 2) * 100%), 0, 0); transition: transform .38s var(--spring); }
 .body.in-r { animation: view-r .32s var(--ease); } .body.in-l { animation: view-l .32s var(--ease); }
 @keyframes view-r { from { opacity: .2; transform: translate3d(18px, 0, 0); } }
@@ -238,3 +238,38 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .near h4 small { font: 10px "IBM Plex Mono", monospace; letter-spacing: 0; text-transform: none; color: var(--mute); }
 .trk .why { display: block; font: italic 13px "Instrument Serif", serif; color: color-mix(in srgb, var(--c) 70%, var(--ink)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (prefers-reduced-motion: reduce) { .spec i { animation: none; } }
+
+/* --- community: live pill, like counts, radio, playlists ------------------------------------- */
+.live { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 13px; background: rgba(13, 17, 18, .62); border: 1px solid var(--line); font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
+.live[hidden] { display: none; }
+.live b { color: var(--ink); font-weight: 400; }
+.live i, .live-big i { width: 7px; height: 7px; border-radius: 50%; background: #4fd69a; box-shadow: 0 0 8px #4fd69a; animation: breathe 2.4s ease-in-out infinite; }
+.live .sep { width: 1px; height: 11px; background: var(--line2); margin: 0 3px; }
+@keyframes breathe { 50% { opacity: .35; transform: scale(.75); } }
+.trk .hv, .pl-card .hv { position: relative; }
+.hv small { position: absolute; bottom: 1px; right: 0; left: 0; text-align: center; font: 9px "IBM Plex Mono", monospace; color: inherit; }
+#ph { position: relative; }
+#ph[data-n]:not([data-n=""])::after { content: attr(data-n); position: absolute; bottom: -1px; left: 0; right: 0; text-align: center; font: 9px "IBM Plex Mono", monospace; }
+.ib.radio.on { color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+.pt em.with { font-style: normal; color: #4fd69a; }
+.room { margin: 8px 0 4px; padding: 12px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, .025); }
+.live-big { display: flex; align-items: center; gap: 8px; font: 13px "Instrument Sans", sans-serif; color: var(--mute); }
+.live-big b { font: italic 30px/1 "Instrument Serif", serif; color: var(--ink); }
+.live-big span { margin-left: auto; font: 11px "IBM Plex Mono", monospace; }
+.radio-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.radio-row button { min-width: 0; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line2); transition: background .2s, border-color .2s; }
+.radio-row button b { display: block; font: 600 13px "Instrument Sans", sans-serif; color: var(--ink); }
+.radio-row button small { display: block; font: 10.5px "IBM Plex Mono", monospace; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.radio-row button.on { border-color: #4fd69a; background: color-mix(in srgb, #4fd69a 12%, transparent); }
+.pub { display: flex; gap: 6px; margin: 4px 0 8px; }
+.pub input { flex: 1; min-width: 0; height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line2); background: rgba(255, 255, 255, .04); color: var(--ink); font: 14px "Instrument Sans", sans-serif; }
+.pub button { height: 36px; padding: 0 14px; border-radius: 10px; background: var(--c); color: #0d1112; font: 600 13px "Instrument Sans", sans-serif; }
+.pub :disabled { opacity: .4; }
+.pl-card { display: grid; grid-template-columns: 36px 1fr 34px auto; gap: 8px; align-items: center; padding: 7px 4px; border-radius: 12px; box-shadow: inset 3px 0 0 var(--c); }
+.pl-card.on { background: color-mix(in srgb, var(--c) 13%, transparent); }
+.pl-card .tt b { display: block; font: italic 17px/1.2 "Instrument Serif", serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-card .tt small { font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
+.pl-go { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); }
+.pl-go svg { width: 15px; height: 15px; }
+.pl-card .hv { width: 34px; height: 34px; display: grid; place-items: center; color: #4c524f; } .pl-card .hv svg { width: 16px; height: 16px; } .pl-card .hv.on { color: #ff86b8; }
+.pl-x { width: 28px; height: 28px; color: var(--mute); font-size: 18px; }

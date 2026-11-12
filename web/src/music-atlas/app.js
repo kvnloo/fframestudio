@@ -6,6 +6,7 @@ import { FEELS, BPM_BANDS, LEVELS, FAMILY_TINT, feelById, familyById, styleName,
 import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine } from "./search.js";
 import { loadSound, soundReady, neighbours, profileHTML, LENSES, bpmOf, organise, beatAt } from "./sound.js";
 import { haptic, pressable, pressRing } from "./gestures.js";
+import * as social from "./social.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -28,8 +29,10 @@ const base = new URLSearchParams(location.search).get("catalog") ?? document.bod
 // The sheet is two paired widgets: the player (now playing) and one of three views below it.
 // track = the playing/selected song's details, similar = its by-ear neighbours, library = every
 // track the filters keep. Next/prev walk the list a song was started from (state.queue).
-const VIEWS = ["track", "similar", "library"];
-const state = { view: "library", queue: "library", lens: "feel", q: "", feels: new Set(), bands: new Set(), cc0: false, picksOnly: false, sel: null, picks: new Set(JSON.parse(localStorage.getItem("sa-picks") || "[]")) };
+const VIEWS = ["track", "similar", "library", "community"];
+const state = { view: "library", queue: "library", lens: "feel", q: "", feels: new Set(), bands: new Set(), cc0: false, picksOnly: false, sel: null, picks: new Set(JSON.parse(localStorage.getItem("sa-picks") || "[]")), radio: null, plist: null };
+// Radio and playlists are queues too: state.radio = "ear" | "crowd" (endless), state.plist = a community playlist.
+const playedIds = new Set();
 let org = null, lensFn = null, atlasIds = "", sim = [], simSeed = null;
 let all = [], byId = new Map(), why = new Map(), nbrs = [], result = { hits: [], ranked: false }, qv = null, like = null, share = null, webBusy = false;
 
@@ -263,7 +266,7 @@ const rowHTML = (t, i, reason) => {
   return `<button class="trk ${state.sel === t.id ? "sel" : ""} ${playing ? "playing" : ""} ${i < 14 && animateRows ? "" : "q"}" data-id="${esc(t.id)}" style="--c:${tone(t)};--i:${i};--beat:${(60 / (t.bpm || 100)).toFixed(3)}s">
     <span class="pl">${playing ? `<span class="eq"><i></i><i></i><i></i></span>` : ICON.play}</span>
     <span class="tt"><b>${esc(t.title)}</b><small>${esc(t.author)} · ${esc(styleName(t.family, t.style))}${t.f ? ` · ${bpmOf(t)} bpm · ${t.f.camelot}` : t.bpm ? ` · ${t.bpm} bpm` : ""}${t.src === "web" ? ` · ${esc(t.provider)}` : ""}</small>${(reason ?? why.get(t.id)) ? `<em class="why">${esc(reason ?? why.get(t.id))}</em>` : ""}</span>
-    <span class="du">${mmss(t.dur)}</span><span class="hv ${state.picks.has(t.id) ? "on" : ""}" data-heart="${esc(t.id)}" role="button" aria-label="Pick">${ICON.heart}</span></button>`;
+    <span class="du">${mmss(t.dur)}</span><span class="hv ${state.picks.has(t.id) ? "on" : ""}" data-heart="${esc(t.id)}" role="button" aria-label="Like">${ICON.heart}${social.room.likes[t.id] ? `<small>${social.compact(social.room.likes[t.id])}</small>` : ""}</span></button>`;
 };
 let animateRows = true;
 function renderBody(scroll = true) {
@@ -272,6 +275,7 @@ function renderBody(scroll = true) {
   const sel = state.sel && byId.get(state.sel);
   if (state.view === "track" && sel) return paint(cardHTML(sel), scroll);
   if (state.view === "similar" && sel) return paint(similarHTML(), scroll);
+  if (state.view === "community") return paint(communityHTML(), scroll);
   let html = "";
   const label = like ? `Sounds like “${esc(like.title)}”` : state.q ? `“${esc(state.q)}”` : state.feels.size || state.bands.size || state.cc0 || state.picksOnly ? "Filtered" : "Every track";
   html += `<div class="sum"><b>${label}</b><span>${hits.length.toLocaleString()} ${hits.length === 1 ? "track" : "tracks"}${result.ranked ? (like?.f ? " · by ear" : qv || like ? " · semantic" : " · words") : ""}</span></div>`;
@@ -307,16 +311,57 @@ function similarHTML() {
     ${simSeed !== state.sel ? `<button class="more" data-act="reseed">Re-centre on “${esc(cur.title)}”</button>` : ""}
     <section class="grp" style="--c:${tone(seed)}"><h3><i></i>By ear<small>timbre · tempo · key · texture</small></h3>${[seed, ...sim.map((n) => n.t)].map((t, i) => rowHTML(t, i, i ? sim[i - 1].why : "the seed")).join("")}</section>`;
 }
+// Community: who is here, what they're playing, the radio, playlists people published, and the charts.
+function communityHTML() {
+  const R = social.room, rows = (ids, why) => ids.map((id) => byId.get(id)).filter(Boolean).map((t, i) => rowHTML(t, i, why(t))).join("");
+  if (!R.on) return `<div class="sum"><b>Community</b></div><div class="empty">The shared layer is offline here (local build or no connection). Likes and playlists still work as your own picks.</div>`;
+  const nowIds = R.now.map(([id]) => id), cnt = Object.fromEntries(R.now);
+  const liked = Object.entries(R.likes).sort((a, b) => b[1] - a[1]).slice(0, 20).map(([id]) => id);
+  const pl = R.playlists.map((p) => `<div class="pl-card ${state.plist?.id === p.id ? "on" : ""}" data-pl="${p.id}"><button class="pl-go" data-plplay="${p.id}" aria-label="Play ${esc(p.name)}">${ICON.play}</button>
+    <span class="tt"><b>${esc(p.name)}</b><small>${p.tracks.length} tracks · ${p.plays} plays${p.own ? " · yours" : ""}</small></span>
+    <span class="hv ${p.liked ? "on" : ""}" data-plheart="${p.id}" role="button" aria-label="Like playlist">${ICON.heart}${p.likes ? `<small>${p.likes}</small>` : ""}</span>${p.own ? `<button class="pl-x" data-plx="${p.id}" aria-label="Unpublish">×</button>` : ""}</div>`).join("");
+  return `<div class="sum"><b>Community</b><span>${social.compact(R.views)} views · ${social.compact(R.visitors)} listeners · ${social.compact(R.plays)} plays</span></div>
+    <section class="room"><div class="live-big"><i></i><b>${R.here}</b> here now<span>${R.listening} listening</span></div>
+      <div class="radio-row"><button data-radio="ear" class="${state.radio === "ear" ? "on" : ""}"><b>By-ear radio</b><small>${state.sel ? `endless, from “${esc(byId.get(state.sel)?.title)}”` : "endless, drifting by sound"}</small></button><button data-radio="crowd" class="${state.radio === "crowd" ? "on" : ""}"><b>Crowd radio</b><small>what people here love and play</small></button></div></section>
+    ${nowIds.length ? `<section class="grp" style="--c:#4fd69a"><h3><i></i>Playing right now<small>${R.listening} listening</small></h3>${rows(nowIds, (t) => `${cnt[t.id]} listening now`)}</section>` : ""}
+    <section class="grp" style="--c:#ffbf4d"><h3><i></i>Community playlists<small>${R.playlists.length}</small></h3>
+      <form class="pub" id="pub"><input id="pubname" maxlength="60" placeholder="${state.picks.size ? `Name a playlist of your ${state.picks.size} ${state.picks.size === 1 ? "pick" : "picks"}…` : "Heart some tracks to publish a playlist"}" ${state.picks.size ? "" : "disabled"} /><button ${state.picks.size ? "" : "disabled"}>Publish</button></form>
+      ${pl || `<div class="empty">No playlists yet. Publish your picks and be the first.</div>`}</section>
+    ${liked.length ? `<section class="grp" style="--c:#ff86b8"><h3><i></i>Most liked</h3>${rows(liked, (t) => `♥ ${R.likes[t.id]}`)}</section>` : ""}
+    ${R.top.length ? `<section class="grp" style="--c:#6ea8ff"><h3><i></i>Most played</h3>${rows(R.top.slice(0, 20).map(([id]) => id), (t) => `${R.top.find(([id]) => id === t.id)[1]} plays`)}</section>` : ""}`;
+}
+function renderLive() {
+  const R = social.room, el = $("#live"); if (!el) return;
+  el.hidden = !R.on;
+  el.innerHTML = `<i></i><b>${R.here}</b><span>here</span><span class="sep"></span><b>${social.compact(R.views)}</b><span>views</span>`;
+  el.title = `${R.here} here now, ${R.listening} listening · ${R.views.toLocaleString()} views · ${R.visitors.toLocaleString()} listeners`;
+}
+let roomT = 0;
+social.onRoom(() => { renderLive(); renderPlayer(); clearTimeout(roomT); roomT = setTimeout(() => { if (state.view === "community" || state.view === "track") { const st = body.scrollTop; renderBody(false); body.scrollTop = st; } }, 120); });
+function startRadio(kind) {
+  state.radio = state.radio === kind ? null : kind; state.plist = null; buzz(8);
+  radioTrail.length = 0; if (state.sel) radioTrail.push(state.sel);
+  if (state.radio) { state.queue = "radio"; toast(kind === "ear" ? "By-ear radio: it keeps going, one neighbour at a time" : "Crowd radio: what the room loves"); if (!state.sel || audio.paused || kind === "crowd") step(1); }
+  else { state.queue = "library"; toast("Radio off"); }
+  renderViews(); renderBody(false); renderPlayer();
+}
+function playPlaylist(id) {
+  const p = social.room.playlists.find((x) => x.id === id); if (!p) return;
+  const ids = p.tracks.filter((x) => byId.has(x)); if (!ids.length) return toast("None of these tracks are in this catalogue");
+  state.plist = { id: p.id, name: p.name, ids }; state.radio = null; state.queue = "playlist"; social.playlistPlayed(p.id);
+  toast(`Playing “${p.name}”`); select(ids[0], { play: true, fly: true, keepScroll: true }); renderBody(false); saveHash();
+}
 function renderViews() {
   const has = !!state.sel, nav = $("#views");
-  if (!has && state.view !== "library") state.view = "library";
-  nav.querySelectorAll("[data-view]").forEach((b) => { const v = b.dataset.view; b.classList.toggle("on", v === state.view); b.classList.toggle("queue", v === state.queue && has); b.disabled = v !== "library" && !has; b.setAttribute("aria-selected", v === state.view); });
+  if (!has && state.view !== "library" && state.view !== "community") state.view = "library";
+  nav.querySelectorAll("[data-view]").forEach((b) => { const v = b.dataset.view; b.classList.toggle("on", v === state.view); b.classList.toggle("queue", (v === state.queue || (v === "community" && ["radio", "playlist"].includes(state.queue))) && has); b.disabled = v !== "library" && v !== "community" && !has; b.setAttribute("aria-selected", v === state.view); });
   nav.style.setProperty("--k", VIEWS.indexOf(state.view));
   $("#vn").textContent = result.hits.length.toLocaleString();
 }
 let lastView = "library";
 function setView(v, scroll = true) {
-  if (!VIEWS.includes(v) || (v !== "library" && !state.sel)) return;
+  if (!VIEWS.includes(v) || (v !== "library" && v !== "community" && !state.sel)) return;
+  if (v === "community") social.loadPlaylists();
   if (v === "similar" && !simSeed) reseed();
   const d = VIEWS.indexOf(v) - VIEWS.indexOf(lastView); lastView = state.view = v;
   renderViews(); renderBody(scroll); saveHash();
@@ -361,6 +406,10 @@ body.addEventListener("click", async (e) => {
   const desc = e.target.closest(".desc"); if (desc) return desc.classList.toggle("open");
   const more = e.target.closest("[data-more]"); if (more) { more.outerHTML = (result.hits.filter((x) => grpOf(x.t) === more.dataset.more).slice(result.ranked ? 40 : 30).map((x, i) => rowHTML(x.t, i)).join("")); return; }
   if (e.target.closest("#web")) return searchWeb();
+  const ph = e.target.closest("[data-plheart]"); if (ph) { e.stopPropagation(); buzz(8); const p = social.room.playlists.find((x) => x.id === ph.dataset.plheart); return p && social.likePlaylist(p.id, !p.liked); }
+  const pp = e.target.closest("[data-plplay]"); if (pp) { buzz(5); return playPlaylist(pp.dataset.plplay); }
+  const px = e.target.closest("[data-plx]"); if (px) { buzz(5); await social.unpublish(px.dataset.plx).catch(() => {}); return toast("Playlist unpublished"); }
+  const rb = e.target.closest("[data-radio]"); if (rb) return startRadio(rb.dataset.radio);
   const act = e.target.closest("[data-act]")?.dataset.act, t = state.sel && byId.get(state.sel);
   if (!act || !t) return;
   if (act === "pick") pick(t.id);
@@ -372,8 +421,10 @@ body.addEventListener("click", async (e) => {
 
 function pick(id) {
   buzz(8);
-  state.picks.has(id) ? state.picks.delete(id) : state.picks.add(id);
+  const on = !state.picks.has(id);
+  on ? state.picks.add(id) : state.picks.delete(id);
   localStorage.setItem("sa-picks", JSON.stringify([...state.picks]));
+  social.like(id, on); // your picks are your likes; the count is everyone's
   renderChips(); renderBody(false); renderPlayer(); saveHash();
 }
 
@@ -387,7 +438,7 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   const t = byId.get(id); if (!t) return;
   const changed = state.sel !== id;
   state.sel = id; A.focusId = id;
-  if (from === "library" || from === "similar") state.queue = from; // started from a list: that list is the queue
+  if (from === "library" || from === "similar") { state.queue = from; state.radio = null; state.plist = null; } // started from a list: that list is the queue
   else if (from === null && view) state.queue = "library";
   if (view) state.view = lastView = view;
   if (changed && state.queue !== "similar") reseed();
@@ -405,13 +456,27 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   if (!wide() && sh.target === "peek" && !play) sheetTo("half");
 }
 function togglePlay() { if (!state.sel) { const first = result.hits[0]?.t; return first && select(first.id, { play: true, fly: true }); } audio.paused ? audio.play().catch(() => {}) : audio.pause(); }
-function step(d) { const list = state.queue === "similar" && simSeed ? [simSeed, ...sim.map((n) => n.t.id)] : result.hits.map((h) => h.t.id), i = list.indexOf(state.sel); const n = list[(i + d + list.length) % list.length]; if (n) select(n, { play: true, fly: true, keepScroll: true }); }
+function step(d) {
+  if (state.radio && d > 0) { // radio only goes forward; back walks what it already played
+    const t = social.radioNext({ kind: state.radio, cur: byId.get(state.sel), all: search(all, { feels: state.feels, bands: state.bands, cc0: state.cc0 }).hits.map((h) => h.t), byId, playedIds, neighbours });
+    if (t) { radioTrail.push(t.id); return select(t.id, { play: true, fly: true, keepScroll: true }); }
+  }
+  if (state.radio && d < 0 && radioTrail.length > 1) { radioTrail.pop(); return select(radioTrail.at(-1), { play: true, fly: true, keepScroll: true }); }
+  if (state.plist) { const L = state.plist.ids, i = L.indexOf(state.sel); return select(L[(i + d + L.length) % L.length], { play: true, fly: true, keepScroll: true }); }
+  stepList(d);
+}
+const radioTrail = [];
+function stepList(d) { const list = state.queue === "similar" && simSeed ? [simSeed, ...sim.map((n) => n.t.id)] : result.hits.map((h) => h.t.id), i = list.indexOf(state.sel); const n = list[(i + d + list.length) % list.length]; if (n) select(n, { play: true, fly: true, keepScroll: true }); }
 function renderPlayer() {
   const t = state.sel && byId.get(state.sel), p = $("#player");
   p.style.setProperty("--c", t ? tone(t) : "#5fd3dc"); $("#views").style.setProperty("--c", t ? tone(t) : "#5fd3dc");
   $("#pt").innerHTML = t ? `<b>${esc(t.title)}</b><small>${esc(t.author)}${bpmOf(t) ? ` · ${bpmOf(t)} bpm` : ""}${t.f?.camelot ? ` · ${t.f.camelot}` : ""}</small>` : `<b>Sound Atlas</b><small>${all.length.toLocaleString()} free tracks · CC0 / CC BY</small>`;
   $("#pp").innerHTML = audio.paused ? ICON.play : ICON.pause;
   $("#ph").classList.toggle("on", !!t && state.picks.has(t.id));
+  const lk = t && social.room.likes[t.id]; $("#ph").dataset.n = lk ? social.compact(lk) : "";
+  const here = t && social.room.now.find(([id]) => id === t.id)?.[1]; // people (you included) on this track right now
+  $("#pt small")?.insertAdjacentHTML("beforeend", here > 1 ? ` · <em class="with">${here - 1} with you</em>` : "");
+  $("#pr").classList.toggle("on", !!state.radio); $("#pr").title = state.radio ? `${state.radio === "ear" ? "By-ear" : "Crowd"} radio on` : "Radio";
 }
 const bar = $("#bar"), thumb = $("#thumb"), tc = $("#tc");
 const playState = () => { const t = state.sel && byId.get(state.sel); return t ? { id: t.id, paused: audio.paused, beat: () => beatAt(audio.currentTime, t), progress: () => (audio.duration ? audio.currentTime / audio.duration : 0) } : null; };
@@ -440,6 +505,8 @@ function tick() {
   if (!audio.paused) { beatFrame(); requestAnimationFrame(tick); }
 }
 const syncPlay = () => { A.setPlaying(playState()); renderPlayer(); if (audio.paused) restPulse(); const r = body.querySelector(".trk.sel"); if (r) { const t = byId.get(state.sel); r.classList.toggle("playing", !audio.paused); r.querySelector(".pl").innerHTML = !audio.paused ? `<span class="eq"><i></i><i></i><i></i></span>` : ICON.play; r.style.setProperty("--beat", (60 / (t?.bpm || 100)).toFixed(3) + "s"); } tick(); };
+audio.addEventListener("play", () => { if (state.sel) { playedIds.add(state.sel); social.played(state.sel); } social.pulse(); });
+audio.addEventListener("pause", () => social.pulse());
 audio.addEventListener("play", syncPlay); audio.addEventListener("pause", syncPlay); audio.addEventListener("loadedmetadata", tick);
 audio.addEventListener("ended", () => step(1));
 audio.addEventListener("error", () => { if (audio.src && state.sel) toast("This one won't stream here; open its source ↗"); });
@@ -448,6 +515,13 @@ $("#pn").onclick = (e) => { e.stopPropagation(); step(1); };
 $("#pv").onclick = (e) => { e.stopPropagation(); step(-1); };
 $("#ph").onclick = (e) => { e.stopPropagation(); if (state.sel) pick(state.sel); };
 $("#ps").onclick = (e) => { e.stopPropagation(); shareLink(); };
+$("#pr").onclick = (e) => { e.stopPropagation(); startRadio(state.radio ?? "ear"); };
+$("#live").onclick = () => { buzz(5); setView("community"); };
+$("#body").addEventListener("submit", async (e) => {
+  if (e.target.id !== "pub") return; e.preventDefault();
+  const name = $("#pubname").value.trim(); if (!name || !state.picks.size) return toast("Name it first");
+  try { const id = await social.publish(name, [...state.picks]); buzz(8); toast(`Published “${name}”`); state.plist = null; renderBody(false); history.replaceState(null, "", location.pathname + location.search + "#pl=" + id); } catch (err) { toast(err.message === "limit" ? "20 playlists per listener" : "Couldn't publish right now"); }
+});
 { // scrub
   const sc = $(".scrub"); let on = false;
   const seek = (e) => { const r = sc.getBoundingClientRect(), k = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); if (audio.duration) { audio.currentTime = k * audio.duration; tick(); } };
@@ -477,6 +551,7 @@ function hashOf() {
   if (state.sel) h.set("t", state.sel);
   if (state.lens !== "feel") h.set("l", state.lens);
   if (state.view !== "library") h.set("v", state.view);
+  if (state.plist) h.set("pl", state.plist.id);
   return h.toString();
 }
 let hashT = 0;
@@ -491,8 +566,10 @@ function readHash() {
   if (VIEWS.includes(h.get("v"))) state.view = h.get("v");
   const shared = (h.get("p") ?? "").split(",").filter((id) => byId.has(id));
   if (shared.length) { shared.forEach((id) => state.picks.add(id)); state.picksOnly = true; toast(`${shared.length} shared picks`); }
+  pendingPlist = h.get("pl");
   return h.get("t");
 }
+let pendingPlist = null;
 async function shareLink() {
   // share.json (deploy-time, never in git) carries the protected-deploy entry link; the hash rides through its redirect.
   const url = (share?.base ?? location.origin + location.pathname) + "#" + hashOf();
@@ -532,5 +609,9 @@ if (matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fulls
   if (t && byId.has(t)) select(t, { fly: true, view: v0 === "library" ? "track" : v0 }); else renderViews();
   if (state.q) warmModel(); else if (!matchMedia("(pointer: coarse)").matches) setTimeout(warmModel, 2500); // phones load the model on first search focus
   renderPlayer();
-  window.__sa = { A, state, get all() { return all; }, get result() { return result; }, audio, modelReady, sheetTo, select, run, setView };
+  social.join(() => ({ track: state.sel, playing: !audio.paused })).then(async () => {
+    renderBody(false);
+    if (pendingPlist) { await social.loadPlaylists(); if (social.room.playlists.some((p) => p.id === pendingPlist)) { setView("community"); const p = social.room.playlists.find((x) => x.id === pendingPlist); state.plist = { id: p.id, name: p.name, ids: p.tracks.filter((x) => byId.has(x)) }; toast(`“${p.name}” · tap ▶ to play`); renderBody(false); } }
+  });
+  window.__sa = { social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, modelReady, sheetTo, select, run, setView };
 })();
