@@ -83,7 +83,8 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
   // Motion encodes energy: a beat's glow decays fast for driving feels and lingers for dark, slow ones.
   // Dance: while a track plays, every ring-1 group moves to its beat in the current sort's vocabulary
   // (dance.js). `dk` fades the dance in on play and out on pause; `poses` is this frame's per-group pose.
-  let dk = 0, poses = null, dpos = 0;
+  // `motion` is the owner's toggle; `lblK` fades canvas labels out while the map is actually dancing.
+  let dk = 0, poses = null, dpos = 0, motion = true, lblK = 1;
   const DECAY = { drive: 8, lift: 6.5, play: 6, groove: 5, calm: 3.5, wonder: 3, sad: 2, shadow: 3.2 };
   const colN = (n) => { if (!n.tint) return col(n.feel); const k = theme + n.feel + n.tint; let c = tints.get(k); if (!c) tints.set(k, (c = shade(col(n.feel), n.tint))); return c; };
   const col = (feel) => { const F = feel && (g.colors?.[feel] ?? feelById[feel]); return F ? (theme === "dark" ? F.night : F.color) : pal().mute; };
@@ -261,10 +262,11 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
     const lk = links ? clamp((now - links.t0) / (reduced ? 1 : 650), 0, 1) : 1;
     if (lk < 1) busy = true;
     linkK = easeIO(lk);
-    const live = !!(playing && !playing.paused && !reduced);
+    const live = !!(motion && playing && !playing.paused && !reduced);
     dk += ((live ? 1 : 0) - dk) * (1 - Math.exp(-dt / 260));
     if (!live && dk < 0.003) dk = 0;
     const dm = dk * zoomDamp(cam.s, Math.min(W, H) * 0.95 / (2 * (g.outer + 30))); // vs the whole-map scale: zoomed in, settle and stop forcing redraws
+    lblK = 1 - clamp(dm * 4, 0, 1); // dancing: labels step aside; paused, motion off or zoomed in: back
     if (dm < 0.003) poses = null; else { poses = dancePoses(dm); busy = true; }
     place(bt);
     draw(now, bt, busy);
@@ -409,9 +411,9 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
       if (n.level === 0 || n.level === 4) continue;
       const a = (n.al ?? 1) * clamp(gr4(n.level) * 1.2 - 0.2, 0, 1);
       const minS = [0, 0, 0.42, 0.95][n.level], fade = clamp((s - minS) / (minS * 0.35 + 0.05), 0, 1);
-      if (a * fade < 0.05) continue;
+      if (a * fade * lblK < 0.05) continue;
       const x = sx(n), y = sy(n); if (x < -120 || x > W + 120 || y < -40 || y > H + 40) continue;
-      ctx.globalAlpha = a * fade;
+      ctx.globalAlpha = a * fade * lblK;
       const ux = Math.cos(n.va), uy = Math.sin(n.va);
       if (n.level === 1) { ctx.font = "13px 'Archivo Black', sans-serif"; text(n.name.toUpperCase(), x + ux * 38 * Math.min(1, 0.55 + s), y + uy * 30 * Math.min(1, 0.55 + s), ux, col(n.feel), P.bg); }
       else if (n.level === 2) { ctx.font = "600 12px 'Instrument Sans', sans-serif"; text(n.name, x + ux * 18, y + uy * 18, ux, P.ink, P.bg); }
@@ -459,7 +461,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1; ctx.textBaseline = "middle";
     // Track pills: playing, focused and the top results, when zoomed in enough to place them.
-    const pills = [...new Set([playing?.id, focusId, ...(links && linkK > 0.9 ? links.list.slice(0, 5).map((l) => l.id) : []), ...(s > 0.7 ? featured : [])])].map((id) => g.byId.get(id)).filter((n) => n?.level === 4);
+    const pills = lblK < 0.05 ? [] : [...new Set([playing?.id, focusId, ...(links && linkK > 0.9 ? links.list.slice(0, 5).map((l) => l.id) : []), ...(s > 0.7 ? featured : [])])].map((id) => g.byId.get(id)).filter((n) => n?.level === 4);
     ctx.font = "italic 14px 'Instrument Serif', serif"; // track titles: the work itself
     const placed = [];
     for (const n of pills) {
@@ -468,7 +470,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
       let bx = x + 10, by = y - h - 6; if (bx + w > W - 6) bx = x - w - 10; if (by < rg.y + 4) by = y + 8;
       if (placed.some((p) => bx < p.x + p.w && bx + w > p.x && by < p.y + p.h && by + h > p.y)) continue;
       placed.push({ x: bx, y: by, w, h });
-      ctx.globalAlpha = Math.max(0.35, n.al ?? 1); ctx.fillStyle = P.panel; ctx.strokeStyle = colN(n); ctx.lineWidth = 1;
+      ctx.globalAlpha = Math.max(0.35, n.al ?? 1) * lblK; ctx.fillStyle = P.panel; ctx.strokeStyle = colN(n); ctx.lineWidth = 1;
       ctx.beginPath(); ctx.roundRect(bx, by, w, h, 11); ctx.fill(); ctx.stroke();
       ctx.fillStyle = P.ink; ctx.textAlign = "left"; ctx.fillText(label, bx + 8, by + h / 2 + 0.5);
     }
@@ -484,6 +486,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
   resize();
   return {
     get graph() { return g; }, get cam() { return cam; },
+    setMotion(v) { motion = !!v; kick(); }, get motion() { return motion; }, get labels() { return lblK; },
     setTracks, setLit, setFeatured, setPlaying, setTheme, setLens, setLinks, focus, flyToIds, fitAll, kick, resize,
     get focusId() { return focusId; }, set focusId(v) { focusId = v; kick(); },
   };

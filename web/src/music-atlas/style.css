@@ -265,6 +265,14 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 /* --- community: live pill, like counts, radio, playlists ------------------------------------- */
 .live { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 13px; background: rgba(13, 17, 18, .62); border: 1px solid var(--line); font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
 .live[hidden] { display: none; }
+.live[hidden] + .motion { margin-left: auto; }
+.motion { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px 0 8px; border-radius: 13px; background: rgba(13, 17, 18, .62); border: 1px solid var(--line); font: 11px "IBM Plex Mono", monospace; color: var(--mute); transition: color .2s, border-color .2s, transform .25s var(--spring); }
+.motion svg { width: 14px; height: 14px; }
+.motion:active { transform: scale(.93); }
+.motion[aria-pressed="true"] { color: #0d1112; background: var(--acc); border-color: var(--acc); }
+.motion[aria-pressed="true"] svg { animation: wig 1.6s ease-in-out infinite; }
+@keyframes wig { 50% { transform: translateX(1.5px) scaleY(.8); } }
+.motion[hidden] { display: none; }
 .live b { color: var(--ink); font-weight: 400; }
 .live i, .live-big i { width: 7px; height: 7px; border-radius: 50%; background: #4fd69a; box-shadow: 0 0 8px #4fd69a; animation: breathe 2.4s ease-in-out infinite; }
 .live .sep { width: 1px; height: 11px; background: var(--line2); margin: 0 3px; }

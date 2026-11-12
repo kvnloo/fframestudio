@@ -565,6 +565,12 @@ $("#ph").onclick = (e) => { e.stopPropagation(); if (state.sel) pick(state.sel);
 $("#ps").onclick = (e) => { e.stopPropagation(); shareLink(); };
 $("#pr").onclick = (e) => { e.stopPropagation(); startRadio(state.radio ?? "ear"); };
 $("#live").onclick = () => { buzz(5); setView("community"); };
+// Motion: the map dances to the playing beat (labels step aside while it does). Remembered per device;
+// hidden when the system asks for reduced motion, which already keeps the map still.
+{ const mb = $("#motion"), on = localStorage.getItem("sa-motion") !== "0";
+  const set = (v) => { A.setMotion(v); mb.setAttribute("aria-pressed", String(v)); localStorage.setItem("sa-motion", v ? "1" : "0"); };
+  set(on); mb.hidden = reduced;
+  mb.onclick = () => { const v = !A.motion; set(v); haptic("select"); toast(v ? "Motion on · labels hide while the map dances" : "Motion off · labels stay"); }; }
 $("#body").addEventListener("submit", async (e) => {
   if (e.target.id !== "pub") return; e.preventDefault();
   const name = $("#pubname").value.trim(); if (!name || !state.picks.size) return toast("Name it first");
