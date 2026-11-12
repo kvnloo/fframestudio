@@ -29,6 +29,10 @@
     <button id="live" class="live" hidden aria-label="Community: who is here"></button>
   </div>
 </header>
+<div id="rail" class="rail">
+  <div class="railrow"><button id="sortbtn" class="sortbtn" aria-haspopup="menu" aria-label="Sort the atlas by"><span class="sk">Sort</span><b id="sortname">Emotions</b><svg viewBox="0 0 10 10"><path d="M2 6.5 5 3.5l3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button><div class="filt"><nav id="chips" class="chips" aria-label="Filter"></nav></div></div>
+  <div id="sortmenu" class="sortmenu" role="menu" hidden></div>
+</div>
 <section id="sheet" class="sheet">
   <div class="grab"><i></i></div>
   <div class="dock">
@@ -38,7 +42,6 @@
       <span id="ai" class="ai" data-state="idle" title="Semantic search loads when you search">AI</span>
       <button id="clear" aria-label="Clear">×</button>
     </div>
-    <div class="filt"><nav id="lens" class="lens" aria-label="Sort the atlas by"></nav><nav id="chips" class="chips"></nav></div>
   </div>
   <div id="player" class="player">
     <button id="pv" class="ib sm" aria-label="Previous"><svg viewBox="0 0 20 20"><path d="M14 5v10l-7-5zM5 5h2v10H5z" fill="currentColor"/></svg></button>

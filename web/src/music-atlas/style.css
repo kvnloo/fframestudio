@@ -197,14 +197,37 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .trk.held { background: color-mix(in srgb, var(--c) 16%, transparent); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; } }
 
-/* --- lens row: what the dots' colour means -------------------------------------------------- */
-.lens { display: flex; gap: 4px; align-items: center; flex: none; padding-right: 4px; margin-right: 2px; border-right: 1px solid var(--line2); }
-.lens:empty { display: none; }
-.lens::-webkit-scrollbar { display: none; }
-.lens .lk { flex: none; font: 10px "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); margin-right: 4px; }
-.lens button { flex: none; height: 26px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--line2); background: var(--panel); color: #cfcac0; font: 600 12px "Instrument Sans", sans-serif; transition: transform .2s var(--spring), background .2s, color .2s; }
-.lens button:active { transform: scale(.93); }
-.lens button.on { background: var(--ink); color: #0d1112; border-color: var(--ink); }
+/* --- sort + filter rail: rides the sheet's top edge, over the canvas (dense, one thumb row) ---- */
+.rail { position: fixed; left: 0; right: 0; top: 0; z-index: 4; pointer-events: none; will-change: transform; transform: translate3d(0, 100vh, 0); }
+.rail > * { pointer-events: auto; }
+.railrow { display: flex; align-items: center; gap: 4px; padding: 6px 0 6px 10px; }
+.rail .filt { flex: 1; min-width: 0; margin: 0; padding: 4px 10px 4px 4px; gap: 4px; mask-image: linear-gradient(90deg, transparent, #000 8px, #000 calc(100% - 24px), transparent); }
+.rail::before { content: ""; position: absolute; z-index: -1; inset: -10px 0 0; background: linear-gradient(transparent, rgba(13, 17, 18, .72) 55%); pointer-events: none; }
+.sortbtn { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 9px 0 10px; border-radius: 9px; border: 1px solid var(--ink); background: var(--ink); color: #0d1112;
+  -webkit-touch-callout: none; user-select: none; touch-action: pan-x; transition: transform .25s var(--spring); box-shadow: 0 4px 14px rgba(0, 0, 0, .5); }
+.sortbtn .sk { font: 9px "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; opacity: .6; }
+.sortbtn b { font: 700 12px "Instrument Sans", sans-serif; }
+.sortbtn svg { width: 10px; height: 10px; transition: transform .25s var(--ease); }
+.sortbtn:active { transform: scale(.94); }
+.sortbtn.open svg { transform: rotate(180deg); }
+.sortbtn.dim { opacity: .55; }
+.rail .chip { height: 28px; padding: 0 8px; gap: 5px; font-size: 12px; border-radius: 9px; background: rgba(22, 28, 29, .94); box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
+.rail .chip small { font-size: 9px; }
+.rail .chip.feel i { width: 7px; height: 7px; }
+.rail .chip.x { color: var(--acc); border-color: rgba(95, 211, 220, .45); }
+.rail .chip.x span { font-size: 14px; line-height: 1; opacity: .8; }
+.rail .chips { gap: 4px; }
+.rail .chips .sep { margin: 7px 1px; }
+.sortmenu { position: absolute; left: 10px; bottom: calc(100% - 4px); min-width: 210px; padding: 5px; border-radius: 14px; background: #1b2223; border: 1px solid var(--line2);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .6); transform-origin: 18px 100%; opacity: 0; transform: scale(.86) translateY(8px); transition: opacity .16s var(--ease), transform .26s var(--spring); }
+.sortmenu.on { opacity: 1; transform: none; }
+.sortmenu button { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: 100%; padding: 9px 10px; border: 0; border-radius: 9px; background: none; color: var(--ink); text-align: left; transition: background .12s, transform .2s var(--spring); }
+.sortmenu button b { font: 600 14px "Instrument Sans", sans-serif; }
+.sortmenu button small { font: 10px "IBM Plex Mono", monospace; color: var(--mute); white-space: nowrap; }
+.sortmenu button.on b::after { content: " ✓"; color: var(--acc); }
+.sortmenu button.hot, .sortmenu button:active { background: var(--ink); transform: scale(1.03); }
+.sortmenu button.hot b, .sortmenu button.hot small, .sortmenu button:active b { color: #0d1112; }
+@media (min-width: 900px) { .rail { right: 424px; top: auto; bottom: 8px; transform: none !important; } .rail::before { display: none; } }
 
 /* --- sound profile on the card (Aural's vocabulary: tonal balance, soundstage, band activity) -- */
 .snd { margin-top: 12px; }

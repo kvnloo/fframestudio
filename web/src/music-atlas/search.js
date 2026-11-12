@@ -49,13 +49,14 @@ export async function embed(texts) {
 const dot = (a, b) => { let d = 0; for (let j = 0; j < DIM; j++) d += a[j] * b[j]; return d / 16129; };
 
 // --- ranking ------------------------------------------------------------------------------------
-// opts: { q, qv (Int8Array query vector), like (track), feels:Set, bands:Set, cc0, picks:Set|null, web }
+// opts: { q, qv (Int8Array query vector), like (track), feels:Set, bands:Set, cc0, picks:Set|null, keep:(t)=>bool, web }
 export function search(tracks, opts) {
   const pool = tracks.filter((t) =>
     (!opts.feels?.size || opts.feels.has(t.feel)) &&
     (!opts.bands?.size || opts.bands.has(t.band)) &&
     (!opts.cc0 || t.license === "CC0") &&
     (!opts.picks || opts.picks.has(t.id)) &&
+    (!opts.keep || opts.keep(t)) &&
     (opts.web !== false || t.src !== "web"));
   const q = (opts.q || "").trim();
   const qv = opts.like?.v ?? opts.qv;

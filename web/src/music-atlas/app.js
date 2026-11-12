@@ -5,7 +5,7 @@ import { createAtlas } from "./atlas.js";
 import { FEELS, BPM_BANDS, LEVELS, FAMILY_TINT, feelById, familyById, styleName, shade } from "./taxonomy.js";
 import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine } from "./search.js";
 import { loadSound, soundReady, neighbours, profileHTML, LENSES, bpmOf, organise, beatAt } from "./sound.js";
-import { haptic, pressable, pressRing } from "./gestures.js";
+import { haptic, pressable, pressRing, HOLD, SLOP, FORCE } from "./gestures.js";
 import * as social from "./social.js";
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -30,24 +30,26 @@ const base = new URLSearchParams(location.search).get("catalog") ?? document.bod
 // track = the playing/selected song's details, similar = its by-ear neighbours, library = every
 // track the filters keep. Next/prev walk the list a song was started from (state.queue).
 const VIEWS = ["track", "similar", "library", "community"];
-const state = { view: "library", queue: "library", lens: "feel", q: "", feels: new Set(), bands: new Set(), cc0: false, picksOnly: false, sel: null, picks: new Set(JSON.parse(localStorage.getItem("sa-picks") || "[]")), radio: null, plist: null };
+const state = { view: "library", queue: "library", lens: "feel", q: "", feels: new Set(), bands: new Set(), gs: new Map(), cc0: false, picksOnly: false, sel: null, picks: new Set(JSON.parse(localStorage.getItem("sa-picks") || "[]")), radio: null, plist: null };
 // Radio and playlists are queues too: state.radio = "ear" | "crowd" (endless), state.plist = a community playlist.
 const playedIds = new Set();
 let org = null, lensFn = null, atlasIds = "", sim = [], simSeed = null;
 let all = [], byId = new Map(), why = new Map(), nbrs = [], result = { hits: [], ranked: false }, qv = null, like = null, share = null, webBusy = false;
 
 // --- elements ---------------------------------------------------------------------------------
-const canvas = $("#atlas"), sheet = $("#sheet"), body = $("#body"), q = $("#q"), chips = $("#chips"), audio = $("#audio");
+const canvas = $("#atlas"), sheet = $("#sheet"), rail = $("#rail"), body = $("#body"), q = $("#q"), chips = $("#chips"), audio = $("#audio");
 const toast = (msg, ms = 2400) => { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("on"), ms); };
 
 // --- bottom sheet with spring physics -----------------------------------------------------------
 const sh = { y: innerHeight, v: 0, target: "peek", raf: 0, drag: null };
 // Geometry is measured once per resize, never per frame: reading layout inside rAF forces a style
 // recalc + layout every frame (it was ~15% of each playback frame).
-const geo = { H: innerHeight, W: innerWidth, top: 40, sat: 0, sab: 0, dock: 250 };
+const geo = { H: innerHeight, W: innerWidth, top: 40, sat: 0, sab: 0, dock: 250, rail: 0 };
+// The sort + filter rail rides the sheet's top edge, over the canvas: one transform for both.
+const setSheetY = (y) => { sheet.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0)`; rail.style.transform = wide() ? "" : `translate3d(0, ${(y - geo.rail).toFixed(2)}px, 0)`; };
 const inset = Object.assign(document.createElement("div"), { style: "position:fixed;visibility:hidden;pointer-events:none;top:0;height:env(safe-area-inset-top,0px);width:env(safe-area-inset-bottom,0px)" });
 document.body.appendChild(inset);
-function measure() { geo.H = innerHeight; geo.W = innerWidth; geo.sat = inset.offsetHeight; geo.sab = inset.offsetWidth; geo.top = $(".top").getBoundingClientRect().bottom + 4; geo.left = sheet.getBoundingClientRect().left; geo.dock = body.offsetTop; }
+function measure() { geo.H = innerHeight; geo.W = innerWidth; geo.sat = inset.offsetHeight; geo.sab = inset.offsetWidth; geo.top = $(".top").getBoundingClientRect().bottom + 4; geo.left = sheet.getBoundingClientRect().left; geo.dock = body.offsetTop; geo.rail = wide() ? 0 : rail.offsetHeight; }
 // Peek shows the dock (search + filters), the player and the view switch: everything above the list.
 const snaps = () => { const H = geo.H; return { peek: H - geo.dock - 4 - geo.sab, half: Math.round(H * 0.5), full: 72 + geo.sat }; };
 function sheetTo(name, v = 0) { if (wide()) return; if (sh.target !== name) buzz(4); sh.target = name; sh.v = v; if (!sh.raf) sh.raf = requestAnimationFrame(sheetStep); atlasRefit(); }
@@ -58,9 +60,9 @@ function sheetStep(now) {
   const goal = snaps()[sh.target];
   if (reduced) { sh.y = goal; sh.v = 0; }
   else { const k = 520, c = 2 * Math.sqrt(k) * 0.92; const a = -k * (sh.y - goal) - c * sh.v; sh.v += a * dt; sh.y += sh.v * dt; } // slightly under-damped spring
-  sheet.style.transform = `translate3d(0, ${sh.y.toFixed(2)}px, 0)`;
+  setSheetY(sh.y);
   sheet.style.setProperty("--open", Math.max(0, Math.min(1, (snaps().peek - sh.y) / (snaps().peek - snaps().full))).toFixed(3));
-  if (Math.abs(sh.y - goal) > 0.4 || Math.abs(sh.v) > 4) sh.raf = requestAnimationFrame(sheetStep); else { sh.y = goal; sheet.style.transform = `translate3d(0, ${goal}px, 0)`; shLast = 0; }
+  if (Math.abs(sh.y - goal) > 0.4 || Math.abs(sh.v) > 4) sh.raf = requestAnimationFrame(sheetStep); else { sh.y = goal; setSheetY(goal); shLast = 0; }
 }
 function sheetPointer() {
   const grabs = [$(".grab"), $("#player"), $(".dock")];
@@ -74,7 +76,7 @@ function sheetPointer() {
     const now = performance.now(), dy = e.clientY - d.y0; if (Math.abs(dy) > 4) d.moved = true;
     d.v = ((e.clientY - d.y) / Math.max(1, now - d.t)) * 1000; d.y = e.clientY; d.t = now;
     const S = snaps(); let y = d.s0 + dy; if (y < S.full) y = S.full - (S.full - y) * 0.25; if (y > S.peek) y = S.peek + (y - S.peek) * 0.25; // rubber band
-    sh.y = y; sheet.style.transform = `translate3d(0, ${y}px, 0)`;
+    sh.y = y; setSheetY(y);
   };
   const up = (e) => {
     const d = sh.drag; sh.drag = null; if (!d) return;
@@ -99,7 +101,7 @@ const A = createAtlas({
   region: () => {
     const top = geo.top;
     if (wide()) return { x: 0, y: top, w: geo.left, h: geo.H - top };
-    const bottom = snaps()[sh.target]; return { x: 0, y: top, w: geo.W, h: Math.max(140, bottom - top) };
+    const bottom = snaps()[sh.target]; return { x: 0, y: top, w: geo.W, h: Math.max(140, bottom - top - geo.rail) };
   },
   onHold: (phase, n, x, y) => {
     if (phase === "arm") return pressRing.arm(x, y, n?.level === 4 ? tone(n.t) : n ? colorOfNode(n) : null);
@@ -110,7 +112,7 @@ const A = createAtlas({
     if (n?.level === 4) return audition(n.t);
     pressRing.hide(); if (!n) return;
     haptic("keep");
-    if (n.level === 1 && !org) { toggle(state.feels, n.feel); state.view = "library"; like = null; toast(state.feels.has(n.feel) ? `Only ${feelById[n.feel].name.toLowerCase()} · hold again to undo` : `${feelById[n.feel].name} filter off`); return run({ fly: true }); }
+    if (n.level === 1) { toggleGroup(n.feel); state.view = "library"; like = null; const nm = grp(n.feel)?.name ?? n.feel; toast(groupOn(n.feel) ? `Only ${nm.toLowerCase()} · hold again to undo` : `${nm} filter off`); return run({ fly: true }); }
     A.focus(n.id); if (n.level >= 1) scrollToGroup(n.feel);
   },
   onDetent: () => haptic("detent"),
@@ -171,37 +173,83 @@ let refitT = 0;
 const focusSel = (ms) => { if (!nbrs.length) return A.focus(state.sel, ms); A.flyToIds([state.sel, ...nbrs.slice(0, 6).map((n) => n.t.id)], ms); A.focusId = state.sel; };
 function atlasRefit() { clearTimeout(refitT); refitT = setTimeout(() => { if (state.sel) focusSel(600); else if (result.ranked) A.flyToIds(result.hits.slice(0, 40).map((h) => h.t.id), 600); else A.focus(A.focusId, 600); }, 30); }
 
-// --- lenses: what the dots' colour means ----------------------------------------------------------
-const lensNav = $("#lens");
+// --- sort + filters: one dense rail riding the sheet's top edge ----------------------------------
+// The pill names the sort; hold it (or press hard) and slide to pick another, or tap it for the menu.
+// The chips beside it are the CURRENT sort's groups, so filters always speak the sort's language:
+// Emotions filter by emotion, Tempo by tempo band, Key by Camelot number. Filters set under another
+// sort stay on and fold into one "+N" chip that clears them.
+const orgs = {}; const orgFor = (id) => (id === "feel" ? null : (orgs[id] ??= organise(id, FEELS, familyById)));
+const groupSet = (lens = state.lens) => (lens === "feel" ? state.feels : (state.gs.get(lens) ?? state.gs.set(lens, new Set()).get(lens)));
+const groupOn = (gid) => groupSet().has(gid);
+const toggleGroup = (gid) => toggle(groupSet(), gid);
+function keepFn() {
+  const on = [...state.gs].filter(([k, v]) => v.size && k !== "feel"); if (!on.length) return null;
+  return (t) => on.every(([k, v]) => v.has(orgFor(k).of(t)));
+}
+const otherFilters = () => (state.lens === "feel" ? 0 : state.feels.size) + state.bands.size + [...state.gs].reduce((n, [k, v]) => n + (k === state.lens ? 0 : v.size), 0);
+const sortBtn = $("#sortbtn"), sortMenu = $("#sortmenu");
 function setLens(id, save = true) {
   const L = LENSES.find((x) => x.id === id) ?? LENSES[0]; state.lens = L.id;
   const changed = save && (org?.id ?? "feel") !== L.id;
   lensFn = L.color ?? null; org = organise(L.id, FEELS, familyById); if (org) org.id = L.id; tintCache.clear();
   A.setLens(lensFn);
   renderPlayer(); // the player, its glow and the queue dot take the playing track's colour under the new sort
-  lensNav.innerHTML = soundReady() ? `<span class="lk">Sort</span>${LENSES.map((x) => `<button class="${x.id === L.id ? "on" : ""}" data-lens="${x.id}">${x.name}</button>`).join("")}` : "";
+  $("#sortname").textContent = L.name; sortBtn.classList.toggle("dim", !soundReady());
+  renderChips(); $("#rail .filt").scrollLeft = 0;
   if (save) saveHash();
   if (changed) { atlasIds = ""; run({ fly: false, scroll: true }).then(() => (state.sel ? focusSel(700) : A.fitAll(700))); }
 }
-lensNav.addEventListener("click", (e) => { const b = e.target.closest("[data-lens]"); if (b) { buzz(4); setLens(b.dataset.lens); } });
+// The sort menu. Opened by a hold it tracks the same finger: slide to an item, let go to choose
+// (a detent tick per item). Opened by a tap it stays until you tap an item or anywhere else.
+const sm = { open: false, held: false, hot: null, t: 0, p0: 0, x: 0, y: 0, down: false };
+function openSort(held) {
+  if (!soundReady()) return toast("Listening data is still loading");
+  sm.open = true; sm.held = held; sm.hot = null;
+  sortMenu.innerHTML = LENSES.map((L) => `<button role="menuitem" data-lens="${L.id}" class="${L.id === state.lens ? "on" : ""}"><b>${L.name}</b><small>${L.id === "feel" ? "how it makes you feel" : esc(L.legend ?? "")}</small></button>`).join("");
+  sortMenu.hidden = false; void sortMenu.offsetWidth; sortMenu.classList.add("on"); sortBtn.classList.add("open"); haptic(held ? "press" : "select");
+}
+function closeSort() { sm.open = false; sm.hot = null; sortMenu.classList.remove("on"); sortBtn.classList.remove("open"); setTimeout(() => { if (!sm.open) sortMenu.hidden = true; }, 180); }
+function hotAt(x, y) {
+  const b = document.elementFromPoint(x, y)?.closest?.("#sortmenu [data-lens]") ?? null;
+  if (b !== sm.hot) { sm.hot?.classList.remove("hot"); b?.classList.add("hot"); if (b) haptic("detent"); sm.hot = b; }
+}
+sortBtn.addEventListener("pointerdown", (e) => {
+  if (e.button > 0) return; sm.down = true; sm.x = e.clientX; sm.y = e.clientY; sm.p0 = e.pressure; sm.fired = false;
+  sortBtn.setPointerCapture(e.pointerId);
+  sm.t = setTimeout(() => { sm.fired = true; if (sm.open) closeSort(); openSort(true); }, HOLD);
+});
+sortBtn.addEventListener("pointermove", (e) => {
+  if (!sm.down) return;
+  if (!sm.fired && e.pointerType !== "mouse" && sm.p0 > 0 && e.pressure - sm.p0 > FORCE) { clearTimeout(sm.t); sm.fired = true; openSort(true); } // pressed harder
+  if (sm.fired) hotAt(e.clientX, e.clientY);
+  else if (Math.hypot(e.clientX - sm.x, e.clientY - sm.y) > SLOP) clearTimeout(sm.t); // a scroll of the rail, not a press
+});
+const sortUp = (e) => {
+  if (!sm.down) return; sm.down = false; clearTimeout(sm.t);
+  if (sm.fired) { const b = sm.hot; if (b) { closeSort(); if (b.dataset.lens !== state.lens) { haptic("keep"); setLens(b.dataset.lens); } } else sm.held = false; return; } // let go on nothing: the menu stays for a tap
+  if (e.type === "pointercancel" || Math.hypot(e.clientX - sm.x, e.clientY - sm.y) > SLOP) return;
+  sm.open ? closeSort() : openSort(false);
+};
+sortBtn.addEventListener("pointerup", sortUp); sortBtn.addEventListener("pointercancel", sortUp);
+sortBtn.addEventListener("contextmenu", (e) => e.preventDefault());
+sortMenu.addEventListener("click", (e) => { const b = e.target.closest("[data-lens]"); if (!b) return; closeSort(); if (b.dataset.lens !== state.lens) { buzz(4); setLens(b.dataset.lens); } });
+document.addEventListener("pointerdown", (e) => { if (sm.open && !e.target.closest("#sortmenu, #sortbtn")) closeSort(); }, true);
 
-// --- chips --------------------------------------------------------------------------------------
 function renderChips() {
-  const counts = {}; for (const t of all) counts[t.feel] = (counts[t.feel] ?? 0) + 1;
-  const legend = org ? (() => { const n = {}; for (const t of all) { const k = grpOf(t); n[k] = (n[k] ?? 0) + 1; } return org.groups.filter((G) => n[G.id]).map((G) => `<button class="chip feel" data-jump="${G.id}" style="--c:${G.night}"><i></i>${esc(G.name)}<small>${n[G.id]}</small></button>`).join("") + `<span class="sep"></span>`; })() : "";
   restPulse();
-  chips.innerHTML = legend +
-    FEELS.map((f) => `<button class="chip feel ${state.feels.has(f.id) ? "on" : ""}" data-feel="${f.id}" style="--c:${f.night}"><i></i>${f.name}<small>${counts[f.id] ?? 0}</small></button>`).join("") +
-    `<span class="sep"></span>` +
-    BPM_BANDS.map((b) => `<button class="chip bpm ${state.bands.has(b.id) ? "on" : ""}" data-band="${b.id}">${b.name}<small>${b.hi < 999 ? (b.lo ? b.lo + "–" : "<") + b.hi : b.lo + "+"}</small></button>`).join("") +
-    `<span class="sep"></span><button class="chip ${state.cc0 ? "on" : ""}" data-cc0="1">CC0 only</button><button class="chip ${state.picksOnly ? "on" : ""}" data-picks="1">♥ Picks<small>${state.picks.size}</small></button>`;
+  const lens = state.lens, O = orgFor(lens), on = groupSet(lens), n = {};
+  for (const t of all) { const k = O ? O.of(t) : t.feel; n[k] = (n[k] ?? 0) + 1; }
+  const groups = O ? O.groups : FEELS;
+  const other = otherFilters();
+  chips.innerHTML = groups.filter((G) => n[G.id]).map((G) => `<button class="chip feel ${on.has(G.id) ? "on" : ""}" data-g="${esc(G.id)}" style="--c:${G.night}"><i></i>${esc(G.id === "none" ? "Unmeasured" : G.name)}<small>${n[G.id]}</small></button>`).join("") +
+    (other ? `<button class="chip x" data-other="1" title="Filters set under other sorts">+${other}<span>×</span></button>` : "") +
+    `<span class="sep"></span><button class="chip ${state.cc0 ? "on" : ""}" data-cc0="1">CC0</button><button class="chip ${state.picksOnly ? "on" : ""}" data-picks="1">♥<small>${state.picks.size}</small></button>`;
 }
 chips.addEventListener("click", (e) => {
   const b = e.target.closest(".chip"); if (!b) return; buzz(4);
-  if (b.dataset.jump) { A.focus("f:" + b.dataset.jump); return scrollToGroup(b.dataset.jump); }
   state.view = "library"; // the filtered list is the answer to a filter tap
-  if (b.dataset.feel) toggle(state.feels, b.dataset.feel);
-  if (b.dataset.band) toggle(state.bands, b.dataset.band);
+  if (b.dataset.g) toggleGroup(b.dataset.g);
+  if (b.dataset.other) { if (state.lens !== "feel") state.feels.clear(); state.bands.clear(); for (const [k, v] of state.gs) if (k !== state.lens) v.clear(); }
   if (b.dataset.cc0) state.cc0 = !state.cc0;
   if (b.dataset.picks) state.picksOnly = !state.picksOnly;
   like = null; run({ fly: true });
@@ -217,7 +265,7 @@ async function run({ fly = false, scroll = true } = {}) {
   qv = null;
   if (state.q && modelReady()) qv = (await embed([state.q]))?.[0] ?? null;
   if (my !== seq) return;
-  const facets = { feels: state.feels, bands: state.bands, cc0: state.cc0, picks: state.picksOnly ? state.picks : null };
+  const facets = { feels: state.feels, bands: state.bands, cc0: state.cc0, picks: state.picksOnly ? state.picks : null, keep: keepFn() };
   why = new Map();
   if (like?.f) { // "More like this" listens: CLAP timbre + tempo + key + texture, not the words
     const near = neighbours(like, search(all, facets).hits.map((h) => h.t), 80);
@@ -488,7 +536,7 @@ const restPulse = () => { if (pulse) for (const el of pulse.all) el.style.scale 
 function beatFrame() {
   const t = state.sel && byId.get(state.sel); if (!t || reduced) return;
   if (!pulse) {
-    const G = grpOf(t), dots = [...document.querySelectorAll(`.grp[data-feel="${G}"] h3 i, .chip[data-jump="${G}"] i, .chip.feel[data-feel="${t.feel}"] i`)], eq = [...body.querySelectorAll(".trk.sel .eq i")];
+    const G = grpOf(t), dots = [...document.querySelectorAll(`.grp[data-feel="${G}"] h3 i, .chip[data-g="${G}"] i`)], eq = [...body.querySelectorAll(".trk.sel .eq i")];
     pulse = { pp: $("#pp"), dot: $(".brand .dot"), dots, eq, all: [$("#pp"), $(".brand .dot"), ...dots, ...eq] };
     eq[0]?.parentNode.classList.add("live");
   }
@@ -546,6 +594,8 @@ function hashOf() {
   if (state.q) h.set("q", state.q);
   if (state.feels.size) h.set("f", [...state.feels].join(","));
   if (state.bands.size) h.set("b", [...state.bands].join(","));
+  if (state.gs.get("tempo")?.size) h.set("b", [...state.gs.get("tempo")].join(","));
+  const gq = [...state.gs].filter(([k, v]) => k !== "tempo" && v.size).map(([k, v]) => `${k}:${[...v].join(".")}`).join(";"); if (gq) h.set("g", gq);
   if (state.cc0) h.set("cc0", "1");
   if (state.picks.size) h.set("p", [...state.picks].join(","));
   if (state.sel) h.set("t", state.sel);
@@ -560,7 +610,9 @@ function readHash() {
   const h = new URLSearchParams(location.hash.slice(1));
   q.value = h.get("q") ?? "";
   for (const f of (h.get("f") ?? "").split(",").filter((x) => feelById[x])) state.feels.add(f);
-  for (const b of (h.get("b") ?? "").split(",").filter((x) => BPM_BANDS.some((B) => B.id === x))) state.bands.add(b);
+  // b= (tempo bands) and g= (other sorts' groups) are the contextual filters; old b= links land in the tempo sort's filter
+  const tb = (h.get("b") ?? "").split(",").filter((x) => BPM_BANDS.some((B) => B.id === x)); if (tb.length) state.gs.set("tempo", new Set(tb));
+  for (const part of (h.get("g") ?? "").split(";")) { const [k, v] = part.split(":"); if (k && v && LENSES.some((L) => L.id === k)) state.gs.set(k, new Set(v.split("."))); }
   state.cc0 = h.get("cc0") === "1";
   if (LENSES.some((L) => L.id === h.get("l"))) state.lens = h.get("l");
   if (VIEWS.includes(h.get("v"))) state.view = h.get("v");
@@ -583,8 +635,8 @@ async function copy(text) {
 }
 
 // --- boot ---------------------------------------------------------------------------------------
-{ const ro = new ResizeObserver(() => { measure(); if (!wide() && !sh.drag) sheetTo(sh.target); atlasRefit(); }); ro.observe($(".top")); ro.observe($(".dock")); } // fonts load, lens row fills in
-addEventListener("resize", () => { measure(); if (!wide()) { sheet.style.transform = `translate3d(0, ${snaps()[sh.target]}px, 0)`; sh.y = snaps()[sh.target]; } else sheet.style.transform = ""; atlasRefit(); });
+{ const ro = new ResizeObserver(() => { measure(); if (!wide() && !sh.drag) sheetTo(sh.target); atlasRefit(); }); ro.observe($(".top")); ro.observe($(".dock")); ro.observe(rail); } // fonts load, lens row fills in
+addEventListener("resize", () => { measure(); if (!wide()) { sh.y = snaps()[sh.target]; setSheetY(sh.y); } else { sheet.style.transform = rail.style.transform = ""; } atlasRefit(); });
 // Phones get the whole screen: browsers only grant fullscreen inside a user gesture, so the first
 // tap anywhere asks for it. Skipped when installed (the manifest already launches fullscreen) and
 // never re-asked once the user leaves it (back gesture / swipe), so exiting stays their choice.
@@ -605,7 +657,7 @@ if (matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fulls
   await document.fonts?.ready;
   A.setTracks(all); A.fitAll(1);
   const t = readHash(), v0 = state.view; setLens(state.lens, false);
-  await run({ fly: !!(state.q || state.feels.size || state.bands.size || state.picksOnly) });
+  await run({ fly: !!(state.q || state.feels.size || [...state.gs.values()].some((s) => s.size) || state.picksOnly) });
   if (t && byId.has(t)) select(t, { fly: true, view: v0 === "library" ? "track" : v0 }); else renderViews();
   if (state.q) warmModel(); else if (!matchMedia("(pointer: coarse)").matches) setTimeout(warmModel, 2500); // phones load the model on first search focus
   renderPlayer();
