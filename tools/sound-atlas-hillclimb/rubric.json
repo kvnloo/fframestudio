@@ -124,7 +124,8 @@
    "source": "journey 6 (broken): 'No new … on Openverse' while 108 matches showed"
   },
   "chip_at_peek_shows_list": {
-   "source": "journey 5 (rough): chip at peek keeps the sheet down"
+   "source": "journey 5 (rough): chip at peek keeps the sheet down",
+   "note": "Round 2 (raise the sheet to half) passed this case but Opus layout rejected it in both orders at 360 and 393: the map stops being the hero. Next mechanism: keep the sheet down and let the player line name the result."
   },
   "radio_shows_next_up": {
    "source": "journey 16 (rough): next-up song is never shown"
@@ -155,6 +156,9 @@
   },
   "hand_pick_ends_tune": {
    "source": "steer contract"
+  },
+  "idle_hint_fits": {
+   "source": "round 1 review: the first-open hint ellipsized to 'Tap a dot to h…' at 393; #pt is excluded from the generic truncation check because song titles may ellipsize, so the idle line gets its own check at every width"
   }
  },
  "case_backlog": {
@@ -168,7 +172,9 @@
   "map_pane_pairing_all_sections": "open ask on #81: only Layers and the meters pair with the map",
   "accent_is_not_a_feel": "Opus art critic: play button and header audio button use the Tense cyan, so the main action reads as a mood (colour = feel rule)",
   "no_credit_label_unambiguous": "Opus text critic: 'No credit' reads as 'credit missing' rather than 'no credit line needed'",
-  "no_empty_counts": "Opus text critic: 'Liked 0' shows an empty count"
+  "no_empty_counts": "Opus text critic: 'Liked 0' shows an empty count",
+  "genre_tags_not_feel_colours": "Opus art (round 2): genre tags (Cinematic, Electronic) and row accent bars use colours from the emotion palette, diluting colour = feel",
+  "map_genre_labels_legible": "Opus art (round 2): grey genre labels on the wheel are low-contrast and collide with dots and the FIRED UP label"
  },
  "critics": {
   "first_time_visitor": {

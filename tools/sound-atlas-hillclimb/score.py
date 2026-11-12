@@ -87,6 +87,8 @@ def gates_and_craft(b, card):
     for w, h in RUBRIC["widths"]:
         pg = phone(b, w, h); ready = boot(pg)
         s = {"ready_s": round(ready, 2)}
+        # the idle player line is the first-open instruction: it must read in full, not "Tap a dot to h…"
+        s["idle_hint_fits"] = pg.evaluate("(() => [...document.querySelectorAll('#pt b, #pt small')].every((e) => e.scrollWidth <= e.clientWidth + 1 && e.scrollHeight <= e.clientHeight + 2))()")
         for state, js in [("peek", "0"), ("half", "__sa.sheetTo('half')"), ("track", f"__sa.select({json.dumps(TID)}); __sa.sheetTo('full'); __sa.setView('track')")]:
             pg.evaluate(js); time.sleep(1.0); pg.screenshot(path=str(OUT / f"{w}-{state}.png"))
             s[state] = pg.evaluate(CHECK + f"({RUBRIC['gates']['min_tap_px']})")
@@ -97,6 +99,7 @@ def gates_and_craft(b, card):
         "overflow_x": max(s[st]["overflowX"] for s in per.values() for st in ("peek", "half", "track")),
         "clipped": agg("clipped"), "edge_crossers": agg("edge")}
     g = card["gates"]; g["pass"] = not g["console_errors"] and g["overflow_x"] <= 0 and not g["clipped"] and not g["edge_crossers"]
+    card["idle_hint_fits"] = all(s["idle_hint_fits"] for s in per.values())
     card["craft"] = {"small_targets": agg("small"), "low_contrast": agg("lowContrast"), "truncated": agg("truncated")}
     card["perf"] = {"ready_s_median": statistics.median(s["ready_s"] for s in per.values())}
 
@@ -266,6 +269,7 @@ def main():
         b.close()
     for sec in ("cases", "motion", "haptics", "perf"):
         card[sec] = {k: majority([c[sec].get(k) for c in parts]) for k in parts[0][sec]}
+    card["cases"]["idle_hint_fits"] = card.pop("idle_hint_fits")
     card["gates"]["console_errors"] = sorted({e for c in parts for e in c["gates"]["console_errors"]})
     card["runs"] = runs
     if "--skip-e2e" not in ARGS: e2e(card)
