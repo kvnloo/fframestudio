@@ -73,7 +73,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .pt.sw-l { animation: sw-l .32s var(--ease); } .pt.sw-r { animation: sw-r .32s var(--ease); }
 @keyframes sw-l { 0% { transform: translateX(0); opacity: 1; } 45% { transform: translateX(-28px); opacity: 0; } 55% { transform: translateX(28px); opacity: 0; } 100% { transform: none; opacity: 1; } }
 @keyframes sw-r { 0% { transform: translateX(0); opacity: 1; } 45% { transform: translateX(28px); opacity: 0; } 55% { transform: translateX(-28px); opacity: 0; } 100% { transform: none; opacity: 1; } }
-.pt b { display: block; font: italic 19px/1.15 "Instrument Serif", serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pt b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font: italic 17px/1.05 "Instrument Serif", serif; overflow: hidden; overflow-wrap: anywhere; } /* two lines: the title column is ~100px on phones */
 .pt small { display: block; font: 11px "IBM Plex Mono", monospace; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .scrub { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; height: 26px; touch-action: none; cursor: pointer; }
 .scrub .track { flex: 1; height: 4px; border-radius: 2px; background: var(--line2); transition: height .2s var(--ease); }
