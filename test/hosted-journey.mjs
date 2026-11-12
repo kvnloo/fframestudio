@@ -55,7 +55,8 @@ export async function verifyHosted({browser,source,out,root,journey,assert}) {
         assert(shelf.includes('may ask to “upload”')&&shelf.includes('nothing is sent over the network')&&shelf.includes("kept in this browser's storage"),'pre-picker privacy copy missing');
         await mobile.locator('.local-library').scrollIntoViewIfNeeded();await mobile.screenshot({path:path.join(out,'folder-privacy-before-390x780.png')});
         const before=requests.length, serverBefore=server.requests.length;
-        await mobile.locator('#folder-files').setInputFiles(bulky);await mobile.waitForSelector('.card[data-project="visitor-film"]');await mobile.waitForSelector('.folder-summary');
+        // Chrome 157 headless hangs setInputFiles(<dir>) at a 390px viewport (800px works); widen only for the upload.
+        await mobile.setViewportSize({width:800,height:780});await mobile.locator('#folder-files').setInputFiles(bulky);await mobile.setViewportSize({width:390,height:780});await mobile.waitForSelector('.card[data-project="visitor-film"]');await mobile.waitForSelector('.folder-summary');
         await mobile.waitForTimeout(500);
         const during=requests.slice(before), serverDuring=server.requests.slice(serverBefore);
         const offOrigin=during.filter(r=>/^https?:/.test(r.url)&&new URL(r.url).origin!==server.base), writes=[...during,...serverDuring].filter(r=>r.method!=='GET'&&r.method!=='HEAD');
