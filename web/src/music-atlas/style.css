@@ -375,6 +375,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 /* --- TV view: what a cast lands on. 10-foot: big type, no touch chrome, the map is the wallpaper ---- */
 html.tv .dock, html.tv .views, html.tv .grab, html.tv #ps, html.tv #pc, html.tv #ph, html.tv #pr, html.tv .rail, html.tv .motion, html.tv .live, html.tv .party { display: none !important; }
+html.tv .brand .dot { animation: none; } /* the logo spin keeps the TV compositor busy every frame while idle */
 html.tv #atlas { top: 0; left: 0; right: 0; bottom: 0; cursor: none; } /* longhands: Tizen 6.5 (Chromium 85) has no `inset` */
 html.tv .scrub .thumbw { top: 0; left: 0; right: 0; bottom: 0; }
 html.tv .sheet { left: auto; right: 24px; top: 24px; bottom: 24px; width: 400px; height: auto; border-radius: 22px; border-bottom: 1px solid var(--line2); transform: none !important; background: rgba(21, 26, 27, .88); }
@@ -396,6 +397,10 @@ html.tv .toast { top: auto; bottom: 40px; font-size: 18px; }
 .tvcode span { color: #c9c4ba; font-size: 15px; } .tvcode em { font-style: normal; color: var(--acc); font-weight: 700; }
 .tvcode code { font: 600 44px/1.1 "IBM Plex Mono", monospace; letter-spacing: .14em; color: var(--ink); margin: 8px 0 4px; }
 .tvcode small { font: 12px "IBM Plex Mono", monospace; color: var(--mute); }
+/* The QR is drawn by the map's own dots (atlas formation): the panel only captions it. Dismissed: a corner chip. */
+.tvcode.nodes .qr, .tvcode.nodes span, .tvcode.mini .qr, .tvcode.mini span { display: none; }
+.tvcode.mini, .tvcode.nodes { padding: 10px 16px; gap: 0; } .tvcode.mini b, .tvcode.nodes b { font-size: 12px; margin: 0; } .tvcode.mini code, .tvcode.nodes code { font-size: 26px; margin: 2px 0; }
+.tvcode.nodes { top: 76px; bottom: auto; } /* under the brand, above the code plate (bottom-left would cover its finder) */
 /* share sheet, room sheet and join prompt (app.js: shareLink, roomSheet, joinPrompt) */
 .shm { position: fixed; inset: 0; z-index: 12; display: flex; align-items: flex-end; justify-content: center; box-sizing: border-box; padding: 0 10px calc(10px + env(safe-area-inset-bottom)); background: rgba(5, 8, 9, 0); transition: background .26s var(--ease); }
 .shm.on { background: rgba(5, 8, 9, .55); }

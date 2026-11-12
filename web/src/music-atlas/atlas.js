@@ -7,6 +7,9 @@ import { pose, seedOf, zoomDamp } from "./dance.js";
 
 const ROWS = 7, SPACING = 15, GAP_FEEL = 5, GAP_STYLE = 1.4, DOT = 4.4;
 const TAU = Math.PI * 2;
+// Samsung TVs (Tizen 6.5 = Chromium 85) predate ctx.roundRect (Chromium 99); one numeric radius is all we use.
+const C2D = globalThis.CanvasRenderingContext2D?.prototype;
+if (C2D && !C2D.roundRect) C2D.roundRect = function (x, y, w, h, r) { r = Math.min(+r || 0, w / 2, h / 2); this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r); this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath(); };
 const easeIO = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 const easeOutBack = (x) => { const c = 1.4; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -85,8 +88,14 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   // (dance.js). `dk` fades the dance in on play and out on pause; `poses` is this frame's per-group pose.
   // `motion` is the owner's toggle; `lblK` fades canvas labels out while the map is actually dancing.
   let dk = 0, poses = null, dpos = 0, motion = true, lblK = 1;
+  // Formation: the leaves fly onto a QR code's dark modules (the TV's pairing code, drawn with the map's own
+  // dots on a light plate so phone cameras read it), the rest of the map fades out. `fe` is the eased mix.
+  let form = null, fe = 0;
   const DECAY = { drive: 8, lift: 6.5, play: 6, groove: 5, calm: 3.5, wonder: 3, sad: 2, shadow: 3.2 };
-  const colN = (n) => { if (!n.tint) return col(n.feel); const k = theme + n.feel + n.tint; let c = tints.get(k); if (!c) tints.set(k, (c = shade(col(n.feel), n.tint))); return c; };
+  // Memoised on the node per theme: drawStatic asks for ~2k colours a frame, and on a TV (Mali-G51) the
+  // string-key lookup showed up in the CPU profile. setTracks builds fresh nodes, so no stale entries.
+  const colN = (n) => { if (n.cT === theme) return n.cC; n.cT = theme; return (n.cC = colRaw(n)); };
+  const colRaw = (n) => { if (!n.tint) return col(n.feel); const k = theme + n.feel + n.tint; let c = tints.get(k); if (!c) tints.set(k, (c = shade(col(n.feel), n.tint))); return c; };
   const col = (feel) => { const F = feel && (g.colors?.[feel] ?? feelById[feel]); return F ? (theme === "dark" ? F.night : F.color) : pal().mute; };
 
   function resize() {
@@ -110,6 +119,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       const from = o ?? (n.parent && old.get(n.parent.id)) ?? n.parent ?? n;
       n.dx = from.dx ?? from.x ?? 0; n.dy = from.dy ?? from.y ?? 0; n.al = o ? o.al : 0;
     }
+    if (form && !assignForm()) form = null;
     gen++; applyLit(); kick();
   }
   function applyLit() {
@@ -129,6 +139,30 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   function zoomOn(id, s = 9, ms) { const n = g.byId.get(id); if (!n) return; focusId = id; flyTo({ x: n.x, y: n.y, s }, ms); }
   function ringAt(x, y) { if (!rings) return null; const d = Math.hypot(x - rings.x, y - rings.y), i = Math.floor((d - RING0 + RING_W / 2) / RING_W); return i >= 0 && i < rings.lanes.length ? rings.lanes[i].k : null; }
   function setTheme(t) { theme = t; gen++; kick(); }
+  // QR modules (dark cells of an N x N matrix) -> one leaf each, matched by angle round the centre so every feel
+  // keeps its wedge and the morph reads as the ring folding into a square. Too few leaves: false, caller falls back.
+  function assignForm() {
+    for (const n of g.leaves) n.fm = null;
+    const { cells, N } = form, K = cells.length, L = g.leaves.length; if (L < K) return false;
+    const ang = (c) => Math.atan2(c[1] - N / 2 + 0.5, c[0] - N / 2 + 0.5);
+    const cs = cells.slice().sort((a, b) => ang(a) - ang(b)), ls = g.leaves.slice().sort((a, b) => Math.atan2(Math.sin(a.a), Math.cos(a.a)) - Math.atan2(Math.sin(b.a), Math.cos(b.a)));
+    cs.forEach((c, i) => { ls[Math.floor((i * L) / K)].fm = c; });
+    return true;
+  }
+  function setFormation(cells, N) {
+    if (!cells) { if (form) form.on = false; kick(); return true; }
+    // Finder patterns stay solid (third field): scanners find a code by those rings' 1:1:3:1:1 runs, which dots break.
+    const fz = (v) => v < 7 || v >= N - 7;
+    cells = cells.map(([x, y]) => [x, y, (x < 7 || y < 7) && fz(x) && fz(y) ? 1 + (x >= 7 ? 1 : 0) + (y >= 7 ? 2 : 0) : 0]); // 1 TL, 2 TR, 3 BL
+    form = { cells, N, on: true, k: form?.k ?? 0 };
+    if (!assignForm()) { form = null; return false; }
+    gen++; kick(); return true;
+  }
+  // Screen square for the code: centred in the free region; world coordinates follow the live camera.
+  function formGeom() {
+    const r = R(), { cx, cy } = centre(), S = Math.min(r.w, r.h) * 0.62, m = S / form.N, s = cam.s;
+    return { m, S, sx0: cx - S / 2, sy0: cy - S / 2, wx: (sx) => cam.x + (sx - cx) / s, wy: (sy) => cam.y + (sy - cy) / s, r: (m * 0.46) / s };
+  }
   // Lens: recolour lit tracks by a measurement (key, tempo, brightness...) instead of their feel.
   function setLens(fn) { lens = fn; gen++; kick(); }
   // Links: "sounds like" arcs from one track to its neighbours, drawn in over ~0.6 s.
@@ -270,11 +304,17 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     const lk = links ? clamp((now - links.t0) / (reduced ? 1 : 650), 0, 1) : 1;
     if (lk < 1) busy = true;
     linkK = easeIO(lk);
+    if (form) {
+      const t = form.on ? 1 : 0; form.k += (t - form.k) * (reduced ? 1 : 1 - Math.exp(-dt / 420));
+      if (Math.abs(t - form.k) < 0.002) form.k = t; else busy = true;
+      if (!form.on && form.k === 0) { for (const n of g.leaves) n.fm = null; form = null; gen++; busy = true; }
+    }
+    fe = form ? easeIO(form.k) : 0;
     const live = !!(motion && playing && !playing.paused && !reduced);
     dk += ((live ? 1 : 0) - dk) * (1 - Math.exp(-dt / 260));
     if (!live && dk < 0.003) dk = 0;
-    const dm = dk * zoomDamp(cam.s, Math.min(W, H) * 0.95 / (2 * (g.outer + 30))); // vs the whole-map scale: zoomed in, settle and stop forcing redraws
-    lblK = 1 - clamp(dm * 4, 0, 1); // dancing: labels step aside; paused, motion off or zoomed in: back
+    const dm = (1 - fe) * dk * zoomDamp(cam.s, Math.min(W, H) * 0.95 / (2 * (g.outer + 30))); // vs the whole-map scale: zoomed in, settle and stop forcing redraws
+    lblK = (1 - clamp(dm * 4, 0, 1)) * (1 - fe); // dancing: labels step aside; paused, motion off or zoomed in: back
     if (dm < 0.003) poses = null; else { poses = dancePoses(dm); busy = true; }
     place(bt);
     draw(now, bt, busy);
@@ -316,6 +356,13 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       }
       n.vx = Math.cos(a) * r + jx; n.vy = Math.sin(a) * r + jy;
     }
+    if (!fe) return;
+    const F = formGeom();
+    for (const n of g.leaves) {
+      const c = n.fm; if (!c) continue;
+      const s = (n.seed ??= seedOf(n.id)), k = easeIO(clamp(form.k * 1.5 - s * 0.5, 0, 1)); // staggered, so it pours in
+      n.vx += (F.wx(F.sx0 + (c[0] + 0.5) * F.m) - n.vx) * k; n.vy += (F.wy(F.sy0 + (c[1] + 0.5) * F.m) - n.vy) * k;
+    }
   }
 
   function draw(now, bt, busy) {
@@ -327,7 +374,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       if (key !== layerKey) { ctx = lctx; drawStatic(bt); ctx = screen; layerKey = key; }
       screen.setTransform(1, 0, 0, 1, 0, 0); screen.globalAlpha = 1; screen.drawImage(layer, 0, 0);
     }
-    drawOverlay(bt);
+    if (fe < 0.05) drawOverlay(bt); // the beat ring and pills would sit on the code
   }
   const grow = (bt, lvl) => clamp(easeOutBack(clamp((bt - lvl * 0.11) / 0.75, 0, 1)), 0, 1.2);
 
@@ -340,6 +387,8 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
     grad.addColorStop(0, theme === "dark" ? "rgba(95,211,220,.06)" : "rgba(47,111,214,.05)"); grad.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    const F = fe ? formGeom() : null, fo = 1 - fe; // fo: everything that isn't the code fades out
+    if (F) { const q = F.m * 2.5; ctx.globalAlpha = clamp(fe * 1.6 - 0.4, 0, 1); ctx.fillStyle = "#ece8df"; ctx.beginPath(); ctx.roundRect(F.sx0 - q, F.sy0 - q, F.S + 2 * q, F.S + 2 * q, q); ctx.fill(); }
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (cx - cam.x * s), dpr * (cy - cam.y * s));
     const gr4 = (lvl) => grow(bt, lvl);
     const X = (n) => n.vx, Y = (n) => n.vy;
@@ -347,7 +396,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     // Style bands: a tinted annular sector under each style's tracks.
     const inner = g.R4 + 6, outer = g.outer + 2;
     for (const st of g.styles) {
-      const a = (st.al ?? 1) * gr4(3); if (a < 0.02) continue;
+      const a = (st.al ?? 1) * gr4(3) * fo; if (a < 0.02) continue;
       ctx.globalAlpha = a * (st.id === focusId || st.id === hoverId ? 0.22 : 0.09);
       ctx.fillStyle = colN(st);
       const b0 = angOf(st.feel, st.a0 - g.step * 0.6), b1 = angOf(st.feel, st.a1 + g.step * 0.6), bk = kOf(st.feel) * gr4(4);
@@ -357,7 +406,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     ctx.lineCap = "round";
     for (const n of g.byId.values()) {
       if (n.level === 0 || n.level === 4) continue;
-      const p = n.parent, a = Math.min(n.al ?? 1, p.al ?? 1); if (a < 0.02) continue;
+      const p = n.parent, a = Math.min(n.al ?? 1, p.al ?? 1) * fo; if (a < 0.02) continue;
       ctx.globalAlpha = a * (p.level === 0 ? 0.28 : 0.6); ctx.strokeStyle = colN(n); ctx.lineWidth = (a > 0.5 && lit ? 2 : 1.2) / Math.max(s, 0.35);
       ctx.beginPath();
       if (p.level === 0) { ctx.moveTo(0, 0); ctx.lineTo(X(n), Y(n)); }
@@ -373,7 +422,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
         const x1 = X(m), y1 = Y(m), bx = (x0 + x1) * 0.22, by = (y0 + y1) * 0.22; // control point pulled to the hub
         // de Casteljau split at linkK draws the arc in from the source.
         const k = linkK, ax = x0 + (bx - x0) * k, ay = y0 + (by - y0) * k, cx2 = bx + (x1 - bx) * k, cy2 = by + (y1 - by) * k;
-        ctx.globalAlpha = 0.25 + 0.6 * w; ctx.strokeStyle = (lens && lens(m.t)) || colN(m); ctx.lineWidth = (1 + 1.6 * w) / Math.max(s, 0.35);
+        ctx.globalAlpha = (0.25 + 0.6 * w) * fo; ctx.strokeStyle = (lens && lens(m.t)) || colN(m); ctx.lineWidth = (1 + 1.6 * w) / Math.max(s, 0.35);
         ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(ax, ay, ax + (cx2 - ax) * k, ay + (cy2 - ay) * k); ctx.stroke();
       }
     }
@@ -383,24 +432,38 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     const buckets = new Map(), rings = [];
     for (const n of g.leaves) {
       const x = n.vx, y = n.vy; if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue;
-      const a = n.al ?? 1; if (a < 0.02) continue;
-      const on = a > 0.5, r = (n.t.src === "shortlist" && on ? DOT * 1.25 : DOT) * (0.6 + 0.4 * a) * n.vr;
-      // Under a lens, unmeasured tracks go neutral.
-      const k = (on ? (lens ? lens(n.t) ?? P.mute : colN(n)) : P.dim) + "|" + (on ? Math.round(a * 8) / 8 : 0.55);
+      const a0 = n.al ?? 1, fm = F && n.fm, a = !F ? a0 : fm ? a0 + (1 - a0) * fe : a0 * fo; if (a < 0.02) continue;
+      const on = a > 0.5;
+      let r = (n.t.src === "shortlist" && on ? DOT * 1.25 : DOT) * (0.6 + 0.4 * a) * n.vr;
+      if (fm) { r += (F.r - r) * fe; if (fm[2]) r = -(r + (F.m / (2 * s) - r) * fe); } // finder: a solid square (negative r)
+      // Under a lens, unmeasured tracks go neutral. QR modules: "q" buckets get an ink underlay (below).
+      const fc = fm && fm[2] && g.root.children.length ? col(g.root.children[((fm[2] - 1) * 3) % g.root.children.length].feel) : null; // one hue per finder ring
+      const k = (fc ?? (on ? (lens ? lens(n.t) ?? P.mute : colN(n)) : P.dim)) + "|" + (fm && fe > 0.5 ? "q" : on ? Math.round(a * 8) / 8 : 0.55);
       let b = buckets.get(k); if (!b) buckets.set(k, (b = []));
       b.push(x, y, r);
-      if (n.t.src === "web" && on) rings.push(x, y, r);
+      if (n.t.src === "web" && on && !fm) rings.push(x, y, r);
     }
+    // Dots under ~2.5 device px can't read as round (least of all from a sofa), and squares of the same area
+    // rasterise far cheaper than arcs: on a TV the zoomed-out map is all such dots, ~1.8k a frame while dancing.
+    const tiny = 2.5 / (s * dpr);
     for (const [k, b] of buckets) {
-      const [c, a] = k.split("|"); ctx.globalAlpha = +a; ctx.fillStyle = c; ctx.beginPath();
-      for (let i = 0; i < b.length; i += 3) { ctx.moveTo(b[i] + b[i + 2], b[i + 1]); ctx.arc(b[i], b[i + 1], b[i + 2], 0, TAU); }
-      ctx.fill();
+      const [c, a] = k.split("|"), q = a === "q"; ctx.beginPath();
+      for (let i = 0; i < b.length; i += 3) {
+        const r = b[i + 2];
+        if (r < 0) ctx.rect(b[i] + r, b[i + 1] + r, -2 * r, -2 * r); // QR finder module: squares join into solid rings
+        else if (r < tiny) { const h = r * 0.886; ctx.rect(b[i] - h, b[i + 1] - h, h * 2, h * 2); } // same area as the disc
+        else { ctx.moveTo(b[i] + r, b[i + 1]); ctx.arc(b[i], b[i + 1], r, 0, TAU); }
+      }
+      // A QR module is ink tinted by its feel: dark enough on the plate for any phone camera, still the map's colours.
+      if (q) { ctx.globalAlpha = 1; ctx.fillStyle = "#1b1a17"; ctx.fill(); ctx.globalAlpha = Math.max(0, 0.9 - fe * 0.5); }
+      else ctx.globalAlpha = +a;
+      ctx.fillStyle = c; ctx.fill();
     }
     if (rings.length) { ctx.globalAlpha = 0.9; ctx.strokeStyle = P.ink; ctx.lineWidth = 1 / Math.max(s, 0.5); ctx.beginPath(); for (let i = 0; i < rings.length; i += 3) { ctx.moveTo(rings[i] + rings[i + 2], rings[i + 1]); ctx.arc(rings[i], rings[i + 1], rings[i + 2], 0, TAU); } ctx.stroke(); }
     // Structural nodes.
     for (const n of g.byId.values()) {
       if (n.level === 4) continue;
-      const a = (n.al ?? 1) * clamp(gr4(n.level), 0, 1); if (a < 0.02) continue;
+      const a = (n.al ?? 1) * clamp(gr4(n.level), 0, 1) * fo; if (a < 0.02) continue;
       const x = X(n), y = Y(n), c = colN(n), k = Math.max(s, 0.45), sel = n.id === focusId || n.id === hoverId;
       ctx.globalAlpha = a;
       if (n.level === 0) { ctx.fillStyle = P.ink; ctx.beginPath(); ctx.arc(0, 0, 7 / Math.max(s, 0.6), 0, TAU); ctx.fill(); continue; }
@@ -417,7 +480,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     ctx.lineJoin = "round"; ctx.textBaseline = "middle";
     for (const n of g.byId.values()) {
       if (n.level === 0 || n.level === 4) continue;
-      const a = (n.al ?? 1) * clamp(gr4(n.level) * 1.2 - 0.2, 0, 1);
+      const a = (n.al ?? 1) * clamp(gr4(n.level) * 1.2 - 0.2, 0, 1) * fo;
       const minS = [0, 0, 0.42, 0.95][n.level], fade = clamp((s - minS) / (minS * 0.35 + 0.05), 0, 1);
       if (a * fade * lblK < 0.05) continue;
       const x = sx(n), y = sy(n); if (x < -120 || x > W + 120 || y < -40 || y > H + 40) continue;
@@ -535,6 +598,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   return {
     get graph() { return g; }, get cam() { return cam; },
     setMotion(v) { motion = !!v; kick(); }, get motion() { return motion; }, get labels() { return lblK; },
+    setFormation, get formation() { return !!form?.on; },
     setTracks, setLit, setFeatured, setPlaying, setTheme, setLens, setLinks, setLayers, zoomOn, focus, flyToIds, fitAll, kick, resize,
     flyCam(c, ms) { flyTo({ ...c }, ms); }, get layerK() { return layerK(); },
     get focusId() { return focusId; }, set focusId(v) { focusId = v; kick(); },

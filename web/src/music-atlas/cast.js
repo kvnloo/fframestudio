@@ -52,7 +52,7 @@ export function receive({ sid, audio, current, apply, next, onStatus }) {
 // What the screen really is, reported in the heartbeat so TV tuning rests on measurements:
 // viewport and pixel ratio, refresh rate (median rAF interval), GPU (WebGL renderer), cores, memory.
 export function probe() {
-  const hw = { w: innerWidth, h: innerHeight, sw: screen.width, sh: screen.height, dpr: devicePixelRatio, cores: navigator.hardwareConcurrency, mem: navigator.deviceMemory, ua: (navigator.userAgent.match(/Chrome\/[\d.]+/) || [""])[0] };
+  const hw = { w: innerWidth, h: innerHeight, sw: screen.width, sh: screen.height, dpr: devicePixelRatio, cores: navigator.hardwareConcurrency, mem: navigator.deviceMemory, ua: (navigator.userAgent.match(/Tizen [\d.]+|Chrome\/[\d.]+|\b\d{2,3}\.0\.\d{4}\.\d+/g) || []).slice(0, 2).join(" ") }; // Tizen UAs carry a bare Chromium version
   try {
     const gl = document.createElement("canvas").getContext("webgl"), x = gl && gl.getExtension("WEBGL_debug_renderer_info");
     hw.gl = gl ? String(x ? gl.getParameter(x.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)).slice(0, 80) : "none";

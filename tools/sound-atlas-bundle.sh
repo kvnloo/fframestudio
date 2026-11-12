@@ -12,7 +12,7 @@ cp "$here"/web/fonts/{ArchivoBlack-Regular,InstrumentSans-Regular,InstrumentSans
 # Deployed at the site root with pretty paths (/song/…, /room/…): <base href="/"> keeps every relative URL on the root.
 sed -e 's#\.\./src/#./src/#g' -e 's#\.\./fonts/#./fonts/#g' -e 's#<head>#<head>\n<base href="/" />#' "$here/web/labs/sound-atlas.html" > "$out/index.html"
 cp "$here/web/labs/sound-atlas.vercel.json" "$out/vercel.json" # rewrites the pretty paths to /api/page (link previews)
-cp "$here"/web/labs/sound-atlas.webmanifest "$here"/web/labs/sound-atlas-icon.svg "$out/" # installable, launches fullscreen
+cp "$here"/web/labs/sound-atlas.webmanifest "$here"/web/labs/sound-atlas-icon.svg "$here"/web/labs/sound-atlas-icon.png "$out/" # installable, launches fullscreen
 cp "$cat_dir/catalog.json" "$cat_dir/vectors.bin" "$out/"
 # Optional listening layer from tools/music-features.py (feat.json + feat.json.clap.bin next to the catalogue).
 [ -f "$cat_dir/feat.json" ] && cp "$cat_dir/feat.json" "$out/sound.json"

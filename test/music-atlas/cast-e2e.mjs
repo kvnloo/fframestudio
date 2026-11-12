@@ -2,6 +2,10 @@
 // Usage: node test/music-atlas/cast-e2e.mjs <base-url> [shots-dir]   (serve with tools/sound-atlas-serve.mjs)
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const base = process.argv[2] ?? "http://127.0.0.1:8871/", shots = process.argv[3];
 const room = Array.from({ length: 6 }, () => "abcdefghjkmnpqrstuvwxyz23456789"[Math.floor(Math.random() * 31)]).join("");
@@ -15,8 +19,16 @@ tv.on("pageerror", (e) => errs.push("tv: " + e.message));
 await tv.goto(`${base}?tv=samsung&name=Samsung%20TV&ip=192.0.2.1&app=TEST.app#room=${room}`);
 await until(() => tv.evaluate(() => document.querySelector("#tvcode.on code")?.textContent), 30000, "TV shows its code");
 assert.equal(await tv.textContent("#tvcode code"), room.toUpperCase());
-await until(() => tv.evaluate(() => !!document.querySelector("#tvcode .qr svg")), 15000, "pairing QR");
-if (shots) await tv.screenshot({ path: `${shots}/tv-waiting.png` });
+// The pairing QR is drawn by the map's own dots; a phone camera (zbar here) must read the pairing link from it.
+await until(() => tv.evaluate(() => window.__sa?.A.formation), 15000, "dots form the pairing QR");
+await wait(3500); // the dots pour in, then settle
+const qrPng = join(shots ?? mkdtempSync(join(tmpdir(), "tvqr-")), "tv-qr.png");
+await tv.screenshot({ path: qrPng });
+const decoded = spawnSync("zbarimg", ["-q", "--raw", qrPng], { encoding: "utf8" }).stdout.trim();
+assert.match(decoded, new RegExp(`#tvpair=${room}~192\\.0\\.2\\.1~TEST\\.app~Samsung(%20| )TV$`), "the dot QR decodes to the pairing link: " + decoded);
+await tv.keyboard.press("ArrowRight"); // any remote key lets the map go
+await until(() => tv.evaluate(() => !window.__sa.A.formation && document.querySelector("#tvcode.mini.on .qr svg") && window.__sa.audio.paused), 5000, "first key dismisses the code only");
+await wait(1500); if (shots) await tv.screenshot({ path: `${shots}/tv-waiting.png` });
 
 const phCtx = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }), ph = await phCtx.newPage();
 ph.on("pageerror", (e) => errs.push("phone: " + e.message));
