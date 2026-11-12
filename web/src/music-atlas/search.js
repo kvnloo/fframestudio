@@ -14,7 +14,7 @@ const hayOf = (t) => ({
   desc: (t.desc || "").toLowerCase(),
 });
 const feelName = (id) => FEELS.find((f) => f.id === id)?.name ?? "";
-function prep(t) { t.title = String(t.title ?? "Untitled"); t.author = String(t.author ?? "Unknown"); t.band = bpmBand(t.bpm); t.hay = hayOf(t); return t; }
+export function prep(t) { t.title = String(t.title ?? "Untitled"); t.author = String(t.author ?? "Unknown"); t.band = bpmBand(t.bpm); t.hay = hayOf(t); return t; }
 
 export async function loadCatalog(base = "./") {
   const [cat, buf] = await Promise.all([

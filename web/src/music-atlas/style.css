@@ -439,3 +439,10 @@ html.tv .toast { top: auto; bottom: 40px; font-size: 18px; }
 @media (prefers-reduced-motion: reduce) { .shc { transition: opacity .2s; transform: none; } .pcta i, .party i { animation: none; } }
 .party { margin-left: auto; }
 .party:not([hidden]) + .live { display: none; } /* in a room the room pill takes the community pill's place */
+/* Bring your own music: the entry in the library view and your playlists as chips */
+.mine { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 14px; }
+.minecta.busy i { animation-duration: .8s; }
+.mpls { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.mpls button { flex: none; display: flex; gap: 6px; align-items: baseline; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line2); font: 600 13px "Instrument Sans", sans-serif; color: var(--ink); white-space: nowrap; }
+.mpls button small { font: 11px "IBM Plex Mono", monospace; color: var(--mute); font-weight: 400; }
+.mpls button:active { transform: scale(.96); }

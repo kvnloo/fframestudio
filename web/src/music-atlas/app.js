@@ -3,7 +3,7 @@
 // Vercel's protection-bypass 307, which drops the query string.
 import { createAtlas } from "./atlas.js";
 import { FEELS, BPM_BANDS, LEVELS, FAMILY_TINT, feelById, familyById, styleName, shade } from "./taxonomy.js";
-import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine } from "./search.js";
+import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine, prep } from "./search.js";
 import { loadSound, soundReady, neighbours, tuneMatch, profileHTML, ord, LENSES, bpmOf, organise, beatAt } from "./sound.js";
 import { haptic, pressable, pressRing, HOLD, SLOP, FORCE } from "./gestures.js";
 import * as social from "./social.js";
@@ -406,6 +406,7 @@ function renderBody(scroll = true) {
   html += `<div class="sum"><b>${label}</b><span>${hits.length.toLocaleString()} ${hits.length === 1 ? "track" : "tracks"}${result.ranked ? (like?.f ? " · by ear" : qv || like ? " · semantic" : " · words") : ""}</span></div>`;
   // Group by feel (the atlas's first ring); ranked searches keep their order inside each group and
   // order groups by their best hit, so the strongest vibe comes first.
+  if (!state.q && !like) html += mineHTML();
   const groups = new Map();
   hits.forEach((h, i) => { const f = grpOf(h.t); if (!groups.has(f)) groups.set(f, { f, best: i, rows: [] }); groups.get(f).rows.push(h.t); });
   const rank = (id) => (org ? grp(id).i : FEELS.findIndex((F) => F.id === id));
@@ -423,6 +424,7 @@ function renderBody(scroll = true) {
   }
   if (!hits.length) html += `<div class="empty">Nothing in the catalogue matches. ${state.q ? "Try the open web below, or fewer filters." : "Try fewer filters."}</div>`;
   if (state.q) html += `<button class="web ${webBusy ? "busy" : ""}" id="web">${webBusy ? "Searching the open web…" : `Search the open web for “${esc(state.q)}”`}<small>Openverse · Jamendo, Freesound, Wikimedia · CC0 / CC BY only</small></button>`;
+  if (state.q || like) html += mineHTML();
   html += `<footer class="src">${sourcesLine()}</footer>`;
   paint(html, scroll);
 }
@@ -512,7 +514,7 @@ $("#views").addEventListener("click", (e) => { const b = e.target.closest("[data
   body.addEventListener("touchstart", (e) => { heldGesture = false; if (e.target.closest("input")) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
   body.addEventListener("touchend", (e) => { if (x0 === null || heldGesture) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) setView(VIEWS[VIEWS.indexOf(state.view) + (dx < 0 ? 1 : -1)]); }, { passive: true });
 }
-const sourcesLine = () => { const n = {}; for (const t of all) n[t.src] = (n[t.src] ?? 0) + 1; return `Sources: ${[["shortlist", "Glide shortlist"], ["incompetech", "Incompetech"], ["ccmixter", "ccMixter"], ["web", "Openverse"]].filter(([k]) => n[k]).map(([k, v]) => `${v} ${n[k].toLocaleString()}`).join(" · ")}. CC0 and CC BY only; no NC, ND or SA. Credit CC BY tracks with the line on each card.`; };
+const sourcesLine = () => { const n = {}; for (const t of all) n[t.src] = (n[t.src] ?? 0) + 1; return `Sources: ${[["shortlist", "Glide shortlist"], ["incompetech", "Incompetech"], ["ccmixter", "ccMixter"], ["web", "Openverse"], ["mine", "yours"]].filter(([k]) => n[k]).map(([k, v]) => `${v} ${n[k].toLocaleString()}`).join(" · ")}. Catalogue tracks are CC0 and CC BY only; no NC, ND or SA; your own music stays on this device. Credit CC BY tracks with the line on each card.`; };
 
 function cardHTML(t) {
   const F = feelById[t.feel], c = tone(t);
@@ -605,6 +607,8 @@ body.addEventListener("click", async (e) => {
   const desc = e.target.closest(".desc"); if (desc) return desc.classList.toggle("open");
   const more = e.target.closest("[data-more]"); if (more) { more.outerHTML = (result.hits.filter((x) => grpOf(x.t) === more.dataset.more).slice(result.ranked ? 40 : 30).map((x, i) => rowHTML(x.t, i)).join("")); return; }
   if (e.target.closest("#web")) return searchWeb();
+  const mn = e.target.closest("[data-mine]"); if (mn) { buzz(5); return mn.dataset.mine === "regrant" ? mineDo("your folder", (B, p) => B.regrantFolder(p).then((r) => ((mine.regrant = false), r))) : mineMenu(); }
+  const mp = e.target.closest("[data-mpl]"); if (mp) { buzz(5); return playMine(mp.dataset.mpl); }
   const ph = e.target.closest("[data-plheart]"); if (ph) { e.stopPropagation(); buzz(8); const p = social.room.playlists.find((x) => x.id === ph.dataset.plheart); return p && social.likePlaylist(p.id, !p.liked); }
   const pp = e.target.closest("[data-plplay]"); if (pp) { buzz(5); return playPlaylist(pp.dataset.plplay); }
   const px = e.target.closest("[data-plx]"); if (px) { buzz(5); await social.unpublish(px.dataset.plx).catch(() => {}); return toast("Playlist unpublished"); }
@@ -629,6 +633,82 @@ function pick(id) {
   renderChips(); renderBody(false); renderPlayer(); saveHash();
 }
 
+// --- your own music (byom.js, loaded on first use; never on the TV) -----------------------------------
+const byom = () => import("./byom.js");
+const mine = { plists: [], regrant: false, busy: "" };
+const mineIds = () => all.filter((t) => t.src === "mine").map((t) => t.id);
+function addMine({ tracks, playlists }, from) {
+  for (const t of tracks) { const o = byId.get(t.id); if (o?.src === "mine") Object.assign(o, { audio: t.audio, art: t.art }); } // a rescan mints fresh blob URLs
+  const fresh = tracks.filter((t) => !byId.has(t.id)).map(prep);
+  if (fresh.length) { all = [...all, ...fresh]; fresh.forEach((t) => byId.set(t.id, t)); A.setTracks(all); $("#count").textContent = all.length.toLocaleString(); }
+  const have = new Set(mine.plists.map((p) => p.id)); mine.plists.push(...playlists.filter((p) => p.ids.length && !have.has(p.id)));
+  const need = fresh.filter((t) => !t.noEmbed); // Spotify's terms bar its data from ML models: words only
+  if (need.length && modelReady()) embed(need.map((t) => t._text)).then((vs) => vs.forEach((v, i) => (need[i].v = v))).catch(() => {});
+  if (from) toast(fresh.length ? `+${fresh.length.toLocaleString()} of your tracks from ${from}` : `Nothing new from ${from}`);
+  run({ fly: !!fresh.length, scroll: false });
+}
+async function mineDo(kind, fn) {
+  if (mine.busy) return toast("Still loading your music…");
+  mine.busy = kind; renderBody(false);
+  const prog = (n, of) => { mine.busy = `${kind} · ${n.toLocaleString()}${of ? " of " + of.toLocaleString() : ""}`; const b = body.querySelector(".minecta small"); if (b) b.textContent = "Loading " + mine.busy + "…"; };
+  try { addMine(await fn(await byom(), prog), kind); } catch (e) { if (e.name !== "AbortError") toast(e.message); }
+  mine.busy = ""; renderBody(false);
+}
+function pickFiles(B, prog) { // phones and browsers without folder handles: a file picker, kept in IndexedDB
+  return new Promise((ok, no) => {
+    const i = Object.assign(document.createElement("input"), { type: "file", multiple: true, accept: "audio/*,.m3u,.m3u8,.xspf,.flac,.opus" });
+    if (!matchMedia("(pointer: coarse)").matches) i.webkitdirectory = true; // desktop Firefox/Safari: a whole folder
+    i.onchange = () => (i.files.length ? B.addFiles(i.files, prog).then(ok, no) : no(Object.assign(new Error(""), { name: "AbortError" })));
+    i.click();
+  });
+}
+async function mineMenu() {
+  const B = await byom(), s = await B.sources(), any = s.dir || s.files || s.plex || s.spotify;
+  const m = document.createElement("div"); m.className = "castmenu";
+  m.innerHTML = `<div class="cm"><b>Bring your own music</b>
+    <button data-m="files"><i>▤</i><span>${B.canKeepFolder() ? "A music folder" : "Music files"}<small>${B.canKeepFolder() ? "Your VLC or music folder · playlists come along" : "Pick songs and .m3u / .xspf playlists"}</small></span></button>
+    <button data-m="plex"><i>▶</i><span>Plex<small>${s.plex ? "Signed in · tap to reload" : "Sign in with plex.tv · streams from your server"}</small></span></button>
+    <button data-m="spotify" ${B.SPOTIFY_ID ? "" : "disabled"}><i>●</i><span>Spotify<small>${!B.SPOTIFY_ID ? "Coming soon" : s.spotify ? "Signed in · tap to reload" : "Liked songs and playlists · plays in Spotify (Premium)"}</small></span></button>
+    ${any ? `<button data-m="forget" class="ghost">Forget my music on this device</button>` : ""}</div>`;
+  document.body.append(m); requestAnimationFrame(() => m.classList.add("on"));
+  const close = () => { m.classList.remove("on"); setTimeout(() => m.remove(), 250); };
+  m.onclick = (e) => {
+    const b = e.target.closest("button"); if (!b && e.target !== m) return; close(); if (!b) return; buzz(5);
+    navigator.storage?.persist?.().catch(() => {}); // a library shouldn't be evicted under storage pressure
+    const k = b.dataset.m;
+    if (k === "files") mineDo("your files", (B, p) => (B.canKeepFolder() ? B.addFolder(p) : pickFiles(B, p))); // the picker must open inside this tap
+    const tab = k === "plex" && !s.plex ? window.open("about:blank", "_blank") : null; // opened inside the tap, or popup blockers eat it
+    if (k === "plex") mineDo("Plex", async (B, p) => { if (!s.plex) { toast("Sign in on the Plex tab, then come back"); await B.plexSignIn((u) => (tab ? (tab.location.href = u) : window.open(u, "_blank"))); } return B.plexLibrary((await B.kv.get("plex")).token, p); });
+    if (k === "spotify") s.spotify ? mineDo("Spotify", (B, p) => B.spotifyLibrary(p)) : B.spotifySignIn();
+    if (k === "forget") forgetMine(B);
+  };
+}
+async function forgetMine(B) {
+  for (const k of ["files", "plex", "spotify"]) await B.forget(k);
+  if (state.sel && byId.get(state.sel)?.src === "mine") { audio.pause(); state.sel = null; }
+  all = all.filter((t) => t.src !== "mine"); byId = new Map(all.map((t) => [t.id, t])); mine.plists = []; mine.regrant = false;
+  A.setTracks(all); $("#count").textContent = all.length.toLocaleString(); toast("Your music is gone from this device"); run({ fly: true });
+}
+const mineHTML = () => {
+  if (cast.isTV) return "";
+  const n = mineIds().length, sub = mine.busy ? `Loading ${mine.busy}…` : mine.regrant ? "Tap to allow your music folder again" : n ? "Add more: a folder, Plex or Spotify" : "Your files or VLC folder, Plex or Spotify";
+  return `<section class="mine"><button class="pcta minecta ${mine.busy ? "busy" : ""}" data-mine="${mine.regrant ? "regrant" : "menu"}"><i></i><span><b>${n ? `Your music · ${n.toLocaleString()}` : "Bring your own music"}</b><small>${sub}</small></span></button>
+    ${n ? `<div class="mpls"><button data-mpl="all">All yours<small>${n}</small></button>${mine.plists.map((p) => `<button data-mpl="${esc(p.id)}">${esc(p.name)}<small>${p.ids.length}</small></button>`).join("")}</div>` : ""}</section>`;
+};
+function playMine(id) {
+  const p = id === "all" ? { id: "all", name: "Your music", ids: mineIds() } : mine.plists.find((x) => x.id === id); if (!p) return;
+  const ids = p.ids.filter((x) => byId.has(x)); if (!ids.length) return toast("None of these songs loaded");
+  state.plist = { id: "mine:" + p.id, name: p.name, ids }; state.radio = null; state.queue = "playlist";
+  toast(`Playing “${p.name}”`); select(ids[0], { play: true, fly: true, keepScroll: true }); renderBody(false);
+}
+// Spotify audio never reaches this page: it plays on your Spotify Connect device; the queue rides along.
+async function spotifyGo(t) {
+  const L = state.plist?.ids ?? [t.id], i = Math.max(0, L.indexOf(t.id)), uris = L.slice(i, i + 50).map((x) => byId.get(x)).filter((x) => x?.provider === "spotify").map((x) => x.uri);
+  try { const B = await byom(), dev = await B.spotifyPlay(uris.length ? uris : [t.uri]); spotify.on = true; toast(`Playing on ${dev}`); } catch (e) { toast(e.message); }
+  renderPlayer();
+}
+const spotify = { on: false };
+
 // --- player -------------------------------------------------------------------------------------
 // ccMixter serves mp3s only with its own Referer, so deployed builds stream them through /api/ccm
 // (tools/sound-atlas-api/ccm.js). Catalogue paths are relative to the catalogue.
@@ -644,8 +724,11 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   else if (from === null && view) state.queue = "library";
   if (view) state.view = lastView = view;
   if (changed && state.queue !== "similar") reseed();
-  if (changed) { audio.src = streamUrl(t); audio.load(); }
-  if (play) audio.play().catch((e) => { if (e.name !== "AbortError") toast("Tap ▶ to play"); });
+  if (changed && spotify.on && t.provider !== "spotify") { spotify.on = false; byom().then((B) => B.spotifyPause()); }
+  if (changed && t.src === "mine" && cast.send.on) { cast.stop(); toast("Your own music plays on this device; the TV has the shared catalogue"); }
+  if (changed) { if (t.audio) { audio.src = streamUrl(t); audio.load(); } else { audio.pause(); audio.removeAttribute("src"); audio.load(); } }
+  if (play && t.provider === "spotify") spotifyGo(t);
+  else if (play) audio.play().catch((e) => { if (e.name !== "AbortError") toast("Tap ▶ to play"); });
   if (changed) {
     nbrs = soundReady() ? neighbours(t, all, 8) : [];
     const top = nbrs[0]?.score || 1;
@@ -657,7 +740,7 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   renderPlayer(); saveHash();
   if (!wide() && sh.target === "peek" && !play) sheetTo("half");
 }
-function togglePlay() { if (!state.sel) { const first = result.hits[0]?.t; return first && select(first.id, { play: true, fly: true }); } audio.paused ? audio.play().catch(() => {}) : audio.pause(); }
+function togglePlay() { if (!state.sel) { const first = result.hits[0]?.t; return first && select(first.id, { play: true, fly: true }); } const cur = byId.get(state.sel); if (cur?.provider === "spotify") return spotify.on ? (spotify.on = false, byom().then((B) => B.spotifyPause()), renderPlayer()) : spotifyGo(cur); audio.paused ? audio.play().catch(() => {}) : audio.pause(); }
 function step(d) {
   if (state.radio && d > 0) { // radio only goes forward; back walks what it already played
     const t = social.radioNext({ kind: state.radio, cur: byId.get(state.sel), all: search(all, { feels: state.feels, bands: state.bands, cc0: state.cc0 }).hits.map((h) => h.t), byId, playedIds, neighbours });
@@ -1030,6 +1113,7 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
   $("#count").textContent = all.length.toLocaleString();
   await document.fonts?.ready;
   A.setTracks(all); A.fitAll(1);
+  if (!cast.isTV && new URLSearchParams(location.search).get("state") === "sa-spotify") await byom().then((B) => B.spotifyReturn()).then(() => (mine.spotifyNew = true), (e) => toast(e.message));
   const t = readHash(), v0 = state.view; setLens(state.lens, false);
   await run({ fly: !!(state.q || state.feels.size || [...state.gs.values()].some((s) => s.size) || state.picksOnly) });
   if (t && byId.has(t)) select(t, { fly: true, view: v0 === "library" ? "track" : v0 }); else renderViews();
@@ -1042,5 +1126,9 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
     renderBody(false);
     if (pendingPlist) { await social.loadPlaylists(); if (social.room.playlists.some((p) => p.id === pendingPlist)) { setView("community"); const p = social.room.playlists.find((x) => x.id === pendingPlist); state.plist = { id: p.id, name: p.name, ids: p.tracks.filter((x) => byId.has(x)) }; toast(`“${p.name}” · tap ▶ to play`); renderBody(false); } }
   });
-  window.__sa = { party, slugs: () => slugs, social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
+  if (!cast.isTV) byom().then(async (B) => {
+    const s = await B.sources(); if (!(s.dir || s.files || s.plex || s.spotify)) return;
+    const r = await B.restore(); mine.regrant = r.needsFolder; addMine(r, mine.spotifyNew ? "Spotify" : null); r.errors.forEach((m) => toast(m));
+  }).catch((e) => toast("Your music: " + e.message));
+  window.__sa = { party, mine, addMine, slugs: () => slugs, social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
 })();
