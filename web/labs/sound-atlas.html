@@ -62,6 +62,22 @@
 </section>
 <div id="toast" class="toast" role="status"></div>
 <audio id="audio" preload="none"></audio>
+<script>
+// TV boot reporter (ES5, runs even if the modules fail to parse on an old TV engine): posts the boot stage
+// and any uncaught error to the cast relay, so a blank TV screen is diagnosable from the phone/host.
+(function () {
+  var room = (location.hash.match(/room=([a-z0-9]{6})/i) || [])[1];
+  if (!/[?&]tv=/.test(location.search) || !room) return;
+  var sid = "tvboot" + Date.now() + "00", errs = [];
+  function send(stage) {
+    try { var x = new XMLHttpRequest(); x.open("POST", "api/social?op=tvpoll"); x.setRequestHeader("content-type", "application/json");
+      x.send(JSON.stringify({ sid: sid, room: room.toLowerCase(), tv: { boot: stage, err: errs.join(" | ").slice(0, 900), ua: navigator.userAgent.slice(0, 200) } })); } catch (e) {}
+  }
+  window.addEventListener("error", function (e) { errs.push((e.message || "error") + " @" + String(e.filename || (e.target && (e.target.src || e.target.href)) || "").split("/").pop() + ":" + (e.lineno || 0)); send("error"); }, true);
+  window.addEventListener("unhandledrejection", function (e) { errs.push("rejection: " + String(e.reason && (e.reason.stack || e.reason)).slice(0, 300)); send("error"); });
+  send("html");
+})();
+</script>
 <script type="module" src="../src/music-atlas/app.js"></script>
 </body>
 </html>
