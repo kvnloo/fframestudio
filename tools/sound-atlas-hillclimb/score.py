@@ -235,11 +235,31 @@ def score(card):
     card["failing_cases"] = [k for k, v in C.items() if v is False]
 
 
+def majority(vals):
+    """Combine N runs of one measurement: booleans by majority, numbers by median, string lists keep
+    items seen in most runs. Timing-sensitive checks flip under host load; one run is not evidence."""
+    v = [x for x in vals if x is not None]
+    if not v: return None
+    if all(isinstance(x, bool) for x in v): return sum(v) * 2 > len(v)
+    if all(isinstance(x, (int, float)) for x in v): return statistics.median(v)
+    if all(isinstance(x, list) and all(isinstance(i, str) for i in x) for x in v):
+        return sorted(i for i in {i for x in v for i in x} if sum(i in x for x in v) * 2 > len(v))
+    return v[0]
+
+
 def main():
     card = {"url": URL, "rubric": RUBRIC["version"], "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "cases": {}, "motion": {}, "haptics": {}, "e2e": {}}
+    runs = int(ARGS[ARGS.index("--runs") + 1]) if "--runs" in ARGS else 3
     with sync_playwright() as p:
         b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
-        gates_and_craft(b, card); interaction_suite(b, card); b.close()
+        gates_and_craft(b, card); base = json.loads(json.dumps(card, default=str)); parts = []
+        for _ in range(runs):
+            c = json.loads(json.dumps(base)); interaction_suite(b, c); parts.append(c)
+        b.close()
+    for sec in ("cases", "motion", "haptics", "perf"):
+        card[sec] = {k: majority([c[sec].get(k) for c in parts]) for k in parts[0][sec]}
+    card["gates"]["console_errors"] = sorted({e for c in parts for e in c["gates"]["console_errors"]})
+    card["runs"] = runs
     if "--skip-e2e" not in ARGS: e2e(card)
     card["gates"]["pass"] = card["gates"]["pass"] and not card["gates"]["console_errors"] and not card["gates"].get("e2e_errors")
     score(card)

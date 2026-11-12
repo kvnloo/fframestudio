@@ -110,12 +110,12 @@
   "track_card_plain_words": {
    "source": "journey 8/9 (rough): engineer-only meter lines",
    "jargon": [
-    "side/mid",
-    "crest",
-    "L/R",
     "Camelot wheel",
-    "pct"
-   ]
+    "LUFS",
+    "spectral centroid",
+    "RMS"
+   ],
+   "note": "The meter lines (pct, side/mid, crest, LRA) are the audiophile layer the owner asked for, and 'pct' carries its own gloss line (582504d). This case catches unglossed engineer terms in the plain-language parts only."
   },
   "credit_or_no_credit_on_card": {
    "source": "standing rule: every CC BY track carries a copyable credit line"
@@ -212,7 +212,8 @@
   "pairwise": "vision critics compare parent vs candidate side by side in both orders; a split is a tie, and a tie is not a win",
   "milestone": "every 3 kept rounds: Opus motion + art panels, then a phone checkpoint for the owner",
   "defect_guard": "the same failure surviving 2 rounds changes mechanism class, not wording",
-  "simplicity": "equal score with less code is a win; a tiny gain that adds ugly code is not"
+  "simplicity": "equal score with less code is a win; a tiny gain that adds ugly code is not",
+  "runs": "score.py runs the interaction suite 3 times: booleans by majority, numbers by median (host load flips single runs)"
  },
  "icp": "Kevin and people like him cutting a launch video: needs a song that fits the vibe, its bpm and key, a licence they can use and a credit line, fast. Also: a first-time visitor opening a shared link on a phone: should understand the map and be playing music in one tap.",
  "jobs": {
