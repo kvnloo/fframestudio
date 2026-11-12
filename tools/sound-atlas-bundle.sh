@@ -10,6 +10,7 @@ mkdir -p "$out/src/music-atlas" "$out/fonts"
 cp "$here"/web/src/music-atlas/*.{js,css} "$out/src/music-atlas/"
 cp "$here"/web/fonts/{ArchivoBlack-Regular,InstrumentSans-Regular,InstrumentSans-Bold,InstrumentSerif-Italic,IBMPlexMono-Regular}.ttf "$here"/web/fonts/*OFL.txt "$out/fonts/"
 sed -e 's#\.\./src/#./src/#g' -e 's#\.\./fonts/#./fonts/#g' "$here/web/labs/sound-atlas.html" > "$out/index.html"
+cp "$here"/web/labs/sound-atlas.webmanifest "$here"/web/labs/sound-atlas-icon.svg "$out/" # installable, launches fullscreen
 cp "$cat_dir/catalog.json" "$cat_dir/vectors.bin" "$out/"
 # Optional listening layer from tools/music-features.py (feat.json + feat.json.clap.bin next to the catalogue).
 [ -f "$cat_dir/feat.json" ] && cp "$cat_dir/feat.json" "$out/sound.json"

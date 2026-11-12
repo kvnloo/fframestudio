@@ -356,6 +356,15 @@ async function copy(text) {
 // --- boot ---------------------------------------------------------------------------------------
 new ResizeObserver(() => { measure(); atlasRefit(); }).observe($(".top")); // chips wrap / fonts load
 addEventListener("resize", () => { measure(); if (!wide()) { sheet.style.transform = `translate3d(0, ${snaps()[sh.target]}px, 0)`; sh.y = snaps()[sh.target]; } else sheet.style.transform = ""; atlasRefit(); });
+// Phones get the whole screen: browsers only grant fullscreen inside a user gesture, so the first
+// tap anywhere asks for it. Skipped when installed (the manifest already launches fullscreen) and
+// never re-asked once the user leaves it (back gesture / swipe), so exiting stays their choice.
+if (matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fullscreen), (display-mode: standalone)").matches && document.documentElement.requestFullscreen) {
+  const go = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen({ navigationUI: "hide" }).catch(() => {}); };
+  addEventListener("click", go, { once: true, capture: true });
+  addEventListener("pointerup", go, { once: true, capture: true }); // a drag on the atlas never makes a click
+}
+
 (async function boot() {
   measure(); sheetPointer();
   sh.y = innerHeight; sheetTo("peek");
