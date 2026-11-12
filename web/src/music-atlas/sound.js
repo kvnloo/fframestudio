@@ -1,0 +1,150 @@
+// Sound Atlas listening layer: what each track measures like (tools/music-features.py) and which
+// tracks sound alike. Values are shown as catalogue percentiles because "bright" only means
+// something next to everything else; neighbours blend CLAP timbre with tempo, key and texture,
+// so a creator can follow a sound across feels instead of staying inside one wedge.
+const DIM = 512;
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+// Scalar descriptors: [key, label, low word, high word, value formatter].
+export const METERS = [
+  ["bright", "Brightness", "dark", "bright", (f) => `${(f.bright / 1000).toFixed(1)} kHz centroid`],
+  ["clarity", "Clarity", "washy", "separated", (f) => `${f.clarity} dB contrast`],
+  ["width", "Soundstage", "narrow", "wide", (f) => `side/mid ${f.width.toFixed(2)} · L/R ${f.corr.toFixed(2)}`],
+  ["busy", "Busyness", "sparse", "dense", (f) => `${f.busy} onsets/s`],
+  ["lra", "Dynamics", "flat", "breathing", (f) => `LRA ${(+f.lra).toFixed(1)} dB · crest ${(+f.crest).toFixed(1)} dB`],
+  ["low", "Low end", "light", "heavy", (f) => `${Math.round(f.low * 100)}% below 120 Hz`],
+];
+const pctKeys = ["tempo", ...METERS.map((m) => m[0])];
+// Listed BPM wins where a source publishes one: measured tempo matched Incompetech's within 4% on
+// 24/40 tracks (34/40 allowing half/double time), so it fills gaps rather than overriding.
+export const bpmOf = (t) => t.bpm || (t.f?.tempo ? Math.round(t.f.tempo) : null);
+const val = (t, k) => (k === "tempo" ? bpmOf(t) : t.f?.[k]);
+let sorted = {}, clapNorm = null, ready = false;
+
+const pct = (k, v) => { const a = sorted[k]; if (!a?.length || v == null) return null; let lo = 0, hi = a.length; while (lo < hi) { const m = (lo + hi) >> 1; a[m] < v ? (lo = m + 1) : (hi = m); } return lo / a.length; };
+
+export async function loadSound(base, tracks) {
+  const [js, buf] = await Promise.all([
+    fetch(base + "sound.json").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    fetch(base + "sound.bin").then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null),
+  ]);
+  if (!js) return false;
+  const byId = new Map(tracks.map((t) => [t.id, t]));
+  const vec = buf && js.dims && buf.byteLength === js.ids.length * js.dims ? new Int8Array(buf) : null;
+  js.ids.forEach((id, i) => {
+    const t = byId.get(id), f = js.features[id]; if (!t || !f) return;
+    t.f = f;
+    if (vec) t.cv = vec.subarray(i * DIM, (i + 1) * DIM);
+  });
+  for (const k of pctKeys) sorted[k] = tracks.filter((t) => t.f).map((t) => val(t, k)).filter((v) => v != null).sort((a, b) => a - b);
+  for (const t of tracks) if (t.f) {
+    t.p = Object.fromEntries(pctKeys.map((k) => [k, pct(k, val(t, k))]));
+    t.hay.meta += " " + words(t).join(" ").toLowerCase(); // "piano", "8a", "wide", "a minor" now search
+  }
+  if (vec) { clapNorm = new Map(); for (const t of tracks) if (t.cv) { let n = 0; for (let j = 0; j < DIM; j++) n += t.cv[j] * t.cv[j]; clapNorm.set(t, Math.sqrt(n) || 1); } }
+  ready = true;
+  return true;
+}
+export const soundReady = () => ready;
+
+// Plain words for a track's measurements, used for search and the card's one-line summary.
+function words(t) {
+  const f = t.f, p = t.p, w = [f.key, f.camelot, f.timbre, ...(f.inst ?? []).map((x) => x[0])];
+  const ends = (k, lo, hi) => (p[k] == null ? null : p[k] > 0.75 ? hi : p[k] < 0.25 ? lo : null);
+  w.push(ends("bright", "dark", "bright"), ends("width", "narrow mono", "wide stereo"), ends("busy", "sparse minimal", "busy dense"), ends("clarity", "washy", "clear crisp"), ends("lra", "compressed", "dynamic"), ends("low", "light", "bassy"));
+  return w.filter(Boolean);
+}
+export const summary = (t) => (t.f ? words(t).slice(2, 7).join(" · ") : "");
+
+// --- harmony ------------------------------------------------------------------------------------
+const cam = (c) => (c ? { n: +c.slice(0, -1), l: c.slice(-1) } : null);
+// Camelot rule DJs mix by: same code, +-1 on the wheel, or the relative major/minor.
+export function keyRelation(a, b) {
+  const x = cam(a), y = cam(b); if (!x || !y) return null;
+  if (x.n === y.n && x.l === y.l) return "same key";
+  if (x.l === y.l && ((x.n - y.n + 12) % 12 === 1 || (y.n - x.n + 12) % 12 === 1)) return "next on the wheel";
+  if (x.n === y.n) return "relative " + (y.l === "B" ? "major" : "minor");
+  return null;
+}
+export const mixesWith = (c) => { const x = cam(c); if (!x) return []; const r = (n) => ((n + 11) % 12) + 1; return [`${r(x.n - 1)}${x.l}`, `${r(x.n + 1)}${x.l}`, `${x.n}${x.l === "A" ? "B" : "A"}`]; };
+
+// Tempo distance in octaves, folding half and double time (a 70 bpm track rides a 140 cut).
+const tempoGap = (a, b) => Math.min(...[1, 2, 0.5].map((m) => Math.abs(Math.log2((a * m) / b))));
+
+// --- neighbours ---------------------------------------------------------------------------------
+export function neighbours(t, pool, k = 8) {
+  if (!t?.f) return [];
+  const na = t.cv && clapNorm?.get(t);
+  const rows = [];
+  for (const u of pool) {
+    if (u === t || !u.f) continue;
+    let timbre = null;
+    if (na && u.cv) { let d = 0; for (let j = 0; j < DIM; j++) d += t.cv[j] * u.cv[j]; timbre = d / (na * clapNorm.get(u)); }
+    const tg = bpmOf(t) && bpmOf(u) ? tempoGap(bpmOf(t), bpmOf(u)) : 1;
+    const sTempo = Math.exp(-((tg / 0.07) ** 2)); // ~5% apart still scores well: inside a DJ's pitch range
+    const rel = keyRelation(t.f.camelot, u.f.camelot), sKey = rel === "same key" ? 1 : rel ? 0.7 : 0;
+    let tex = 0, n = 0; for (const m of ["bright", "busy", "width", "clarity"]) if (t.p[m] != null && u.p[m] != null) { tex += 1 - Math.abs(t.p[m] - u.p[m]); n++; }
+    const sTex = n ? tex / n : 0;
+    rows.push({ t: u, timbre, sTempo, sKey, sTex, rel, tg });
+  }
+  // CLAP cosines bunch in a narrow band; rescale them across this pool before blending.
+  const ts = rows.map((r) => r.timbre).filter((x) => x != null).sort((a, b) => a - b);
+  const lo = ts[Math.floor(ts.length * 0.5)] ?? 0, hi = ts[ts.length - 1] ?? 1;
+  for (const r of rows) {
+    r.sTimbre = r.timbre == null ? null : clamp((r.timbre - lo) / Math.max(1e-6, hi - lo), 0, 1);
+    r.score = r.sTimbre == null ? 0.45 * r.sTex + 0.35 * r.sTempo + 0.2 * r.sKey : 0.55 * r.sTimbre + 0.18 * r.sTempo + 0.12 * r.sKey + 0.15 * r.sTex;
+  }
+  rows.sort((a, b) => b.score - a.score);
+  return rows.slice(0, k).map((r) => ({ ...r, why: why(t, r) }));
+}
+function why(t, r) {
+  const u = r.t, out = [];
+  if (r.sTimbre != null && r.sTimbre > 0.6) {
+    const shared = (u.f.inst ?? []).map((x) => x[0]).filter((x) => (t.f.inst ?? []).some((y) => y[0] === x));
+    out.push(shared.length ? `same ${shared.slice(0, 2).join(" + ")}` : "similar timbre");
+  }
+  if (r.tg < 0.04) out.push(Math.abs(Math.log2(bpmOf(t) / bpmOf(u))) > 0.5 ? `half/double time ${bpmOf(u)}` : `${bpmOf(u)} bpm`);
+  if (r.rel) out.push(`${u.f.camelot} ${r.rel}`);
+  if (!out.length) out.push(r.sTex > 0.75 ? "same texture" : r.sTimbre != null && r.sTimbre > 0.4 ? "similar timbre" : "close overall");
+  return out.slice(0, 3).join(" · ");
+}
+
+// --- lenses: recolour the atlas by a measurement ---------------------------------------------------
+// Colours are quantised so the renderer still batches dots into a handful of paths.
+const ramp = (stops, x) => { x = clamp(x, 0, 1) * (stops.length - 1); const i = Math.min(stops.length - 2, Math.floor(x)), k = x - i; const a = stops[i], b = stops[i + 1]; return `rgb(${a.map((v, j) => Math.round(v + (b[j] - v) * k)).join(",")})`; };
+const q = (x) => Math.round(clamp(x, 0, 1) * 10) / 10;
+const COOL_WARM = [[64, 120, 220], [95, 211, 220], [236, 232, 223], [244, 178, 90], [234, 92, 84]];
+const DARK_LIGHT = [[110, 70, 40], [196, 132, 60], [240, 214, 150], [220, 246, 255]];
+const QUIET_LOUD = [[70, 92, 110], [95, 211, 220], [255, 214, 102], [255, 110, 150]];
+export const LENSES = [
+  { id: "feel", name: "Feel" },
+  { id: "key", name: "Key", legend: "Camelot wheel · A minor, B major", color: (t) => { const c = cam(t.f?.camelot); return c ? `hsl(${(c.n - 1) * 30},${c.l === "B" ? 70 : 55}%,${c.l === "B" ? 66 : 52}%)` : null; } },
+  { id: "tempo", name: "Tempo", legend: "slow ↔ fast", color: (t) => (t.p?.tempo == null ? null : ramp(COOL_WARM, q(t.p.tempo))) },
+  { id: "bright", name: "Bright", legend: "dark ↔ bright", color: (t) => (t.p?.bright == null ? null : ramp(DARK_LIGHT, q(t.p.bright))) },
+  { id: "busy", name: "Busy", legend: "sparse ↔ dense", color: (t) => (t.p?.busy == null ? null : ramp(QUIET_LOUD, q(t.p.busy))) },
+  { id: "width", name: "Space", legend: "narrow ↔ wide stereo", color: (t) => (t.p?.width == null ? null : ramp(COOL_WARM, q(t.p.width))) },
+];
+
+// --- card ----------------------------------------------------------------------------------------
+export function profileHTML(t) {
+  const f = t.f; if (!f) return "";
+  const src = t.bpm ? (Math.abs(Math.log2(t.bpm / f.tempo)) > 0.03 ? `listed · heard ${Math.round(f.tempo)}` : "listed · confirmed") : `measured${f.tempoConf < 0.25 ? " · loose" : ""}`;
+  const meter = ([k, label, lo, hi, fmt]) => {
+    const p = t.p[k]; if (p == null || f[k] == null) return "";
+    const extra = k === "busy" && f.busyBands ? `<span class="bb">${["low", "mid", "high"].map((b) => `<i style="--h:${clamp(f.busyBands[b] / 9, 0.04, 1).toFixed(2)}" title="${b} ${f.busyBands[b]}/s"></i>`).join("")}</span>`
+      : k === "width" ? `<svg class="stage" viewBox="0 0 44 22" aria-hidden="true"><ellipse cx="22" cy="11" rx="${(4 + clamp(f.width, 0, 1) * 17).toFixed(1)}" ry="8" /><circle cx="22" cy="11" r="1.6" /></svg>` : "";
+    return `<div class="mt"><span class="ml">${label}</span><span class="mb"><i style="left:${(p * 100).toFixed(1)}%"></i></span>${extra}<span class="mw"><span>${lo}</span><b>${Math.round(p * 100)}th pct</b><span>${hi}</span></span><span class="mv">${esc(fmt(f))}</span></div>`;
+  };
+  const bands = (f.bands ?? []).map((d, i) => `<i style="--n:${i};--h:${clamp((d + 40) / 40, 0.03, 1).toFixed(2)}" title="${[32, 63, 125, 250, 500, "1k", "2k", "4k", "8k", "16k"][i]} Hz ${d} dB"></i>`).join("");
+  const inst = (f.inst ?? []).slice(0, 4).map((x) => `<span>${esc(x[0])}</span>`).join("");
+  return `<section class="snd">
+    <div class="big">
+      <div><b>${bpmOf(t)}</b><small>bpm</small><small>${src}</small></div>
+      <div><b>${esc(f.camelot)}</b><small>${esc(f.key)}${f.keyConf < 0.5 ? " · ambiguous" : ""}</small><small>mixes with ${mixesWith(f.camelot).join(" ")}</small></div>
+      <div class="spec" title="Tonal balance, 32 Hz–16 kHz octaves">${bands}<small>32 Hz · tonal balance · 16k</small></div>
+    </div>
+    ${inst || f.timbre ? `<div class="inst">${inst}${f.timbre ? `<em>${esc(f.timbre)}</em>` : ""}</div>` : ""}
+    <div class="meters">${METERS.map(meter).join("")}</div>
+  </section>`;
+}

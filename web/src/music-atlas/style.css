@@ -152,3 +152,51 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   .player { padding-top: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; } }
+
+/* --- lens row: what the dots' colour means -------------------------------------------------- */
+.lens { display: flex; gap: 4px; align-items: center; overflow-x: auto; padding: 0 12px 10px; margin: -4px -12px 0; scrollbar-width: none; }
+.lens:empty { display: none; }
+.lens::-webkit-scrollbar { display: none; }
+.lens .lk { flex: none; font: 10px "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); margin-right: 4px; }
+.lens button { flex: none; height: 26px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line2); background: var(--panel); color: #cfcac0; font: 600 12px "Instrument Sans", sans-serif; transition: transform .2s var(--spring), background .2s, color .2s; }
+.lens button:active { transform: scale(.93); }
+.lens button.on { background: var(--ink); color: #0d1112; border-color: var(--ink); }
+.lens .lg { flex: none; display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; font: 10px "IBM Plex Mono", monospace; color: var(--mute); animation: rise .35s var(--ease) backwards; }
+.lens .lg i { width: 44px; height: 6px; border-radius: 3px; }
+.lg-key i { background: linear-gradient(90deg, hsl(0 60% 58%), hsl(60 60% 58%), hsl(120 60% 58%), hsl(180 60% 58%), hsl(240 60% 58%), hsl(300 60% 58%), hsl(360 60% 58%)); }
+.lg-tempo i, .lg-width i { background: linear-gradient(90deg, #4078dc, #5fd3dc, #ece8df, #f4b25a, #ea5c54); }
+.lg-bright i { background: linear-gradient(90deg, #6e4628, #c4843c, #f0d696, #dcf6ff); }
+.lg-busy i { background: linear-gradient(90deg, #465c6e, #5fd3dc, #ffd666, #ff6e96); }
+
+/* --- sound profile on the card (Aural's vocabulary: tonal balance, soundstage, band activity) -- */
+.snd { margin-top: 12px; }
+.snd .big { display: grid; grid-template-columns: auto auto 1fr; gap: 16px; align-items: start; }
+.snd .big > div { min-width: 0; }
+.snd .big b { display: block; font: 30px/1 "Archivo Black", sans-serif; letter-spacing: -.01em; }
+.snd .big small { display: block; font: 10px "IBM Plex Mono", monospace; color: var(--mute); margin-top: 4px; white-space: nowrap; }
+.spec { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; height: 46px; align-items: end; }
+.spec i { height: 100%; border-radius: 2px; background: color-mix(in srgb, var(--c) 75%, transparent); transform: scaleY(var(--h)); transform-origin: bottom; animation: grow .6s var(--ease) backwards; animation-delay: calc(var(--n, 0) * 30ms); }
+.spec small { grid-column: 1 / -1; text-align: center; }
+@keyframes grow { from { transform: scaleY(0); } }
+.inst { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-top: 12px; }
+.inst span { font: 600 11px "Instrument Sans", sans-serif; padding: 3px 8px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--c) 45%, var(--line2)); }
+.inst em { font: italic 16px "Instrument Serif", serif; color: #c9c4ba; margin-left: 4px; }
+.meters { margin-top: 10px; }
+.mt { display: grid; grid-template-columns: 82px 1fr 44px; grid-template-rows: auto auto auto; gap: 3px 10px; align-items: center; padding: 7px 0; border-bottom: 1px dashed var(--line2); }
+.mt .ml { font: 10px "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
+.mt .mb { position: relative; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--line2), color-mix(in srgb, var(--c) 55%, var(--line2))); }
+.mt .mb i { position: absolute; left: 0; top: -4px; width: 0; height: 14px; }
+.mt .mb i::after { content: ""; position: absolute; left: -2px; width: 4px; height: 14px; border-radius: 2px; background: var(--ink); box-shadow: 0 0 0 2px var(--panel2); }
+.mt .mw { grid-column: 2; display: flex; justify-content: space-between; font: 9px "IBM Plex Mono", monospace; color: var(--mute); }
+.mt .mw b { font-weight: 400; color: var(--ink); opacity: .75; }
+.mt .mv { grid-column: 1 / -1; grid-row: 3; font: 10px "IBM Plex Mono", monospace; color: #a39e94; }
+.mt .bb { grid-row: 1 / 3; align-self: center; grid-column: 3; display: flex; gap: 2px; height: 22px; align-items: end; }
+.mt .bb i { width: 6px; height: 100%; border-radius: 1px; background: var(--c); transform: scaleY(var(--h)); transform-origin: bottom; }
+.mt .stage { grid-row: 1 / 3; align-self: center; grid-column: 3; width: 44px; height: 22px; }
+.stage ellipse { fill: color-mix(in srgb, var(--c) 18%, transparent); stroke: var(--c); stroke-width: 1.2; }
+.stage circle { fill: var(--ink); }
+.near { margin-top: 14px; }
+.near h4 { margin: 0 0 4px; font: 13px "Archivo Black", sans-serif; letter-spacing: .03em; text-transform: uppercase; color: var(--c); display: flex; gap: 8px; align-items: baseline; }
+.near h4 small { font: 10px "IBM Plex Mono", monospace; letter-spacing: 0; text-transform: none; color: var(--mute); }
+.trk .why { display: block; font: italic 13px "Instrument Serif", serif; color: color-mix(in srgb, var(--c) 70%, var(--ink)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (prefers-reduced-motion: reduce) { .spec i, .lens .lg { animation: none; } }

@@ -61,6 +61,7 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
   let ctx = screen, layerKey = "", gen = 0;
   let g = layout([]), dpr = 1, W = 0, H = 0, theme = "dark";
   const cam = { x: 0, y: 0, s: 0.3 };
+  let lens = null, links = null, linkK = 1;
   let tween = null, vel = null, lit = null, focusId = "root", featured = [], playing = null, bloom0 = performance.now(), raf = 0, last = performance.now();
   const pal = () => (theme === "dark"
     ? { bg: "#0d1112", ink: "#ece8df", mute: "#8f8a80", dim: "#39403f", line: "#2a3033", panel: "rgba(16,21,22,.86)" }
@@ -97,6 +98,10 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
   function setFeatured(ids) { featured = ids.slice(0, 8); kick(); }
   function setPlaying(p) { playing = p; kick(); }
   function setTheme(t) { theme = t; gen++; kick(); }
+  // Lens: recolour lit tracks by a measurement (key, tempo, brightness...) instead of their feel.
+  function setLens(fn) { lens = fn; gen++; kick(); }
+  // Links: "sounds like" arcs from one track to its neighbours, drawn in over ~0.6 s.
+  function setLinks(from, list) { links = from && list?.length ? { from, list, t0: performance.now() } : null; gen++; kick(); }
 
   // --- camera -------------------------------------------------------------------------------
   const R = () => region?.() ?? { x: 0, y: 0, w: W, h: H };
@@ -216,6 +221,9 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
     }
     const bt = reduced ? 1 : (now - bloom0) / 1000;
     if (bt < 1.4) busy = true;
+    const lk = links ? clamp((now - links.t0) / (reduced ? 1 : 650), 0, 1) : 1;
+    if (lk < 1) busy = true;
+    linkK = easeIO(lk);
     draw(now, bt, busy);
     if (busy || (playing && !playing.paused)) kick();
   }
@@ -265,7 +273,20 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
       else { const rm = (Math.hypot(X(p), Y(p)) + Math.hypot(X(n), Y(n))) / 2; ctx.moveTo(X(p), Y(p)); ctx.bezierCurveTo(Math.cos(p.a) * rm, Math.sin(p.a) * rm, Math.cos(n.a) * rm, Math.sin(n.a) * rm, X(n), Y(n)); }
       ctx.stroke();
     }
-    // Tracks. Dim ones are grey; lit ones carry their feel colour.
+    // Sounds-like links: chords bent toward the centre, so cross-feel neighbours visibly span the ring.
+    const ln = links && g.byId.get(links.from);
+    if (ln) {
+      const x0 = X(ln), y0 = Y(ln);
+      for (const { id, w } of links.list) {
+        const m = g.byId.get(id); if (!m) continue;
+        const x1 = X(m), y1 = Y(m), bx = (x0 + x1) * 0.22, by = (y0 + y1) * 0.22; // control point pulled to the hub
+        // de Casteljau split at linkK draws the arc in from the source.
+        const k = linkK, ax = x0 + (bx - x0) * k, ay = y0 + (by - y0) * k, cx2 = bx + (x1 - bx) * k, cy2 = by + (y1 - by) * k;
+        ctx.globalAlpha = 0.25 + 0.6 * w; ctx.strokeStyle = lens?.(m.t) ?? col(m.feel); ctx.lineWidth = (1 + 1.6 * w) / Math.max(s, 0.35);
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(ax, ay, ax + (cx2 - ax) * k, ay + (cy2 - ay) * k); ctx.stroke();
+      }
+    }
+    // Tracks. Dim ones are grey; lit ones carry their feel colour (or the lens colour).
     const g4 = gr4(4);
     // Batched: one path per colour and alpha step instead of a fill per dot (~1.8k dots).
     const buckets = new Map(), rings = [];
@@ -273,7 +294,7 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
       const x = n.dx * g4, y = n.dy * g4; if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue;
       const a = n.al ?? 1; if (a < 0.02) continue;
       const on = a > 0.5, r = (n.t.src === "shortlist" && on ? DOT * 1.25 : DOT) * (0.6 + 0.4 * a);
-      const k = (on ? col(n.feel) : P.dim) + "|" + (on ? Math.round(a * 8) / 8 : 0.55);
+      const k = (on ? (lens?.(n.t) ?? col(n.feel)) : P.dim) + "|" + (on ? Math.round(a * 8) / 8 : 0.55);
       let b = buckets.get(k); if (!b) buckets.set(k, (b = []));
       b.push(x, y, r);
       if (n.t.src === "web" && on) rings.push(x, y, r);
@@ -335,7 +356,7 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1; ctx.textBaseline = "middle";
     // Track pills: playing, focused and the top results, when zoomed in enough to place them.
-    const pills = [...new Set([playing?.id, focusId, ...(s > 0.7 ? featured : [])])].map((id) => g.byId.get(id)).filter((n) => n?.level === 4);
+    const pills = [...new Set([playing?.id, focusId, ...(links && linkK > 0.9 ? links.list.slice(0, 5).map((l) => l.id) : []), ...(s > 0.7 ? featured : [])])].map((id) => g.byId.get(id)).filter((n) => n?.level === 4);
     ctx.font = "600 12px 'Instrument Sans', sans-serif";
     const placed = [];
     for (const n of pills) {
@@ -360,7 +381,7 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
   resize();
   return {
     get graph() { return g; }, get cam() { return cam; },
-    setTracks, setLit, setFeatured, setPlaying, setTheme, focus, flyToIds, fitAll, kick, resize,
+    setTracks, setLit, setFeatured, setPlaying, setTheme, setLens, setLinks, focus, flyToIds, fitAll, kick, resize,
     get focusId() { return focusId; }, set focusId(v) { focusId = v; kick(); },
   };
 }

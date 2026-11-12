@@ -4,6 +4,7 @@
 import { createAtlas } from "./atlas.js";
 import { FEELS, BPM_BANDS, LEVELS, feelById, familyById, styleName } from "./taxonomy.js";
 import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine } from "./search.js";
+import { loadSound, soundReady, neighbours, profileHTML, LENSES, bpmOf } from "./sound.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -14,8 +15,8 @@ const wide = () => geo.W >= 900;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const base = new URLSearchParams(location.search).get("catalog") ?? document.body.dataset.catalog ?? "./";
-const state = { q: "", feels: new Set(), bands: new Set(), cc0: false, picksOnly: false, sel: null, picks: new Set(JSON.parse(localStorage.getItem("sa-picks") || "[]")) };
-let all = [], byId = new Map(), result = { hits: [], ranked: false }, qv = null, like = null, share = null, webBusy = false;
+const state = { lens: "feel", q: "", feels: new Set(), bands: new Set(), cc0: false, picksOnly: false, sel: null, picks: new Set(JSON.parse(localStorage.getItem("sa-picks") || "[]")) };
+let all = [], byId = new Map(), why = new Map(), nbrs = [], result = { hits: [], ranked: false }, qv = null, like = null, share = null, webBusy = false;
 
 // --- elements ---------------------------------------------------------------------------------
 const canvas = $("#atlas"), sheet = $("#sheet"), body = $("#body"), q = $("#q"), chips = $("#chips"), audio = $("#audio");
@@ -87,7 +88,19 @@ const A = createAtlas({
   },
 });
 let refitT = 0;
-function atlasRefit() { clearTimeout(refitT); refitT = setTimeout(() => { if (state.sel) A.focus(state.sel, 600); else if (result.ranked) A.flyToIds(result.hits.slice(0, 40).map((h) => h.t.id), 600); else A.focus(A.focusId, 600); }, 30); }
+// A selected track with neighbours frames its whole "sounds like" constellation, not just itself.
+const focusSel = (ms) => { if (!nbrs.length) return A.focus(state.sel, ms); A.flyToIds([state.sel, ...nbrs.slice(0, 6).map((n) => n.t.id)], ms); A.focusId = state.sel; };
+function atlasRefit() { clearTimeout(refitT); refitT = setTimeout(() => { if (state.sel) focusSel(600); else if (result.ranked) A.flyToIds(result.hits.slice(0, 40).map((h) => h.t.id), 600); else A.focus(A.focusId, 600); }, 30); }
+
+// --- lenses: what the dots' colour means ----------------------------------------------------------
+const lensNav = $("#lens");
+function setLens(id, save = true) {
+  const L = LENSES.find((x) => x.id === id) ?? LENSES[0]; state.lens = L.id;
+  A.setLens(L.color ?? null);
+  lensNav.innerHTML = soundReady() ? `<span class="lk">Colour</span>${LENSES.map((x) => `<button class="${x.id === L.id ? "on" : ""}" data-lens="${x.id}">${x.name}</button>`).join("")}${L.legend ? `<span class="lg lg-${L.id}"><i></i>${L.legend}</span>` : ""}` : "";
+  if (save) saveHash();
+}
+lensNav.addEventListener("click", (e) => { const b = e.target.closest("[data-lens]"); if (b) { buzz(4); setLens(b.dataset.lens); } });
 
 // --- chips --------------------------------------------------------------------------------------
 function renderChips() {
@@ -117,7 +130,13 @@ async function run({ fly = false, scroll = true } = {}) {
   qv = null;
   if (state.q && modelReady()) qv = (await embed([state.q]))?.[0] ?? null;
   if (my !== seq) return;
-  result = search(all, { q: state.q, qv, like, feels: state.feels, bands: state.bands, cc0: state.cc0, picks: state.picksOnly ? state.picks : null });
+  const facets = { feels: state.feels, bands: state.bands, cc0: state.cc0, picks: state.picksOnly ? state.picks : null };
+  why = new Map();
+  if (like?.f) { // "More like this" listens: CLAP timbre + tempo + key + texture, not the words
+    const near = neighbours(like, search(all, facets).hits.map((h) => h.t), 80);
+    near.forEach((n) => why.set(n.t.id, n.why));
+    result = { hits: [{ t: like, score: 9 }, ...near.map((n) => ({ t: n.t, score: n.score }))], ranked: true };
+  } else result = search(all, { q: state.q, qv, like, ...facets });
   const filtered = result.ranked || state.feels.size || state.bands.size || state.cc0 || state.picksOnly;
   A.setLit(filtered ? result.hits.map((h) => h.t.id) : null);
   A.setFeatured(result.ranked ? result.hits.slice(0, 8).map((h) => h.t.id) : []);
@@ -151,11 +170,11 @@ const ICON = {
   pause: `<svg viewBox="0 0 20 20"><rect x="5" y="4.5" width="3.4" height="11" rx="1" fill="currentColor"/><rect x="11.6" y="4.5" width="3.4" height="11" rx="1" fill="currentColor"/></svg>`,
   heart: `<svg viewBox="0 0 20 20"><path d="M10 16.5s-6-3.7-6-8.2A3.3 3.3 0 0 1 10 6a3.3 3.3 0 0 1 6 2.3c0 4.5-6 8.2-6 8.2z" fill="currentColor"/></svg>`,
 };
-const rowHTML = (t, i) => {
+const rowHTML = (t, i, reason) => {
   const playing = state.sel === t.id && !audio.paused;
   return `<button class="trk ${state.sel === t.id ? "sel" : ""} ${playing ? "playing" : ""} ${i < 14 && animateRows ? "" : "q"}" data-id="${esc(t.id)}" style="--c:${night(t.feel)};--i:${i};--beat:${(60 / (t.bpm || 100)).toFixed(3)}s">
     <span class="pl">${playing ? `<span class="eq"><i></i><i></i><i></i></span>` : ICON.play}</span>
-    <span class="tt"><b>${esc(t.title)}</b><small>${esc(t.author)} · ${esc(styleName(t.family, t.style))}${t.bpm ? ` · ${t.bpm} bpm` : ""}${t.src === "web" ? ` · ${esc(t.provider)}` : ""}</small></span>
+    <span class="tt"><b>${esc(t.title)}</b><small>${esc(t.author)} · ${esc(styleName(t.family, t.style))}${t.f ? ` · ${bpmOf(t)} bpm · ${t.f.camelot}` : t.bpm ? ` · ${t.bpm} bpm` : ""}${t.src === "web" ? ` · ${esc(t.provider)}` : ""}</small>${(reason ?? why.get(t.id)) ? `<em class="why">${esc(reason ?? why.get(t.id))}</em>` : ""}</span>
     <span class="du">${mmss(t.dur)}</span><span class="hv ${state.picks.has(t.id) ? "on" : ""}" data-heart="${esc(t.id)}" role="button" aria-label="Pick">${ICON.heart}</span></button>`;
 };
 let animateRows = true;
@@ -164,19 +183,21 @@ function renderBody(scroll = true) {
   const hits = result.hits;
   const sel = state.sel && byId.get(state.sel);
   let html = sel ? cardHTML(sel) : "";
-  const label = like ? `More like “${esc(like.title)}”` : state.q ? `“${esc(state.q)}”` : state.feels.size || state.bands.size || state.cc0 || state.picksOnly ? "Filtered" : "Every track";
-  html += `<div class="sum"><b>${label}</b><span>${hits.length.toLocaleString()} ${hits.length === 1 ? "track" : "tracks"}${result.ranked ? (qv || like ? " · semantic" : " · words") : ""}</span></div>`;
+  const label = like ? `Sounds like “${esc(like.title)}”` : state.q ? `“${esc(state.q)}”` : state.feels.size || state.bands.size || state.cc0 || state.picksOnly ? "Filtered" : "Every track";
+  html += `<div class="sum"><b>${label}</b><span>${hits.length.toLocaleString()} ${hits.length === 1 ? "track" : "tracks"}${result.ranked ? (like?.f ? " · by ear" : qv || like ? " · semantic" : " · words") : ""}</span></div>`;
   // Group by feel (the atlas's first ring); ranked searches keep their order inside each group and
   // order groups by their best hit, so the strongest vibe comes first.
   const groups = new Map();
   hits.forEach((h, i) => { const f = h.t.feel; if (!groups.has(f)) groups.set(f, { f, best: i, rows: [] }); groups.get(f).rows.push(h.t); });
   const order = [...groups.values()].sort((a, b) => (result.ranked ? a.best - b.best : FEELS.findIndex((F) => F.id === a.f) - FEELS.findIndex((F) => F.id === b.f)));
   const LIM = result.ranked ? 40 : 30;
-  for (const g of order) {
+  // By-ear results stay one ranked list: the point is that a neighbour can live in another feel.
+  if (like?.f) html += `<section class="grp" style="--c:${night(like.feel)}"><h3><i></i>By ear<small>CLAP timbre · tempo · Camelot · texture</small></h3>${hits.slice(0, 80).map((h, i) => rowHTML(h.t, i)).join("")}</section>`;
+  else for (const g of order) {
     const F = feelById[g.f], bpms = g.rows.map((t) => t.bpm).filter(Boolean), more = g.rows.length - LIM;
     const styles = [...new Set(g.rows.slice(0, 40).map((t) => styleName(t.family, t.style)))].slice(0, 3).join(" · ");
     html += `<section class="grp" data-feel="${g.f}" style="--c:${F.night}"><h3 data-focus="f:${g.f}"><i></i>${F.name}<small>${g.rows.length}${bpms.length ? ` · ${Math.min(...bpms)}–${Math.max(...bpms)} bpm` : ""}</small><em>${esc(styles)}</em></h3>
-      ${g.rows.slice(0, g.open ? 400 : LIM).map(rowHTML).join("")}${more > 0 ? `<button class="more" data-more="${g.f}">Show ${more} more ${F.name.toLowerCase()} tracks</button>` : ""}</section>`;
+      ${g.rows.slice(0, g.open ? 400 : LIM).map((t, i) => rowHTML(t, i)).join("")}${more > 0 ? `<button class="more" data-more="${g.f}">Show ${more} more ${F.name.toLowerCase()} tracks</button>` : ""}</section>`;
   }
   if (!hits.length) html += `<div class="empty">Nothing in the catalogue matches. ${state.q ? "Try the open web below, or fewer filters." : "Try fewer filters."}</div>`;
   if (state.q) html += `<button class="web ${webBusy ? "busy" : ""}" id="web">${webBusy ? "Searching the open web…" : `Search the open web for “${esc(state.q)}”`}<small>Openverse · Jamendo, Freesound, Wikimedia · CC0 / CC BY only</small></button>`;
@@ -196,6 +217,8 @@ function cardHTML(t) {
   ];
   return `<article class="card" style="--c:${c}">
     <div class="lin">${LEVELS.map((L, i) => `<div class="lv"><b>0${i + 1}</b><span class="k">${L}</span><span class="v">${i === 3 ? rows[i][0] : esc(rows[i][0])}</span>${rows[i][1] ? `<span class="s">${i === 3 ? rows[i][1] : esc(rows[i][1])}</span>` : ""}</div>`).join("")}</div>
+    ${profileHTML(t)}
+    ${nbrs.length ? `<section class="near"><h4>Sounds like<small>timbre · tempo · key · texture</small></h4>${nbrs.slice(0, 6).map((n, i) => rowHTML(n.t, i, n.why)).join("")}</section>` : ""}
     ${t.tags?.length ? `<div class="tags">${t.tags.slice(0, 8).map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : ""}
     ${t.desc ? `<p class="desc">${esc(t.desc)}</p>` : ""}
     <div class="lic"><span class="badge">${esc(t.license)}</span><code>${esc(creditLine(t))}</code></div>
@@ -217,7 +240,7 @@ body.addEventListener("click", async (e) => {
   if (!act || !t) return;
   if (act === "pick") pick(t.id);
   if (act === "credit") { await copy(creditLine(t)); toast("Credit line copied"); }
-  if (act === "like") { warmModel(); if (!t.v) return toast("Semantic search is still loading"); like = t; q.value = ""; run({ fly: true }); toast(`Tracks that sound described like “${t.title}”`); }
+  if (act === "like") { if (!t.f) { warmModel(); if (!t.v) return toast("Semantic search is still loading"); } like = t; q.value = ""; run({ fly: true }); toast(t.f ? `Tracks that sound like “${t.title}”` : `Tracks described like “${t.title}”`); }
 });
 
 function pick(id) {
@@ -228,13 +251,23 @@ function pick(id) {
 }
 
 // --- player -------------------------------------------------------------------------------------
+// ccMixter serves mp3s only with its own Referer, so deployed builds stream them through /api/ccm
+// (tools/sound-atlas-api/ccm.js). Catalogue paths are relative to the catalogue.
+const CCM = "https://ccmixter.org/content/";
+const proxied = !/^(localhost|127\.|\[::1\])/.test(location.hostname) && location.protocol === "https:";
+const streamUrl = (t) => (proxied && t.audio.startsWith(CCM) ? "/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)) : new URL(t.audio, new URL(base, location.href)).href);
 function select(id, { play = false, fly = false, keepScroll = false } = {}) {
   const t = byId.get(id); if (!t) return;
   const changed = state.sel !== id;
   state.sel = id; A.focusId = id;
-  if (changed) { audio.src = new URL(t.audio, new URL(base, location.href)).href; audio.load(); } // catalogue paths are relative to the catalogue
+  if (changed) { audio.src = streamUrl(t); audio.load(); }
   if (play) audio.play().catch((e) => { if (e.name !== "AbortError") toast("Tap ▶ to play"); });
-  if (fly) A.focus(id);
+  if (changed) {
+    nbrs = soundReady() ? neighbours(t, all, 8) : [];
+    const top = nbrs[0]?.score || 1;
+    A.setLinks(nbrs.length ? id : null, nbrs.map((n) => ({ id: n.t.id, w: Math.max(0, (n.score / top - 0.6) / 0.4) })));
+  }
+  if (fly) focusSel();
   A.setPlaying({ id, bpm: t.bpm, paused: audio.paused, time: () => audio.currentTime, progress: () => (audio.duration ? audio.currentTime / audio.duration : 0) });
   const st = body.scrollTop; renderBody(false); if (keepScroll) body.scrollTop = st; else body.scrollTop = 0;
   renderPlayer(); saveHash();
@@ -292,6 +325,7 @@ function hashOf() {
   if (state.cc0) h.set("cc0", "1");
   if (state.picks.size) h.set("p", [...state.picks].join(","));
   if (state.sel) h.set("t", state.sel);
+  if (state.lens !== "feel") h.set("l", state.lens);
   return h.toString();
 }
 let hashT = 0;
@@ -302,6 +336,7 @@ function readHash() {
   for (const f of (h.get("f") ?? "").split(",").filter((x) => feelById[x])) state.feels.add(f);
   for (const b of (h.get("b") ?? "").split(",").filter((x) => BPM_BANDS.some((B) => B.id === x))) state.bands.add(b);
   state.cc0 = h.get("cc0") === "1";
+  if (LENSES.some((L) => L.id === h.get("l"))) state.lens = h.get("l");
   const shared = (h.get("p") ?? "").split(",").filter((id) => byId.has(id));
   if (shared.length) { shared.forEach((id) => state.picks.add(id)); state.picksOnly = true; toast(`${shared.length} shared picks`); }
   return h.get("t");
@@ -327,10 +362,11 @@ addEventListener("resize", () => { measure(); if (!wide()) { sheet.style.transfo
   const cat = await loadCatalog(base).catch((e) => { body.innerHTML = `<div class="empty">Could not load the catalogue (${esc(e.message)}).</div>`; throw e; });
   share = await fetch(base + "share.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
   all = cat.tracks; byId = new Map(all.map((t) => [t.id, t]));
+  await loadSound(base, all); // optional: measured tempo/key/texture + CLAP neighbours
   $("#count").textContent = all.length.toLocaleString();
   await document.fonts?.ready;
   A.setTracks(all); A.fitAll(1);
-  const t = readHash();
+  const t = readHash(); setLens(state.lens, false);
   await run({ fly: !!(state.q || state.feels.size || state.bands.size || state.picksOnly) });
   if (t && byId.has(t)) select(t, { fly: true });
   if (state.q) warmModel(); else if (!matchMedia("(pointer: coarse)").matches) setTimeout(warmModel, 2500); // phones load the model on first search focus
