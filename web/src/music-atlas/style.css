@@ -176,6 +176,14 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   transition: opacity .25s var(--ease), transform .45s var(--spring); max-width: calc(100% - 32px); }
 .toast.on { opacity: 1; transform: translate3d(-50%, 0, 0) scale(1); }
 
+/* first-visit fullscreen hint: floats over the map; only "Never mind" catches taps */
+.fsh { position: fixed; left: 50%; top: 30%; z-index: 8; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none;
+  transform: translate3d(-50%, 8px, 0); opacity: 0; transition: opacity .3s var(--ease), transform .45s var(--spring); }
+.fsh.on { opacity: 1; transform: translate3d(-50%, 0, 0); }
+.fsh span { padding: 10px 16px; border-radius: 999px; background: rgba(13, 17, 18, .82); backdrop-filter: blur(10px); border: 1px solid var(--line2); color: var(--ink); font: 600 14px "Instrument Sans", sans-serif; white-space: nowrap; box-shadow: 0 10px 30px rgba(0, 0, 0, .4); }
+.fsh button { pointer-events: auto; min-height: 32px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line2); background: rgba(13, 17, 18, .88); color: #d8d3c9; font: 500 12px "Instrument Sans", sans-serif; }
+.fsh button:active { transform: scale(.94); }
+
 /* wide screens: the sheet becomes a side panel */
 @media (min-width: 900px) {
   .top { right: 420px; background: none; }
