@@ -448,7 +448,7 @@ function communityHTML() {
 function renderLive() {
   const R = social.room, el = $("#live"); if (!el) return;
   el.hidden = !R.on;
-  el.innerHTML = `<i></i><b>${R.here}</b><span>here now</span><span class="sep"></span><b>${social.compact(R.views)}</b><span>visits</span>`;
+  el.innerHTML = `<i></i><b>${R.here}</b><span>here</span><span class="sep"></span><b>${social.compact(R.views)}</b><span>visits</span>`;
   el.title = `${R.here} here now, ${R.listening} listening · ${R.views.toLocaleString()} views · ${R.visitors.toLocaleString()} listeners`;
 }
 let roomT = 0;

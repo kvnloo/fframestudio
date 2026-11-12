@@ -218,6 +218,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .rail .chip.x span { font-size: 14px; line-height: 1; opacity: .8; }
 .rail .chips { gap: 4px; }
 .rail .pins { flex: none; padding: 4px 10px 4px 0; }
+/* Phones: Sort + the two pinned filters on one row, the sort's groups get their own full-width row
+   (squeezed beside the pins they showed one chip and a stub). Desktop has room for one row. */
+@media (max-width: 899px) { .railrow { flex-wrap: wrap; row-gap: 0; } .rail .pins { margin-left: auto; } .rail .filt { order: 3; flex: 0 0 100%; padding-left: 0; mask-image: linear-gradient(90deg, #000 calc(100% - 64px), transparent); } }
 .rail .chips .sep { margin: 7px 1px; }
 .sortmenu { position: absolute; left: 10px; bottom: calc(100% - 4px); min-width: 210px; padding: 5px; border-radius: 14px; background: #1b2223; border: 1px solid var(--line2);
   box-shadow: 0 18px 44px rgba(0, 0, 0, .6); transform-origin: 18px 100%; opacity: 0; transform: scale(.86) translateY(8px); transition: opacity .16s var(--ease), transform .26s var(--spring); }
@@ -264,7 +267,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 @media (prefers-reduced-motion: reduce) { .spec i { animation: none; } }
 
 /* --- community: live pill, like counts, radio, playlists ------------------------------------- */
-.live { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 10px; border-radius: 16px; background: rgba(13, 17, 18, .62); border: 1px solid var(--line); font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
+.live { margin-left: auto; white-space: nowrap; flex: none; display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 10px; border-radius: 16px; background: rgba(13, 17, 18, .62); border: 1px solid var(--line); font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
 .live[hidden] { display: none; }
 .live[hidden] + .motion { margin-left: auto; }
 .motion { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 10px 0 8px; border-radius: 16px; background: rgba(13, 17, 18, .62); border: 1px solid var(--line); font: 11px "IBM Plex Mono", monospace; color: var(--mute); transition: color .2s, border-color .2s, transform .25s var(--spring); }
@@ -274,6 +277,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .motion[aria-pressed="true"] svg { animation: wig 1.6s ease-in-out infinite; }
 @keyframes wig { 50% { transform: translateX(1.5px) scaleY(.8); } }
 .motion[hidden] { display: none; }
+@media (max-width: 379px) { .brand small { display: none; } } /* the Library tab carries the count; the header must fit Motion */
 @media (max-width: 419px) { .motion { width: 32px; padding: 0; justify-content: center; } .motion span { display: none; } } /* icon-only on phones: the label pushed it off-screen */
 .live b { color: var(--ink); font-weight: 400; }
 .live i, .live-big i { width: 7px; height: 7px; border-radius: 50%; background: #4fd69a; box-shadow: 0 0 8px #4fd69a; animation: breathe 2.4s ease-in-out infinite; }
