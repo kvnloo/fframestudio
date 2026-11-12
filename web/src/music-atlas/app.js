@@ -420,7 +420,16 @@ function renderBody(scroll = true) {
   html += `<footer class="src">${sourcesLine()}</footer>`;
   paint(html, scroll);
 }
-function paint(html, scroll) { body.innerHTML = html; restPulse(); if (scroll) body.scrollTop = 0; watchLayers(); }
+// Re-painting the view you're already on (steering, releasing a meter, liking) must not look like
+// arriving: entrances stay off and the card's colour, spectrum and meter ticks glide from old to new.
+const GLIDE = [".card", ".spec i", ".mt .mb > i:not(.tg)", ".bb i"];
+function paint(html, scroll) {
+  const same = !scroll && body.dataset.v === state.view, was = same && GLIDE.map((s) => [...body.querySelectorAll(s)].map((el) => el.style.cssText));
+  body.innerHTML = html; body.dataset.v = state.view; body.classList.toggle("calm", same);
+  if (was) GLIDE.forEach((s, g) => { const els = [...body.querySelectorAll(s)]; if (els.length !== was[g].length) return;
+    const now = els.map((el) => el.style.cssText); els.forEach((el, i) => { el.style.cssText = was[g][i]; }); body.offsetWidth; els.forEach((el, i) => { el.style.cssText = now[i]; }); });
+  restPulse(); if (scroll) body.scrollTop = 0; watchLayers();
+}
 // Similar: one flat by-ear list around a seed. The seed stays put while you play through its list,
 // so rows never reshuffle under your thumb; "Re-centre" re-seeds on whatever is playing now.
 function similarHTML() {
@@ -546,7 +555,8 @@ function retune() {
 function paintTune() {
   const t = byId.get(state.sel); if (!t) return;
   const el = body.querySelector(".tunes"), html = tuneHTML(t);
-  if (el) el.outerHTML = html; else body.querySelector(".snd")?.insertAdjacentHTML("afterend", html);
+  // the list enters once; later retunes swap it in place
+  if (el) el.outerHTML = html.replace('class="tunes', 'class="tunes still'); else body.querySelector(".snd")?.insertAdjacentHTML("afterend", html);
   const hint = body.querySelector(".meters .hint"); if (hint) hint.textContent = "Your settings steer what plays · dim tick = this song";
   body.querySelector(".meters")?.classList.add("tuning");
   for (const inp of body.querySelectorAll("input.tune")) { const p = t.p?.[inp.dataset.k], tick = inp.parentElement.querySelector("i:not(.tg)"); if (p != null && tick) tick.style.left = `${(p * 100).toFixed(1)}%`; }
@@ -661,7 +671,7 @@ function renderPlayer() {
   $("#pt small")?.insertAdjacentHTML("afterbegin", here > 1 ? `<em class="with">${here - 1} with you</em> · ` : ""); // lead: the tail of this line is ellipsized on phones
   $("#pr").classList.toggle("on", !!state.radio); $("#pr").title = state.radio ? `${state.radio === "ear" ? "By-ear" : "Crowd"} radio on` : "Radio";
 }
-const bar = $("#bar"), thumb = $("#thumb"), tc = $("#tc");
+const bar = $("#bar"), thumb = $("#thumb"), tc = $("#tc"); let scrubK = null; // while scrubbing, the finger (not the audio) places the thumb
 const playState = () => { const t = state.sel && byId.get(state.sel); return t ? { id: t.id, paused: audio.paused, beat: () => beatAt(audio.currentTime, t), progress: () => (audio.duration ? audio.currentTime / audio.duration : 0) } : null; };
 // The page plays along: the player button, brand mark and the playing group's legend/header dots
 // swell on accented beats; the row's three bars read kick, off-beat and bar accent. Only the
@@ -682,7 +692,7 @@ function beatFrame() {
   const [k, h, a] = pulse.eq; if (a) { k.style.scale = `1 ${(0.2 + 0.8 * Math.exp(-b.ph * 5)).toFixed(3)}`; h.style.scale = `1 ${(0.2 + 0.55 * off).toFixed(3)}`; a.style.scale = `1 ${(0.2 + 0.8 * e).toFixed(3)}`; }
 }
 function tick() {
-  const d = audio.duration, c = audio.currentTime;
+  const d = audio.duration, c = scrubK != null && d ? scrubK * d : audio.currentTime;
   const k = d ? c / d : 0; bar.style.transform = `scaleX(${k})`; thumb.style.transform = `translate3d(${(k * 100).toFixed(2)}%, 0, 0)`; // compositor-only
   const label = `${mmss(c)} / ${mmss(d)}`; if (label !== tc.textContent) tc.textContent = label; // text changes re-layout: once a second, not per frame
   if (!audio.paused) { beatFrame(); requestAnimationFrame(tick); }
@@ -711,12 +721,13 @@ $("#body").addEventListener("submit", async (e) => {
   const name = $("#pubname").value.trim(); if (!name || !state.picks.size) return toast("Name it first");
   try { const id = await social.publish(name, [...state.picks]); buzz(8); toast(`Published “${name}”`); state.plist = null; renderBody(false); history.replaceState(null, "", location.pathname + location.search + "#pl=" + id); } catch (err) { toast(err.message === "limit" ? "20 playlists per listener" : "Couldn't publish right now"); }
 });
-{ // scrub
+{ // scrub: the thumb tracks the finger every move; the stream seeks once, on release (a seek per move stutters)
   const sc = $(".scrub"); let on = false;
-  const seek = (e) => { const r = sc.getBoundingClientRect(), k = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); if (audio.duration) { audio.currentTime = k * audio.duration; tick(); } };
-  sc.addEventListener("pointerdown", (e) => { e.stopPropagation(); on = true; sc.setPointerCapture(e.pointerId); sc.classList.add("on"); seek(e); });
-  sc.addEventListener("pointermove", (e) => on && seek(e));
-  const off = () => { on = false; sc.classList.remove("on"); }; sc.addEventListener("pointerup", off); sc.addEventListener("pointercancel", off);
+  const tr = sc.querySelector(".track"), at = (e) => { const r = tr.getBoundingClientRect(); scrubK = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); tick(); };
+  sc.addEventListener("pointerdown", (e) => { e.stopPropagation(); on = true; sc.setPointerCapture(e.pointerId); sc.classList.add("on"); at(e); });
+  sc.addEventListener("pointermove", (e) => on && at(e));
+  const off = (e) => { if (on && e.type === "pointerup" && audio.duration) audio.currentTime = scrubK * audio.duration; on = false; scrubK = null; sc.classList.remove("on"); tick(); };
+  sc.addEventListener("pointerup", off); sc.addEventListener("pointercancel", off);
 }
 addEventListener("keydown", (e) => {
   if (e.target === q) return;

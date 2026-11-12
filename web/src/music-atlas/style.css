@@ -322,6 +322,12 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .mt .mb i.tg::after { content: ""; position: absolute; left: -6px; width: 12px; height: 16px; border-radius: 6px; background: var(--c); box-shadow: 0 0 0 2px var(--panel2), 0 0 12px var(--c); }
 .meters.tuning .mt .mb > i:not(.tg)::after { opacity: .45; }
 .tunes { margin: 10px 0 4px; padding: 10px 0 2px; border-top: 1px solid color-mix(in srgb, var(--c) 40%, transparent); animation: tunein .28s ease-out; }
+.tunes.still, .body.calm .card, .body.calm .tunes, .body.calm .spec i { animation: none; }
+/* --c is a registered colour so a song change fades the card's tint instead of snapping it */
+@property --c { syntax: "<color>"; inherits: true; initial-value: #5fd3dc; }
+.body.calm .card { transition: --c .45s var(--ease); }
+.body.calm .spec i, .body.calm .bb i { transition: transform .45s var(--ease); }
+.body.calm .mt .mb > i:not(.tg), .meters.tuning .mt .mb > i:not(.tg) { transition: left .45s var(--ease); }
 @keyframes tunein { from { opacity: 0; transform: translateY(6px); } }
 .tunes h4, .layers h4 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; font: 12px "Archivo Black", sans-serif; letter-spacing: .03em; text-transform: uppercase; color: var(--c); }
 .layers h4 small, .tunes h4 small { flex: 1; min-width: 0; font: 10px "IBM Plex Mono", monospace; letter-spacing: 0; text-transform: none; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
