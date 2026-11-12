@@ -797,19 +797,31 @@ async function copy(text) {
 // --- boot ---------------------------------------------------------------------------------------
 { const ro = new ResizeObserver(() => { measure(); if (!wide() && !sh.drag) sheetTo(sh.target); atlasRefit(); }); ro.observe($(".top")); ro.observe($(".dock")); ro.observe(rail); } // fonts load, lens row fills in
 addEventListener("resize", () => { measure(); if (!wide()) { sh.y = snaps()[sh.target]; setSheetY(sh.y); } else { sheet.style.transform = rail.style.transform = ""; } atlasRefit(); });
-// Phones get the whole screen: browsers only grant fullscreen inside a user gesture, so the first
-// tap anywhere asks for it. Skipped when installed (the manifest already launches fullscreen) and
-// never re-asked once the user leaves it (back gesture / swipe), so exiting stays their choice.
-// A hint says so; "Never mind" turns it off on this device. The hint's text lets taps through.
-if (matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fullscreen), (display-mode: standalone)").matches && document.documentElement.requestFullscreen && localStorage.getItem("sa-fs") !== "no") {
-  const hint = document.createElement("div"); hint.className = "fsh";
-  hint.innerHTML = `<span>Tap anywhere to go fullscreen</span><button type="button">Never mind</button>`; document.body.append(hint);
-  const done = () => { removeEventListener("click", go, true); removeEventListener("pointerup", go, true); hint.classList.remove("on"); setTimeout(() => hint.remove(), 400); };
-  const go = (e) => { if (hint.contains(e.target)) return; done(); if (!document.fullscreenElement) document.documentElement.requestFullscreen({ navigationUI: "hide" }).catch(() => {}); };
-  hint.querySelector("button").onclick = (e) => { e.stopPropagation(); buzz(5); localStorage.setItem("sa-fs", "no"); done(); };
-  addEventListener("click", go, true); addEventListener("pointerup", go, true); // a drag on the atlas never makes a click
-  // centred on the open map: below the header, above the Sort/filter rail (which sits mid-screen on phones)
-  setTimeout(() => { if (!hint.isConnected) return; const a = $(".top").getBoundingClientRect().bottom, z = rail.getBoundingClientRect().top; hint.style.top = `${Math.round((a + z) / 2 - hint.offsetHeight / 2)}px`; hint.classList.add("on"); }, 700); // after the sheet (and the rail riding on it) has risen into place
+// Phones get the whole screen: browsers only grant fullscreen inside a user gesture, so a tap
+// anywhere asks for it. Skipped when installed (the manifest already launches fullscreen). Leaving it
+// (back gesture / swipe) is respected on the spot; the hint comes back with the next touch, so the tap
+// after that restores fullscreen. "Never mind" turns it off on this device. The hint's text lets taps through.
+if (matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fullscreen), (display-mode: standalone)").matches && document.documentElement.requestFullscreen) {
+  const off = () => localStorage.getItem("sa-fs") === "no";
+  const fsHint = (delay, armNow) => {
+    if (off() || document.fullscreenElement || $(".fsh")) return;
+    const hint = document.createElement("div"); hint.className = "fsh";
+    hint.innerHTML = `<span>Tap anywhere to go fullscreen</span><button type="button">Never mind</button>`; document.body.append(hint);
+    const done = () => { removeEventListener("click", go, true); removeEventListener("pointerup", go, true); hint.classList.remove("on"); setTimeout(() => hint.remove(), 400); };
+    const go = (e) => { if (hint.contains(e.target)) return; done(); if (!document.fullscreenElement) document.documentElement.requestFullscreen({ navigationUI: "hide" }).catch(() => {}); };
+    hint.querySelector("button").onclick = (e) => { e.stopPropagation(); buzz(5); localStorage.setItem("sa-fs", "no"); done(); };
+    // centred on the open map: below the header, above the Sort/filter rail (which sits mid-screen on phones)
+    setTimeout(() => {
+      if (!hint.isConnected) return; const a = $(".top").getBoundingClientRect().bottom, z = rail.getBoundingClientRect().top;
+      hint.style.top = `${Math.round((a + z) / 2 - hint.offsetHeight / 2)}px`; hint.classList.add("on"); if (!armNow) arm();
+    }, delay);
+    const arm = () => { addEventListener("click", go, true); addEventListener("pointerup", go, true); }; // a drag on the atlas never makes a click
+    if (armNow) arm();
+  };
+  fsHint(700, true); // after the sheet (and the rail riding on it) has risen into place
+  // Left fullscreen: the next touch (once that gesture ends) brings the hint back; it doesn't go fullscreen itself.
+  const back = () => { removeEventListener("pointerdown", back, true); addEventListener("pointerup", () => fsHint(350), { capture: true, once: true }); };
+  document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && !off()) addEventListener("pointerdown", back, true); else removeEventListener("pointerdown", back, true); });
 }
 
 (async function boot() {
