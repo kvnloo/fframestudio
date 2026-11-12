@@ -151,8 +151,10 @@ export class StudioView {
         (a, i) =>
           `<button class="pill" data-action="${a}" ${i < 3 ? 'aria-pressed="' + (a === "mute") + '"' : ""}>${["Loop shot", "Loop film", "Mute", "Screening room"][i]}</button>`,
       )
-      .join("");
+      .join("") +
+      '<label class="pill soundtrack-pick" title="Audition soundtracks against the cut (preview only)">♪ <select id="soundtrack" aria-label="Soundtrack"></select></label>';
     transport.insertBefore(controls, $("#seek"));
+    controls.querySelector("#soundtrack").onchange = (ev) => this.setTrack(ev.target.value, true);
     const ruler = document.createElement("div");
     ruler.id = "film-ruler";
     $("#timeline-space").prepend(ruler);
@@ -282,7 +284,9 @@ export class StudioView {
     this.timelineSig = sig;
     const step = Math.max(1, Math.ceil((max - min) / fps / 12 / 5) * 5),
       ticks = [];
-    for (let s = Math.ceil(min / fps / step) * step; s * fps <= max; s += step)
+    // Ticks stop at the film end, else a label past it widens the fitted timeline.
+    const last = Math.min(max, e.total - 28 / e.scale);
+    for (let s = Math.ceil(min / fps / step) * step; s * fps <= last; s += step)
       ticks.push(
         `<span style="left:${s * fps * e.scale}px">${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}</span>`,
       );
@@ -300,7 +304,8 @@ export class StudioView {
             ];
       })
       .join("");
-    const music = e.doc.metadata?.music,
+    // The auditioned track (if any) owns the credit line; the doc's music stays the fallback.
+    const music = this.track?.file ? this.track : this.track ? null : e.doc.metadata?.music,
       bpm = tempoOf(e.video.beats, fps, music?.bpm),
       authoredBars = e.video.clips.every((c) =>
         Number.isFinite(c.metadata?.bars),
@@ -393,7 +398,7 @@ export class StudioView {
       else this.audio.pause();
     }
   }
-  async action(a) {
+  async baseAction(a) {
     const e = this.e;
     if (a === "loop-shot" || a === "loop-film") {
       this.loop = this.loop === a ? null : a;
@@ -428,37 +433,102 @@ export class StudioView {
       ? [c.start, c.start + c.duration]
       : [0, e.total];
   }
-  async loadAudio() {
+  // Every audible option: the film's own render audio, attached soundtrack media and
+  // project-listed alternates (metadata.soundtracks: [{file,title,author,license,bpm,starts_at_s}]).
+  soundtracks() {
+    const e = this.e,
+      owner = e.video.clips.find((c) => c.attached.some((a) => a.kind === "audio")),
+      attachment = owner?.attached.find((a) => a.kind === "audio"),
+      name = (f) => String(f).split("/").pop(),
+      list = [{ id: "mix", label: "Film mix · render audio", file: null }];
+    if (!e.doc.preview?.proxy && !e.doc.media.some((m) => m.kind === "video")) list.length = 0;
+    for (const m of e.doc.media.filter((m) => m.kind === "audio")) {
+      const own = attachment?.mediaId === m.id,
+        music = own ? e.doc.metadata?.music || {} : {};
+      list.push({
+        id: m.id, file: m.file, title: music.title || name(m.file), author: music.author, bpm: music.bpm,
+        label: [music.title || name(m.file), music.author].filter(Boolean).join(" · "),
+        start: own ? Number(music.starts_at_s) || 0 : 0,
+        offset: own ? owner.start + attachment.offset : 0,
+        duration: own ? attachment.duration : e.total,
+      });
+    }
+    for (const [i, t] of (e.doc.metadata?.soundtracks || []).entries())
+      if (t?.file && !list.some((x) => x.file === t.file))
+        list.push({
+          id: "alt:" + i, file: t.file, title: t.title || name(t.file), author: t.author, bpm: t.bpm,
+          label: [t.title || name(t.file), t.author, t.license].filter(Boolean).join(" · "),
+          start: Number(t.starts_at_s) || 0, offset: 0, duration: e.total,
+        });
+    return list;
+  }
+  setTrack(id, chosen) {
+    const list = this.soundtracks(),
+      track = list.find((t) => t.id === id) || list.find((t) => t.file) || list[0];
+    if (!track) return;
+    try { storage.setItem("ffs:soundtrack:" + this.e.doc.id, track.id); } catch {}
+    // Picking a track is an explicit gesture to listen, so unmute.
+    if (chosen && this.muted) this.action("mute");
+    this.loadAudio(track);
+  }
+  async action(a) {
+    if (a === "next-soundtrack") {
+      const list = this.soundtracks(),
+        i = list.findIndex((t) => t.id === this.track?.id);
+      if (list.length) this.setTrack(list[(i + 1) % list.length].id, true);
+      return true;
+    }
+    return this.baseAction(a);
+  }
+  async loadAudio(track) {
     const e = this.e;
-    const owner = e.video.clips.find((c) =>
-      c.attached.some((a) => a.kind === "audio"),
-    );
-    const attachment = owner?.attached.find((a) => a.kind === "audio");
-    const media = e.doc.media.find((m) => m.id === attachment?.mediaId);
-    this.audioStart = owner ? owner.start + attachment.offset : 0;
-    this.audioEnd = this.audioStart + (attachment?.duration || 0);
-    this.audioSourceIn = Number(e.doc.metadata?.music?.starts_at_s) || 0;
-    this.samplePoster();
+    if (!track) {
+      const list = this.soundtracks();
+      let saved = null;
+      try { saved = storage.getItem("ffs:soundtrack:" + e.doc.id); } catch {}
+      track = list.find((t) => t.id === saved) || list.find((t) => t.file) || list[0];
+      this.samplePoster();
+    }
+    this.track = track;
+    this.timelineSig = null;
+    const select = $("#soundtrack");
+    if (select) {
+      const list = this.soundtracks();
+      select.innerHTML = list.map((t) => `<option value="${esc(t.id)}">${esc(t.label)}</option>`).join("");
+      select.value = track?.id || "";
+      select.closest("label").hidden = list.length < 2;
+    }
+    const media = track?.file ? { file: track.file } : null;
+    this.audioStart = media ? track.offset : 0;
+    this.audioEnd = media ? track.offset + track.duration : e.total;
+    this.audioSourceIn = media ? track.start : 0;
+    this.audio.pause();
+    if (media) {
+      this.audio.src = e.url(media.file);
+      this.audio.load();
+    } else if (this.audio.src) {
+      this.audio.removeAttribute("src");
+      this.audio.load();
+    }
+    $("#preview-video").muted = this.muted || !!media;
+    this.waveWorker?.terminate();
     const analysisFile = media?.file || e.doc.preview.proxy;
     if (!analysisFile || e.dead) {
       this.analysisState = "absent";
       return;
     }
     this.analysisState = "decoding";
+    const token = (this.audioToken = (this.audioToken || 0) + 1);
     this.waveStart = media ? this.audioStart : 0;
-    this.waveDuration = media ? attachment.duration : e.total;
+    this.waveDuration = media ? track.duration : e.total;
     this.waveSource = media ? "soundtrack" : "source proxy audio";
-    if (media) {
-      this.audio.src = e.url(media.file);
-      this.audio.load();
-    }
     this.waveWorker = new Worker("/app/src/wave-worker.js", { type: "module" });
     this.waveWorker.onmessage = ({ data }) => {
       if (e.dead) return;
       if (data.error) {
         put(
           "#music-credit",
-          (e.doc.metadata?.music?.title || "Audio") + " · WAVEFORM UNAVAILABLE",
+          (this.track?.title || "Audio") + " · WAVEFORM UNAVAILABLE",
         );
         return;
       }
@@ -473,17 +543,11 @@ export class StudioView {
       );
       put(
         "#music-credit",
-        (e.doc.metadata?.music
-          ? [
-              e.doc.metadata.music.title,
-              e.doc.metadata.music.author,
-              e.doc.metadata.music.bpm
-                ? e.doc.metadata.music.bpm + " BPM"
-                : null,
-            ]
+        (this.track?.file
+          ? [this.track.title, this.track.author, this.track.bpm ? this.track.bpm + " BPM" : null]
               .filter(Boolean)
               .join(" · ")
-          : "SOURCE PROXY AUDIO") + " · MEASURED WAVEFORM",
+          : "FILM MIX · SOURCE PROXY AUDIO") + " · MEASURED WAVEFORM",
       );
       this.drawWave();
     };
@@ -506,7 +570,7 @@ export class StudioView {
       const start = media ? Math.round(this.audioSourceIn * buffer.sampleRate) : 0;
       const end = start + Math.round(this.waveDuration / fpsOf(e.doc) * buffer.sampleRate);
       const samples = buffer.getChannelData(0).slice(start, end);
-      if (e.dead) return;
+      if (e.dead || token !== this.audioToken) return;
       this.waveWorker.postMessage({ key, samples }, [samples.buffer]);
       await this.audioContext.close();
     } catch {
@@ -514,7 +578,7 @@ export class StudioView {
       this.analysisState = "unavailable";
       put(
         "#music-credit",
-        (e.doc.metadata?.music?.title || "Source audio") +
+        (this.track?.title || "Source audio") +
           " · NO DECODABLE AUDIO · SHOT MARKERS",
       );
     }

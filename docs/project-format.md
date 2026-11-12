@@ -69,6 +69,12 @@ beat lists (`beats` / `beat_times`, seconds relative to `starts_at_s`) become fr
 BPM alone **does not invent a measured beat grid**. The current import of one real project includes
 BPM but not beat times; its timeline correctly has no manufactured beat lines.
 
+Optional `soundtracks` (kept as `metadata.soundtracks`) lists alternate tracks to audition:
+`[{file, title, author, license, bpm, starts_at_s}]`, with `file` relative to the project
+folder. The transport's ♪ picker offers them next to the film's own render audio and any
+attached audio. Picking one is **preview only**: it plays in sync with the playhead and never
+edits the document, the cut or the export.
+
 Use `node tools/migrate-project.mjs INPUT.json OUTPUT.json` to migrate a **copy**. The tool
 refuses an existing output and identical real paths. Tests copy every project from
 `FFS_LIBRARY` (default `~/fframestudio/projects`) to TMPDIR, migrate, read back, and verify
