@@ -24,7 +24,7 @@ await until(() => tv.evaluate(() => window.__sa?.A.formation), 15000, "dots form
 await wait(3500); // the dots pour in, then settle
 const qrPng = join(shots ?? mkdtempSync(join(tmpdir(), "tvqr-")), "tv-qr.png");
 await tv.screenshot({ path: qrPng });
-const decoded = spawnSync("zbarimg", ["-q", "--raw", qrPng], { encoding: "utf8" }).stdout.trim();
+const decoded = spawnSync("zbarimg", ["-q", "--raw", "-Stest-inverted", qrPng], { encoding: "utf8" }).stdout.trim();
 assert.match(decoded, new RegExp(`#tvpair=${room}~192\\.0\\.2\\.1~TEST\\.app~Samsung(%20| )TV$`), "the dot QR decodes to the pairing link: " + decoded);
 await tv.keyboard.press("ArrowRight"); // any remote key lets the map go
 await until(() => tv.evaluate(() => !window.__sa.A.formation && document.querySelector("#tvcode.mini.on .qr svg") && window.__sa.audio.paused), 5000, "first key dismisses the code only");

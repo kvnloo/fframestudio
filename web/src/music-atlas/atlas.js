@@ -138,11 +138,12 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   const layerK = () => clamp((cam.s - LAYER_S) / (LAYER_FULL - LAYER_S), 0, 1);
   function zoomOn(id, s = 9, ms) { const n = g.byId.get(id); if (!n) return; focusId = id; flyTo({ x: n.x, y: n.y, s }, ms); }
   function ringAt(x, y) { if (!rings) return null; const d = Math.hypot(x - rings.x, y - rings.y), i = Math.floor((d - RING0 + RING_W / 2) / RING_W); return i >= 0 && i < rings.lanes.length ? rings.lanes[i].k : null; }
-  function setTheme(t) { theme = t; gen++; kick(); }
+  function setTheme(t) { theme = t; if (form) form.eyes = null; gen++; kick(); }
   // QR modules (dark cells of an N x N matrix) -> one leaf each, matched by angle round the centre so every feel
   // keeps its wedge and the morph reads as the ring folding into a square. Too few leaves: false, caller falls back.
   function assignForm() {
     for (const n of g.leaves) n.fm = null;
+    form.eyes = null;
     const { cells, N } = form, K = cells.length, L = g.leaves.length; if (L < K) return false;
     const ang = (c) => Math.atan2(c[1] - N / 2 + 0.5, c[0] - N / 2 + 0.5);
     const cs = cells.slice().sort((a, b) => ang(a) - ang(b)), ls = g.leaves.slice().sort((a, b) => Math.atan2(Math.sin(a.a), Math.cos(a.a)) - Math.atan2(Math.sin(b.a), Math.cos(b.a)));
@@ -161,7 +162,29 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   // Screen square for the code: centred in the free region; world coordinates follow the live camera.
   function formGeom() {
     const r = R(), { cx, cy } = centre(), S = Math.min(r.w, r.h) * 0.62, m = S / form.N, s = cam.s;
-    return { m, S, sx0: cx - S / 2, sy0: cy - S / 2, wx: (sx) => cam.x + (sx - cx) / s, wy: (sy) => cam.y + (sy - cy) / s, r: (m * 0.46) / s };
+    return { m, S, sx0: cx - S / 2, sy0: cy - S / 2, wx: (sx) => cam.x + (sx - cx) / s, wy: (sy) => cam.y + (sy - cy) / s, r: (m * 0.42) / s,
+      c: form.N / 2 - 0.5, t: reduced ? 0 : (performance.now() / 2600) * TAU };
+  }
+  // The three finder eyes, drawn in screen space: a rounded ring and a round pupil, each in one feel's hue. Along any
+  // line through the centre they keep QR's 1:1:3:1:1 light/dark runs, which is all a scanner looks for.
+  // Each eye takes the hue of the wedge it sits in (nearest data dot), skipping Sad's deliberately muted grey-blue.
+  function eyeHue(x, y) {
+    const hit = (form.eyes ??= {})[x + "," + y]; if (hit) return hit;
+    let best = null, bd = 1e9;
+    for (const n of g.leaves) { const c = n.fm; if (!c || c[2] || n.feel === "sad") continue; const d = (c[0] - x) ** 2 + (c[1] - y) ** 2; if (d < bd) { bd = d; best = n; } }
+    return (form.eyes[x + "," + y] = best ? colN(best) : pal().ink);
+  }
+  function drawFinders(F) {
+    const a = clamp(fe * 1.6 - 0.6, 0, 1); if (!a) return;
+    const m = F.m, z = 0.75 + 0.25 * easeOutBack(a), { cx: ox, cy: oy } = centre();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = a;
+    [[0, 0], [form.N - 7, 0], [0, form.N - 7]].forEach(([x, y], i) => {
+      const cx = F.sx0 + (x + 3.5) * m, cy = F.sy0 + (y + 3.5) * m, h = 3 * m * z;
+      ctx.strokeStyle = ctx.fillStyle = eyeHue(x + 3, y + 3);
+      ctx.lineWidth = m * z; ctx.beginPath(); ctx.roundRect(cx - h, cy - h, 2 * h, 2 * h, m * 1.6 * z); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, 1.5 * m * z, 0, TAU); ctx.fill();
+    });
+    ctx.setTransform(dpr * cam.s, 0, 0, dpr * cam.s, dpr * (ox - cam.x * cam.s), dpr * (oy - cam.y * cam.s));
   }
   // Lens: recolour lit tracks by a measurement (key, tempo, brightness...) instead of their feel.
   function setLens(fn) { lens = fn; gen++; kick(); }
@@ -307,6 +330,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     if (form) {
       const t = form.on ? 1 : 0; form.k += (t - form.k) * (reduced ? 1 : 1 - Math.exp(-dt / 420));
       if (Math.abs(t - form.k) < 0.002) form.k = t; else busy = true;
+      if (form.on && !reduced) busy = true; // the code's ripple
       if (!form.on && form.k === 0) { for (const n of g.leaves) n.fm = null; form = null; gen++; busy = true; }
     }
     fe = form ? easeIO(form.k) : 0;
@@ -388,7 +412,6 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     grad.addColorStop(0, theme === "dark" ? "rgba(95,211,220,.06)" : "rgba(47,111,214,.05)"); grad.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
     const F = fe ? formGeom() : null, fo = 1 - fe; // fo: everything that isn't the code fades out
-    if (F) { const q = F.m * 2.5; ctx.globalAlpha = clamp(fe * 1.6 - 0.4, 0, 1); ctx.fillStyle = "#ece8df"; ctx.beginPath(); ctx.roundRect(F.sx0 - q, F.sy0 - q, F.S + 2 * q, F.S + 2 * q, q); ctx.fill(); }
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (cx - cam.x * s), dpr * (cy - cam.y * s));
     const gr4 = (lvl) => grow(bt, lvl);
     const X = (n) => n.vx, Y = (n) => n.vy;
@@ -435,10 +458,11 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       const a0 = n.al ?? 1, fm = F && n.fm, a = !F ? a0 : fm ? a0 + (1 - a0) * fe : a0 * fo; if (a < 0.02) continue;
       const on = a > 0.5;
       let r = (n.t.src === "shortlist" && on ? DOT * 1.25 : DOT) * (0.6 + 0.4 * a) * n.vr;
-      if (fm) { r += (F.r - r) * fe; if (fm[2]) r = -(r + (F.m / (2 * s) - r) * fe); } // finder: a solid square (negative r)
-      // Under a lens, unmeasured tracks go neutral. QR modules: "q" buckets get an ink underlay (below).
-      const fc = fm && fm[2] && g.root.children.length ? col(g.root.children[((fm[2] - 1) * 3) % g.root.children.length].feel) : null; // one hue per finder ring
-      const k = (fc ?? (on ? (lens ? lens(n.t) ?? P.mute : colN(n)) : P.dim)) + "|" + (fm && fe > 0.5 ? "q" : on ? Math.round(a * 8) / 8 : 0.55);
+      // QR modules glow in their feel colour on the dark ground (an inverted code: light modules, no plate). Data dots
+      // breathe in a ripple from the centre; finder dots melt into the drawn finder eyes (drawFinders).
+      if (fm) { if (fm[2]) r *= 1 - fe; else r += (F.r * (0.8 + 0.2 * Math.sin(F.t - Math.hypot(fm[0] - F.c, fm[1] - F.c) * 0.55)) - r) * fe; }
+      // Under a lens, unmeasured tracks go neutral.
+      const k = (on || fm ? (lens ? lens(n.t) ?? P.mute : colN(n)) : P.dim) + "|" + (fm ? (fm[2] ? Math.round((1 - fe) * 8) / 8 : 1) : on ? Math.round(a * 8) / 8 : 0.55);
       let b = buckets.get(k); if (!b) buckets.set(k, (b = []));
       b.push(x, y, r);
       if (n.t.src === "web" && on && !fm) rings.push(x, y, r);
@@ -447,18 +471,16 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     // rasterise far cheaper than arcs: on a TV the zoomed-out map is all such dots, ~1.8k a frame while dancing.
     const tiny = 2.5 / (s * dpr);
     for (const [k, b] of buckets) {
-      const [c, a] = k.split("|"), q = a === "q"; ctx.beginPath();
+      const [c, a] = k.split("|"); if (+a < 0.02) continue; ctx.beginPath();
       for (let i = 0; i < b.length; i += 3) {
         const r = b[i + 2];
-        if (r < 0) ctx.rect(b[i] + r, b[i + 1] + r, -2 * r, -2 * r); // QR finder module: squares join into solid rings
-        else if (r < tiny) { const h = r * 0.886; ctx.rect(b[i] - h, b[i + 1] - h, h * 2, h * 2); } // same area as the disc
+        if (r < tiny) { const h = r * 0.886; ctx.rect(b[i] - h, b[i + 1] - h, h * 2, h * 2); } // same area as the disc
         else { ctx.moveTo(b[i] + r, b[i + 1]); ctx.arc(b[i], b[i + 1], r, 0, TAU); }
       }
-      // A QR module is ink tinted by its feel: dark enough on the plate for any phone camera, still the map's colours.
-      if (q) { ctx.globalAlpha = 1; ctx.fillStyle = "#1b1a17"; ctx.fill(); ctx.globalAlpha = Math.max(0, 0.9 - fe * 0.5); }
-      else ctx.globalAlpha = +a;
+      ctx.globalAlpha = +a;
       ctx.fillStyle = c; ctx.fill();
     }
+    if (F) drawFinders(F);
     if (rings.length) { ctx.globalAlpha = 0.9; ctx.strokeStyle = P.ink; ctx.lineWidth = 1 / Math.max(s, 0.5); ctx.beginPath(); for (let i = 0; i < rings.length; i += 3) { ctx.moveTo(rings[i] + rings[i + 2], rings[i + 1]); ctx.arc(rings[i], rings[i + 1], rings[i + 2], 0, TAU); } ctx.stroke(); }
     // Structural nodes.
     for (const n of g.byId.values()) {
