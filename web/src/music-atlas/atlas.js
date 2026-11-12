@@ -330,7 +330,6 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     if (form) {
       const t = form.on ? 1 : 0; form.k += (t - form.k) * (reduced ? 1 : 1 - Math.exp(-dt / 420));
       if (Math.abs(t - form.k) < 0.002) form.k = t; else busy = true;
-      if (form.on && !reduced) busy = true; // the code's ripple
       if (!form.on && form.k === 0) { for (const n of g.leaves) n.fm = null; form = null; gen++; busy = true; }
     }
     fe = form ? easeIO(form.k) : 0;
@@ -459,7 +458,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       const on = a > 0.5;
       let r = (n.t.src === "shortlist" && on ? DOT * 1.25 : DOT) * (0.6 + 0.4 * a) * n.vr;
       // QR modules glow in their feel colour on the dark ground (an inverted code: light modules, no plate). Data dots
-      // breathe in a ripple from the centre; finder dots melt into the drawn finder eyes (drawFinders).
+      // ripple out from the centre as they land, then hold still (a per-frame ripple redraws the whole map: 40 ms frames on the QN85B); finder dots melt into the drawn finder eyes (drawFinders).
       if (fm) { if (fm[2]) r *= 1 - fe; else r += (F.r * (0.8 + 0.2 * Math.sin(F.t - Math.hypot(fm[0] - F.c, fm[1] - F.c) * 0.55)) - r) * fe; }
       // Under a lens, unmeasured tracks go neutral.
       const k = (on || fm ? (lens ? lens(n.t) ?? P.mute : colN(n)) : P.dim) + "|" + (fm ? (fm[2] ? Math.round((1 - fe) * 8) / 8 : 1) : on ? Math.round(a * 8) / 8 : 0.55);
