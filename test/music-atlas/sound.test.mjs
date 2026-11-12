@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { keyRelation, mixesWith, bpmOf, neighbours, loadSound, LENSES, profileHTML } from "../../web/src/music-atlas/sound.js";
+import { keyRelation, mixesWith, bpmOf, neighbours, loadSound, LENSES, profileHTML, organise, beatAt } from "../../web/src/music-atlas/sound.js";
 
 test("Camelot relations follow the DJ mixing rule", () => {
   assert.equal(keyRelation("8A", "8A"), "same key");
@@ -46,4 +46,28 @@ test("lens colours and the profile render for measured tracks only", () => {
   const html = profileHTML(t);
   assert.match(html, /8A/); assert.match(html, /piano/); assert.match(html, /90th pct/);
   assert.equal(profileHTML({ id: "bare" }), "");
+});
+
+test("a lens regroups tracks into its own rings; unmeasured tracks get their own group", async () => {
+  const { FEELS, familyById } = await import("../../web/src/music-atlas/taxonomy.js");
+  const a = { id: "a", feel: "calm", family: "electronic", bpm: 92, f: { camelot: "8A", key: "A minor" }, p: { bright: 0.93 } };
+  const b = { id: "b", feel: "drive", family: "rock", bpm: 170 };
+  const key = organise("key", FEELS, familyById);
+  assert.equal(key.of(a), "8"); assert.equal(key.of(b), "none");
+  assert.deepEqual(key.path(a).map((x) => x[0]), ["A", "calm"]);
+  assert.equal(organise("tempo", FEELS, familyById).of(b), "rush");
+  assert.equal(organise("bright", FEELS, familyById).of(a), "airy");
+  assert.equal(organise("feel", FEELS, familyById), null);
+  for (const L of LENSES.slice(1)) { const o = organise(L.id, FEELS, familyById); for (const G of o.groups) assert.match(G.night, /^(#|rgb|hsl)/); }
+});
+
+test("beat phase locks to the measured downbeat and ranks accents like a metre", () => {
+  const tr = { bpm: 120, f: { beat: { bpm: 120, down: 0.25 } } }; // 0.5 s beats, bar starts at 0.25 s
+  const at = (t) => beatAt(t, tr);
+  assert.equal(at(0.25).ph, 0); assert.equal(at(0.25).acc, 1);   // phrase start
+  assert.equal(at(2.25).acc, 0.7);                               // next bar's downbeat
+  assert.equal(at(1.25).acc, 0.45); assert.equal(at(0.75).acc, 0.28);
+  assert.ok(Math.abs(at(0.5).ph - 0.5) < 1e-9);
+  assert.equal(at(0.0).acc, 0.28);                               // before the first downbeat wraps to beat 16
+  assert.equal(beatAt(1, { bpm: 60 }).ph, 0);                    // unmeasured: BPM from t=0
 });

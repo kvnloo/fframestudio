@@ -57,6 +57,16 @@ function words(t) {
 }
 export const summary = (t) => (t.f ? words(t).slice(2, 7).join(" · ") : "");
 
+// --- metre ---------------------------------------------------------------------------------------
+// Where playback sits in the music: phase inside the beat (0 at the hit) and a metric accent that
+// ranks the hit like a composer would (phrase start > bar downbeat > beat 3 > beats 2 and 4), from
+// the downbeat music-features.py measured. Unmeasured tracks fall back to the BPM from t=0.
+export function beatAt(t, track) {
+  const b = track?.f?.beat, len = 60 / (b?.bpm || bpmOf(track) || 100);
+  const n = (t - (b?.down ?? 0)) / len, i = Math.floor(n), pos = ((i % 16) + 16) % 16;
+  return { ph: n - i, i, len, acc: pos === 0 ? 1 : pos % 4 === 0 ? 0.7 : pos % 2 === 0 ? 0.45 : 0.28 };
+}
+
 // --- harmony ------------------------------------------------------------------------------------
 const cam = (c) => (c ? { n: +c.slice(0, -1), l: c.slice(-1) } : null);
 // Camelot rule DJs mix by: same code, +-1 on the wheel, or the relative major/minor.
@@ -125,6 +135,39 @@ export const LENSES = [
   { id: "busy", name: "Busy", legend: "sparse ↔ dense", color: (t) => (t.p?.busy == null ? null : ramp(QUIET_LOUD, q(t.p.busy))) },
   { id: "width", name: "Space", legend: "narrow ↔ wide stereo", color: (t) => (t.p?.width == null ? null : ramp(COOL_WARM, q(t.p.width))) },
 ];
+
+// --- organisations: a lens also re-sorts the atlas into its own rings ------------------------------
+// Feel keeps the taxonomy (feel -> family -> style). Every other lens becomes ring 1 itself, with
+// feel and family nested inside, so switching lens regroups the whole map and the list below.
+const BANDS5 = { bright: ["Dark", "Mellow", "Even", "Bright", "Airy"], busy: ["Sparse", "Light", "Moving", "Busy", "Dense"], width: ["Mono", "Narrow", "Even", "Wide", "Huge"] };
+const RAMPS = { tempo: COOL_WARM, bright: DARK_LIGHT, busy: QUIET_LOUD, width: COOL_WARM };
+const TEMPO = [["slow", "Slow", 0, 90], ["mid", "Mid", 90, 115], ["up", "Up", 115, 135], ["fast", "Fast", 135, 160], ["rush", "Rush", 160, 999]];
+const UNMEASURED = { id: "none", name: "Unmeasured", color: "#8a857a", night: "#8f8a80", ask: "no listening profile" };
+export function organise(id, feels, families) {
+  if (!id || id === "feel") return null;
+  const feelIx = Object.fromEntries(feels.map((F, i) => [F.id, i]));
+  const inner = (t) => [[t.feel, feels[feelIx[t.feel]]?.name ?? t.feel, feelIx[t.feel] ?? 99], [t.family, families[t.family]?.name ?? t.family, 0]];
+  let groups, top;
+  if (id === "key") {
+    groups = Array.from({ length: 12 }, (_, i) => { const c = `hsl(${i * 30},62%,60%)`, d = `hsl(${i * 30},55%,46%)`; return { id: String(i + 1), name: `${i + 1}`, color: d, night: c, ask: "Camelot neighbours mix" }; });
+    top = (t) => { const c = cam(t.f?.camelot); return c ? String(c.n) : null; };
+    const path = (t) => { const c = cam(t.f.camelot); return [[c.l, `${t.f.camelot} ${t.f.key}`, c.l === "A" ? 0 : 1], inner(t)[0]]; };
+    return finish(groups, top, path, inner);
+  }
+  if (id === "tempo") {
+    groups = TEMPO.map(([gid, name, lo, hi], i) => ({ id: gid, name, lo, hi, color: ramp(RAMPS.tempo, (i + 0.5) / TEMPO.length), night: ramp(RAMPS.tempo, (i + 0.5) / TEMPO.length), ask: hi < 999 ? `${lo || "<"}${lo ? "–" : ""}${hi} bpm` : `${lo}+ bpm` }));
+    top = (t) => { const b = +bpmOf(t); return b > 0 ? (TEMPO.findLast(([, , lo]) => b >= lo) ?? TEMPO[0])[0] : null; };
+  } else {
+    const names = BANDS5[id];
+    groups = names.map((name, i) => ({ id: name.toLowerCase(), name, color: ramp(RAMPS[id], (i + 0.5) / 5), night: ramp(RAMPS[id], (i + 0.5) / 5), ask: `${i * 20}–${i * 20 + 20}th pct` }));
+    top = (t) => (t.p?.[id] == null ? null : groups[Math.min(4, Math.floor(t.p[id] * 5))].id);
+  }
+  return finish(groups, top, inner, inner);
+}
+function finish(groups, top, path, inner) {
+  const all = [...groups, UNMEASURED], byId = Object.fromEntries(all.map((G, i) => [G.id, { ...G, i }]));
+  return { groups: all, byId, of: (t) => top(t) ?? "none", path: (t) => (top(t) ? path(t) : inner(t)) };
+}
 
 // --- card ----------------------------------------------------------------------------------------
 export function profileHTML(t) {

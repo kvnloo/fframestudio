@@ -12,6 +12,8 @@ Aural's soundstage (side/mid width, L/R correlation, octave bands, low/mid/high 
   bright      spectral centroid (Hz), the register the mix lives in
   clarity     octave spectral contrast (peak minus valley, dB): high = separated, low = washy
   width       side/mid RMS ratio; corr = L/R correlation (1 = mono)
+  beat        where the beats fall: the first downbeat (s, mod one 4/4 bar) at the BPM the
+              client plays to (listed when the source publishes one), so visuals land on the beat
   busy        onsets per second, overall and per band (low < 200 Hz, mid, high > 2 kHz)
   dyn         crest factor (dB) and loudness range (p95 - p10 of 400 ms RMS, dB)
   low / air   energy share below 120 Hz / above 8 kHz
@@ -49,8 +51,8 @@ def decode(url, dur):
            "-ac", "2", "-ar", str(SR), "-f", "f32le", "-"]
     raw = subprocess.run(cmd, capture_output=True, timeout=120).stdout
     x = np.frombuffer(raw, dtype=np.float32)
-    if x.size < SR * 4: return None
-    return x[: x.size // 2 * 2].reshape(-1, 2)
+    if x.size < SR * 4: return None, start
+    return x[: x.size // 2 * 2].reshape(-1, 2), start
 
 
 def stft(x, n=2048, hop=512):
@@ -95,7 +97,29 @@ def tempo(env, fps):
     return round(60 * fps / L, 1), round(min(max(conf - 1, 0) / 3, 1), 2)
 
 
-def features(x):
+def beat_phase(flux, low, fps, bpm, t0):
+    """Comb the onset envelope at the beat period for the phase with the most energy, then pick the
+    downbeat as the beat (of four) where the low band (kick) hits hardest. Times are absolute in the
+    track, reduced mod one beat / one bar, so any playback position maps to a phase."""
+    P = 60 * fps / bpm; n = flux.size
+    if n < P * 8: return None
+    k = int(fps) | 1; idx = np.arange(n)
+    norm = lambda e: np.maximum(e - np.convolve(e, np.ones(k) / k, mode="same"), 0)
+    env, lo = norm(flux), norm(low)
+    beats = np.arange(0, (n - 1 - P) / P)
+    phases = np.arange(0, P, 0.25)
+    sc = np.array([np.interp(ph + beats * P, idx, env).sum() for ph in phases])
+    ph = phases[int(np.argmax(sc))]
+    bars = np.arange(0, (n - 1 - 4 * P) / (4 * P))
+    ds = np.array([np.interp(ph + (4 * bars + j) * P, idx, lo).sum() for j in range(4)])
+    j = int(np.argmax(ds))
+    at = lambda f: t0 + ((f + 1) * 512 + 1024) / SR  # flux[i] = frame i+1 minus frame i; frame centre
+    beat, bar = 60 / bpm, 240 / bpm
+    return {"bpm": round(float(bpm), 2), "t0": round(at(ph) % beat, 3), "down": round(at(ph + j * P) % bar, 3),
+            "conf": round(float(sc.max() / (sc.mean() + 1e-9)), 2), "downConf": round(float(ds.max() / (ds.mean() + 1e-9)), 2)}
+
+
+def features(x, listed=None, t0=0):
     L, Rr = x[:, 0], x[:, 1]
     mid, side = (L + Rr) / 2, (L - Rr) / 2
     rms = lambda v: float(np.sqrt(np.mean(v ** 2)) + 1e-12)
@@ -118,6 +142,7 @@ def features(x):
         m = (freqs >= lo) & (freqs < hi); flux_b[name] = d[:, m].sum(axis=1)
     flux = d.sum(axis=1); secs = x.shape[0] / SR
     bpm, bconf = tempo(flux, fps)
+    beat = beat_phase(flux, flux_b["low"], fps, listed or bpm, t0)
     # Chroma -> key.
     m = (freqs >= 65) & (freqs <= 5000)
     pcs = (np.round(12 * np.log2(freqs[m] / 440)) + 9) % 12
@@ -145,6 +170,7 @@ def features(x):
         "low": round(float(P[:, freqs < 120].sum() / tot.sum()), 3),
         "air": round(float(P[:, freqs > 8000].sum() / tot.sum()), 4),
         "bands": bands.tolist(),
+        "beat": beat,
     }
 
 
@@ -205,8 +231,8 @@ def main():
 
     def one(t):
         try:  # a slow or dead host costs one track, never the run
-            x = decode(url(t), t.get("dur"))
-            return t, x, (features(x) if x is not None else None)
+            x, t0 = decode(url(t), t.get("dur"))
+            return t, x, (features(x, t.get("bpm"), t0) if x is not None else None)
         except Exception as e: print(f"fail {t['id']}: {e}", file=sys.stderr); return t, None, None
 
     def results(ex):  # bounded: decoded audio is ~5 MB a track, so never queue the whole catalogue

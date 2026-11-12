@@ -108,6 +108,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .eq { display: flex; gap: 2px; align-items: flex-end; height: 14px; }
 .eq i { will-change: transform; width: 3px; height: 100%; border-radius: 1px; background: currentColor; transform-origin: bottom; animation: eq var(--beat) ease-in-out infinite alternate; }
 .eq i:nth-child(2) { animation-delay: calc(var(--beat) * -.33); } .eq i:nth-child(3) { animation-delay: calc(var(--beat) * -.66); }
+.eq.live i { animation: none; transform: none; }
 @keyframes eq { from { transform: scaleY(.25); } to { transform: scaleY(1); } }
 .more, .web { width: 100%; margin: 6px 0; padding: 12px; border-radius: 12px; border: 1px dashed var(--line2); color: #bdb8ae; font-weight: 600; font-size: 13px; transition: background .2s, transform .3s var(--spring); }
 .more:active, .web:active { transform: scale(.98); }
@@ -119,11 +120,11 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 /* track card: the atlas lineage card */
 .card { --c: var(--acc); margin: 10px 0 4px; padding: 6px 14px 14px; border-radius: 18px; background: color-mix(in srgb, var(--c) 7%, rgba(255, 255, 255, .02)); border: 1px solid color-mix(in srgb, var(--c) 30%, var(--line)); animation: rise .45s var(--ease) backwards; }
-.lin .lv { display: grid; grid-template-columns: 26px 68px 1fr; align-items: baseline; gap: 0 8px; padding: 9px 0; border-bottom: 1px dashed var(--line2); }
+.lin .lv { display: grid; grid-template-columns: 22px 58px 1fr; align-items: baseline; gap: 0 8px; padding: 5px 0; border-bottom: 1px dashed var(--line2); }
 .lv b { font: 500 10px "IBM Plex Mono", monospace; color: var(--c); }
 .lv .k { font: 10px "IBM Plex Mono", monospace; letter-spacing: .12em; color: var(--mute); }
 .lv .v { font-weight: 600; font-size: 15px; }
-.lv .v em { font: italic 22px/1.1 "Instrument Serif", serif; }
+.lv .v em { font: italic 20px/1.1 "Instrument Serif", serif; }
 .lv .s { grid-column: 3; font-size: 12px; color: var(--mute); }
 .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
 .tags span { font: 10px "IBM Plex Mono", monospace; padding: 3px 7px; border-radius: 6px; background: rgba(255, 255, 255, .05); color: #bdb8ae; }
@@ -161,12 +162,6 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .lens button { flex: none; height: 26px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--line2); background: var(--panel); color: #cfcac0; font: 600 12px "Instrument Sans", sans-serif; transition: transform .2s var(--spring), background .2s, color .2s; }
 .lens button:active { transform: scale(.93); }
 .lens button.on { background: var(--ink); color: #0d1112; border-color: var(--ink); }
-.lens .lg { flex: 1 0 100%; display: inline-flex; align-items: center; gap: 6px; margin: 2px 0 0; font: 10px "IBM Plex Mono", monospace; color: var(--mute); animation: rise .35s var(--ease) backwards; }
-.lens .lg i { width: 44px; height: 6px; border-radius: 3px; }
-.lg-key i { background: linear-gradient(90deg, hsl(0 60% 58%), hsl(60 60% 58%), hsl(120 60% 58%), hsl(180 60% 58%), hsl(240 60% 58%), hsl(300 60% 58%), hsl(360 60% 58%)); }
-.lg-tempo i, .lg-width i { background: linear-gradient(90deg, #4078dc, #5fd3dc, #ece8df, #f4b25a, #ea5c54); }
-.lg-bright i { background: linear-gradient(90deg, #6e4628, #c4843c, #f0d696, #dcf6ff); }
-.lg-busy i { background: linear-gradient(90deg, #465c6e, #5fd3dc, #ffd666, #ff6e96); }
 
 /* --- sound profile on the card (Aural's vocabulary: tonal balance, soundstage, band activity) -- */
 .snd { margin-top: 12px; }
@@ -199,4 +194,4 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .near h4 { margin: 0 0 4px; font: 13px "Archivo Black", sans-serif; letter-spacing: .03em; text-transform: uppercase; color: var(--c); display: flex; gap: 8px; align-items: baseline; }
 .near h4 small { font: 10px "IBM Plex Mono", monospace; letter-spacing: 0; text-transform: none; color: var(--mute); }
 .trk .why { display: block; font: italic 13px "Instrument Serif", serif; color: color-mix(in srgb, var(--c) 70%, var(--ink)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-@media (prefers-reduced-motion: reduce) { .spec i, .lens .lg { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .spec i { animation: none; } }

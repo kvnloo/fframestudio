@@ -4,18 +4,24 @@
 import { createAtlas } from "./atlas.js";
 import { FEELS, BPM_BANDS, LEVELS, feelById, familyById, styleName } from "./taxonomy.js";
 import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine } from "./search.js";
-import { loadSound, soundReady, neighbours, profileHTML, LENSES, bpmOf } from "./sound.js";
+import { loadSound, soundReady, neighbours, profileHTML, LENSES, bpmOf, organise, beatAt } from "./sound.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const mmss = (s) => (s == null || !isFinite(s) ? "–:––" : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`);
 const night = (f) => feelById[f]?.night ?? "#8f8a80";
+// The active organisation decides a track's group (ring 1) and every colour on the page: the
+// legend, the atlas wedges, list headers, rows, card and player all read from these three.
+const grpOf = (t) => (org ? org.of(t) : t.feel);
+const grp = (id) => (org ? org.byId[id] : feelById[id]);
+const tone = (t) => (lensFn && lensFn(t)) || (org ? grp(grpOf(t))?.night : night(t.feel)) || "#8f8a80";
 const buzz = (ms = 6) => navigator.vibrate?.(ms);
 const wide = () => geo.W >= 900;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const base = new URLSearchParams(location.search).get("catalog") ?? document.body.dataset.catalog ?? "./";
 const state = { lens: "feel", q: "", feels: new Set(), bands: new Set(), cc0: false, picksOnly: false, sel: null, picks: new Set(JSON.parse(localStorage.getItem("sa-picks") || "[]")) };
+let org = null, lensFn = null, cardOpen = true, atlasIds = "";
 let all = [], byId = new Map(), why = new Map(), nbrs = [], result = { hits: [], ranked: false }, qv = null, like = null, share = null, webBusy = false;
 
 // --- elements ---------------------------------------------------------------------------------
@@ -96,16 +102,21 @@ function atlasRefit() { clearTimeout(refitT); refitT = setTimeout(() => { if (st
 const lensNav = $("#lens");
 function setLens(id, save = true) {
   const L = LENSES.find((x) => x.id === id) ?? LENSES[0]; state.lens = L.id;
-  A.setLens(L.color ?? null);
-  lensNav.innerHTML = soundReady() ? `<span class="lk">Colour</span>${LENSES.map((x) => `<button class="${x.id === L.id ? "on" : ""}" data-lens="${x.id}">${x.name}</button>`).join("")}${L.legend ? `<span class="lg lg-${L.id}"><i></i>${L.legend}</span>` : ""}` : "";
+  const changed = save && (org?.id ?? "feel") !== L.id;
+  lensFn = L.color ?? null; org = organise(L.id, FEELS, familyById); if (org) org.id = L.id;
+  A.setLens(lensFn);
+  lensNav.innerHTML = soundReady() ? `<span class="lk">Sort</span>${LENSES.map((x) => `<button class="${x.id === L.id ? "on" : ""}" data-lens="${x.id}">${x.name}</button>`).join("")}` : "";
   if (save) saveHash();
+  if (changed) { atlasIds = ""; run({ fly: false, scroll: true }).then(() => (state.sel ? focusSel(700) : A.fitAll(700))); }
 }
 lensNav.addEventListener("click", (e) => { const b = e.target.closest("[data-lens]"); if (b) { buzz(4); setLens(b.dataset.lens); } });
 
 // --- chips --------------------------------------------------------------------------------------
 function renderChips() {
   const counts = {}; for (const t of all) counts[t.feel] = (counts[t.feel] ?? 0) + 1;
-  chips.innerHTML =
+  const legend = org ? (() => { const n = {}; for (const t of all) { const k = grpOf(t); n[k] = (n[k] ?? 0) + 1; } return org.groups.filter((G) => n[G.id]).map((G) => `<button class="chip feel" data-jump="${G.id}" style="--c:${G.night}"><i></i>${esc(G.name)}<small>${n[G.id]}</small></button>`).join("") + `<span class="sep"></span>`; })() : "";
+  restPulse();
+  chips.innerHTML = legend +
     FEELS.map((f) => `<button class="chip feel ${state.feels.has(f.id) ? "on" : ""}" data-feel="${f.id}" style="--c:${f.night}"><i></i>${f.name}<small>${counts[f.id] ?? 0}</small></button>`).join("") +
     `<span class="sep"></span>` +
     BPM_BANDS.map((b) => `<button class="chip bpm ${state.bands.has(b.id) ? "on" : ""}" data-band="${b.id}">${b.name}<small>${b.hi < 999 ? (b.lo ? b.lo + "–" : "<") + b.hi : b.lo + "+"}</small></button>`).join("") +
@@ -113,6 +124,8 @@ function renderChips() {
 }
 chips.addEventListener("click", (e) => {
   const b = e.target.closest(".chip"); if (!b) return; buzz(4);
+  if (b.dataset.jump) { A.focus("f:" + b.dataset.jump); return scrollToGroup(b.dataset.jump); }
+  cardOpen = false; // the filtered list, not the old card, is the answer to a filter tap
   if (b.dataset.feel) toggle(state.feels, b.dataset.feel);
   if (b.dataset.band) toggle(state.bands, b.dataset.band);
   if (b.dataset.cc0) state.cc0 = !state.cc0;
@@ -137,7 +150,11 @@ async function run({ fly = false, scroll = true } = {}) {
     near.forEach((n) => why.set(n.t.id, n.why));
     result = { hits: [{ t: like, score: 9 }, ...near.map((n) => ({ t: n.t, score: n.score }))], ranked: true };
   } else result = search(all, { q: state.q, qv, like, ...facets });
-  const filtered = result.ranked || state.feels.size || state.bands.size || state.cc0 || state.picksOnly;
+  // Facets reshape the atlas itself (the kept tracks re-pack into full wedges); searches only light up.
+  const pool = like?.f || result.ranked ? search(all, facets).hits.map((h) => h.t) : result.hits.map((h) => h.t), ids = pool.length + ":" + (pool[0]?.id ?? "") + (pool.at(-1)?.id ?? "") + (org?.id ?? "feel");
+  if (ids !== atlasIds) { atlasIds = ids; A.setTracks(pool, org); }
+  $("#count").textContent = pool.length === all.length ? all.length.toLocaleString() : `${pool.length.toLocaleString()} / ${all.length.toLocaleString()}`;
+  const filtered = result.ranked;
   A.setLit(filtered ? result.hits.map((h) => h.t.id) : null);
   A.setFeatured(result.ranked ? result.hits.slice(0, 8).map((h) => h.t.id) : []);
   renderChips(); renderBody(scroll); saveHash();
@@ -172,7 +189,7 @@ const ICON = {
 };
 const rowHTML = (t, i, reason) => {
   const playing = state.sel === t.id && !audio.paused;
-  return `<button class="trk ${state.sel === t.id ? "sel" : ""} ${playing ? "playing" : ""} ${i < 14 && animateRows ? "" : "q"}" data-id="${esc(t.id)}" style="--c:${night(t.feel)};--i:${i};--beat:${(60 / (t.bpm || 100)).toFixed(3)}s">
+  return `<button class="trk ${state.sel === t.id ? "sel" : ""} ${playing ? "playing" : ""} ${i < 14 && animateRows ? "" : "q"}" data-id="${esc(t.id)}" style="--c:${tone(t)};--i:${i};--beat:${(60 / (t.bpm || 100)).toFixed(3)}s">
     <span class="pl">${playing ? `<span class="eq"><i></i><i></i><i></i></span>` : ICON.play}</span>
     <span class="tt"><b>${esc(t.title)}</b><small>${esc(t.author)} · ${esc(styleName(t.family, t.style))}${t.f ? ` · ${bpmOf(t)} bpm · ${t.f.camelot}` : t.bpm ? ` · ${t.bpm} bpm` : ""}${t.src === "web" ? ` · ${esc(t.provider)}` : ""}</small>${(reason ?? why.get(t.id)) ? `<em class="why">${esc(reason ?? why.get(t.id))}</em>` : ""}</span>
     <span class="du">${mmss(t.dur)}</span><span class="hv ${state.picks.has(t.id) ? "on" : ""}" data-heart="${esc(t.id)}" role="button" aria-label="Pick">${ICON.heart}</span></button>`;
@@ -182,33 +199,34 @@ function renderBody(scroll = true) {
   animateRows = scroll; // a scroll-to-top render is a new result set; in-place re-renders (pick, select) stay still
   const hits = result.hits;
   const sel = state.sel && byId.get(state.sel);
-  let html = sel ? cardHTML(sel) : "";
+  let html = sel && cardOpen ? cardHTML(sel) : "";
   const label = like ? `Sounds like “${esc(like.title)}”` : state.q ? `“${esc(state.q)}”` : state.feels.size || state.bands.size || state.cc0 || state.picksOnly ? "Filtered" : "Every track";
   html += `<div class="sum"><b>${label}</b><span>${hits.length.toLocaleString()} ${hits.length === 1 ? "track" : "tracks"}${result.ranked ? (like?.f ? " · by ear" : qv || like ? " · semantic" : " · words") : ""}</span></div>`;
   // Group by feel (the atlas's first ring); ranked searches keep their order inside each group and
   // order groups by their best hit, so the strongest vibe comes first.
   const groups = new Map();
-  hits.forEach((h, i) => { const f = h.t.feel; if (!groups.has(f)) groups.set(f, { f, best: i, rows: [] }); groups.get(f).rows.push(h.t); });
-  const order = [...groups.values()].sort((a, b) => (result.ranked ? a.best - b.best : FEELS.findIndex((F) => F.id === a.f) - FEELS.findIndex((F) => F.id === b.f)));
+  hits.forEach((h, i) => { const f = grpOf(h.t); if (!groups.has(f)) groups.set(f, { f, best: i, rows: [] }); groups.get(f).rows.push(h.t); });
+  const rank = (id) => (org ? grp(id).i : FEELS.findIndex((F) => F.id === id));
+  const order = [...groups.values()].sort((a, b) => (result.ranked ? a.best - b.best : rank(a.f) - rank(b.f)));
   const LIM = result.ranked ? 40 : 30;
   // By-ear results stay one ranked list: the point is that a neighbour can live in another feel.
   if (like?.f) html += `<section class="grp" style="--c:${night(like.feel)}"><h3><i></i>By ear<small>CLAP timbre · tempo · Camelot · texture</small></h3>${hits.slice(0, 80).map((h, i) => rowHTML(h.t, i)).join("")}</section>`;
   else for (const g of order) {
-    const F = feelById[g.f], bpms = g.rows.map((t) => t.bpm).filter(Boolean), more = g.rows.length - LIM;
-    const styles = [...new Set(g.rows.slice(0, 40).map((t) => styleName(t.family, t.style)))].slice(0, 3).join(" · ");
+    const F = grp(g.f), bpms = g.rows.map((t) => t.bpm).filter(Boolean), more = g.rows.length - LIM;
+    const styles = org ? (F.ask ?? "") : [...new Set(g.rows.slice(0, 40).map((t) => styleName(t.family, t.style)))].slice(0, 3).join(" · ");
     html += `<section class="grp" data-feel="${g.f}" style="--c:${F.night}"><h3 data-focus="f:${g.f}"><i></i>${F.name}<small>${g.rows.length}${bpms.length ? ` · ${Math.min(...bpms)}–${Math.max(...bpms)} bpm` : ""}</small><em>${esc(styles)}</em></h3>
       ${g.rows.slice(0, g.open ? 400 : LIM).map((t, i) => rowHTML(t, i)).join("")}${more > 0 ? `<button class="more" data-more="${g.f}">Show ${more} more ${F.name.toLowerCase()} tracks</button>` : ""}</section>`;
   }
   if (!hits.length) html += `<div class="empty">Nothing in the catalogue matches. ${state.q ? "Try the open web below, or fewer filters." : "Try fewer filters."}</div>`;
   if (state.q) html += `<button class="web ${webBusy ? "busy" : ""}" id="web">${webBusy ? "Searching the open web…" : `Search the open web for “${esc(state.q)}”`}<small>Openverse · Jamendo, Freesound, Wikimedia · CC0 / CC BY only</small></button>`;
   html += `<footer class="src">${sourcesLine()}</footer>`;
-  body.innerHTML = html;
+  body.innerHTML = html; restPulse();
   if (scroll) body.scrollTop = 0;
 }
 const sourcesLine = () => { const n = {}; for (const t of all) n[t.src] = (n[t.src] ?? 0) + 1; return `Sources: ${[["shortlist", "Glide shortlist"], ["incompetech", "Incompetech"], ["ccmixter", "ccMixter"], ["web", "Openverse"]].filter(([k]) => n[k]).map(([k, v]) => `${v} ${n[k].toLocaleString()}`).join(" · ")}. CC0 and CC BY only; no NC, ND or SA. Credit CC BY tracks with the line on each card.`; };
 
 function cardHTML(t) {
-  const F = feelById[t.feel], c = F.night;
+  const F = feelById[t.feel], c = tone(t);
   const rows = [
     [F.name, F.ask + (t.feelGuess ? " · inferred" : "")],
     [familyById[t.family]?.name, ""],
@@ -234,7 +252,7 @@ body.addEventListener("click", async (e) => {
   if (row) { buzz(5); const id = row.dataset.id; return id === state.sel ? togglePlay() : select(id, { play: true, fly: true, keepScroll: true }); }
   const h = e.target.closest("[data-focus]"); if (h) { buzz(4); return A.focus(h.dataset.focus); }
   const desc = e.target.closest(".desc"); if (desc) return desc.classList.toggle("open");
-  const more = e.target.closest("[data-more]"); if (more) { more.outerHTML = (result.hits.filter((x) => x.t.feel === more.dataset.more).slice(result.ranked ? 40 : 30).map((x, i) => rowHTML(x.t, i)).join("")); return; }
+  const more = e.target.closest("[data-more]"); if (more) { more.outerHTML = (result.hits.filter((x) => grpOf(x.t) === more.dataset.more).slice(result.ranked ? 40 : 30).map((x, i) => rowHTML(x.t, i)).join("")); return; }
   if (e.target.closest("#web")) return searchWeb();
   const act = e.target.closest("[data-act]")?.dataset.act, t = state.sel && byId.get(state.sel);
   if (!act || !t) return;
@@ -259,7 +277,7 @@ const streamUrl = (t) => (proxied && t.audio.startsWith(CCM) ? "/api/ccm?p=" + e
 function select(id, { play = false, fly = false, keepScroll = false } = {}) {
   const t = byId.get(id); if (!t) return;
   const changed = state.sel !== id;
-  state.sel = id; A.focusId = id;
+  cardOpen = true; state.sel = id; A.focusId = id;
   if (changed) { audio.src = streamUrl(t); audio.load(); }
   if (play) audio.play().catch((e) => { if (e.name !== "AbortError") toast("Tap ▶ to play"); });
   if (changed) {
@@ -268,7 +286,7 @@ function select(id, { play = false, fly = false, keepScroll = false } = {}) {
     A.setLinks(nbrs.length ? id : null, nbrs.map((n) => ({ id: n.t.id, w: Math.max(0, (n.score / top - 0.6) / 0.4) })));
   }
   if (fly) focusSel();
-  A.setPlaying({ id, bpm: t.bpm, paused: audio.paused, time: () => audio.currentTime, progress: () => (audio.duration ? audio.currentTime / audio.duration : 0) });
+  A.setPlaying(playState());
   const st = body.scrollTop; renderBody(false); if (keepScroll) body.scrollTop = st; else body.scrollTop = 0;
   renderPlayer(); saveHash();
   if (!wide() && sh.target === "peek" && !play) sheetTo("half");
@@ -277,19 +295,38 @@ function togglePlay() { if (!state.sel) { const first = result.hits[0]?.t; retur
 function step(d) { const list = result.hits.map((h) => h.t.id), i = list.indexOf(state.sel); const n = list[(i + d + list.length) % list.length]; if (n) select(n, { play: true, fly: true }); }
 function renderPlayer() {
   const t = state.sel && byId.get(state.sel), p = $("#player");
-  p.style.setProperty("--c", t ? night(t.feel) : "#5fd3dc");
-  $("#pt").innerHTML = t ? `<b>${esc(t.title)}</b><small>${esc(t.author)} · ${esc(t.license)}${t.bpm ? ` · ${t.bpm} bpm` : ""}</small>` : `<b>Sound Atlas</b><small>${all.length.toLocaleString()} free tracks · CC0 / CC BY</small>`;
+  p.style.setProperty("--c", t ? tone(t) : "#5fd3dc");
+  $("#pt").innerHTML = t ? `<b>${esc(t.title)}</b><small>${esc(t.author)}${bpmOf(t) ? ` · ${bpmOf(t)} bpm` : ""}${t.f?.camelot ? ` · ${t.f.camelot}` : ""}</small>` : `<b>Sound Atlas</b><small>${all.length.toLocaleString()} free tracks · CC0 / CC BY</small>`;
   $("#pp").innerHTML = audio.paused ? ICON.play : ICON.pause;
   $("#ph").classList.toggle("on", !!t && state.picks.has(t.id));
 }
 const bar = $("#bar"), thumb = $("#thumb"), tc = $("#tc");
+const playState = () => { const t = state.sel && byId.get(state.sel); return t ? { id: t.id, paused: audio.paused, beat: () => beatAt(audio.currentTime, t), progress: () => (audio.duration ? audio.currentTime / audio.duration : 0) } : null; };
+// The page plays along: the player button, brand mark and the playing group's legend/header dots
+// swell on accented beats; the row's three bars read kick, off-beat and bar accent. Only the
+// `scale` property is written (compositor-only, and it composes with CSS transform animations).
+let pulse = null;
+const restPulse = () => { if (pulse) for (const el of pulse.all) el.style.scale = ""; pulse?.eq[0]?.parentNode.classList.remove("live"); pulse = null; };
+function beatFrame() {
+  const t = state.sel && byId.get(state.sel); if (!t || reduced) return;
+  if (!pulse) {
+    const G = grpOf(t), dots = [...document.querySelectorAll(`.grp[data-feel="${G}"] h3 i, .chip[data-jump="${G}"] i, .chip.feel[data-feel="${t.feel}"] i`)], eq = [...body.querySelectorAll(".trk.sel .eq i")];
+    pulse = { pp: $("#pp"), dot: $(".brand .dot"), dots, eq, all: [$("#pp"), $(".brand .dot"), ...dots, ...eq] };
+    eq[0]?.parentNode.classList.add("live");
+  }
+  const b = beatAt(audio.currentTime, t), e = Math.exp(-b.ph * 5) * b.acc, off = Math.exp(-((b.ph + 0.5) % 1) * 7);
+  pulse.pp.style.scale = (1 + 0.06 * e).toFixed(3);
+  pulse.dot.style.scale = (1 + 0.4 * e).toFixed(3);
+  for (const d of pulse.dots) d.style.scale = (1 + 0.7 * e).toFixed(3);
+  const [k, h, a] = pulse.eq; if (a) { k.style.scale = `1 ${(0.2 + 0.8 * Math.exp(-b.ph * 5)).toFixed(3)}`; h.style.scale = `1 ${(0.2 + 0.55 * off).toFixed(3)}`; a.style.scale = `1 ${(0.2 + 0.8 * e).toFixed(3)}`; }
+}
 function tick() {
   const d = audio.duration, c = audio.currentTime;
   const k = d ? c / d : 0; bar.style.transform = `scaleX(${k})`; thumb.style.transform = `translate3d(${(k * 100).toFixed(2)}%, 0, 0)`; // compositor-only
   const label = `${mmss(c)} / ${mmss(d)}`; if (label !== tc.textContent) tc.textContent = label; // text changes re-layout: once a second, not per frame
-  if (!audio.paused) requestAnimationFrame(tick);
+  if (!audio.paused) { beatFrame(); requestAnimationFrame(tick); }
 }
-const syncPlay = () => { A.setPlaying(state.sel ? { id: state.sel, bpm: byId.get(state.sel)?.bpm, paused: audio.paused, time: () => audio.currentTime, progress: () => (audio.duration ? audio.currentTime / audio.duration : 0) } : null); renderPlayer(); const r = body.querySelector(".trk.sel"); if (r) { const t = byId.get(state.sel); r.classList.toggle("playing", !audio.paused); r.querySelector(".pl").innerHTML = !audio.paused ? `<span class="eq"><i></i><i></i><i></i></span>` : ICON.play; r.style.setProperty("--beat", (60 / (t?.bpm || 100)).toFixed(3) + "s"); } tick(); };
+const syncPlay = () => { A.setPlaying(playState()); renderPlayer(); if (audio.paused) restPulse(); const r = body.querySelector(".trk.sel"); if (r) { const t = byId.get(state.sel); r.classList.toggle("playing", !audio.paused); r.querySelector(".pl").innerHTML = !audio.paused ? `<span class="eq"><i></i><i></i><i></i></span>` : ICON.play; r.style.setProperty("--beat", (60 / (t?.bpm || 100)).toFixed(3) + "s"); } tick(); };
 audio.addEventListener("play", syncPlay); audio.addEventListener("pause", syncPlay); audio.addEventListener("loadedmetadata", tick);
 audio.addEventListener("ended", () => step(1));
 audio.addEventListener("error", () => { if (audio.src && state.sel) toast("This one won't stream here; open its source ↗"); });
