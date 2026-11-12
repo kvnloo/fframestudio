@@ -215,10 +215,10 @@ export function profileHTML(t, tune = null) {
   return `<section class="snd">
     <div class="big">
       <div><b>${bpmOf(t)}</b><small>bpm</small><small>${src}</small></div>
-      <div><b>${esc(f.camelot)}</b><small>${esc(f.key)}${f.keyConf < 0.5 ? " · ambiguous" : ""}</small><small>mixes with ${mixesWith(f.camelot).join(" ")}</small></div>
+      <div><b>${esc(f.camelot)}</b><small>key ${esc(f.key)}${f.keyConf < 0.5 ? " · ambiguous" : ""}</small><small title="Camelot wheel: neighbours mix in key">mixes with ${mixesWith(f.camelot).join(" ")}</small></div>
       <div class="spec" title="Tonal balance, 32 Hz–16 kHz octaves">${bands}<small>32 Hz – 16k</small></div>
     </div>
     ${inst || f.timbre ? `<div class="inst">${inst}${f.timbre ? `<em>${esc(f.timbre)}</em>` : ""}</div>` : ""}
-    <div class="meters${tune ? " tuning" : ""}"><p class="hint">${tune ? "Your settings · the closest songs are below" : "Drag any meter to find a song that measures like that"}</p>${METERS.map(meter).join("")}</div>
+    <div class="meters${tune ? " tuning" : ""}"><p class="hint">${tune ? "Your settings · the closest songs are below" : "Drag a meter: the song switches to one that measures like that. pct = its rank among all songs"}</p>${METERS.map(meter).join("")}</div>
   </section>`;
 }

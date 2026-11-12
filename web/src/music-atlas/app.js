@@ -307,9 +307,11 @@ function renderChips() {
   const other = otherFilters();
   chips.innerHTML = groups.filter((G) => n[G.id]).map((G) => `<button class="chip feel ${on.has(G.id) ? "on" : ""}" data-g="${esc(G.id)}" style="--c:${G.night}"><i></i>${esc(G.id === "none" ? "Unmeasured" : G.name)}<small>${n[G.id]}</small></button>`).join("") +
     (other ? `<button class="chip x" data-other="1" title="Filters set under other sorts">+${other}<span>×</span></button>` : "") +
-    `<span class="sep"></span><button class="chip ${state.cc0 ? "on" : ""}" data-cc0="1">CC0</button><button class="chip ${state.picksOnly ? "on" : ""}" data-picks="1">♥<small>${state.picks.size}</small></button>`;
+    "";
+  // Pinned outside the scroller so they never slide offscreen behind 8+ groups.
+  $("#pins").innerHTML = `<button class="chip ${state.picksOnly ? "on" : ""}" data-picks="1" aria-label="Only tracks you liked" title="Only tracks you liked">♥ Liked<small>${state.picks.size}</small></button><button class="chip ${state.cc0 ? "on" : ""}" data-cc0="1" aria-label="Only CC0: no credit needed" title="CC0: use without crediting anyone">No credit</button>`;
 }
-chips.addEventListener("click", (e) => {
+const onChip = (e) => {
   const b = e.target.closest(".chip"); if (!b) return; buzz(4);
   state.view = "library"; // the filtered list is the answer to a filter tap
   if (b.dataset.g) toggleGroup(b.dataset.g);
@@ -317,7 +319,8 @@ chips.addEventListener("click", (e) => {
   if (b.dataset.cc0) state.cc0 = !state.cc0;
   if (b.dataset.picks) state.picksOnly = !state.picksOnly;
   like = null; run({ fly: true });
-});
+};
+chips.addEventListener("click", onChip); $("#pins").addEventListener("click", onChip);
 const toggle = (set, v) => (set.has(v) ? set.delete(v) : set.add(v));
 
 // --- search -------------------------------------------------------------------------------------
@@ -445,7 +448,7 @@ function communityHTML() {
 function renderLive() {
   const R = social.room, el = $("#live"); if (!el) return;
   el.hidden = !R.on;
-  el.innerHTML = `<i></i><b>${R.here}</b><span>here</span><span class="sep"></span><b>${social.compact(R.views)}</b><span>views</span>`;
+  el.innerHTML = `<i></i><b>${R.here}</b><span>here now</span><span class="sep"></span><b>${social.compact(R.views)}</b><span>visits</span>`;
   el.title = `${R.here} here now, ${R.listening} listening · ${R.views.toLocaleString()} views · ${R.visitors.toLocaleString()} listeners`;
 }
 let roomT = 0;
@@ -751,17 +754,18 @@ function readHash() {
   if (LENSES.some((L) => L.id === h.get("l"))) state.lens = h.get("l");
   if (VIEWS.includes(h.get("v"))) state.view = h.get("v");
   const shared = (h.get("p") ?? "").split(",").filter((id) => byId.has(id));
-  if (shared.length) { shared.forEach((id) => state.picks.add(id)); state.picksOnly = true; toast(`${shared.length} shared picks`); }
+  if (shared.length) { shared.forEach((id) => state.picks.add(id)); toast(`${shared.length} shared picks · tap ♥ Liked to see them`); } // the full atlas still loads
   pendingPlist = h.get("pl");
   return h.get("t");
 }
 let pendingPlist = null;
 async function shareLink() {
   // share.json (deploy-time, never in git) carries the protected-deploy entry link; the hash rides through its redirect.
-  const url = (share?.base ?? location.origin + location.pathname) + "#" + hashOf();
+  // A shared song opens the whole atlas on that song: no filters, likes or search ride along.
+  const t = state.sel && byId.get(state.sel), url = (share?.base ?? location.origin + location.pathname) + (t ? "#t=" + encodeURIComponent(t.id) : "");
   buzz(8);
-  if (navigator.share && matchMedia("(pointer: coarse)").matches) { try { await navigator.share({ title: "Sound Atlas picks", url }); return; } catch (e) { if (e.name === "AbortError") return; } }
-  await copy(url); toast(state.picks.size ? `Link with ${state.picks.size} picks copied` : "Link copied");
+  if (navigator.share && matchMedia("(pointer: coarse)").matches) { try { await navigator.share({ title: t ? `${t.title} · Sound Atlas` : "Sound Atlas", url }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  await copy(url); toast(t ? `Link to “${t.title}” copied` : "Link copied");
 }
 async function copy(text) {
   try { await navigator.clipboard.writeText(text); return true; }

@@ -217,6 +217,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .rail .chip.x { color: var(--acc); border-color: rgba(95, 211, 220, .45); }
 .rail .chip.x span { font-size: 14px; line-height: 1; opacity: .8; }
 .rail .chips { gap: 4px; }
+.rail .pins { flex: none; padding: 4px 10px 4px 0; }
 .rail .chips .sep { margin: 7px 1px; }
 .sortmenu { position: absolute; left: 10px; bottom: calc(100% - 4px); min-width: 210px; padding: 5px; border-radius: 14px; background: #1b2223; border: 1px solid var(--line2);
   box-shadow: 0 18px 44px rgba(0, 0, 0, .6); transform-origin: 18px 100%; opacity: 0; transform: scale(.86) translateY(8px); transition: opacity .16s var(--ease), transform .26s var(--spring); }
@@ -310,7 +311,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 /* layers: the Track pane's half of the stems view (the map rings are the other half) */
 .layers { margin-top: 14px; padding: 12px 0 4px; border-top: 1px solid var(--line); }
 /* Tune: every meter is a slider; the original value stays as the dark tick, your target glows. */
-.meters .hint { margin: 0 0 2px; font: 10px "IBM Plex Mono", monospace; color: var(--mute); }
+.meters .hint { margin: 0 0 2px; font: 10px/1.4 "IBM Plex Mono", monospace; color: var(--mute); }
 .meters.tuning .hint { color: var(--c); }
 .mt .mb input.tune { position: absolute; inset: -12px -8px; width: calc(100% + 16px); height: 30px; margin: 0; opacity: 0; cursor: ew-resize; touch-action: pan-y; }
 .mt .mb i.tg { position: absolute; top: -5px; width: 0; height: 16px; pointer-events: none; }
