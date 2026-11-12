@@ -374,7 +374,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .castmenu button.ghost { min-height: 40px; justify-content: center; border-color: transparent; color: var(--mute); font: 12px "IBM Plex Mono", monospace; }
 
 /* --- TV view: what a cast lands on. 10-foot: big type, no touch chrome, the map is the wallpaper ---- */
-html.tv .dock, html.tv .views, html.tv .grab, html.tv #ps, html.tv #pc, html.tv #ph, html.tv #pr, html.tv .rail, html.tv .motion, html.tv .live { display: none !important; }
+html.tv .dock, html.tv .views, html.tv .grab, html.tv #ps, html.tv #pc, html.tv #ph, html.tv #pr, html.tv .rail, html.tv .motion, html.tv .live, html.tv .party { display: none !important; }
 html.tv #atlas { top: 0; left: 0; right: 0; bottom: 0; cursor: none; } /* longhands: Tizen 6.5 (Chromium 85) has no `inset` */
 html.tv .scrub .thumbw { top: 0; left: 0; right: 0; bottom: 0; }
 html.tv .sheet { left: auto; right: 24px; top: 24px; bottom: 24px; width: 400px; height: auto; border-radius: 22px; border-bottom: 1px solid var(--line2); transform: none !important; background: rgba(21, 26, 27, .88); }
