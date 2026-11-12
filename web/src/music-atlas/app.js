@@ -1006,8 +1006,7 @@ function tvBadge(st) { // unpaired: say how to cast here; QR = pairing link for 
   const key = `${room}|${ok}`; if (el.dataset.k === key) return; el.dataset.k = key;
   if (!room) { el.innerHTML = `<b>Sound Atlas TV</b><span>No cast room in the link.</span>`; return; }
   const p = new URLSearchParams(location.search), link = `${share?.base ?? location.origin + location.pathname}#tvpair=${[room, p.get("ip") ?? "", p.get("app") ?? "", p.get("name") ?? "TV"].join("~")}`;
-  if (!tvQR.done && !linked) {
-    tvQR.done = true;
+  if (!tvQR.done && (tvQR.done = true) && !linked) { // only on the first status: never re-forms over a session in use
     const m = qrEncode(link, { ecc: "M", border: 0 }), cells = [];
     m.data.forEach((row, y) => row.forEach((on, x) => { if (on) cells.push([x, y]); }));
     tvQR.on = A.setFormation(cells, m.size); // false: too few songs to draw it, the panel keeps its own QR

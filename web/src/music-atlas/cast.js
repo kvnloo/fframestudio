@@ -39,7 +39,7 @@ export function receive({ sid, audio, current, apply, next, onStatus }) {
     if (ROOM.test(room)) {
       try {
         const j = await api("tvpoll", { sid, room, after, tv: status() });
-        if (j.cmd && j.cseq > after) { after = j.cseq; last = Date.now(); clearTimeout(wait); apply(j.cmd, j.cage ?? 0); }
+        if (j.cmd && j.cseq > after) { after = j.cseq; last = Date.now() - (j.cage ?? 0); clearTimeout(wait); apply(j.cmd, j.cage ?? 0); } // a relaunch picks up the room's last command: its age, not now, says if a phone is still there
         onStatus({ room, linked: Date.now() - last < 120_000 && after > 0, ok: true });
       } catch { onStatus({ room, linked: false, ok: false }); }
     } else onStatus({ room: null, linked: false, ok: false });
