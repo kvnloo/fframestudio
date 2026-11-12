@@ -277,6 +277,9 @@ function hotAt(x, y) {
   const b = document.elementFromPoint(x, y)?.closest?.("#sortmenu [data-lens]") ?? null;
   if (b !== sm.hot) { sm.hot?.classList.remove("hot"); b?.classList.add("hot"); if (b) haptic("detent"); sm.hot = b; }
 }
+// A held finger that strays AWAY px past the menu (and the button it came from) dismisses it; a wobble on the border doesn't.
+const AWAY = 24, outBy = (r, x, y) => Math.hypot(Math.max(r.left - x, 0, x - r.right), Math.max(r.top - y, 0, y - r.bottom));
+const away = (x, y) => Math.min(outBy(sortMenu.getBoundingClientRect(), x, y), outBy(sortBtn.getBoundingClientRect(), x, y)) > AWAY;
 sortBtn.addEventListener("pointerdown", (e) => {
   if (e.button > 0) return; sm.down = true; sm.x = e.clientX; sm.y = e.clientY; sm.p0 = e.pressure; sm.fired = false;
   sortBtn.setPointerCapture(e.pointerId);
@@ -285,6 +288,7 @@ sortBtn.addEventListener("pointerdown", (e) => {
 sortBtn.addEventListener("pointermove", (e) => {
   if (!sm.down) return;
   if (!sm.fired && e.pointerType !== "mouse" && sm.p0 > 0 && e.pressure - sm.p0 > FORCE) { clearTimeout(sm.t); sm.fired = true; openSort(true); } // pressed harder
+  if (sm.fired && sm.open && away(e.clientX, e.clientY)) { sm.down = false; return closeSort(); } // slid off without choosing: let it go
   if (sm.fired) hotAt(e.clientX, e.clientY);
   else if (Math.hypot(e.clientX - sm.x, e.clientY - sm.y) > SLOP) clearTimeout(sm.t); // a scroll of the rail, not a press
 });
