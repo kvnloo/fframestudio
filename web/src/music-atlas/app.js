@@ -4,7 +4,7 @@
 import { createAtlas } from "./atlas.js";
 import { FEELS, BPM_BANDS, LEVELS, FAMILY_TINT, feelById, familyById, styleName, shade } from "./taxonomy.js";
 import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine } from "./search.js";
-import { loadSound, soundReady, neighbours, tuneMatch, profileHTML, LENSES, bpmOf, organise, beatAt } from "./sound.js";
+import { loadSound, soundReady, neighbours, tuneMatch, profileHTML, ord, LENSES, bpmOf, organise, beatAt } from "./sound.js";
 import { haptic, pressable, pressRing, HOLD, SLOP, FORCE } from "./gestures.js";
 import * as social from "./social.js";
 import { loadLayers, layersOf, layerCount, STEMS, laneColor, createMixer, stemUrl, lenders } from "./layers.js";
@@ -161,7 +161,7 @@ function mixAct(op, k) {
 function layersHTML(t) {
   const lanes = lanesOf(t.id);
   if (!lanes) return layerCount() ? `<section class="layers none"><h4>Layers</h4><p>Not split yet. Layers appear here and on the map as the splitter works through the catalogue (${layerCount()} so far).</p></section>` : "";
-  return `<section class="layers"><h4>Layers<small>${lanes.length} · ⇄ borrows from a similar song</small><button data-lmix="reset" class="${mixer.id === t.id && mixer.changed ? "" : "off"}">Full mix</button></h4>
+  return `<section class="layers"><h4>Layers<small>${lanes.length} · ⇄ borrow from a neighbour</small><button data-lmix="reset" class="${mixer.id === t.id && mixer.changed ? "" : "off"}">Full mix</button></h4>
     ${lanes.map((l) => `<div class="lane${l.on ? "" : " out"}${mixer.id === t.id && mixer.solo === l.k ? " solo" : ""}" style="--l:${l.color}"><i></i><b>${esc(l.name)}${l.from ? `<em>from ${esc(l.from.title)}</em>` : ""}</b>${envSVG(l.env)}<small>${Math.round(l.share * 100)}%</small><button data-lmix="mute" data-k="${l.k}" aria-label="Mute ${esc(l.name)}">M</button><button data-lmix="solo" data-k="${l.k}" aria-label="Solo ${esc(l.name)}">S</button><button data-lmix="swap" data-k="${l.k}" class="${l.from ? "on" : ""}" aria-label="Swap ${esc(l.name)} for a similar song's" title="Borrow this layer from a similar song">⇄</button></div>`).join("")}
   </section>`;
 }
@@ -377,7 +377,7 @@ const rowHTML = (t, i, reason) => {
   const playing = state.sel === t.id && !audio.paused;
   return `<button class="trk ${state.sel === t.id ? "sel" : ""} ${playing ? "playing" : ""} ${i < 14 && animateRows ? "" : "q"}" data-id="${esc(t.id)}" style="--c:${tone(t)};--i:${i};--beat:${(60 / (t.bpm || 100)).toFixed(3)}s">
     <span class="pl">${playing ? `<span class="eq"><i></i><i></i><i></i></span>` : ICON.play}</span>
-    <span class="tt"><b>${esc(t.title)}</b><small>${esc(t.author)} · ${esc(styleName(t.family, t.style))}${t.f ? ` · ${bpmOf(t)} bpm · ${t.f.camelot}` : t.bpm ? ` · ${t.bpm} bpm` : ""}${t.src === "web" ? ` · ${esc(t.provider)}` : ""}</small>${(reason ?? why.get(t.id)) ? `<em class="why">${esc(reason ?? why.get(t.id))}</em>` : ""}</span>
+    <span class="tt"><b>${esc(t.title)}</b><small>${t.f ? `${bpmOf(t)} bpm · ${t.f.camelot} · ` : t.bpm ? `${t.bpm} bpm · ` : ""}${esc(styleName(t.family, t.style))} · ${esc(t.author)}${t.src === "web" ? ` · ${esc(t.provider)}` : ""}</small>${(reason ?? why.get(t.id)) ? `<em class="why">${esc(reason ?? why.get(t.id))}</em>` : ""}</span>
     <span class="du">${mmss(t.dur)}</span><span class="hv ${state.picks.has(t.id) ? "on" : ""}" data-heart="${esc(t.id)}" role="button" aria-label="Like">${ICON.heart}${social.room.likes[t.id] ? `<small>${social.compact(social.room.likes[t.id])}</small>` : ""}</span></button>`;
 };
 let animateRows = true;
@@ -430,11 +430,11 @@ function communityHTML() {
   const nowIds = R.now.map(([id]) => id), cnt = Object.fromEntries(R.now);
   const liked = Object.entries(R.likes).sort((a, b) => b[1] - a[1]).slice(0, 20).map(([id]) => id);
   const pl = R.playlists.map((p) => `<div class="pl-card ${state.plist?.id === p.id ? "on" : ""}" data-pl="${p.id}"><button class="pl-go" data-plplay="${p.id}" aria-label="Play ${esc(p.name)}">${ICON.play}</button>
-    <span class="tt"><b>${esc(p.name)}</b><small>${p.tracks.length} tracks · ${p.plays} plays${p.own ? " · yours" : ""}</small></span>
+    <span class="tt"><b>${esc(p.name)}</b><small>${p.tracks.length} track${p.tracks.length === 1 ? "" : "s"} · ${p.plays} play${p.plays === 1 ? "" : "s"}${p.own ? " · yours" : ""}</small></span>
     <span class="hv ${p.liked ? "on" : ""}" data-plheart="${p.id}" role="button" aria-label="Like playlist">${ICON.heart}${p.likes ? `<small>${p.likes}</small>` : ""}</span>${p.own ? `<button class="pl-x" data-plx="${p.id}" aria-label="Unpublish">×</button>` : ""}</div>`).join("");
   return `<div class="sum"><b>Community</b><span>${social.compact(R.views)} views · ${social.compact(R.visitors)} listeners · ${social.compact(R.plays)} plays</span></div>
     <section class="room"><div class="live-big"><i></i><b>${R.here}</b> here now<span>${R.listening} listening</span></div>
-      <div class="radio-row"><button data-radio="ear" class="${state.radio === "ear" ? "on" : ""}"><b>By-ear radio</b><small>${state.sel ? `endless, from “${esc(byId.get(state.sel)?.title)}”` : "endless, drifting by sound"}</small></button><button data-radio="crowd" class="${state.radio === "crowd" ? "on" : ""}"><b>Crowd radio</b><small>what people here love and play</small></button></div></section>
+      <div class="radio-row"><button data-radio="ear" class="${state.radio === "ear" ? "on" : ""}"><b>By-ear radio</b><small>${state.sel ? `from “${esc(byId.get(state.sel)?.title)}”, endless` : "endless, drifting by sound"}</small></button><button data-radio="crowd" class="${state.radio === "crowd" ? "on" : ""}"><b>Crowd radio</b><small>what people here love and play</small></button></div></section>
     ${nowIds.length ? `<section class="grp" style="--c:#4fd69a"><h3><i></i>Playing right now<small>${R.listening} listening</small></h3>${rows(nowIds, (t) => `${cnt[t.id]} listening now`)}</section>` : ""}
     <section class="grp" style="--c:#ffbf4d"><h3><i></i>Community playlists<small>${R.playlists.length}</small></h3>
       <form class="pub" id="pub"><input id="pubname" maxlength="60" placeholder="${state.picks.size ? `Name a playlist of your ${state.picks.size} ${state.picks.size === 1 ? "pick" : "picks"}…` : "Heart some tracks to publish a playlist"}" ${state.picks.size ? "" : "disabled"} /><button ${state.picks.size ? "" : "disabled"}>Publish</button></form>
@@ -564,7 +564,7 @@ body.addEventListener("input", (e) => {
   const mb = inp.parentElement; let g = mb.querySelector(".tg"); if (!g) { g = document.createElement("i"); g.className = "tg"; mb.prepend(g); }
   g.style.left = `${v * 100}%`;
   const b = mb.parentElement.querySelector(".mw b"), p0 = Math.round((t.p[k] ?? v) * 100), p1 = Math.round(v * 100);
-  if (b) b.textContent = p0 === p1 ? `${p0}th pct` : `${p0} → ${p1}th pct`;
+  if (b) b.textContent = p0 === p1 ? `${ord(p0)} pct` : `${ord(p0)} → ${ord(p1)} pct`;
   clearTimeout(tuneT); tuneT = setTimeout(retune, 260); // a pause in the drag is enough to change the song
 });
 
@@ -646,12 +646,12 @@ function stepList(d) { const list = state.queue === "similar" && simSeed ? [simS
 function renderPlayer() {
   const t = state.sel && byId.get(state.sel), p = $("#player");
   p.style.setProperty("--c", t ? tone(t) : "#5fd3dc"); $("#views").style.setProperty("--c", t ? tone(t) : "#5fd3dc");
-  $("#pt").innerHTML = t ? `<b>${esc(t.title)}</b><small>${esc(t.author)}${bpmOf(t) ? ` · ${bpmOf(t)} bpm` : ""}${t.f?.camelot ? ` · ${t.f.camelot}` : ""}</small>` : `<b>Sound Atlas</b><small>${all.length.toLocaleString()} free tracks · CC0 / CC BY</small>`;
+  $("#pt").innerHTML = t ? `<b>${esc(t.title)}</b><small>${bpmOf(t) ? `${bpmOf(t)} bpm · ` : ""}${t.f?.camelot ? `${t.f.camelot} · ` : ""}${esc(t.author)}</small>` : `<b>Sound Atlas</b><small>${all.length.toLocaleString()} free tracks · CC0 / CC BY</small>`;
   $("#pp").innerHTML = audio.paused ? ICON.play : ICON.pause;
   $("#ph").classList.toggle("on", !!t && state.picks.has(t.id));
   const lk = t && social.room.likes[t.id]; $("#ph").dataset.n = lk ? social.compact(lk) : "";
   const here = t && social.room.now.find(([id]) => id === t.id)?.[1]; // people (you included) on this track right now
-  $("#pt small")?.insertAdjacentHTML("beforeend", here > 1 ? ` · <em class="with">${here - 1} with you</em>` : "");
+  $("#pt small")?.insertAdjacentHTML("afterbegin", here > 1 ? `<em class="with">${here - 1} with you</em> · ` : ""); // lead: the tail of this line is ellipsized on phones
   $("#pr").classList.toggle("on", !!state.radio); $("#pr").title = state.radio ? `${state.radio === "ear" ? "By-ear" : "Crowd"} radio on` : "Radio";
 }
 const bar = $("#bar"), thumb = $("#thumb"), tc = $("#tc");

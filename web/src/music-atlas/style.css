@@ -16,7 +16,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   background: linear-gradient(rgba(13, 17, 18, .8), rgba(13, 17, 18, 0)); }
 .top > * { pointer-events: auto; }
 .row1 { display: flex; gap: 10px; align-items: center; }
-.brand { display: flex; gap: 7px; align-items: center; color: var(--ink); text-decoration: none; flex: none; }
+.brand { display: flex; gap: 7px; align-items: center; min-height: 32px; color: var(--ink); text-decoration: none; flex: none; }
 .brand b { font: 13px "Archivo Black", sans-serif; letter-spacing: .02em; text-transform: uppercase; }
 .brand small { font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
 .brand .dot { width: 11px; height: 11px; border-radius: 50%; background: conic-gradient(#ff6b5f, #ffbf4d, #ff86b8, #6ea8ff, #4fd69a, #c38bff, #5fd3dc, #ff6b5f); animation: spin 9s linear infinite; }
@@ -49,9 +49,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .chip small { font: 10px "IBM Plex Mono", monospace; color: var(--mute); }
 .chip.feel i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 0 var(--c); transition: box-shadow .3s; }
 .chip.on { background: var(--ink); color: #0d1112; border-color: var(--ink); }
-.chip.on small { color: #4b4944; }
 .chip.feel.on { background: var(--c); border-color: var(--c); }
 .chip.feel.on i { background: #0d1112; }
+.chip.on small { color: #0d1112; opacity: .75; } /* the count sat grey-on-colour (2.2:1) on a picked chip */
 .chips .sep { flex: none; width: 1px; margin: 6px 2px; background: var(--line2); }
 
 /* bottom sheet */
@@ -248,7 +248,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .mt .mb { position: relative; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--line2), color-mix(in srgb, var(--c) 55%, var(--line2))); }
 .mt .mb i { position: absolute; left: 0; top: -4px; width: 0; height: 14px; }
 .mt .mb i::after { content: ""; position: absolute; left: -2px; width: 4px; height: 14px; border-radius: 2px; background: var(--ink); box-shadow: 0 0 0 2px var(--panel2); }
-.mt .mw { grid-column: 2; display: flex; justify-content: space-between; font: 9px "IBM Plex Mono", monospace; color: var(--mute); }
+.mt .mw { grid-column: 2; display: flex; justify-content: space-between; font: 10px "IBM Plex Mono", monospace; color: var(--mute); }
 .mt .mw b { font-weight: 400; color: var(--ink); opacity: .75; }
 .mt .mv { grid-column: 1 / -1; grid-row: 3; font: 10px "IBM Plex Mono", monospace; color: #a39e94; }
 .mt .bb { grid-row: 1 / 3; align-self: center; grid-column: 3; display: flex; gap: 2px; height: 22px; align-items: end; }
@@ -259,26 +259,28 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .near { margin-top: 14px; }
 .near h4 { margin: 0 0 4px; font: 13px "Archivo Black", sans-serif; letter-spacing: .03em; text-transform: uppercase; color: var(--c); display: flex; gap: 8px; align-items: baseline; }
 .near h4 small { font: 10px "IBM Plex Mono", monospace; letter-spacing: 0; text-transform: none; color: var(--mute); }
-.trk .why { display: block; font: italic 13px "Instrument Serif", serif; color: color-mix(in srgb, var(--c) 70%, var(--ink)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trk .why { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; font: italic 14px/1.2 "Instrument Serif", serif; color: color-mix(in srgb, var(--c) 70%, var(--ink)); } /* the reason is the point of the row: wrap, never cut mid-phrase */
 @media (prefers-reduced-motion: reduce) { .spec i { animation: none; } }
 
 /* --- community: live pill, like counts, radio, playlists ------------------------------------- */
-.live { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 13px; background: rgba(13, 17, 18, .62); border: 1px solid var(--line); font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
+.live { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 10px; border-radius: 16px; background: rgba(13, 17, 18, .62); border: 1px solid var(--line); font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
 .live[hidden] { display: none; }
 .live[hidden] + .motion { margin-left: auto; }
-.motion { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px 0 8px; border-radius: 13px; background: rgba(13, 17, 18, .62); border: 1px solid var(--line); font: 11px "IBM Plex Mono", monospace; color: var(--mute); transition: color .2s, border-color .2s, transform .25s var(--spring); }
+.motion { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 10px 0 8px; border-radius: 16px; background: rgba(13, 17, 18, .62); border: 1px solid var(--line); font: 11px "IBM Plex Mono", monospace; color: var(--mute); transition: color .2s, border-color .2s, transform .25s var(--spring); }
 .motion svg { width: 14px; height: 14px; }
 .motion:active { transform: scale(.93); }
 .motion[aria-pressed="true"] { color: #0d1112; background: var(--acc); border-color: var(--acc); }
 .motion[aria-pressed="true"] svg { animation: wig 1.6s ease-in-out infinite; }
 @keyframes wig { 50% { transform: translateX(1.5px) scaleY(.8); } }
 .motion[hidden] { display: none; }
+@media (max-width: 419px) { .motion { width: 32px; padding: 0; justify-content: center; } .motion span { display: none; } } /* icon-only on phones: the label pushed it off-screen */
 .live b { color: var(--ink); font-weight: 400; }
 .live i, .live-big i { width: 7px; height: 7px; border-radius: 50%; background: #4fd69a; box-shadow: 0 0 8px #4fd69a; animation: breathe 2.4s ease-in-out infinite; }
 .live .sep { width: 1px; height: 11px; background: var(--line2); margin: 0 3px; }
 @keyframes breathe { 50% { opacity: .35; transform: scale(.75); } }
 .trk .hv, .pl-card .hv { position: relative; }
-.hv small { position: absolute; bottom: 1px; right: 0; left: 0; text-align: center; font: 9px "IBM Plex Mono", monospace; color: inherit; }
+.hv small { position: absolute; bottom: 1px; right: 0; left: 0; text-align: center; font: 9px "IBM Plex Mono", monospace; color: var(--mute); } /* the like count stays readable when the heart is dim */
+.hv.on small { color: inherit; }
 #ph { position: relative; }
 #ph[data-n]:not([data-n=""])::after { content: attr(data-n); position: absolute; bottom: -1px; left: 0; right: 0; text-align: center; font: 9px "IBM Plex Mono", monospace; }
 .ib.radio.on { color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
@@ -290,7 +292,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .radio-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
 .radio-row button { min-width: 0; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line2); transition: background .2s, border-color .2s; }
 .radio-row button b { display: block; font: 600 13px "Instrument Sans", sans-serif; color: var(--ink); }
-.radio-row button small { display: block; font: 10.5px "IBM Plex Mono", monospace; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.radio-row button small { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; font: 10.5px/1.35 "IBM Plex Mono", monospace; color: var(--mute); } /* two lines: "from <song>" was cut before the song */
 .radio-row button.on { border-color: #4fd69a; background: color-mix(in srgb, #4fd69a 12%, transparent); }
 .pub { display: flex; gap: 6px; margin: 4px 0 8px; }
 .pub input { flex: 1; min-width: 0; height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line2); background: rgba(255, 255, 255, .04); color: var(--ink); font: 14px "Instrument Sans", sans-serif; }
@@ -318,16 +320,16 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 @keyframes tunein { from { opacity: 0; transform: translateY(6px); } }
 .tunes h4, .layers h4 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; font: 12px "Archivo Black", sans-serif; letter-spacing: .03em; text-transform: uppercase; color: var(--c); }
 .layers h4 small, .tunes h4 small { flex: 1; min-width: 0; font: 10px "IBM Plex Mono", monospace; letter-spacing: 0; text-transform: none; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.layers h4 button, .tunes h4 button { flex: none; padding: 3px 9px; border-radius: 999px; font: 11px "IBM Plex Mono", monospace; color: var(--ink); background: color-mix(in srgb, var(--c) 22%, transparent); border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); }
+.layers h4 button, .tunes h4 button { flex: none; padding: 6px 11px; border-radius: 999px; font: 11px "IBM Plex Mono", monospace; color: var(--ink); background: color-mix(in srgb, var(--c) 22%, transparent); border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); }
 .layers h4 button.off { opacity: .35; pointer-events: none; }
 .layers.none p { margin: 0; font: 12px/1.45 "Instrument Sans", sans-serif; color: var(--mute); }
-.lane { display: grid; grid-template-columns: 8px 84px 1fr 30px 28px 28px 28px; gap: 6px; align-items: center; min-height: 34px; transition: opacity .2s; }
+.lane { display: grid; grid-template-columns: 8px 96px 1fr 30px 32px 32px 32px; gap: 6px; align-items: center; min-height: 34px; transition: opacity .2s; }
 .lane i { width: 8px; height: 8px; border-radius: 50%; background: var(--l); }
 .lane b { font: 600 12px "Instrument Sans", sans-serif; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lane .env { width: 100%; height: 18px; }
 .lane .env path { fill: color-mix(in srgb, var(--l) 70%, transparent); }
 .lane small { font: 10px "IBM Plex Mono", monospace; color: var(--mute); text-align: right; }
-.lane button { height: 26px; border-radius: 8px; font: 600 11px "IBM Plex Mono", monospace; color: color-mix(in srgb, var(--ink) 75%, transparent); background: rgba(255, 255, 255, .04); border: 1px solid var(--line); }
+.lane button { height: 32px; border-radius: 8px; font: 600 12px "IBM Plex Mono", monospace; color: var(--ink); background: rgba(255, 255, 255, .06); border: 1px solid var(--line2); }
 .lane.out { opacity: .38; }
 .lane.out button[data-lmix="mute"] { color: var(--bg); background: var(--mute); }
 .lane b em { display: block; font: italic 400 10px "Instrument Serif", serif; color: var(--l); overflow: hidden; text-overflow: ellipsis; }

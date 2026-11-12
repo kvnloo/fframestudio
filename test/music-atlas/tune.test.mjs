@@ -2,7 +2,7 @@
 // meters you left alone keep the rest of the seed's character.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { tuneMatch } from "../../web/src/music-atlas/sound.js";
+import { tuneMatch, ord } from "../../web/src/music-atlas/sound.js";
 
 const tr = (id, p) => ({ id, p: { tempo: 0.5, bright: 0.5, busy: 0.5, width: 0.5, clarity: 0.5, lra: 0.5, low: 0.5, ...p } });
 const seed = tr("seed", { bright: 0.2 });
@@ -28,4 +28,8 @@ test("tracks without a listening profile are skipped", () => {
 test("with the seed in the pool, untouched settings keep the seed playing; a big move changes it", () => {
   assert.equal(tuneMatch(seed, { ...seed.p }, pool, 3, { withSeed: true })[0].t.id, "seed");
   assert.equal(tuneMatch(seed, { ...seed.p, bright: 0.9 }, pool, 3, { withSeed: true })[0].t.id, "bright-only");
+});
+
+test("percentiles read as English ordinals (42nd, 63rd, 11th, 100th), not 42th", () => {
+  assert.deepEqual([1, 2, 3, 11, 12, 13, 21, 42, 63, 100, 0].map(ord), ["1st", "2nd", "3rd", "11th", "12th", "13th", "21st", "42nd", "63rd", "100th", "0th"]);
 });

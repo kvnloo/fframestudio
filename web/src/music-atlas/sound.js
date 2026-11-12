@@ -112,6 +112,8 @@ export function neighbours(t, pool, k = 8) {
 // --- tune: drag a track's meters and find the song that measures like that -------------------------
 // target = percentiles per meter (0..1). Moved meters weigh 3x the ones left alone, so "this, but
 // brighter" keeps the rest of the song's character; the seed's timbre is a soft tiebreak.
+export const ord = (n) => { n = Math.round(n); const t = n % 100, u = n % 10; return n + (t > 10 && t < 14 ? "th" : u === 1 ? "st" : u === 2 ? "nd" : u === 3 ? "rd" : "th"); };
+
 export function tuneMatch(seed, target, pool, k = 6, { withSeed = false } = {}) {
   const keys = Object.keys(target).filter((m) => seed.p?.[m] != null);
   const moved = new Set(keys.filter((m) => Math.abs(target[m] - seed.p[m]) > 0.02));
@@ -206,7 +208,7 @@ export function profileHTML(t, tune = null) {
     const tv = tune?.[k] ?? p, moved = Math.abs(tv - p) > 0.02;
     const extra = k === "busy" && f.busyBands ? `<span class="bb">${["low", "mid", "high"].map((b) => `<i style="--h:${clamp(f.busyBands[b] / 9, 0.04, 1).toFixed(2)}" title="${b} ${f.busyBands[b]}/s"></i>`).join("")}</span>`
       : k === "width" ? `<svg class="stage" viewBox="0 0 44 22" aria-hidden="true"><ellipse cx="22" cy="11" rx="${(4 + clamp(f.width, 0, 1) * 17).toFixed(1)}" ry="8" /><circle cx="22" cy="11" r="1.6" /></svg>` : "";
-    return `<div class="mt"><span class="ml">${label}</span><span class="mb"><i style="left:${(p * 100).toFixed(1)}%"></i>${tune ? `<i class="tg" style="left:${(tv * 100).toFixed(1)}%"></i>` : ""}<input class="tune" type="range" min="0" max="100" value="${Math.round(tv * 100)}" data-k="${k}" aria-label="Find a song with this ${esc(label.toLowerCase())}"></span>${extra}<span class="mw"><span>${lo}</span><b>${moved ? `${Math.round(p * 100)} → ${Math.round(tv * 100)}th pct` : `${Math.round(p * 100)}th pct`}</b><span>${hi}</span></span><span class="mv">${esc(fmt(f))}</span></div>`;
+    return `<div class="mt"><span class="ml">${label}</span><span class="mb"><i style="left:${(p * 100).toFixed(1)}%"></i>${tune ? `<i class="tg" style="left:${(tv * 100).toFixed(1)}%"></i>` : ""}<input class="tune" type="range" min="0" max="100" value="${Math.round(tv * 100)}" data-k="${k}" aria-label="Find a song with this ${esc(label.toLowerCase())}"></span>${extra}<span class="mw"><span>${lo}</span><b>${moved ? `${ord(p * 100)} → ${ord(tv * 100)} pct` : `${ord(p * 100)} pct`}</b><span>${hi}</span></span><span class="mv">${esc(fmt(f))}</span></div>`;
   };
   const bands = (f.bands ?? []).map((d, i) => `<i style="--n:${i};--h:${clamp((d + 40) / 40, 0.03, 1).toFixed(2)}" title="${[32, 63, 125, 250, 500, "1k", "2k", "4k", "8k", "16k"][i]} Hz ${d} dB"></i>`).join("");
   const inst = (f.inst ?? []).slice(0, 4).map((x) => `<span>${esc(x[0])}</span>`).join("");
@@ -214,7 +216,7 @@ export function profileHTML(t, tune = null) {
     <div class="big">
       <div><b>${bpmOf(t)}</b><small>bpm</small><small>${src}</small></div>
       <div><b>${esc(f.camelot)}</b><small>${esc(f.key)}${f.keyConf < 0.5 ? " · ambiguous" : ""}</small><small>mixes with ${mixesWith(f.camelot).join(" ")}</small></div>
-      <div class="spec" title="Tonal balance, 32 Hz–16 kHz octaves">${bands}<small>32 Hz – 16 kHz</small></div>
+      <div class="spec" title="Tonal balance, 32 Hz–16 kHz octaves">${bands}<small>32 Hz – 16k</small></div>
     </div>
     ${inst || f.timbre ? `<div class="inst">${inst}${f.timbre ? `<em>${esc(f.timbre)}</em>` : ""}</div>` : ""}
     <div class="meters${tune ? " tuning" : ""}"><p class="hint">${tune ? "Your settings · the closest songs are below" : "Drag any meter to find a song that measures like that"}</p>${METERS.map(meter).join("")}</div>
