@@ -6,6 +6,9 @@
 // - Google Cast (Chromecast, Google TV, Nest Hub): the Cast SDK starts the DashCast receiver,
 //   which loads the TV view with a fresh room.
 // While casting, the phone keeps playing muted so its map, beat and scrubber stay in step.
+// Like Chromecast, the TV plays on when the phone leaves Chrome: a hidden page sends nothing
+// (Android pauses or freezes the muted copy; that is not the listener pausing), catches up with the
+// TV on return, and a reopened or reloaded page takes control of the same TV again.
 
 const ROOM = /^[a-z0-9]{6}$/;
 const DASHCAST = "84912283", NS = "urn:x-cast:com.madmod.dashcast";
@@ -63,10 +66,16 @@ export function probe() {
 
 // --- the phone ------------------------------------------------------------------------------------
 export const send = { on: false, room: null, kind: null, name: "", tv: null, tage: 0, session: null };
-let hooks = null, sentAt = 0, quietUntil = 0, sendT = 0, peekT = 0;
+let hooks = null, sentAt = 0, quietUntil = 0, echo = null, sendT = 0, peekT = 0;
 const snapshot = () => ({ t: hooks.current(), pos: Math.round(hooks.audio.currentTime * 10) / 10, playing: !hooks.audio.paused });
-function push() { if (!send.on || Date.now() < quietUntil) return; clearTimeout(sendT); sendT = setTimeout(() => { sentAt = Date.now(); api("cast", { sid: hooks.sid, room: send.room, cmd: snapshot() }).catch(() => {}); }, 120); }
+const away = () => document.visibilityState === "hidden";
+function push() {
+  if (!send.on || away()) return;
+  const s = snapshot(); // the phone copying the TV fires play/seek events too; only those are skipped
+  if (Date.now() < quietUntil && echo && s.t === echo.t && s.playing === echo.playing) return;
+  sentAt = Date.now(); clearTimeout(sendT); sendT = setTimeout(() => { if (away()) return; sentAt = Date.now(); api("cast", { sid: hooks.sid, room: send.room, cmd: snapshot() }).catch(() => {}); }, 120); }
 export const quiet = (ms = 600) => { quietUntil = Date.now() + ms; };
+function mirror(tv, tage, ms = 1500) { echo = { t: tv.t, playing: tv.playing }; quiet(ms); hooks.follow(tv, tage); }
 
 // app hooks: { sid, audio, current, follow(tv, tage), toast, haptic, onChange() }
 export function attach(h) {
@@ -80,31 +89,47 @@ export function attach(h) {
     hp.delete("tvpair"); history.replaceState(null, "", location.pathname + location.search + (hp.toString() ? "#" + hp : ""));
   }
   if (window.chrome && !isTV) setTimeout(loadCastSDK, 1500); // the Cast picker must open inside the tap, so the SDK loads ahead
+  document.addEventListener("visibilitychange", () => {
+    if (away()) clearTimeout(sendT);
+    else if (send.on) peek(true); // back: the TV played on, so the phone follows it
+  });
+  resume();
+}
+// A page closed or reloaded mid-cast picks the TV back up if it is still playing that room.
+const CAST_KEY = "sa-casting";
+async function resume() {
+  let c; try { c = JSON.parse(localStorage.getItem(CAST_KEY)); } catch {}
+  if (!c || !ROOM.test(c.room ?? "")) return;
+  const j = await api("castpeek", { sid: hooks.sid, room: c.room }).catch(() => null);
+  if (!fresh(j)) return localStorage.removeItem(CAST_KEY);
+  begin(c.room, c.kind, c.name, true); mirror(j.tv, j.tage ?? 0, 2000);
 }
 const loadTV = () => { try { return JSON.parse(localStorage.getItem("sa-tv")); } catch { return null; } };
 const saveTV = (tv) => localStorage.setItem("sa-tv", JSON.stringify(tv));
 export const savedTV = loadTV;
 
-function begin(room, kind, name) {
+function begin(room, kind, name, back = false) {
   Object.assign(send, { on: true, room, kind, name });
-  hooks.audio.muted = true; sentAt = 0; push();
+  localStorage.setItem(CAST_KEY, JSON.stringify({ room, kind, name }));
+  hooks.audio.muted = true; sentAt = 0; if (!back) push();
   clearInterval(peekT); peekT = setInterval(peek, 2500);
-  hooks.onChange(); hooks.haptic("keep"); hooks.toast(`Playing on ${name}`);
+  hooks.onChange(); hooks.haptic("keep"); hooks.toast(back ? `Still playing on ${name}` : `Playing on ${name}`);
 }
 export function stop() {
   if (!send.on) return;
   const s = snapshot(); s.playing = false;
   api("cast", { sid: hooks.sid, room: send.room, cmd: s }).catch(() => {}); // the TV pauses where it was
   try { send.session?.endSession(true); } catch {}
+  localStorage.removeItem(CAST_KEY);
   clearInterval(peekT); Object.assign(send, { on: false, room: null, kind: null, session: null, tv: null });
   hooks.audio.muted = false; hooks.onChange(); hooks.toast("Stopped casting");
 }
-async function peek() {
-  if (!send.on) return;
+async function peek(force = false) {
+  if (!send.on || (away() && !force)) return;
   try {
     const j = await api("castpeek", { sid: hooks.sid, room: send.room });
     send.tv = j.tv; send.tage = j.tage ?? 1e9;
-    if (j.tv && send.tage < 5000 && Date.now() - sentAt > 6000) { quiet(); hooks.follow(j.tv, send.tage); } // the TV moved on by itself (song ended, its remote)
+    if (j.tv && send.tage < 5000 && (force || Date.now() - sentAt > 6000)) mirror(j.tv, send.tage); // the TV moved on by itself (song ended, its remote)
     hooks.onChange();
   } catch {}
 }
