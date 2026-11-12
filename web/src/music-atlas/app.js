@@ -175,6 +175,7 @@ function setLens(id, save = true) {
   const changed = save && (org?.id ?? "feel") !== L.id;
   lensFn = L.color ?? null; org = organise(L.id, FEELS, familyById); if (org) org.id = L.id; tintCache.clear();
   A.setLens(lensFn);
+  renderPlayer(); // the player, its glow and the queue dot take the playing track's colour under the new sort
   lensNav.innerHTML = soundReady() ? `<span class="lk">Sort</span>${LENSES.map((x) => `<button class="${x.id === L.id ? "on" : ""}" data-lens="${x.id}">${x.name}</button>`).join("")}` : "";
   if (save) saveHash();
   if (changed) { atlasIds = ""; run({ fly: false, scroll: true }).then(() => (state.sel ? focusSel(700) : A.fitAll(700))); }

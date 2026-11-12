@@ -9,7 +9,7 @@ ring at full zoom. Output, next to the catalogue:
   stems.json                       {"model", "hop", "tracks": {id: {"dur", "stems": [...]}}}
   stems/<id>/<stem>.webm           one file per kept stem; the stems sum back to the mix
 
-Usage (in an env with demucs + soundfile, e.g. /mnt/zer0models/project-envs/sound-atlas-stems):
+Usage (in an env with demucs + soundfile, e.g. <local>/project-envs/sound-atlas-stems):
   python tools/sound-atlas-stems.py <catalog-dir> [--ids a,b] [--src shortlist] [--tracks-base DIR]
 Only CC0 / CC BY tracks are split: layers are derivatives, and NC/ND/SA terms forbid or bind them.
 """
