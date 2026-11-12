@@ -68,7 +68,22 @@ lists the failing cases. It exits 1 if a gate fails. It also runs `steer_e2e.py`
 The evaluator is frozen. A climb never edits this directory. New cases are added in their own
 commit, before the climb that targets them.
 
-## Calibrate the critics before trusting them
+## Critics (Opus, calibrated)
+
+```bash
+python3 tools/sound-atlas-hillclimb/critic.py <outdir> --pair <name> parent.png candidate.png [--pair ...]
+```
+
+Each of the 4 layers (task, layout, text, art) is judged by a fresh `hermes chat --oneshot` Opus call
+with no history. Every pair is judged in both A/B orders. Run pairs at 360 and 393.
+
+Calibration result (`rubric.json` `critics.calibration`):
+- **Rail anchor:** Opus took the owner's side on all 4 layers at 360, in both orders.
+- **Pins anchor:** the task layer took the owner's side. The visual layers preferred the old build
+  because the "fix" commit also wrapped the header, which was a real regression.
+- **Null pair:** came out a tie on every layer, so there is no position bias.
+
+## How the calibration works
 
 Use the owner's own verdicts as anchors. The rejected and accepted states are in git:
 - "this looks bad" before `7f388f2` vs after it
@@ -86,7 +101,7 @@ model, the rubric or the evidence size changes.
 | Role | Model |
 |---|---|
 | Builder (one change per round) | Claude Opus (Kevin's highest-rated). GPT models only through fx or pi with a contract brief, after passing their coding probe |
-| Routine critics (journey, creator, craft) | Claude Haiku 5.5, once calibrated |
+| All pairwise critics | Claude Opus 5.5 (calibrated 2026-11-12). Haiku only after it passes the same anchors |
 | Motion and art-director panels | Claude Opus 5.5 |
 | Gates and cases | code |
 | Feel | the owner, on the phone |
