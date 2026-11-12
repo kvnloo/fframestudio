@@ -1,0 +1,18 @@
+[package]
+name = "sound-atlas-gpui"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+gpui = { version = "=0.2.2", default-features = false, features = ["font-kit", "x11", "wayland"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = { version = "2", default-features = false, features = ["tls"] }
+rodio = { version = "0.20", default-features = false, features = ["symphonia-mp3"] }
+
+[profile.dev]
+opt-level = 1
+debug = false
+[profile.dev.package."*"]
+opt-level = 2

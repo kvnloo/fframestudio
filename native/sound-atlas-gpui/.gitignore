@@ -1,0 +1,7 @@
+target/
+bench/mirror/
+bench/node_modules
+bench/results*.jsonl
+bench/wl/rt/
+bench/wl/sway.log
+*.png
