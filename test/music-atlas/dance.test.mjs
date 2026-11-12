@@ -49,5 +49,5 @@ test("density sets how often a band pulses, soundstage how wide it opens", () =>
   for (let i = 1; i < n.length; i++) assert.ok(n[i] > n[i - 1], `busy ${n}`);
   const w = (gi) => Math.max(...bar("width", "x", gi, {}).xs.map((p) => p.spread));
   assert.ok(w(4) > w(2) && w(2) > w(0));
-  assert.ok(Math.min(...bar("width", "x", 0, {}).xs.map((p) => p.spread)) < 0, "mono pinches in");
+  for (const gi of [0, 1]) assert.ok(Math.min(...bar("width", "x", gi, {}).xs.map((p) => p.spread)) < 0, "mono and intimate pinch in");
 });

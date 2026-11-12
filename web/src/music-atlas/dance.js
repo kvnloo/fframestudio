@@ -69,7 +69,7 @@ export function pose(lens, gid, gi, pos, tune = {}) {
   const v = Math.max(0, Math.min(1, gi / 4));
   if (lens === "bright") return { ...REST, k: 1 + 0.04 * (1 - v) * hit(ph, 3) * acc + 0.01 * v * hat, tw: v * hat };
   if (lens === "busy") { const per = [0.25, 0.5, 1, 2, 4][Math.round(v * 4)]; return { ...REST, k: 1 + (0.045 - 0.02 * v) * hit(frac(pos * per), 6) }; }
-  if (lens === "width") return { ...REST, spread: (-0.06 + 0.24 * v) * hit(ph, 4) * acc };
+  if (lens === "width") return { ...REST, spread: [-0.06, -0.03, 0.04, 0.1, 0.18][Math.round(v * 4)] * hit(ph, 4) * acc }; // mono and intimate pinch in
   return { ...REST, k: 1 + 0.02 * kick };
 }
 
