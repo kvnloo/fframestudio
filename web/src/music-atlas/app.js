@@ -349,7 +349,7 @@ async function run({ fly = false, scroll = true } = {}) {
     result = { hits: [{ t: like, score: 9 }, ...near.map((n) => ({ t: n.t, score: n.score }))], ranked: true };
   } else result = search(all, { q: state.q, qv, like, ...facets });
   // Facets reshape the atlas itself (the kept tracks re-pack into full wedges); searches only light up.
-  const pool = like?.f || result.ranked ? search(all, facets).hits.map((h) => h.t) : result.hits.map((h) => h.t), ids = pool.length + ":" + (pool[0]?.id ?? "") + (pool.at(-1)?.id ?? "") + (org?.id ?? "feel");
+  const pool = like?.f || result.ranked ? search(all, facets).hits.map((h) => h.t) : result.hits.map((h) => h.t), ids = pool.length + ":" + (pool[0]?.id ?? "") + (pool[pool.length - 1]?.id ?? "") + (org?.id ?? "feel");
   if (ids !== atlasIds) { atlasIds = ids; A.setTracks(pool, org); }
   $("#count").textContent = pool.length === all.length ? all.length.toLocaleString() : `${pool.length.toLocaleString()} / ${all.length.toLocaleString()}`;
   const filtered = result.ranked;
@@ -811,7 +811,7 @@ function readHash() {
 }
 let pendingPlist = null, pendingRoom = null;
 // --- share sheet: QR code, copy, the system share sheet, and "Listen together" -------------------------
-const qrSVG = (text) => renderSVG(text, { border: 2, pixelSize: 8, whiteColor: "#ece8df", blackColor: "#0d1112" });
+const qr = (text) => renderSVG(text, { border: 2, pixelSize: 8, whiteColor: "#ece8df", blackColor: "#0d1112" });
 const bare = (u) => u.replace(/^https?:\/\//, "");
 function sheetUI(cls, html) {
   document.querySelector(".shm")?.close();
@@ -829,7 +829,7 @@ function shareLink() {
   const t = state.sel && byId.get(state.sel), url = t ? songLink(t) : appLink(), title = t ? `${t.title} · Sound Atlas` : "Sound Atlas";
   buzz(8);
   const m = sheetUI("share", `
-    <div class="shq" aria-label="QR code for the link">${qrSVG(url)}</div>
+    <div class="shq" aria-label="QR code for the link">${qr(url)}</div>
     <div class="shn"><b>${esc(t ? t.title : "Sound Atlas")}</b><small>${esc(t ? t.author : `${all.length.toLocaleString()} free songs by feel`)}</small></div>
     <button class="shu" data-a="copy" title="Copy link">${esc(bare(url))}</button>
     <div class="sha"><button data-a="copy">Copy link</button>${navigator.share ? `<button data-a="send">Share…</button>` : ""}</div>
@@ -865,7 +865,7 @@ function roomSheet() {
   const url = roomLink(party.room), code = party.room.toUpperCase();
   const m = sheetUI("room", `
     <div class="sht">Listen together</div>
-    <div class="shq" aria-label="QR code to join">${qrSVG(url)}</div>
+    <div class="shq" aria-label="QR code to join">${qr(url)}</div>
     <div class="rcode">${code.slice(0, 3)}<span>${code.slice(3)}</span></div>
     <p class="shs">${roomStatus()}</p>
     <label class="nudge"><span>Speaker delay</span><input type="range" min="-300" max="300" step="10" value="${party.nudge}" /><output>${party.nudge > 0 ? "+" : ""}${party.nudge} ms</output></label>
@@ -965,11 +965,7 @@ function tvBadge({ room, linked, ok }) { // unpaired: say how to cast here; QR =
   if (!room) { el.innerHTML = `<b>Sound Atlas TV</b><span>No cast room in the link.</span>`; return; }
   const p = new URLSearchParams(location.search), link = `${share?.base ?? location.origin + location.pathname}#tvpair=${[room, p.get("ip") ?? "", p.get("app") ?? "", p.get("name") ?? "TV"].join("~")}`;
   el.innerHTML = `<div class="qr"></div><div><b>Cast from your phone</b><span>Open Sound Atlas on your phone, tap <em>Cast</em>, pick this TV and enter</span><code>${room.toUpperCase()}</code><small>${ok ? "or scan to pair this phone" : "Reconnecting…"}</small></div>`;
-  qr(link).then((svg) => { const q = el.querySelector(".qr"); if (q && svg) q.innerHTML = svg; });
-}
-async function qr(text) { // only the TV draws a QR, so the library loads only there
-  if (!window.qrcode) await new Promise((ok) => document.head.append(Object.assign(document.createElement("script"), { src: "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js", onload: ok, onerror: ok })));
-  if (!window.qrcode) return null; const c = qrcode(0, "M"); c.addData(text); c.make(); return c.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+  el.querySelector(".qr").innerHTML = qr(link);
 }
 if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind);
 

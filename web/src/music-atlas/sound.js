@@ -186,7 +186,7 @@ export function organise(id, feels, families) {
   }
   if (id === "tempo") {
     groups = TEMPO.map(([gid, name, lo, hi], i) => ({ id: gid, name, lo, hi, color: ramp(RAMPS.tempo, (i + 0.5) / TEMPO.length), night: ramp(RAMPS.tempo, (i + 0.5) / TEMPO.length), ask: hi < 999 ? `${lo || "<"}${lo ? "–" : ""}${hi} bpm` : `${lo}+ bpm` }));
-    top = (t) => { const b = +bpmOf(t); return b > 0 ? (TEMPO.findLast(([, , lo]) => b >= lo) ?? TEMPO[0])[0] : null; };
+    top = (t) => { const b = +bpmOf(t); return b > 0 ? ([...TEMPO].reverse().find(([, , lo]) => b >= lo) ?? TEMPO[0])[0] : null; };
   } else {
     const names = BANDS5[id];
     groups = names.map((name, i) => ({ id: name.toLowerCase(), name, color: ramp(RAMPS[id], (i + 0.5) / 5), night: ramp(RAMPS[id], (i + 0.5) / 5), ask: `${i * 20}–${i * 20 + 20}th pct` }));
