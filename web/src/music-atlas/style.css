@@ -447,3 +447,42 @@ html.tv .toast { top: auto; bottom: 40px; font-size: 18px; }
 .mpls button { flex: none; display: flex; gap: 6px; align-items: baseline; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line2); font: 600 13px "Instrument Sans", sans-serif; color: var(--ink); white-space: nowrap; }
 .mpls button small { font: 11px "IBM Plex Mono", monospace; color: var(--mute); font-weight: 400; }
 .mpls button:active { transform: scale(.96); }
+
+/* Browse (browse.js): Feels · Artists · Albums · Genres · Recent, and artist / album / genre pages */
+.bmodes { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 8px 2px 2px; }
+.bmodes button { flex: none; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--line2); font: 600 13px "Instrument Sans", sans-serif; color: var(--mute); transition: color .2s, background .2s, border-color .2s; }
+.bmodes button.on { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.bmodes button:active, .bi:active, .at:active, .gchips button:active, .bplay button:active { transform: scale(.97); }
+.blist { display: flex; flex-direction: column; margin-top: 6px; }
+.bi { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 7px 4px; border-radius: 12px; text-align: left; content-visibility: auto; contain-intrinsic-size: 54px; }
+.bi .tt { display: flex; flex-direction: column; min-width: 0; }
+.bi .tt b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bi .tt small { font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
+.bi .chev { font-style: normal; color: var(--mute); font-size: 20px; padding-right: 6px; }
+.avatar { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font: 600 13px "Instrument Sans", sans-serif; color: var(--ink);
+  background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--c) 70%, #fff 10%), color-mix(in srgb, var(--c) 35%, var(--bg))); }
+.agrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 14px 12px; margin-top: 8px; }
+.at { display: flex; flex-direction: column; gap: 3px; text-align: left; min-width: 0; }
+.at > b { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; }
+.at > small { font-size: 12px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cover { display: grid; place-items: center; aspect-ratio: 1; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid var(--line);
+  background: linear-gradient(140deg, color-mix(in srgb, var(--c) 55%, var(--bg)), color-mix(in srgb, var(--c) 12%, var(--bg))); }
+.cover img { width: 100%; height: 100%; object-fit: cover; }
+.cover b { font: 28px "Archivo Black", sans-serif; color: color-mix(in srgb, var(--c) 40%, var(--ink)); }
+.gchips { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 2px 6px; }
+.gchips button { display: flex; gap: 6px; align-items: center; padding: 7px 12px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--c) 40%, var(--line2)); font: 600 13px "Instrument Sans", sans-serif; }
+.gchips button i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.gchips button small { font: 11px "IBM Plex Mono", monospace; color: var(--mute); font-weight: 400; }
+.bhead { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 8px 4px 6px; }
+.bhead .bback { font: 600 13px "Instrument Sans", sans-serif; color: var(--mute); padding: 4px 0; }
+.bhead .avatar { width: 84px; height: 84px; font-size: 26px; margin-top: 4px; box-shadow: 0 0 40px color-mix(in srgb, var(--c) 35%, transparent); }
+.bhead .cover { width: 150px; margin-top: 4px; box-shadow: 0 12px 40px color-mix(in srgb, var(--c) 25%, transparent); }
+.bhead h2 { margin: 2px 0 0; font: italic 30px/1.05 "Instrument Serif", serif; }
+.bhead p { margin: 0; font-size: 13px; color: var(--mute); }
+.bacts { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 0 2px; }
+.bacts > small { margin-left: auto; font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
+.bplay { display: flex; gap: 8px; }
+.bplay button { display: flex; align-items: center; gap: 6px; padding: 8px 15px 8px 11px; border-radius: 999px; font: 600 13.5px "Instrument Sans", sans-serif; border: 1px solid var(--line2); transition: transform .3s var(--spring); }
+.bplay button:first-child { background: var(--c, var(--acc)); border-color: transparent; color: var(--bg); }
+.bplay svg { width: 16px; height: 16px; }
+a.aref { color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 3px; cursor: pointer; }

@@ -43,7 +43,8 @@ async function fileTrack(file, path) {
   const pic = t.picture, art = pic?.data ? URL.createObjectURL(new Blob([new Uint8Array(pic.data)], { type: pic.format || "image/jpeg" })) : null;
   const nm = fromName(file.name), num = (v) => (Array.isArray(v) ? v[0] : v);
   return mineTrack({ id, provider: "files", path, title: t.title || nm.title, author: t.artist || nm.author, album: t.album, art, audio: URL.createObjectURL(file),
-    bpm: num(t.TBPM?.data) ?? t.bpm, genre: [].concat(t.genre || []).map(String) });
+    bpm: num(t.TBPM?.data) ?? t.bpm, genre: [].concat(t.genre || []).map(String),
+    track: t.track ?? null, disc: t.TPOS?.data ?? null, albumArtist: t.TPE2?.data || t.aART?.data || null, year: String(t.year ?? "") }); // browse.js orders albums by these
 }
 // Playlists: m3u lines / xspf <location>, matched to the library by file name.
 export function parsePlaylist(name, text) {
@@ -117,7 +118,8 @@ export function plexTrack(sv, m) {
   return mineTrack({ id: "px-" + hash(sv.uri) + "-" + m.ratingKey, provider: "plex", title: m.title, author: m.originalTitle || m.grandparentTitle, album: m.parentTitle,
     art: thumb ? `${sv.uri}/photo/:/transcode?width=240&height=240&url=${encodeURIComponent(thumb)}&X-Plex-Token=${tok}` : null,
     audio: part ? `${sv.uri}${part.key}?X-Plex-Token=${tok}` : null, dur: m.duration ? Math.round(m.duration / 1000) : null,
-    genre: (m.Genre || []).map((g) => g.tag), moods: (m.Mood || []).map((g) => g.tag), server: sv.name });
+    genre: (m.Genre || []).map((g) => g.tag), moods: (m.Mood || []).map((g) => g.tag), server: sv.name,
+    track: m.index ?? null, disc: m.parentIndex ?? null, albumArtist: m.grandparentTitle || null, year: String(m.parentYear ?? m.year ?? "") });
 }
 export async function plexLibrary(token, onProgress) {
   const tracks = [], playlists = [];
@@ -170,7 +172,8 @@ async function sp(path, init = {}) {
 }
 export function spotifyTrack(it) {
   return mineTrack({ id: "sp-" + it.id, provider: "spotify", uri: it.uri, title: it.name, author: (it.artists || []).map((a) => a.name).join(", "), album: it.album?.name,
-    art: it.album?.images?.slice(-2)[0]?.url ?? null, audio: null, dur: it.duration_ms ? Math.round(it.duration_ms / 1000) : null, sourceUrl: it.external_urls?.spotify, noEmbed: true });
+    art: it.album?.images?.slice(-2)[0]?.url ?? null, audio: null, dur: it.duration_ms ? Math.round(it.duration_ms / 1000) : null, sourceUrl: it.external_urls?.spotify, noEmbed: true,
+    track: it.track_number ?? null, disc: it.disc_number ?? null, albumArtist: it.album?.artists?.[0]?.name ?? null, year: (it.album?.release_date ?? "").slice(0, 4) });
 }
 async function spPages(path, pick, onPage) { const out = []; for (let u = path; u; ) { const j = await sp(u); out.push(...(j.items || []).map(pick).filter(Boolean)); onPage?.(out.length, j.total); u = j.next; } return out; }
 export async function spotifyLibrary(onProgress) {

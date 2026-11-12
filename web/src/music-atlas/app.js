@@ -11,6 +11,7 @@ import * as cast from "./cast.js";
 import { slugIndex, readPath } from "./links.js";
 import { party, join as joinParty, leave as leaveParty, heard, onEnded as partyEnded, setNudge, drift, rid as roomId } from "./party.js";
 import { renderSVG, encode as qrEncode } from "./uqr.js";
+import * as browse from "./browse.js";
 import { loadLayers, layersOf, layerCount, STEMS, laneColor, createMixer, stemUrl, lenders } from "./layers.js";
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -35,7 +36,8 @@ const base = new URLSearchParams(location.search).get("catalog") ?? document.bod
 // track = the playing/selected song's details, similar = its by-ear neighbours, library = every
 // track the filters keep. Next/prev walk the list a song was started from (state.queue).
 const VIEWS = ["track", "similar", "library", "community"];
-const state = { view: "library", queue: "library", lens: "feel", q: "", feels: new Set(), bands: new Set(), gs: new Map(), cc0: false, picksOnly: false, sel: null, picks: new Set(JSON.parse(localStorage.getItem("sa-picks") || "[]")), radio: null, plist: null };
+const state = { view: "library", queue: "library", lens: "feel", q: "", feels: new Set(), bands: new Set(), gs: new Map(), cc0: false, picksOnly: false, sel: null, picks: new Set(JSON.parse(localStorage.getItem("sa-picks") || "[]")), radio: null, plist: null,
+  browse: "feel", open: null, recent: JSON.parse(localStorage.getItem("sa-recent") || "[]") }; // browse: Library's mode (browse.MODES); open: an artist/album/genre page
 // Radio and playlists are queues too: state.radio = "ear" | "crowd" (endless), state.plist = a community playlist.
 const playedIds = new Set();
 let org = null, lensFn = null, atlasIds = "", sim = [], simSeed = null;
@@ -401,7 +403,8 @@ function renderBody(scroll = true) {
   if (state.view === "track" && sel) return paint(cardHTML(sel), scroll);
   if (state.view === "similar" && sel) return paint(similarHTML(), scroll);
   if (state.view === "community") return paint(communityHTML(), scroll);
-  let html = "";
+  if (state.view === "library" && (state.browse !== "feel" || state.open)) return paint(browseHTML(), scroll);
+  let html = browseBar();
   const label = like ? `Sounds like “${esc(like.title)}”` : state.q ? `“${esc(state.q)}”` : state.feels.size || state.bands.size || state.cc0 || state.picksOnly ? "Filtered" : "Every track";
   html += `<div class="sum"><b>${label}</b><span>${hits.length.toLocaleString()} ${hits.length === 1 ? "track" : "tracks"}${result.ranked ? (like?.f ? " · by ear" : qv || like ? " · semantic" : " · words") : ""}</span></div>`;
   // Group by feel (the atlas's first ring); ranked searches keep their order inside each group and
@@ -441,6 +444,58 @@ function paint(html, scroll) {
     const now = els.map((el) => el.style.cssText); els.forEach((el, i) => { el.style.cssText = was[g][i]; }); body.offsetWidth; els.forEach((el, i) => { el.style.cssText = now[i]; }); });
   restPulse(); if (scroll) body.scrollTop = 0; watchLayers();
 }
+// --- browse: artists, albums, genres, recent (browse.js) -----------------------------------------------
+// Lists come from what the search and filters keep; a page's songs are its play order, so Play, Shuffle
+// and tapping a row queue that page (a playlist queue: next/prev stay inside it).
+const browseBar = () => `<nav class="bmodes" role="tablist" aria-label="Browse by">${browse.MODES.map(([id, name]) => `<button role="tab" data-browse="${id}" class="${state.browse === id && !state.open ? "on" : ""}" aria-selected="${state.browse === id}">${name}</button>`).join("")}</nav>`;
+const keptTracks = () => result.hits.map((h) => h.t);
+const totalTime = (ts) => { const m = Math.round(ts.reduce((n, t) => n + (t.dur || 0), 0) / 60); return !m ? "" : m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`; };
+const initials = (s) => String(s).replace(/^the\s+/i, "").split(/\s+/).slice(0, 2).map((w) => w[0] ?? "").join("").toUpperCase();
+const artLink = (t) => browse.artistsOf(t).map((a) => `<a class="aref" data-open="a:${esc(browse.keyOf(a))}">${esc(a)}</a>`).join(", ");
+const pageBtns = (n) => `<span class="bplay"><button data-bplay="play">${ICON.play}Play</button><button data-bplay="shuffle"><svg viewBox="0 0 20 20"><path d="M3 6h3l7 8h4M3 14h3l2-2.3M11 8.3 13 6h4M15 4l2 2-2 2M15 12l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Shuffle</button></span><small>${n}</small>`;
+function browseHTML() {
+  const kept = keptTracks(), d = browse.detail(state.open, kept);
+  if (state.open && d) {
+    const c = tone(d.tracks[0]);
+    const head = `<div class="bhead" style="--c:${c}"><button class="bback" data-back aria-label="Back">‹ ${esc(browse.MODES.find(([id]) => id === state.browse)?.[1] ?? "Library")}</button>
+      ${d.kind === "al" ? `<div class="cover" style="--c:${c}">${d.art ? `<img src="${esc(d.art)}" alt="" />` : `<b>${esc(initials(d.name))}</b>`}</div>` : d.kind === "a" ? `<div class="avatar" style="--c:${c}">${esc(initials(d.name))}</div>` : ""}
+      <h2>${esc(d.name)}</h2><p>${d.kind === "al" && d.artist !== "Various artists" ? `<a class="aref" data-open="a:${esc(browse.keyOf(d.artist))}">${esc(d.artist)}</a> · ${esc(d.sub.split(" · ").slice(1).join(" · "))}` : esc(d.sub)}</p>
+      <div class="bacts">${pageBtns(totalTime(d.tracks))}</div></div>`;
+    const groups = d.groups ?? [{ tracks: d.tracks }];
+    return head + `<div data-blist>${groups.map((g, gi) => `<section class="grp" style="--c:${tone(g.tracks[0])}">${g.name ? `<h3 ${g.open ? `data-open="${esc(g.open)}"` : ""}><i></i>${esc(g.name)}<small>${g.tracks.length}${g.sub ? " · " + esc(g.sub) : ""}</small>${g.open ? "<em>album →</em>" : ""}</h3>` : ""}${g.tracks.map((t, i) => rowHTML(t, gi * 20 + i)).join("")}</section>`).join("")}</div>`;
+  }
+  let html = browseBar();
+  if (state.browse === "artists") {
+    const A = browse.artists(kept);
+    html += `<div class="sum"><b>Artists</b><span>${A.length.toLocaleString()}</span></div><div class="blist">${A.map((a) => `<button class="bi" data-open="a:${esc(a.key)}" style="--c:${tone(a.tracks[0])}"><span class="avatar">${esc(initials(a.name))}</span><span class="tt"><b>${esc(a.name)}</b><small>${a.tracks.length} song${a.tracks.length === 1 ? "" : "s"}${a.albums ? ` · ${a.albums} album${a.albums === 1 ? "" : "s"}` : ""}</small></span><i class="chev">›</i></button>`).join("")}</div>`;
+  }
+  if (state.browse === "albums") {
+    const L = browse.albums(kept);
+    html += `<div class="sum"><b>Albums</b><span>${L.length.toLocaleString()}</span></div>`;
+    html += L.length ? `<div class="agrid">${L.map((a) => `<button class="at" data-open="al:${esc(a.key)}" style="--c:${tone(a.tracks[0])}"><span class="cover">${a.art ? `<img src="${esc(a.art)}" alt="" loading="lazy" />` : `<b>${esc(initials(a.name))}</b>`}</span><b>${esc(a.name)}</b><small>${esc(a.artist)}</small></button>`).join("")}</div>`
+      : `<div class="empty">The free catalogue is all singles, so there are no albums yet. Albums show up when you bring your own music with album tags (files, Plex or Spotify).</div>` + mineHTML();
+  }
+  if (state.browse === "genres") {
+    const G = browse.genres(kept);
+    html += `<div class="sum"><b>Genres</b><span>${G.reduce((n, f) => n + f.styles.length, 0)} styles</span></div>${G.map((f) => `<section class="grp" style="--c:${tone(f.styles[0].tracks[0])}"><h3><i></i>${esc(f.name)}<small>${f.n}</small></h3><div class="gchips">${f.styles.map((g) => `<button data-open="g:${esc(g.key)}" style="--c:${tone(g.tracks[0])}"><i></i>${esc(g.name)}<small>${g.tracks.length}</small></button>`).join("")}</div></section>`).join("")}`;
+  }
+  if (state.browse === "recent") {
+    const R = state.recent.map((id) => byId.get(id)).filter(Boolean);
+    html += `<div class="sum"><b>Recently played</b><span>${R.length}</span></div>`;
+    html += R.length ? `<div class="bacts">${pageBtns("")}</div><div data-blist><section class="grp">${R.map((t, i) => rowHTML(t, i)).join("")}</section></div>` : `<div class="empty">Songs you play land here, newest first, on this device.</div>`;
+  }
+  return html;
+}
+const pageIds = () => (state.open ? browse.detail(state.open, keptTracks())?.tracks.map((t) => t.id) : state.browse === "recent" ? state.recent.filter((id) => byId.has(id)) : null) ?? [];
+const pageName = () => (state.open ? browse.detail(state.open, keptTracks())?.name : "Recently played");
+function playPage(id, shuffle = false) { // queue this page and play from id (or the top, or shuffled)
+  let ids = pageIds(); if (!ids.length) return;
+  if (shuffle) ids = browse.shuffled(ids);
+  state.plist = { id: "page:" + (state.open ?? state.browse), name: pageName(), ids }; state.radio = null; state.queue = "playlist";
+  if (shuffle) toast(`Shuffling “${state.plist.name}”`);
+  select(id ?? ids[0], { play: true, fly: true, keepScroll: true });
+}
+function openPage(open) { state.view = lastView = "library"; state.open = open; if (open.startsWith("a:") && state.browse === "feel") state.browse = "artists"; if (open.startsWith("al:") && state.browse === "feel") state.browse = "albums"; if (open.startsWith("g:") && state.browse === "feel") state.browse = "genres"; renderViews(); renderBody(true); saveHash(); if (!wide() && sh.target === "peek") sheetTo("half"); }
 // Similar: one flat by-ear list around a seed. The seed stays put while you play through its list,
 // so rows never reshuffle under your thumb; "Re-centre" re-seeds on whatever is playing now.
 function similarHTML() {
@@ -522,7 +577,7 @@ function cardHTML(t) {
     [F.name, F.ask + (t.feelGuess ? " · inferred" : "")],
     [familyById[t.family]?.name, ""],
     [styleName(t.family, t.style), [t.bpm ? `${t.bpm} bpm` : "", t.dur ? mmss(t.dur) : ""].filter(Boolean).join(" · ")],
-    [`<em>${esc(t.title)}</em>`, esc(t.author)],
+    [`<em>${esc(t.title)}</em>`, artLink(t) + (t.album ? ` · <a class="aref" data-open="al:${esc(browse.albums([t])[0].key)}">${esc(t.album)}</a>` : "")],
   ];
   return `<article class="card" style="--c:${c}">
     <div class="lin">${LEVELS.map((L, i) => `<div class="lv"><b>0${i + 1}</b><span class="k">${L}</span><span class="v">${i === 3 ? rows[i][0] : esc(rows[i][0])}</span>${rows[i][1] ? `<span class="s">${i === 3 ? rows[i][1] : esc(rows[i][1])}</span>` : ""}</div>`).join("")}</div>
@@ -601,7 +656,12 @@ function scrollToGroup(feel) { if (state.view !== "library") setView("library", 
 body.addEventListener("click", async (e) => {
   const heart = e.target.closest("[data-heart]");
   if (heart) { e.stopPropagation(); return pick(heart.dataset.heart); }
+  const op = e.target.closest("[data-open]"); if (op) { e.stopPropagation(); buzz(5); return openPage(op.dataset.open); }
+  const bm = e.target.closest("[data-browse]"); if (bm) { buzz(4); state.browse = bm.dataset.browse; state.open = null; renderBody(true); return saveHash(); }
+  if (e.target.closest("[data-back]")) { buzz(4); state.open = null; renderBody(true); return saveHash(); }
+  const bp = e.target.closest("[data-bplay]"); if (bp) { buzz(5); return playPage(null, bp.dataset.bplay === "shuffle"); }
   const row = e.target.closest(".trk");
+  if (row && row.closest("[data-blist]")) { buzz(5); return row.dataset.id === state.sel && state.plist?.id?.startsWith("page:") ? togglePlay() : playPage(row.dataset.id); }
   if (row) { buzz(5); const id = row.dataset.id; return id === state.sel ? togglePlay() : select(id, { play: true, fly: true, keepScroll: true, from: state.view, tuned: !!row.closest(".tunes") }); }
   const h = e.target.closest("[data-focus]"); if (h) { buzz(4); return A.focus(h.dataset.focus); }
   const desc = e.target.closest(".desc"); if (desc) return desc.classList.toggle("open");
@@ -793,7 +853,7 @@ function tick() {
   if (!audio.paused) { beatFrame(); requestAnimationFrame(tick); }
 }
 const syncPlay = () => { A.setPlaying(playState()); renderPlayer(); if (audio.paused) restPulse(); const r = body.querySelector(".trk.sel"); if (r) { const t = byId.get(state.sel); r.classList.toggle("playing", !audio.paused); r.querySelector(".pl").innerHTML = !audio.paused ? `<span class="eq"><i></i><i></i><i></i></span>` : ICON.play; r.style.setProperty("--beat", (60 / (t?.bpm || 100)).toFixed(3) + "s"); } tick(); };
-audio.addEventListener("play", () => { if (state.sel) { playedIds.add(state.sel); social.played(state.sel); } social.pulse(); });
+audio.addEventListener("play", () => { if (state.sel) { playedIds.add(state.sel); social.played(state.sel); if (state.recent[0] !== state.sel) { state.recent = browse.remember(state.recent, state.sel); localStorage.setItem("sa-recent", JSON.stringify(state.recent)); } } social.pulse(); });
 audio.addEventListener("pause", () => social.pulse());
 audio.addEventListener("play", syncPlay); audio.addEventListener("pause", syncPlay); audio.addEventListener("loadedmetadata", tick);
 audio.addEventListener("ended", () => partyEnded(() => step(1))); // in a room, whoever set the song picks the next
@@ -855,7 +915,9 @@ function hashOf() {
   if (state.sel && !(pretty && !share?.base)) h.set("t", state.sel); // deployed: the path names the song
   if (state.lens !== "feel") h.set("l", state.lens);
   if (state.view !== "library") h.set("v", state.view);
-  if (state.plist) h.set("pl", state.plist.id);
+  if (state.plist && !state.plist.id.startsWith("page:")) h.set("pl", state.plist.id);
+  if (state.view === "library" && state.browse !== "feel") h.set("br", state.browse);
+  if (state.view === "library" && state.open) h.set("bo", state.open);
   return h.toString();
 }
 let hashT = 0;
@@ -885,6 +947,8 @@ function readHash() {
   state.cc0 = h.get("cc0") === "1";
   if (LENSES.some((L) => L.id === h.get("l"))) state.lens = h.get("l");
   if (VIEWS.includes(h.get("v"))) state.view = h.get("v");
+  if (browse.MODES.some(([id]) => id === h.get("br"))) state.browse = h.get("br");
+  if (/^(a|al|g):/.test(h.get("bo") ?? "")) state.open = h.get("bo");
   const shared = (h.get("p") ?? "").split(",").filter((id) => byId.has(id));
   if (shared.length) { shared.forEach((id) => state.picks.add(id)); toast(`${shared.length} shared picks · tap ♥ Liked to see them`); } // the full atlas still loads
   pendingPlist = h.get("pl"); pendingRoom = h.get("room");
@@ -1058,7 +1122,7 @@ if ("mediaSession" in navigator) { // lock screens, Now Playing on Apple TV / Ai
 function nowPlaying(t) {
   if (!t || !window.MediaMetadata || !navigator.mediaSession) return;
   const icon = new URL("sound-atlas-icon.png", share?.base ?? location.origin + "/").href;
-  navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.author ?? "", album: "Sound Atlas", artwork: [{ src: icon, sizes: "512x512", type: "image/png" }] });
+  navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.author ?? "", album: t.album || "Sound Atlas", artwork: [{ src: icon, sizes: "512x512", type: "image/png" }] });
 }
 function castFollow(tv, tage) { // the TV moved on by itself: the phone (muted) catches up
   if (tv.t && tv.t !== state.sel && byId.has(tv.t)) select(tv.t, { play: tv.playing, fly: true, keepScroll: true });
