@@ -307,12 +307,21 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 /* layers: the Track pane's half of the stems view (the map rings are the other half) */
 .layers { margin-top: 14px; padding: 12px 0 4px; border-top: 1px solid var(--line); }
-.layers h4 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; font: 12px "Archivo Black", sans-serif; letter-spacing: .03em; text-transform: uppercase; color: var(--c); }
-.layers h4 small { flex: 1; min-width: 0; font: 10px "IBM Plex Mono", monospace; letter-spacing: 0; text-transform: none; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.layers h4 button { flex: none; padding: 3px 9px; border-radius: 999px; font: 11px "IBM Plex Mono", monospace; color: var(--ink); background: color-mix(in srgb, var(--c) 22%, transparent); border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); }
+/* Tune: every meter is a slider; the original value stays as the dark tick, your target glows. */
+.meters .hint { margin: 0 0 2px; font: 10px "IBM Plex Mono", monospace; color: var(--mute); }
+.meters.tuning .hint { color: var(--c); }
+.mt .mb input.tune { position: absolute; inset: -12px -8px; width: calc(100% + 16px); height: 30px; margin: 0; opacity: 0; cursor: ew-resize; touch-action: pan-y; }
+.mt .mb i.tg { position: absolute; top: -5px; width: 0; height: 16px; pointer-events: none; }
+.mt .mb i.tg::after { content: ""; position: absolute; left: -6px; width: 12px; height: 16px; border-radius: 6px; background: var(--c); box-shadow: 0 0 0 2px var(--panel2), 0 0 12px var(--c); }
+.meters.tuning .mt .mb > i:not(.tg)::after { opacity: .45; }
+.tunes { margin: 10px 0 4px; padding: 10px 0 2px; border-top: 1px solid color-mix(in srgb, var(--c) 40%, transparent); animation: tunein .28s ease-out; }
+@keyframes tunein { from { opacity: 0; transform: translateY(6px); } }
+.tunes h4, .layers h4 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; font: 12px "Archivo Black", sans-serif; letter-spacing: .03em; text-transform: uppercase; color: var(--c); }
+.layers h4 small, .tunes h4 small { flex: 1; min-width: 0; font: 10px "IBM Plex Mono", monospace; letter-spacing: 0; text-transform: none; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.layers h4 button, .tunes h4 button { flex: none; padding: 3px 9px; border-radius: 999px; font: 11px "IBM Plex Mono", monospace; color: var(--ink); background: color-mix(in srgb, var(--c) 22%, transparent); border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); }
 .layers h4 button.off { opacity: .35; pointer-events: none; }
 .layers.none p { margin: 0; font: 12px/1.45 "Instrument Sans", sans-serif; color: var(--mute); }
-.lane { display: grid; grid-template-columns: 8px 84px 1fr 34px 30px 30px; gap: 8px; align-items: center; height: 34px; transition: opacity .2s; }
+.lane { display: grid; grid-template-columns: 8px 84px 1fr 30px 28px 28px 28px; gap: 6px; align-items: center; min-height: 34px; transition: opacity .2s; }
 .lane i { width: 8px; height: 8px; border-radius: 50%; background: var(--l); }
 .lane b { font: 600 12px "Instrument Sans", sans-serif; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lane .env { width: 100%; height: 18px; }
@@ -321,4 +330,6 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .lane button { height: 26px; border-radius: 8px; font: 600 11px "IBM Plex Mono", monospace; color: color-mix(in srgb, var(--ink) 75%, transparent); background: rgba(255, 255, 255, .04); border: 1px solid var(--line); }
 .lane.out { opacity: .38; }
 .lane.out button[data-lmix="mute"] { color: var(--bg); background: var(--mute); }
+.lane b em { display: block; font: italic 400 10px "Instrument Serif", serif; color: var(--l); overflow: hidden; text-overflow: ellipsis; }
+.lane button[data-lmix="swap"].on { color: var(--bg); background: var(--l); border-color: var(--l); }
 .lane.solo button[data-lmix="solo"] { color: var(--bg); background: var(--l); border-color: var(--l); }

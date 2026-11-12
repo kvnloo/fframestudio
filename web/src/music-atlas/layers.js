@@ -34,42 +34,74 @@ export const stemUrl = (f) => new URL(f, root).href;
 export const laneColor = (base, k) => shade(base, STEMS[k]?.tint ?? [0, 0]);
 
 // Mixer: the master <audio> stays the clock (seek bar, beat grid, next-track all keep working);
-// while any layer is muted or soloed the master goes silent and the stems play in its place,
-// nudged back into step with playbackRate (hard seek only past 120 ms). The stems sum back to
+// while any layer is muted, soloed or borrowed the master goes silent and the stems play in its
+// place, nudged back into step with playbackRate (hard seek only past 120 ms). The stems sum back to
 // the mix, so nothing is engaged until the mix differs from the original.
+// Borrow = remix: lane k plays the same layer from another song instead, time-stretched to this
+// song's tempo and lined up on its downbeat (pitch is kept; the browser stretches, not resamples).
 export function createMixer(master, urlOf) {
   let id = null, els = [], on = false, timer = 0;
-  const mute = new Set(); let solo = null;
+  const mute = new Set(), lent = new Map(); let solo = null; // lent: k -> { el, from, rate, at }
   const audible = (k) => (solo ? solo === k : !mute.has(k));
   function load(trackId, L) {
     if (id === trackId) return;
     drop(); id = trackId;
-    els = L.stems.map((s) => { const a = new Audio(); a.preload = "auto"; a.src = urlOf(s.f); a.dataset.k = s.k; return a; });
+    els = L.stems.map((s) => { const a = new Audio(); a.preload = "auto"; a.src = urlOf(s.f); a.dataset.k = s.k; a.map = (t) => t; a.rate = 1; return a; });
   }
-  function drop() { disengage(); for (const a of els) { a.pause(); a.removeAttribute("src"); a.load(); } els = []; id = null; mute.clear(); solo = null; }
+  const kill = (a) => { a.pause(); a.removeAttribute("src"); a.load(); };
+  function drop() { disengage(); for (const a of els) kill(a); for (const b of lent.values()) kill(b.el); els = []; lent.clear(); id = null; mute.clear(); solo = null; }
+  const all = () => [...els, ...[...lent.values()].map((b) => b.el)];
   function sync(hard = false) {
     const t = master.currentTime;
-    for (const a of els) {
-      const d = a.currentTime - t;
-      if (hard || Math.abs(d) > 0.12) { try { a.currentTime = t; } catch {} a.playbackRate = 1; }
-      else a.playbackRate = Math.abs(d) > 0.015 ? 1 - Math.max(-0.04, Math.min(0.04, d * 1.5)) : 1;
+    for (const a of all()) {
+      let want = a.map(t); if (a.duration > 1 && want >= a.duration) want %= a.duration; // a short borrowed layer loops
+      const d = a.currentTime - want;
+      if (hard || Math.abs(d) > 0.12) { try { a.currentTime = Math.max(0, want); } catch {} a.playbackRate = a.rate; }
+      else a.playbackRate = a.rate * (Math.abs(d) > 0.015 ? 1 - Math.max(-0.04, Math.min(0.04, d * 1.5)) : 1);
       if (master.paused && !a.paused) a.pause();
       if (!master.paused && a.paused) a.play().catch(() => {});
     }
   }
+  const changed = () => !!solo || mute.size > 0 || lent.size > 0;
   function engage() { if (on || !els.length) return; on = true; master.muted = true; sync(true); timer = setInterval(sync, 500); }
-  function disengage() { if (!on) return; on = false; master.muted = false; clearInterval(timer); for (const a of els) a.pause(); }
-  function apply() { if (!solo && !mute.size) disengage(); else engage(); for (const a of els) a.muted = !audible(a.dataset.k); }
+  function disengage() { if (!on) return; on = false; master.muted = false; clearInterval(timer); for (const a of all()) a.pause(); }
+  function apply() {
+    if (!changed()) disengage(); else engage();
+    for (const a of els) a.muted = !audible(a.dataset.k) || lent.has(a.dataset.k);
+    for (const [k, b] of lent) b.el.muted = !audible(k);
+    if (on) sync(true);
+  }
   master.addEventListener("play", () => on && sync(true));
   master.addEventListener("pause", () => on && sync());
   master.addEventListener("seeked", () => on && sync(true));
   master.addEventListener("emptied", () => { if (id) drop(); });
   return {
     load, drop, audible,
-    get id() { return id; }, get engaged() { return on; }, get changed() { return !!solo || mute.size > 0; },
-    get solo() { return solo; }, muted: (k) => mute.has(k),
+    get id() { return id; }, get engaged() { return on; }, get changed() { return changed(); },
+    get solo() { return solo; }, muted: (k) => mute.has(k), lent: (k) => lent.get(k) ?? null,
     toggleMute(k) { solo = null; mute.has(k) ? mute.delete(k) : mute.add(k); apply(); },
     toggleSolo(k) { solo = solo === k ? null : k; if (solo) mute.clear(); apply(); },
-    reset() { solo = null; mute.clear(); apply(); },
+    // from = { id, f (stem file), rate, at: (t) => time in the lender }; null gives the lane back.
+    borrow(k, from) {
+      const old = lent.get(k); if (old) { kill(old.el); lent.delete(k); }
+      if (from) { const a = new Audio(); a.preload = "auto"; a.src = urlOf(from.f); a.dataset.k = k; a.map = from.at; a.rate = from.rate; a.preservesPitch = true; lent.set(k, { ...from, el: a }); }
+      apply();
+    },
+    reset() { solo = null; mute.clear(); for (const b of lent.values()) kill(b.el); lent.clear(); apply(); },
   };
+}
+
+// Who can lend lane k to track t: split songs with that layer, within a DJ's stretch (+-20%, folding
+// half/double time), ranked by the caller's by-ear order. Each comes with its stretch and downbeat map.
+export function lenders(t, k, ranked, beatOf) {
+  const a = beatOf(t); if (!a.bpm) return [];
+  const out = [];
+  for (const u of ranked) {
+    const L = layersOf(u.id), s = L?.stems.find((x) => x.k === k); if (!s || u.id === t.id) continue;
+    const b = beatOf(u); if (!b.bpm) continue;
+    const rate = [1, 2, 0.5].map((m) => (a.bpm / b.bpm) * m).sort((x, y) => Math.abs(Math.log2(x)) - Math.abs(Math.log2(y)))[0];
+    if (rate < 0.8 || rate > 1.25) continue;
+    out.push({ id: u.id, f: s.f, rate, at: (time) => b.down + (time - a.down) * rate });
+  }
+  return out;
 }

@@ -1,0 +1,26 @@
+// Tune: dragging a track's meters finds the song that measures like the new settings, while the
+// meters you left alone keep the rest of the seed's character.
+import test from "node:test";
+import assert from "node:assert/strict";
+import { tuneMatch } from "../../web/src/music-atlas/sound.js";
+
+const tr = (id, p) => ({ id, p: { tempo: 0.5, bright: 0.5, busy: 0.5, width: 0.5, clarity: 0.5, lra: 0.5, low: 0.5, ...p } });
+const seed = tr("seed", { bright: 0.2 });
+const pool = [seed, tr("twin", { bright: 0.2 }), tr("bright-only", { bright: 0.9 }), tr("bright-but-fast", { bright: 0.9, tempo: 1, busy: 1 }), tr("other", { tempo: 0.1, width: 0.9 })];
+
+test("moving one meter ranks the song that matches it and nothing else first", () => {
+  const rows = tuneMatch(seed, { ...seed.p, bright: 0.9 }, pool, 3);
+  assert.equal(rows[0].t.id, "bright-only");
+  assert.equal(rows[0].why, "bright");
+  assert.ok(rows.findIndex((r) => r.t.id === "bright-but-fast") > 0);
+});
+
+test("untouched settings return the closest twin and never the seed itself", () => {
+  const rows = tuneMatch(seed, { ...seed.p }, pool, 4);
+  assert.equal(rows[0].t.id, "twin");
+  assert.ok(!rows.some((r) => r.t === seed));
+});
+
+test("tracks without a listening profile are skipped", () => {
+  assert.equal(tuneMatch(seed, { ...seed.p }, [seed, { id: "x" }], 4).length, 0);
+});

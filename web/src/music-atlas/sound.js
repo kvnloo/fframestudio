@@ -8,6 +8,7 @@ const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
 // Scalar descriptors: [key, label, low word, high word, value formatter].
 export const METERS = [
+  ["tempo", "Tempo", "slow", "fast", (f) => `${Math.round(f.tempo)} bpm heard`],
   ["bright", "Tonality", "warm", "bright", (f) => `${(f.bright / 1000).toFixed(1)} kHz centroid`],
   ["clarity", "Separation", "congested", "transparent", (f) => `${f.clarity} dB contrast`],
   ["width", "Soundstage", "intimate", "expansive", (f) => `side/mid ${f.width.toFixed(2)} · L/R ${f.corr.toFixed(2)}`],
@@ -108,6 +109,31 @@ export function neighbours(t, pool, k = 8) {
   rows.sort((a, b) => b.score - a.score);
   return rows.slice(0, k).map((r) => ({ ...r, why: why(t, r) }));
 }
+// --- tune: drag a track's meters and find the song that measures like that -------------------------
+// target = percentiles per meter (0..1). Moved meters weigh 3x the ones left alone, so "this, but
+// brighter" keeps the rest of the song's character; the seed's timbre is a soft tiebreak.
+export function tuneMatch(seed, target, pool, k = 6) {
+  const keys = Object.keys(target).filter((m) => seed.p?.[m] != null);
+  const moved = new Set(keys.filter((m) => Math.abs(target[m] - seed.p[m]) > 0.02));
+  const na = seed.cv && clapNorm?.get(seed), rows = [];
+  for (const u of pool) {
+    if (u === seed || !u.p) continue;
+    let s = 0, w = 0;
+    for (const m of keys) { if (u.p[m] == null) continue; const wt = moved.has(m) ? 3 : 1, d = Math.abs(u.p[m] - target[m]); s += wt * (1 - d) ** 2; w += wt; }
+    if (!w) continue;
+    let tim = 0; if (na && u.cv) { let d = 0; for (let j = 0; j < DIM; j++) d += seed.cv[j] * u.cv[j]; tim = d / (na * clapNorm.get(u)); }
+    rows.push({ t: u, fit: s / w, tim });
+  }
+  const ts = rows.map((r) => r.tim).sort((a, b) => a - b), lo = ts[Math.floor(ts.length * 0.5)] ?? 0, hi = ts[ts.length - 1] ?? 1;
+  for (const r of rows) r.score = 0.85 * r.fit + 0.15 * clamp((r.tim - lo) / Math.max(1e-6, hi - lo), 0, 1);
+  rows.sort((a, b) => b.score - a.score);
+  const label = Object.fromEntries(METERS.map((m) => [m[0], m]));
+  return rows.slice(0, k).map((r) => {
+    const near = [...moved].filter((m) => Math.abs(r.t.p[m] - target[m]) < 0.12).map((m) => { const [, , lo2, hi2] = label[m]; return r.t.p[m] > seed.p[m] ? hi2 : lo2; });
+    return { ...r, why: near.length ? near.slice(0, 3).join(" · ") : r.fit > 0.9 ? "close on every meter" : "nearest overall" };
+  });
+}
+
 function why(t, r) {
   const u = r.t, out = [];
   if (r.sTimbre != null && r.sTimbre > 0.6) {
@@ -172,14 +198,15 @@ function finish(groups, top, path, inner) {
 }
 
 // --- card ----------------------------------------------------------------------------------------
-export function profileHTML(t) {
+export function profileHTML(t, tune = null) {
   const f = t.f; if (!f) return "";
   const src = t.bpm ? (Math.abs(Math.log2(t.bpm / f.tempo)) > 0.03 ? `listed · heard ${Math.round(f.tempo)}` : "listed · confirmed") : `measured${f.tempoConf < 0.25 ? " · loose" : ""}`;
   const meter = ([k, label, lo, hi, fmt]) => {
     const p = t.p[k]; if (p == null || f[k] == null) return "";
+    const tv = tune?.[k] ?? p, moved = Math.abs(tv - p) > 0.02;
     const extra = k === "busy" && f.busyBands ? `<span class="bb">${["low", "mid", "high"].map((b) => `<i style="--h:${clamp(f.busyBands[b] / 9, 0.04, 1).toFixed(2)}" title="${b} ${f.busyBands[b]}/s"></i>`).join("")}</span>`
       : k === "width" ? `<svg class="stage" viewBox="0 0 44 22" aria-hidden="true"><ellipse cx="22" cy="11" rx="${(4 + clamp(f.width, 0, 1) * 17).toFixed(1)}" ry="8" /><circle cx="22" cy="11" r="1.6" /></svg>` : "";
-    return `<div class="mt"><span class="ml">${label}</span><span class="mb"><i style="left:${(p * 100).toFixed(1)}%"></i></span>${extra}<span class="mw"><span>${lo}</span><b>${Math.round(p * 100)}th pct</b><span>${hi}</span></span><span class="mv">${esc(fmt(f))}</span></div>`;
+    return `<div class="mt"><span class="ml">${label}</span><span class="mb"><i style="left:${(p * 100).toFixed(1)}%"></i>${tune ? `<i class="tg" style="left:${(tv * 100).toFixed(1)}%"></i>` : ""}<input class="tune" type="range" min="0" max="100" value="${Math.round(tv * 100)}" data-k="${k}" aria-label="Find a song with this ${esc(label.toLowerCase())}"></span>${extra}<span class="mw"><span>${lo}</span><b>${moved ? `${Math.round(p * 100)} → ${Math.round(tv * 100)}th pct` : `${Math.round(p * 100)}th pct`}</b><span>${hi}</span></span><span class="mv">${esc(fmt(f))}</span></div>`;
   };
   const bands = (f.bands ?? []).map((d, i) => `<i style="--n:${i};--h:${clamp((d + 40) / 40, 0.03, 1).toFixed(2)}" title="${[32, 63, 125, 250, 500, "1k", "2k", "4k", "8k", "16k"][i]} Hz ${d} dB"></i>`).join("");
   const inst = (f.inst ?? []).slice(0, 4).map((x) => `<span>${esc(x[0])}</span>`).join("");
@@ -190,6 +217,6 @@ export function profileHTML(t) {
       <div class="spec" title="Tonal balance, 32 Hz–16 kHz octaves">${bands}<small>32 Hz – 16 kHz</small></div>
     </div>
     ${inst || f.timbre ? `<div class="inst">${inst}${f.timbre ? `<em>${esc(f.timbre)}</em>` : ""}</div>` : ""}
-    <div class="meters">${METERS.map(meter).join("")}</div>
+    <div class="meters${tune ? " tuning" : ""}"><p class="hint">${tune ? "Your settings · the closest songs are below" : "Drag any meter to find a song that measures like that"}</p>${METERS.map(meter).join("")}</div>
   </section>`;
 }

@@ -4,10 +4,10 @@
 import { createAtlas } from "./atlas.js";
 import { FEELS, BPM_BANDS, LEVELS, FAMILY_TINT, feelById, familyById, styleName, shade } from "./taxonomy.js";
 import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine } from "./search.js";
-import { loadSound, soundReady, neighbours, profileHTML, LENSES, bpmOf, organise, beatAt } from "./sound.js";
+import { loadSound, soundReady, neighbours, tuneMatch, profileHTML, LENSES, bpmOf, organise, beatAt } from "./sound.js";
 import { haptic, pressable, pressRing, HOLD, SLOP, FORCE } from "./gestures.js";
 import * as social from "./social.js";
-import { loadLayers, layersOf, layerCount, STEMS, laneColor, createMixer, stemUrl } from "./layers.js";
+import { loadLayers, layersOf, layerCount, STEMS, laneColor, createMixer, stemUrl, lenders } from "./layers.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -134,22 +134,35 @@ const colorOfNode = (n) => (org ? grp(n.feel)?.night : feelById[n.feel]?.night) 
 // Track pane lists the same layers with mute / solo. Scrolling the pane to Layers zooms the map in
 // (and back out when you scroll away); zooming the map all the way in brings the pane to Layers.
 const mixer = createMixer(audio, stemUrl);
-const lanesOf = (id) => { const L = layersOf(id), t = byId.get(id); if (!L || !t) return null; const on = mixer.id === id; return L.stems.map((s) => ({ ...s, share: s.on, name: STEMS[s.k]?.name ?? s.k, color: laneColor(tone(t), s.k), on: !on || mixer.audible(s.k) })); };
+// A borrowed lane takes its lender's colour, so a remix reads on the map as two songs' hues.
+const lanesOf = (id) => { const L = layersOf(id), t = byId.get(id); if (!L || !t) return null; const on = mixer.id === id; return L.stems.map((s) => { const from = on ? mixer.lent(s.k) : null, u = from && byId.get(from.id); return { ...s, share: s.on, name: STEMS[s.k]?.name ?? s.k, from: u, color: laneColor(tone(u ?? t), s.k), on: !on || mixer.audible(s.k) }; }); };
+const beatOf = (u) => ({ bpm: u?.f?.beat?.bpm || bpmOf(u), down: u?.f?.beat?.down ?? 0 });
+// Swap walks lane k through the songs that can lend it, closest by ear first, then gives it back.
+function swapLane(t, k) {
+  const pool = all.filter((u) => layersOf(u.id)?.stems.some((s) => s.k === k));
+  const ranked = soundReady() && t.f ? neighbours(t, pool, pool.length).map((n) => n.t) : pool;
+  const list = lenders(t, k, ranked, beatOf).slice(0, 8), cur = mixer.lent(k), i = cur ? list.findIndex((x) => x.id === cur.id) : -1;
+  const next = list[i + 1] ?? null;
+  if (!list.length) return toast(`No split song can lend its ${(STEMS[k]?.name ?? k).toLowerCase()} at this tempo yet`);
+  mixer.borrow(k, next);
+  const u = next && byId.get(next.id), b = u && beatOf(u);
+  toast(next ? `${STEMS[k]?.name} from “${u.title}” · ${Math.round(b.bpm)}→${Math.round(beatOf(t).bpm)} bpm` : `${STEMS[k]?.name} back from the original`);
+}
 A.setLayers((id) => { const lanes = lanesOf(id); return lanes && { lanes }; });
 function mixAct(op, k) {
   const id = state.sel, L = id && layersOf(id); if (!L) return;
   if (mixer.id !== id) mixer.load(id, L);
-  if (op === "solo") mixer.toggleSolo(k); else if (op === "mute") mixer.toggleMute(k); else mixer.reset();
+  if (op === "swap") swapLane(byId.get(id), k); else if (op === "solo") mixer.toggleSolo(k); else if (op === "mute") mixer.toggleMute(k); else mixer.reset();
   if (audio.paused && op !== "reset") audio.play().catch(() => {});
   const lane = STEMS[k]?.name ?? "";
-  toast(op === "reset" || !mixer.changed ? "Full mix" : mixer.solo ? `Only ${lane.toLowerCase()}` : `${lane} ${mixer.muted(k) ? "muted" : "back in"}`);
+  if (op !== "swap") toast(op === "reset" || !mixer.changed ? "Full mix" : mixer.solo ? `Only ${lane.toLowerCase()}` : `${lane} ${mixer.muted(k) ? "muted" : "back in"}`);
   paintLayers(); A.kick();
 }
 function layersHTML(t) {
   const lanes = lanesOf(t.id);
   if (!lanes) return layerCount() ? `<section class="layers none"><h4>Layers</h4><p>Not split yet. Layers appear here and on the map as the splitter works through the catalogue (${layerCount()} so far).</p></section>` : "";
-  return `<section class="layers"><h4>Layers<small>${lanes.length} · split by Demucs · zoom all the way in on the map</small><button data-lmix="reset" class="${mixer.id === t.id && mixer.changed ? "" : "off"}">Full mix</button></h4>
-    ${lanes.map((l) => `<div class="lane${l.on ? "" : " out"}${mixer.id === t.id && mixer.solo === l.k ? " solo" : ""}" style="--l:${l.color}"><i></i><b>${esc(l.name)}</b>${envSVG(l.env)}<small>${Math.round(l.share * 100)}%</small><button data-lmix="mute" data-k="${l.k}" aria-label="Mute ${esc(l.name)}">M</button><button data-lmix="solo" data-k="${l.k}" aria-label="Solo ${esc(l.name)}">S</button></div>`).join("")}
+  return `<section class="layers"><h4>Layers<small>${lanes.length} · ⇄ borrows from a similar song</small><button data-lmix="reset" class="${mixer.id === t.id && mixer.changed ? "" : "off"}">Full mix</button></h4>
+    ${lanes.map((l) => `<div class="lane${l.on ? "" : " out"}${mixer.id === t.id && mixer.solo === l.k ? " solo" : ""}" style="--l:${l.color}"><i></i><b>${esc(l.name)}${l.from ? `<em>from ${esc(l.from.title)}</em>` : ""}</b>${envSVG(l.env)}<small>${Math.round(l.share * 100)}%</small><button data-lmix="mute" data-k="${l.k}" aria-label="Mute ${esc(l.name)}">M</button><button data-lmix="solo" data-k="${l.k}" aria-label="Solo ${esc(l.name)}">S</button><button data-lmix="swap" data-k="${l.k}" class="${l.from ? "on" : ""}" aria-label="Swap ${esc(l.name)} for a similar song's" title="Borrow this layer from a similar song">⇄</button></div>`).join("")}
   </section>`;
 }
 // Envelope sparkline, stretched to the lane's own range so a steady drum part still shows its shape.
@@ -220,7 +233,8 @@ pressable(body, ".trk", {
 
 let refitT = 0;
 // A selected track with neighbours frames its whole "sounds like" constellation, not just itself.
-const focusSel = (ms) => { if (!nbrs.length) return A.focus(state.sel, ms); A.flyToIds([state.sel, ...nbrs.slice(0, 6).map((n) => n.t.id)], ms); A.focusId = state.sel; };
+// While you tune, it frames the songs your settings matched instead.
+const focusSel = (ms) => { const ids = tune?.id === state.sel && tune.rows?.length ? tune.rows.map((r) => r.t.id) : nbrs.slice(0, 6).map((n) => n.t.id); if (!ids.length) return A.focus(state.sel, ms); A.flyToIds([state.sel, ...ids], ms); A.focusId = state.sel; };
 function atlasRefit() { clearTimeout(refitT); refitT = setTimeout(() => { if (state.sel) focusSel(600); else if (result.ranked) A.flyToIds(result.hits.slice(0, 40).map((h) => h.t.id), 600); else A.focus(A.focusId, 600); }, 30); }
 
 // --- sort + filters: one dense rail riding the sheet's top edge ----------------------------------
@@ -435,7 +449,7 @@ function renderLive() {
   el.title = `${R.here} here now, ${R.listening} listening · ${R.views.toLocaleString()} views · ${R.visitors.toLocaleString()} listeners`;
 }
 let roomT = 0;
-social.onRoom(() => { renderLive(); renderPlayer(); clearTimeout(roomT); roomT = setTimeout(() => { if (state.view === "community" || state.view === "track") { const st = body.scrollTop; renderBody(false); body.scrollTop = st; } }, 120); });
+social.onRoom(() => { renderLive(); renderPlayer(); clearTimeout(roomT); roomT = setTimeout(() => { if (tuning) return; if (state.view === "community" || state.view === "track") { const st = body.scrollTop; renderBody(false); body.scrollTop = st; } }, 120); });
 function startRadio(kind) {
   state.radio = state.radio === kind ? null : kind; state.plist = null; buzz(8);
   radioTrail.length = 0; if (state.sel) radioTrail.push(state.sel);
@@ -470,7 +484,7 @@ function reseed() { const t = byId.get(state.sel); simSeed = t?.id ?? null; sim 
 $("#views").addEventListener("click", (e) => { const b = e.target.closest("[data-view]"); if (b && !b.disabled) { buzz(4); setView(b.dataset.view); } });
 { // swipe the body sideways to move between views
   let x0 = null, y0 = 0;
-  body.addEventListener("touchstart", (e) => { heldGesture = false; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  body.addEventListener("touchstart", (e) => { heldGesture = false; if (e.target.closest("input")) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
   body.addEventListener("touchend", (e) => { if (x0 === null || heldGesture) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) setView(VIEWS[VIEWS.indexOf(state.view) + (dx < 0 ? 1 : -1)]); }, { passive: true });
 }
 const sourcesLine = () => { const n = {}; for (const t of all) n[t.src] = (n[t.src] ?? 0) + 1; return `Sources: ${[["shortlist", "Glide shortlist"], ["incompetech", "Incompetech"], ["ccmixter", "ccMixter"], ["web", "Openverse"]].filter(([k]) => n[k]).map(([k, v]) => `${v} ${n[k].toLocaleString()}`).join(" · ")}. CC0 and CC BY only; no NC, ND or SA. Credit CC BY tracks with the line on each card.`; };
@@ -485,7 +499,8 @@ function cardHTML(t) {
   ];
   return `<article class="card" style="--c:${c}">
     <div class="lin">${LEVELS.map((L, i) => `<div class="lv"><b>0${i + 1}</b><span class="k">${L}</span><span class="v">${i === 3 ? rows[i][0] : esc(rows[i][0])}</span>${rows[i][1] ? `<span class="s">${i === 3 ? rows[i][1] : esc(rows[i][1])}</span>` : ""}</div>`).join("")}</div>
-    ${profileHTML(t)}
+    ${profileHTML(t, tune?.id === t.id ? tune.p : null)}
+    ${tuneHTML(t)}
     ${layersHTML(t)}
     ${nbrs.length ? `<button class="tease" data-act="similar"><b>Sounds like</b><span>${nbrs.slice(0, 3).map((n) => `<em style="--c:${tone(n.t)}">${esc(n.t.title)}</em>`).join("")}</span><small>see ${Math.max(nbrs.length, sim.length)}+ →</small></button>` : ""}
     ${t.tags?.length ? `<div class="tags">${t.tags.slice(0, 8).map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : ""}
@@ -494,6 +509,44 @@ function cardHTML(t) {
     <div class="acts"><button data-act="similar">More like this</button><button data-act="credit">Copy credit</button><button data-act="pick" class="${state.picks.has(t.id) ? "on" : ""}">${state.picks.has(t.id) ? "♥ Picked" : "♥ Pick"}</button>${t.sourceUrl ? `<a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener">Source ↗</a>` : ""}</div>
   </article>`;
 }
+// --- tune: drag the Track pane's meters and the songs that measure like that rise underneath ----
+// The map answers too: its sounds-like chords re-aim at the matches and the camera frames them.
+let tune = null, tuneT = 0, tuning = false; // tune = { id, p: { meter: target pct }, rows }
+function tuneHTML(t) {
+  if (tune?.id !== t.id || !tune.rows) return "";
+  return `<section class="tunes"><h4>Closest to your settings<small>by ear</small><button data-act="untune">Reset</button></h4>
+    ${tune.rows.length ? tune.rows.map((r, i) => rowHTML(r.t, i, r.why)).join("") : `<div class="empty">Nothing measures like that yet.</div>`}</section>`;
+}
+function retune() {
+  const t = byId.get(tune?.id); if (!t) return;
+  tune.rows = tuneMatch(t, tune.p, all, 6);
+  const el = body.querySelector(".tunes"), html = tuneHTML(t);
+  if (el) el.outerHTML = html; else body.querySelector(".snd")?.insertAdjacentHTML("afterend", html);
+  const hint = body.querySelector(".meters .hint"); if (hint) hint.textContent = "Your settings · the closest songs are below";
+  body.querySelector(".meters")?.classList.add("tuning");
+  A.setLinks(t.id, tune.rows.map((r, i) => ({ id: r.t.id, w: 1 - i * 0.1 })));
+  focusSel(700);
+}
+function untune() {
+  tune = null; const t = byId.get(state.sel); if (!t) return;
+  const top = nbrs[0]?.score || 1;
+  A.setLinks(nbrs.length ? t.id : null, nbrs.map((n) => ({ id: n.t.id, w: Math.max(0, (n.score / top - 0.6) / 0.4) })));
+  const st = body.scrollTop; renderBody(false); body.scrollTop = st; focusSel(600);
+}
+body.addEventListener("pointerdown", (e) => { if (e.target.closest("input.tune")) tuning = true; });
+addEventListener("pointerup", () => { if (tuning) { tuning = false; buzz(6); } });
+body.addEventListener("input", (e) => {
+  const inp = e.target.closest("input.tune"), t = state.sel && byId.get(state.sel); if (!inp || !t?.p) return;
+  if (tune?.id !== t.id) tune = { id: t.id, p: Object.fromEntries(Object.entries(t.p).filter(([, v]) => v != null)), rows: null };
+  const k = inp.dataset.k, v = inp.value / 100; tune.p[k] = v;
+  const mb = inp.parentElement; let g = mb.querySelector(".tg"); if (!g) { g = document.createElement("i"); g.className = "tg"; mb.prepend(g); }
+  g.style.left = `${v * 100}%`;
+  const b = mb.parentElement.querySelector(".mw b"), p0 = Math.round(t.p[k] * 100), p1 = Math.round(v * 100);
+  if (b) b.textContent = p0 === p1 ? `${p0}th pct` : `${p0} → ${p1}th pct`;
+  haptic?.("tick");
+  clearTimeout(tuneT); tuneT = setTimeout(retune, 120);
+});
+
 function scrollToGroup(feel) { if (state.view !== "library") setView("library", false); const g = body.querySelector(`.grp[data-feel="${feel}"]`); if (g) { if (!wide() && sh.target === "peek") sheetTo("half"); body.scrollTo({ top: g.offsetTop - 8, behavior: reduced ? "auto" : "smooth" }); } }
 
 body.addEventListener("click", async (e) => {
@@ -516,6 +569,7 @@ body.addEventListener("click", async (e) => {
   if (act === "credit") { await copy(creditLine(t)); toast("Credit line copied"); }
   if (act === "similar" && t.f && soundReady()) return setView("similar");
   if (act === "reseed") { reseed(); return renderBody(true); }
+  if (act === "untune") { buzz(5); return untune(); }
   if (act === "similar" || act === "describe") { if (!t.f) { warmModel(); if (!t.v) return toast("Semantic search is still loading"); } like = t; q.value = ""; state.view = "library"; run({ fly: true }); toast(t.f ? `Tracks that sound like “${t.title}”` : `Tracks described like “${t.title}”`); }
 });
 
@@ -724,5 +778,5 @@ if (matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fulls
     renderBody(false);
     if (pendingPlist) { await social.loadPlaylists(); if (social.room.playlists.some((p) => p.id === pendingPlist)) { setView("community"); const p = social.room.playlists.find((x) => x.id === pendingPlist); state.plist = { id: p.id, name: p.name, ids: p.tracks.filter((x) => byId.has(x)) }; toast(`“${p.name}” · tap ▶ to play`); renderBody(false); } }
   });
-  window.__sa = { social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, modelReady, sheetTo, select, run, setView };
+  window.__sa = { social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
 })();
