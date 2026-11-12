@@ -3,6 +3,7 @@
 // pinch and fly at 60 fps on a phone. Tracks sit in the outer band of their style's wedge, slow on
 // the inside, fast on the outside, so BPM reads as distance from the centre.
 import { FEELS, FAMILIES, FAMILY_TINT, feelById, shade } from "./taxonomy.js";
+import { pose, seedOf } from "./dance.js";
 
 const ROWS = 7, SPACING = 15, GAP_FEEL = 5, GAP_STYLE = 1.4, DOT = 4.4;
 const TAU = Math.PI * 2;
@@ -80,6 +81,9 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
   // A node's colour: its ring-1 hue, shifted by its ring-2 tint (cached; the renderer batches by string).
   const tints = new Map();
   // Motion encodes energy: a beat's glow decays fast for driving feels and lingers for dark, slow ones.
+  // Dance: while a track plays, every ring-1 group moves to its beat in the current sort's vocabulary
+  // (dance.js). `dk` fades the dance in on play and out on pause; `poses` is this frame's per-group pose.
+  let dk = 0, poses = null, dpos = 0;
   const DECAY = { drive: 8, lift: 6.5, play: 6, groove: 5, calm: 3.5, wonder: 3, sad: 2, shadow: 3.2 };
   const colN = (n) => { if (!n.tint) return col(n.feel); const k = theme + n.feel + n.tint; let c = tints.get(k); if (!c) tints.set(k, (c = shade(col(n.feel), n.tint))); return c; };
   const col = (feel) => { const F = feel && (g.colors?.[feel] ?? feelById[feel]); return F ? (theme === "dark" ? F.night : F.color) : pal().mute; };
@@ -257,8 +261,49 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
     const lk = links ? clamp((now - links.t0) / (reduced ? 1 : 650), 0, 1) : 1;
     if (lk < 1) busy = true;
     linkK = easeIO(lk);
+    const live = !!(playing && !playing.paused && !reduced);
+    dk += ((live ? 1 : 0) - dk) * (1 - Math.exp(-dt / 260));
+    if (!live && dk < 0.003) { dk = 0; poses = null; } else { poses = dancePoses(); busy = true; }
+    place(bt);
     draw(now, bt, busy);
     if (busy || (playing && !playing.paused)) kick();
+  }
+
+  function dancePoses() {
+    const b = playing?.beat?.(); if (!b) return null;
+    const pn = g.byId.get(playing.id), c = pn?.t?.f?.camelot, lensId = org?.id ?? "feel";
+    const tune = { bpm: 60 / b.len, key: c ? +String(c).slice(0, -1) : null };
+    dpos = b.i + b.ph;
+    const out = new Map();
+    for (const f of g.root.children) {
+      const p = pose(lensId, f.feel, org?.byId?.[f.feel]?.i ?? 0, dpos, tune), m = dk * (pn && pn.feel === f.feel ? 1.3 : 1);
+      out.set(f.feel, { k: 1 + (p.k - 1) * m, da: p.da * m, spread: p.spread * m, hop: p.hop * m, jit: p.jit * m, tw: p.tw * m, ac: f.a, step: Math.floor(dpos * 4) });
+    }
+    return out;
+  }
+  const wrap = (d) => d - TAU * Math.round(d / TAU);
+  const angOf = (gid, a) => { const P = poses?.get(gid); return P ? a + P.da + wrap(a - P.ac) * P.spread : a; };
+  const kOf = (gid) => poses?.get(gid)?.k ?? 1;
+  const rnd = (s, n) => { const x = Math.sin(s * 9301.17 + n * 49.297) * 43758.5453; return x - Math.floor(x); };
+  // Every node's drawn position this frame (vx, vy): its morph position, grown by the bloom, then danced.
+  // Leaves also get vr, a radius multiplier for twinkles. Hit-testing keeps the undanced layout.
+  function place(bt) {
+    const gl = [0, 1, 2, 3, 4].map((l) => grow(bt, l));
+    for (const n of g.byId.values()) {
+      const x = n.dx * gl[n.level], y = n.dy * gl[n.level], P = poses && n.level > 0 ? poses.get(n.feel) : null;
+      if (!P) { n.vx = x; n.vy = y; n.va = n.a; n.vr = 1; continue; }
+      let r = Math.hypot(x, y) * P.k, a = Math.atan2(y, x);
+      a += P.da + wrap(a - P.ac) * P.spread;
+      n.va = n.a == null ? a : n.a + P.da + wrap(n.a - P.ac) * P.spread; n.vr = 1;
+      let jx = 0, jy = 0;
+      if (n.level === 4) {
+        const s = (n.seed ??= seedOf(n.id));
+        if (P.hop) r += P.hop * (s < 0.5 ? 1 : -0.6);
+        if (P.jit) { jx = (rnd(s, P.step) - 0.5) * 2 * P.jit; jy = (rnd(s + 0.37, P.step) - 0.5) * 2 * P.jit; }
+        if (P.tw) n.vr = 1 + 0.6 * P.tw * (0.5 + 0.5 * Math.sin(TAU * (dpos / 4 + s)));
+      }
+      n.vx = Math.cos(a) * r + jx; n.vy = Math.sin(a) * r + jy;
+    }
   }
 
   function draw(now, bt, busy) {
@@ -285,7 +330,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
     ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (cx - cam.x * s), dpr * (cy - cam.y * s));
     const gr4 = (lvl) => grow(bt, lvl);
-    const X = (n) => n.dx * gr4(n.level), Y = (n) => n.dy * gr4(n.level);
+    const X = (n) => n.vx, Y = (n) => n.vy;
     const vx0 = cam.x - cx / s - 40, vx1 = cam.x + (W - cx) / s + 40, vy0 = cam.y - cy / s - 40, vy1 = cam.y + (H - cy) / s + 40;
     // Style bands: a tinted annular sector under each style's tracks.
     const inner = g.R4 + 6, outer = g.outer + 2;
@@ -293,7 +338,8 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
       const a = (st.al ?? 1) * gr4(3); if (a < 0.02) continue;
       ctx.globalAlpha = a * (st.id === focusId || st.id === hoverId ? 0.22 : 0.09);
       ctx.fillStyle = colN(st);
-      ctx.beginPath(); ctx.arc(0, 0, outer * gr4(4), st.a0 - g.step * 0.6, st.a1 + g.step * 0.6); ctx.arc(0, 0, inner * gr4(4), st.a1 + g.step * 0.6, st.a0 - g.step * 0.6, true); ctx.closePath(); ctx.fill();
+      const b0 = angOf(st.feel, st.a0 - g.step * 0.6), b1 = angOf(st.feel, st.a1 + g.step * 0.6), bk = kOf(st.feel) * gr4(4);
+      ctx.beginPath(); ctx.arc(0, 0, outer * bk, b0, b1); ctx.arc(0, 0, inner * bk, b1, b0, true); ctx.closePath(); ctx.fill();
     }
     // Edges.
     ctx.lineCap = "round";
@@ -303,7 +349,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
       ctx.globalAlpha = a * (p.level === 0 ? 0.28 : 0.6); ctx.strokeStyle = colN(n); ctx.lineWidth = (a > 0.5 && lit ? 2 : 1.2) / Math.max(s, 0.35);
       ctx.beginPath();
       if (p.level === 0) { ctx.moveTo(0, 0); ctx.lineTo(X(n), Y(n)); }
-      else { const rm = (Math.hypot(X(p), Y(p)) + Math.hypot(X(n), Y(n))) / 2; ctx.moveTo(X(p), Y(p)); ctx.bezierCurveTo(Math.cos(p.a) * rm, Math.sin(p.a) * rm, Math.cos(n.a) * rm, Math.sin(n.a) * rm, X(n), Y(n)); }
+      else { const rm = (Math.hypot(X(p), Y(p)) + Math.hypot(X(n), Y(n))) / 2; ctx.moveTo(X(p), Y(p)); ctx.bezierCurveTo(Math.cos(p.va) * rm, Math.sin(p.va) * rm, Math.cos(n.va) * rm, Math.sin(n.va) * rm, X(n), Y(n)); }
       ctx.stroke();
     }
     // Sounds-like links: chords bent toward the centre, so cross-feel neighbours visibly span the ring.
@@ -324,9 +370,9 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
     // Batched: one path per colour and alpha step instead of a fill per dot (~1.8k dots).
     const buckets = new Map(), rings = [];
     for (const n of g.leaves) {
-      const x = n.dx * g4, y = n.dy * g4; if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue;
+      const x = n.vx, y = n.vy; if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue;
       const a = n.al ?? 1; if (a < 0.02) continue;
-      const on = a > 0.5, r = (n.t.src === "shortlist" && on ? DOT * 1.25 : DOT) * (0.6 + 0.4 * a);
+      const on = a > 0.5, r = (n.t.src === "shortlist" && on ? DOT * 1.25 : DOT) * (0.6 + 0.4 * a) * n.vr;
       // Under a lens, unmeasured tracks go neutral.
       const k = (on ? (lens ? lens(n.t) ?? P.mute : colN(n)) : P.dim) + "|" + (on ? Math.round(a * 8) / 8 : 0.55);
       let b = buckets.get(k); if (!b) buckets.set(k, (b = []));
@@ -364,7 +410,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
       if (a * fade < 0.05) continue;
       const x = sx(n), y = sy(n); if (x < -120 || x > W + 120 || y < -40 || y > H + 40) continue;
       ctx.globalAlpha = a * fade;
-      const ux = Math.cos(n.a), uy = Math.sin(n.a);
+      const ux = Math.cos(n.va), uy = Math.sin(n.va);
       if (n.level === 1) { ctx.font = "13px 'Archivo Black', sans-serif"; text(n.name.toUpperCase(), x + ux * 38 * Math.min(1, 0.55 + s), y + uy * 30 * Math.min(1, 0.55 + s), ux, col(n.feel), P.bg); }
       else if (n.level === 2) { ctx.font = "600 12px 'Instrument Sans', sans-serif"; text(n.name, x + ux * 18, y + uy * 18, ux, P.ink, P.bg); }
       else { ctx.font = "11px 'IBM Plex Mono', monospace"; text(n.name, x + ux * 14, y + uy * 14, ux, P.mute, P.bg); }
@@ -373,7 +419,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
 
   function drawOverlay(bt) {
     const P = pal(), { cx, cy } = centre(), s = cam.s, g4 = grow(bt, 4);
-    const X = (n) => n.dx * grow(bt, n.level), Y = (n) => n.dy * grow(bt, n.level);
+    const X = (n) => n.vx, Y = (n) => n.vy;
     const sx = (n) => cx + (X(n) - cam.x) * s, sy = (n) => cy + (Y(n) - cam.y) * s;
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (cx - cam.x * s), dpr * (cy - cam.y * s));
     // Playing track, scored like a metre: every beat ripples its dot, each bar's downbeat lights its
@@ -381,7 +427,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
     // from the measured downbeat (sound.js beatAt), so pulses land on the kick, not just the tempo.
     const pn = playing && g.byId.get(playing.id);
     if (pn) {
-      const x = pn.dx * g4, y = pn.dy * g4, c = colN(pn), px = 1 / s;
+      const x = pn.vx, y = pn.vy, c = colN(pn), px = 1 / s;
       const b = playing.paused || reduced ? null : playing.beat?.(), env = b ? Math.exp(-b.ph * (DECAY[pn.t.feel] ?? 5)) : 0;
       if (b) {
         ctx.globalAlpha = env * (0.25 + 0.45 * b.acc); ctx.strokeStyle = c; ctx.lineWidth = 2 * px;
@@ -389,18 +435,18 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
         if (b.acc >= 0.7) { // bar: light the track's lineage, style -> family -> feel -> centre, each in its own tint
           ctx.lineCap = "round";
           for (let n = pn.parent; n && n.level > 0; n = n.parent) {
-            const p = n.parent, nx = n.dx * grow(bt, n.level), ny = n.dy * grow(bt, n.level), qx = p.dx * grow(bt, p.level) || 0, qy = p.dy * grow(bt, p.level) || 0;
+            const p = n.parent, nx = n.vx, ny = n.vy, qx = p.vx || 0, qy = p.vy || 0;
             ctx.globalAlpha = env * (0.35 + 0.4 * b.acc); ctx.strokeStyle = colN(n); ctx.lineWidth = (1.4 + 1.8 * b.acc) * px;
             ctx.beginPath(); ctx.moveTo(qx, qy);
             if (p.level === 0) ctx.lineTo(nx, ny);
-            else { const rm = (Math.hypot(qx, qy) + Math.hypot(nx, ny)) / 2; ctx.bezierCurveTo(Math.cos(p.a) * rm, Math.sin(p.a) * rm, Math.cos(n.a) * rm, Math.sin(n.a) * rm, nx, ny); }
+            else { const rm = (Math.hypot(qx, qy) + Math.hypot(nx, ny)) / 2; ctx.bezierCurveTo(Math.cos(p.va) * rm, Math.sin(p.va) * rm, Math.cos(n.va) * rm, Math.sin(n.va) * rm, nx, ny); }
             ctx.stroke();
           }
         }
         if (b.acc === 1) { // phrase: the whole wedge answers
           if (wedge.id !== pn.feel || wedge.g !== g) { let a0 = Infinity, a1 = -Infinity; for (const st of g.styles) if (st.feel === pn.feel) { a0 = Math.min(a0, st.a0); a1 = Math.max(a1, st.a1); } Object.assign(wedge, { id: pn.feel, g, a0, a1 }); }
           ctx.globalAlpha = env * 0.6; ctx.strokeStyle = col(pn.feel); ctx.lineWidth = 3 * px;
-          ctx.beginPath(); ctx.arc(0, 0, (g.outer + 8) * g4, wedge.a0 - g.step * 0.6, wedge.a1 + g.step * 0.6); ctx.stroke();
+          ctx.beginPath(); ctx.arc(0, 0, (g.outer + 8) * g4 * kOf(pn.feel), angOf(pn.feel, wedge.a0 - g.step * 0.6), angOf(pn.feel, wedge.a1 + g.step * 0.6)); ctx.stroke();
           ctx.globalAlpha = env * 0.18; ctx.lineWidth = 1.5 * px; ctx.beginPath(); ctx.arc(0, 0, g.R4 * (0.98 + 0.04 * (1 - env)) * g4, 0, TAU); ctx.stroke();
         }
       }
