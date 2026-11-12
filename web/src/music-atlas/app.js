@@ -282,18 +282,19 @@ const AWAY = 24, outBy = (r, x, y) => Math.hypot(Math.max(r.left - x, 0, x - r.r
 const away = (x, y) => Math.min(outBy(sortMenu.getBoundingClientRect(), x, y), outBy(sortBtn.getBoundingClientRect(), x, y)) > AWAY;
 sortBtn.addEventListener("pointerdown", (e) => {
   if (e.button > 0) return; sm.down = true; sm.x = e.clientX; sm.y = e.clientY; sm.p0 = e.pressure; sm.fired = false;
-  sortBtn.setPointerCapture(e.pointerId);
-  sm.t = setTimeout(() => { sm.fired = true; if (sm.open) closeSort(); openSort(true); }, HOLD);
+  sortBtn.setPointerCapture(e.pointerId); sortBtn.classList.add("arming");
+  sm.a = setTimeout(() => sm.down && pressRing.arm(sm.x, sm.y), 110); // the same arming ring a held row shows
+  sm.t = setTimeout(() => { sm.fired = true; pressRing.fire(); if (sm.open) closeSort(); openSort(true); }, HOLD);
 });
 sortBtn.addEventListener("pointermove", (e) => {
   if (!sm.down) return;
   if (!sm.fired && e.pointerType !== "mouse" && sm.p0 > 0 && e.pressure - sm.p0 > FORCE) { clearTimeout(sm.t); sm.fired = true; openSort(true); } // pressed harder
-  if (sm.fired && sm.open && away(e.clientX, e.clientY)) { sm.down = false; return closeSort(); } // slid off without choosing: let it go
+  if (sm.fired && sm.open && away(e.clientX, e.clientY)) { sm.down = false; pressRing.hide(); sortBtn.classList.remove("arming"); return closeSort(); } // slid off without choosing: let it go
   if (sm.fired) hotAt(e.clientX, e.clientY);
-  else if (Math.hypot(e.clientX - sm.x, e.clientY - sm.y) > SLOP) clearTimeout(sm.t); // a scroll of the rail, not a press
+  else if (Math.hypot(e.clientX - sm.x, e.clientY - sm.y) > SLOP) { clearTimeout(sm.t); clearTimeout(sm.a); pressRing.hide(); sortBtn.classList.remove("arming"); } // a scroll of the rail, not a press
 });
 const sortUp = (e) => {
-  if (!sm.down) return; sm.down = false; clearTimeout(sm.t);
+  if (!sm.down) return; sm.down = false; clearTimeout(sm.t); clearTimeout(sm.a); pressRing.hide(); sortBtn.classList.remove("arming");
   if (sm.fired) { const b = sm.hot; if (b) { closeSort(); if (b.dataset.lens !== state.lens) { haptic("keep"); setLens(b.dataset.lens); } } else sm.held = false; return; } // let go on nothing: the menu stays for a tap
   if (e.type === "pointercancel" || Math.hypot(e.clientX - sm.x, e.clientY - sm.y) > SLOP) return;
   sm.open ? closeSort() : openSort(false);
@@ -355,7 +356,7 @@ async function run({ fly = false, scroll = true } = {}) {
 }
 q.addEventListener("input", () => { like = null; state.view = "library"; clearTimeout(debounce); debounce = setTimeout(() => run({ fly: true }), 180); });
 q.addEventListener("focus", () => { warmModel(); if (!wide()) sheetTo("full"); }); // the keyboard takes the bottom; results go above it
-q.addEventListener("keydown", (e) => { if (e.key === "Enter") { q.blur(); run({ fly: true }); if (state.q) searchWeb(); } if (e.key === "Escape") { q.value = ""; like = null; run({ fly: true }); q.blur(); } });
+q.addEventListener("keydown", (e) => { if (e.key === "Enter") { q.blur(); run({ fly: true }); if (state.q) searchWeb(true); } if (e.key === "Escape") { q.value = ""; like = null; run({ fly: true }); q.blur(); } });
 $("#clear").onclick = () => { q.value = ""; like = null; run({ fly: true }); };
 
 const ai = $("#ai");
@@ -364,12 +365,13 @@ function warmModel() {
   loadModel((s) => { ai.dataset.state = s; ai.title = { loading: "Loading semantic search…", ready: "Semantic search on", off: "Semantic search unavailable; matching words only" }[s]; if (s === "ready") { if (state.q) run({ fly: true, scroll: false }); toast("Semantic search ready"); } }).catch(() => {});
 }
 
-async function searchWeb() {
+async function searchWeb(auto = false) {
   if (webBusy || !state.q) return; webBusy = true; renderBody(false);
   try {
     const got = await webSearch(state.q, all);
     if (got.length) { all = [...all, ...got]; got.forEach((t) => byId.set(t.id, t)); A.setTracks(all); }
-    toast(got.length ? `+${got.length} from across the web (Openverse)` : "No new CC0 / CC BY songs on Openverse for that");
+    if (got.length) toast(`+${got.length} from across the web (Openverse)`);
+    else if (!auto || !result.hits?.length) toast("No new CC0 / CC BY songs on Openverse for that"); // after Enter, local matches already answer
   } catch (e) { toast(e.message); }
   webBusy = false; run({ fly: true, scroll: false });
 }
@@ -423,9 +425,12 @@ function renderBody(scroll = true) {
 // Re-painting the view you're already on (steering, releasing a meter, liking) must not look like
 // arriving: entrances stay off and the card's colour, spectrum and meter ticks glide from old to new.
 const GLIDE = [".card", ".spec i", ".mt .mb > i:not(.tg)", ".bb i"];
+const painted = new Set();
 function paint(html, scroll) {
+  // A track's card and spectrum enter once; coming back to its view (a tab switch) shows them settled.
+  const key = state.view + "|" + (state.sel ?? ""), seen = painted.has(key); painted.add(key);
   const same = !scroll && body.dataset.v === state.view, was = same && GLIDE.map((s) => [...body.querySelectorAll(s)].map((el) => el.style.cssText));
-  body.innerHTML = html; body.dataset.v = state.view; body.classList.toggle("calm", same);
+  body.innerHTML = html; body.dataset.v = state.view; body.classList.toggle("calm", same || seen);
   if (was) GLIDE.forEach((s, g) => { const els = [...body.querySelectorAll(s)]; if (els.length !== was[g].length) return;
     const now = els.map((el) => el.style.cssText); els.forEach((el, i) => { el.style.cssText = was[g][i]; }); body.offsetWidth; els.forEach((el, i) => { el.style.cssText = now[i]; }); });
   restPulse(); if (scroll) body.scrollTop = 0; watchLayers();
@@ -663,7 +668,9 @@ function stepList(d) { const list = state.queue === "similar" && simSeed ? [simS
 function renderPlayer() {
   const t = state.sel && byId.get(state.sel), p = $("#player");
   p.style.setProperty("--c", t ? tone(t) : "#5fd3dc"); $("#views").style.setProperty("--c", t ? tone(t) : "#5fd3dc");
-  $("#pt").innerHTML = t ? `<b>${esc(t.title)}</b><small>${bpmOf(t) ? `${bpmOf(t)} bpm · ` : ""}${t.f?.camelot ? `${t.f.camelot} · ` : ""}${esc(t.author)}</small>` : `<b>Sound Atlas</b><small>${all.length.toLocaleString()} free CC tracks</small>`;
+  const pt = $("#pt"), fresh = (t?.id ?? null) !== renderPlayer.id; renderPlayer.id = t?.id ?? null;
+  if (fresh && !reduced && !pt.classList.contains("sw-l") && !pt.classList.contains("sw-r")) { pt.classList.remove("in"); void pt.offsetWidth; pt.classList.add("in"); }
+  pt.innerHTML = t ? `<b>${esc(t.title)}</b><small>${bpmOf(t) ? `${bpmOf(t)} bpm · ` : ""}${t.f?.camelot ? `${t.f.camelot} · ` : ""}${esc(t.author)}</small>` : `<b>Sound Atlas</b><small>${all.length.toLocaleString()} free CC tracks</small>`;
   $("#pp").innerHTML = audio.paused ? ICON.play : ICON.pause;
   $("#ph").classList.toggle("on", !!t && state.picks.has(t.id));
   const lk = t && social.room.likes[t.id]; $("#ph").dataset.n = lk ? social.compact(lk) : "";

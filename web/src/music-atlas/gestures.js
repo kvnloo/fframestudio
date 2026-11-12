@@ -16,9 +16,19 @@ const ios = (() => {
   return label;
 })();
 // Named patterns so every surface speaks the same language: detent < tick < select < press < keep.
-const PAT = { detent: 4, tick: 6, select: 9, press: 14, keep: [12, 40, 20], cancel: [5, 30, 5], beat: 7, bar: 14 };
+// Chrome on Android plays navigator.vibrate as a legacy one-shot at the motor's fixed strength (no
+// amplitude), so length is the only intensity dial. Android's guidance puts a crisp key click at
+// 10-20 ms; much shorter pulses barely move the actuator, so the scale starts at 8 ms.
+const PAT = { detent: 8, tick: 10, select: 14, press: 18, keep: [16, 60, 24], cancel: [8, 50, 8], beat: 8, bar: 14 };
+// A new vibrate cancels the one playing, so two calls in one gesture (press + audition, select +
+// sheet snap) left only the second, often weaker, pulse. Within GAP ms the stronger pulse wins.
+const RANK = { detent: 0, beat: 1, tick: 2, select: 3, cancel: 3, bar: 4, press: 5, keep: 6 }, GAP = 60;
+let lastT = -1e9, lastR = -1;
 export function haptic(kind = "tick") {
-  const p = typeof kind === "number" ? kind : PAT[kind] ?? 6;
+  const now = performance.now(), r = RANK[kind] ?? 2;
+  if (now - lastT < GAP && r <= lastR) return;
+  lastT = now; lastR = r;
+  const p = typeof kind === "number" ? kind : PAT[kind] ?? 10;
   if (navigator.vibrate) { try { navigator.vibrate(p); } catch {} return; }
   ios?.click(); // one system tick, whatever the pattern
 }

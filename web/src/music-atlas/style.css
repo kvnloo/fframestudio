@@ -70,6 +70,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .ib.heart.on { color: #ff86b8; animation: pop .45s var(--spring); }
 @keyframes pop { 40% { transform: scale(1.35); } }
 .pt { min-width: 0; padding-left: 4px; }
+.pt.in { animation: pt-in .32s var(--ease); }
+@keyframes pt-in { from { opacity: 0; transform: translateY(5px); } }
+.player, .views { transition: --c .45s var(--ease); }
 .pt.sw-l { animation: sw-l .32s var(--ease); } .pt.sw-r { animation: sw-r .32s var(--ease); }
 @keyframes sw-l { 0% { transform: translateX(0); opacity: 1; } 45% { transform: translateX(-28px); opacity: 0; } 55% { transform: translateX(28px); opacity: 0; } 100% { transform: none; opacity: 1; } }
 @keyframes sw-r { 0% { transform: translateX(0); opacity: 1; } 45% { transform: translateX(28px); opacity: 0; } 55% { transform: translateX(-28px); opacity: 0; } 100% { transform: none; opacity: 1; } }
@@ -216,7 +219,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .sortbtn .sk { font: 9px "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; opacity: .6; }
 .sortbtn b { font: 700 12px "Instrument Sans", sans-serif; }
 .sortbtn svg { width: 10px; height: 10px; transition: transform .25s var(--ease); }
-.sortbtn:active { transform: scale(.94); }
+.sortbtn:active, .sortbtn.arming { transform: scale(.94); }
 .sortbtn.open svg { transform: rotate(180deg); }
 .sortbtn.dim { opacity: .55; }
 .rail .chip { height: 28px; padding: 0 8px; gap: 5px; font-size: 12px; border-radius: 9px; background: rgba(22, 28, 29, .94); box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
