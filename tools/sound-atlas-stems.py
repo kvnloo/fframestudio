@@ -2,7 +2,7 @@
 """Split Sound Atlas tracks into layers (stems) offline, for the studio view.
 
 Demucs (htdemucs_6s: drums, bass, other, guitar, piano, vocals) separates each track on the GPU
-(~5 s per 3-minute track on a 3080 Ti). Each stem is then measured and kept only if it is really
+(~5 s per 3-minute track on a 3080 Ti; the model stays loaded and decode, encode and upload overlap it). Each stem is then measured and kept only if it is really
 there, encoded small (Opus in WebM), and summarised as a loudness envelope the atlas draws as a
 ring at full zoom. Output, next to the catalogue:
 
@@ -17,6 +17,9 @@ Only CC0 / CC BY tracks are split: layers are derivatives, and NC/ND/SA terms fo
 """
 import argparse, json, os, subprocess, sys, tempfile
 from pathlib import Path
+
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import soundfile as sf
@@ -35,14 +38,45 @@ def licensed(t):
     return lic.startswith("CC0") or (lic.startswith("CC BY") and not any(x in lic for x in ("NC", "ND", "SA")))
 
 
-def fetch(t, base, tmp):
+SR = 44100
+
+
+def load(t, base, max_min):
+    """Decode a track to float32 stereo 44.1 kHz in memory (remote ones stream through ffmpeg)."""
     src = t["audio"]
+    if max_min and (t.get("dur") or 0) > max_min * 60:
+        return None
     if not src.startswith("http"):
-        return str((base / src).resolve())
-    out = Path(tmp) / f"{t['id']}.wav"
+        src = str((base / src).resolve())
     ref = ["-referer", "https://ccmixter.org/"] if "ccmixter.org/" in src else []
-    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", *ref, "-i", src, "-ac", "2", "-ar", "44100", str(out)], check=True, timeout=300)
-    return str(out)
+    raw = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", *ref, "-i", src, "-ac", "2", "-ar", str(SR), "-f", "f32le", "-"],
+                         check=True, timeout=300, capture_output=True).stdout
+    x = np.frombuffer(raw, np.float32).reshape(-1, 2)
+    return None if max_min and len(x) > max_min * 60 * SR else x
+
+
+def encode(x, f):
+    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "f32le", "-ar", str(SR), "-ac", "2", "-i", "-",
+                    "-c:a", "libopus", "-b:a", BITRATE, "-vbr", "on", str(f)], input=np.ascontiguousarray(x, np.float32).tobytes(), check=True)
+
+
+class Separator:
+    """htdemucs_6s loaded once and kept on the GPU (the old per-track CLI reloaded torch + weights every time)."""
+    def __init__(self, device):
+        import torch
+        from demucs.pretrained import get_model
+        from demucs.apply import apply_model
+        self.torch, self.apply, self.dev = torch, apply_model, device
+        self.model = get_model(MODEL).to(device).eval()
+
+    def __call__(self, x):
+        th = self.torch
+        w = th.from_numpy(x.T.copy())
+        ref = w.mean(0); m, sd = ref.mean(), ref.std() + 1e-8
+        with th.inference_mode():
+            y = self.apply(self.model, ((w - m) / sd)[None], device=self.dev, shifts=1, split=True, overlap=0.25, progress=False)[0]
+        y = (y * sd + m).cpu().numpy()
+        return {k: y[i].T for i, k in enumerate(self.model.sources)}
 
 
 def measure(x, sr):
@@ -64,6 +98,7 @@ def main():
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--push", default="", help="HF dataset repo to publish to, e.g. kvnloo/sound-atlas-stems")
     ap.add_argument("--every", type=int, default=10)
+    ap.add_argument("--max-min", type=float, default=12, help="skip tracks longer than this many minutes (a 59 min one OOM-killed the box)")
     a = ap.parse_args()
     cat = json.loads((a.catalog_dir / "catalog.json").read_text())
     base = a.tracks_base or a.catalog_dir
@@ -81,34 +116,40 @@ def main():
     if not todo:
         return
     batch = []
-    for t in todo:
+    sep = Separator(a.device)
+    pool = ThreadPoolExecutor(max_workers=6)  # opus encodes + the next download overlap the GPU
+    nxt = pool.submit(load, todo[0], base, a.max_min) if todo else None
+    for i, t in enumerate(todo):
       try:
-        # One track per demucs run: a batch run holds every separated track in RAM and got OOM-killed.
-        with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as tmp:
-            src = fetch(t, base, tmp)
-            subprocess.run([sys.executable, "-m", "demucs", "-n", MODEL, "-d", a.device, "-o", tmp, "--filename", "{track}/{stem}.{ext}", src], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            d = Path(tmp) / MODEL / Path(src).stem
-            dest = a.catalog_dir / "stems" / t["id"]
-            dest.mkdir(parents=True, exist_ok=True)
-            stems, dur = [], 0
-            for k in ORDER:
-                x, sr = sf.read(d / f"{k}.wav")
-                dur = len(x) / sr
-                db, env = measure(x, sr)
-                on = float((db > ON_DB).mean())
-                if on < KEEP_ON or db.max() < KEEP_PEAK:
-                    continue
-                f = dest / f"{k}.webm"
-                subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", str(d / f"{k}.wav"), "-c:a", "libopus", "-b:a", BITRATE, "-vbr", "on", str(f)], check=True)
-                stems.append({"k": k, "f": f"stems/{t['id']}/{k}.webm", "on": round(on, 3), "env": env})
-            doc["tracks"][t["id"]] = {"dur": round(dur, 2), "stems": stems}
-            print(t["id"], [s["k"] for s in stems], file=sys.stderr)
-            out_json.write_text(json.dumps(doc, separators=(",", ":")))  # checkpoint per track
-            batch.append(t["id"])
+        wav = nxt.result()
+        nxt = pool.submit(load, todo[i + 1], base, a.max_min) if i + 1 < len(todo) else None
+        if wav is None:
+            print(t["id"], "SKIPPED longer than", a.max_min, "min", file=sys.stderr); continue
+        t0 = time.time()
+        out = sep(wav)  # {stem: (samples, 2) float32}
+        t1 = time.time()
+        dest = a.catalog_dir / "stems" / t["id"]
+        dest.mkdir(parents=True, exist_ok=True)
+        stems, jobs = [], []
+        for k in ORDER:
+            x = out[k]
+            db, env = measure(x, SR)
+            on = float((db > ON_DB).mean())
+            if on < KEEP_ON or db.max() < KEEP_PEAK:
+                continue
+            jobs.append(pool.submit(encode, x, dest / f"{k}.webm"))
+            stems.append({"k": k, "f": f"stems/{t['id']}/{k}.webm", "on": round(on, 3), "env": env})
+        for j in jobs: j.result()
+        doc["tracks"][t["id"]] = {"dur": round(len(wav) / SR, 2), "stems": stems}
+        print(t["id"], [s["k"] for s in stems], f"sep {t1 - t0:.1f}s enc {time.time() - t1:.1f}s", file=sys.stderr)
+        out_json.write_text(json.dumps(doc, separators=(",", ":")))  # checkpoint per track
+        batch.append(t["id"])
       except Exception as e:  # one bad download or split never kills the run
         print(t["id"], "FAILED", repr(e)[:200], file=sys.stderr)
+        if nxt is None and i + 1 < len(todo): nxt = pool.submit(load, todo[i + 1], base, a.max_min)
       if a.push and len(batch) >= a.every:
-        push(a.push, a.catalog_dir, doc, by, batch); batch = []
+        pool.submit(push, a.push, a.catalog_dir, json.loads(json.dumps(doc)), by, batch); batch = []  # upload overlaps too
+    pool.shutdown(wait=True)
     if a.push and batch:
         push(a.push, a.catalog_dir, doc, by, batch)
 
