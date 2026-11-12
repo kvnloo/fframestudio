@@ -3,7 +3,7 @@
 // pinch and fly at 60 fps on a phone. Tracks sit in the outer band of their style's wedge, slow on
 // the inside, fast on the outside, so BPM reads as distance from the centre.
 import { FEELS, FAMILIES, FAMILY_TINT, feelById, shade } from "./taxonomy.js";
-import { pose, seedOf } from "./dance.js";
+import { pose, seedOf, zoomDamp } from "./dance.js";
 
 const ROWS = 7, SPACING = 15, GAP_FEEL = 5, GAP_STYLE = 1.4, DOT = 4.4;
 const TAU = Math.PI * 2;
@@ -263,20 +263,22 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
     linkK = easeIO(lk);
     const live = !!(playing && !playing.paused && !reduced);
     dk += ((live ? 1 : 0) - dk) * (1 - Math.exp(-dt / 260));
-    if (!live && dk < 0.003) { dk = 0; poses = null; } else { poses = dancePoses(); busy = true; }
+    if (!live && dk < 0.003) dk = 0;
+    const dm = dk * zoomDamp(cam.s, Math.min(W, H) * 0.95 / (2 * (g.outer + 30))); // vs the whole-map scale: zoomed in, settle and stop forcing redraws
+    if (dm < 0.003) poses = null; else { poses = dancePoses(dm); busy = true; }
     place(bt);
     draw(now, bt, busy);
     if (busy || (playing && !playing.paused)) kick();
   }
 
-  function dancePoses() {
+  function dancePoses(dm) {
     const b = playing?.beat?.(); if (!b) return null;
     const pn = g.byId.get(playing.id), c = pn?.t?.f?.camelot, lensId = org?.id ?? "feel";
     const tune = { bpm: 60 / b.len, key: c ? +String(c).slice(0, -1) : null };
     dpos = b.i + b.ph;
     const out = new Map();
     for (const f of g.root.children) {
-      const p = pose(lensId, f.feel, org?.byId?.[f.feel]?.i ?? 0, dpos, tune), m = dk * (pn && pn.feel === f.feel ? 1.3 : 1);
+      const p = pose(lensId, f.feel, org?.byId?.[f.feel]?.i ?? 0, dpos, tune), m = dm * (pn && pn.feel === f.feel ? 1.3 : 1);
       out.set(f.feel, { k: 1 + (p.k - 1) * m, da: p.da * m, spread: p.spread * m, hop: p.hop * m, jit: p.jit * m, tw: p.tw * m, ac: f.a, step: Math.floor(dpos * 4) });
     }
     return out;

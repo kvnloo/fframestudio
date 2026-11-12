@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { pose, tempoPerBar, wheel, REST } from "../../web/src/music-atlas/dance.js";
+import { pose, tempoPerBar, wheel, zoomDamp, REST } from "../../web/src/music-atlas/dance.js";
 import { FEELS } from "../../web/src/music-atlas/taxonomy.js";
 
 // Sample one bar at 1/64 notes; count onsets (rises of the radial pulse) and the peak displacement.
@@ -28,6 +28,11 @@ test("each emotion moves differently", () => {
   assert.ok(bar("feel", "drive", 0, {}).peak > bar("feel", "calm", 0, {}).peak, "fired up hits harder than at peace");
   assert.ok(bar("feel", "sad", 0, {}).xs.every((p) => p.k <= 1), "sad only ever sinks");
   assert.ok(bar("feel", "shadow", 0, {}).xs.every((p) => p.jit > 0), "tense always trembles");
+  const crest = (id, at) => pose("feel", id, 0, at, {}).k - 1;
+  assert.ok(crest("lift", 1) > crest("lift", 1.5), "joyful crests on the beat");
+  assert.ok(crest("play", 1.5) > crest("play", 1), "playful crests off the beat");
+  const sad = bar("feel", "sad", 0, {}).xs.map((p) => 1 - p.k);
+  assert.ok(sad[1] < sad[3], "sad sighs in gradually, not a flinch");
 });
 
 test("tempo bands pulse at their own speed, the tune's band on the beat", () => {
@@ -36,6 +41,10 @@ test("tempo bands pulse at their own speed, the tune's band on the beat", () => 
   assert.ok(tempoPerBar("mid", 128) < tempoPerBar("rush", 128));
   assert.equal(bar("tempo", "up", 2, { bpm: 128 }).onsets, 4);
   assert.equal(bar("tempo", "slow", 0, { bpm: 128 }).onsets, tempoPerBar("slow", 128));
+  for (const bpm of [70, 96, 128, 150, 175]) for (const g of ["slow", "mid", "up", "fast", "rush"]) {
+    const own = tempoPerBar(g, bpm) === 4;
+    assert.equal(own, bar("tempo", g, 0, { bpm }).xs.length && pose("tempo", g, 0, 0, { bpm }).k > 1.04, `${g}@${bpm}: only the tune's band rides the beat`);
+  }
 });
 
 test("keys that mix with the tune dance hardest", () => {
@@ -50,4 +59,13 @@ test("density sets how often a band pulses, soundstage how wide it opens", () =>
   const w = (gi) => Math.max(...bar("width", "x", gi, {}).xs.map((p) => p.spread));
   assert.ok(w(4) > w(2) && w(2) > w(0));
   for (const gi of [0, 1]) assert.ok(Math.min(...bar("width", "x", gi, {}).xs.map((p) => p.spread)) < 0, "mono and intimate pinch in");
+});
+
+test("the dance settles as you zoom in", () => {
+  const fit = 0.12;
+  assert.equal(zoomDamp(0.1, fit), 1);
+  assert.equal(zoomDamp(2.6, fit), 0);
+  assert.equal(zoomDamp(9, fit), 0);
+  // offsets are world px, so on-screen motion is s * damp: it must shrink as you zoom in
+  for (let s = fit; s < 3; s += 0.02) assert.ok((s + 0.02) * zoomDamp(s + 0.02, fit) < s * zoomDamp(s, fit) + 1e-9, `screen motion grows at ${s}`);
 });

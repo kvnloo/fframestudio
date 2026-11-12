@@ -32,8 +32,19 @@ export const wheel = (a, b) => { const d = Math.abs(a - b) % 12; return Math.min
 export function tempoPerBar(gid, bpm) {
   if (!(bpm > 0) || !TEMPO_MID[gid]) return 0;
   if (bpm >= TEMPO_LO[gid] && bpm < TEMPO_HI[gid]) return 4; // the tune's own band: on the beat
-  return Math.max(1, Math.min(8, Math.round((4 * TEMPO_MID[gid]) / bpm)));
+  // Only the tune's band may land on the beat: slower bands stay under 4 a bar, faster ones over.
+  const slower = TEMPO_HI[gid] <= bpm, n = Math.round((4 * TEMPO_MID[gid]) / bpm);
+  return slower ? Math.max(1, Math.min(3, n)) : Math.max(5, Math.min(8, n));
 }
+
+// Zoom settle. Dance offsets are in world px, so on screen they grow with the zoom scale s; damping by
+// (fit/s)^1.5 makes on-screen motion shrink as you zoom in from the whole-map view (scale `fit`),
+// and a final fade from 0.95 (styles legible) leaves it still by 2.6 (the leaf detent), titles readable.
+export const zoomDamp = (s, fit = 0.12) => {
+  if (s <= fit) return 1;
+  const fade = s <= 0.95 ? 1 : Math.max(0, 1 - Math.log(s / 0.95) / Math.log(2.6 / 0.95));
+  return (fit / s) ** 1.5 * fade;
+};
 
 // lens: sort id ("feel", "key", "tempo", "bright", "busy", "width"); gid: ring-1 group id;
 // gi: its band index (0 = low end of the scale); pos: beats since the downbeat (fractional);
@@ -44,13 +55,13 @@ export function pose(lens, gid, gi, pos, tune = {}) {
   const kick = hit(ph, 7) * acc, off = hit(frac(pos + 0.5), 7), hat = hit(frac(pos * 4), 9);
   if (!lens || lens === "feel") {
     switch (gid) {
-      case "drive": return { ...REST, k: 1 + 0.055 * hit(ph, 10) * acc, jit: 0.6 * hat };
-      case "lift": return { ...REST, k: 1 + 0.035 * Math.sin(Math.PI * ph) ** 2 }; // a hop up and back per beat
+      case "drive": return { ...REST, k: 1 + 0.055 * hit(ph, 10) * acc }; // sharp attack, fast decay: a punch
+      case "lift": return { ...REST, k: 1 + 0.035 * Math.cos(Math.PI * ph) ** 2 }; // round bounce cresting ON the beat (playful takes the off-beat)
       case "play": return { ...REST, k: 1 + 0.012 * off, hop: 5 * off };
       case "groove": { const c = Math.cos(Math.PI * pos); return { ...REST, da: 0.022 * Math.sign(c) * Math.abs(c) ** 0.5, k: 1 + 0.014 * kick }; }
       case "calm": return { ...REST, k: 1 + 0.028 * (0.5 - 0.5 * Math.cos((TAU * pos) / 8)) };
       case "wonder": return { ...REST, da: 0.014 * Math.sin((TAU * pos) / 16), tw: 0.7 };
-      case "sad": return { ...REST, k: 1 - 0.03 * hit(bar, 2.2) };
+      case "sad": return { ...REST, k: 1 - 0.03 * (bar < 0.15 ? Math.sin((Math.PI / 2) * (bar / 0.15)) : hit(bar - 0.15, 2.4)) }; // a soft sigh, not a flinch
       case "shadow": return { ...REST, k: 1 - 0.018 * hit(ph, 12), jit: 2.4 };
       default: return { ...REST, k: 1 + 0.02 * kick };
     }
