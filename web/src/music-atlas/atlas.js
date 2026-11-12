@@ -63,7 +63,7 @@ export function layout(tracks, org = null) {
   return { root, byId, leaves, styles, R4, radii, step, outer: R4 + 14 + ROWS * SPACING, colors: org?.byId ?? null };
 }
 
-export function createAtlas({ canvas, region, onTap, onCamera }) {
+export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent }) {
   // Two layers: `layer` caches the static atlas (bands, edges, dots, nodes, labels) and is only
   // redrawn when the camera, data or an animation changes it; playback then costs one blit plus
   // the beat ring and pills per frame.
@@ -80,7 +80,7 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
   // A node's colour: its ring-1 hue, shifted by its ring-2 tint (cached; the renderer batches by string).
   const tints = new Map();
   // Motion encodes energy: a beat's glow decays fast for driving feels and lingers for dark, slow ones.
-  const DECAY = { drive: 8, lift: 6.5, play: 6, groove: 5, calm: 3.5, wonder: 3, shadow: 2.5 };
+  const DECAY = { drive: 8, lift: 6.5, play: 6, groove: 5, calm: 3.5, wonder: 3, sad: 2, shadow: 3.2 };
   const colN = (n) => { if (!n.tint) return col(n.feel); const k = theme + n.feel + n.tint; let c = tints.get(k); if (!c) tints.set(k, (c = shade(col(n.feel), n.tint))); return c; };
   const col = (feel) => { const F = feel && (g.colors?.[feel] ?? feelById[feel]); return F ? (theme === "dark" ? F.night : F.color) : pal().mute; };
 
@@ -153,21 +153,33 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
 
   // --- gestures -----------------------------------------------------------------------------
   const pts = new Map(); let pan = null, pinch = null, moved = false, lastTap = 0, samples = [];
+  // Hold (or press harder): onHold("arm"|"fire"|"move"|"end"|"cancel", node, clientX, clientY).
+  // While a hold is live the finger scrubs instead of panning.
+  let hold = null;
+  const HOLD_MS = 420, FORCE = 0.22;
+  const dropHold = () => { if (!hold) return; clearTimeout(hold.t); clearTimeout(hold.a); if (hold.armed && !hold.on) onHold?.("cancel"); hold = null; };
+  const fireHold = () => { if (!hold || hold.on) return; hold.on = true; pan = null; vel = null; onHold?.("fire", hit(hold.lx, hold.ly), hold.cx, hold.cy); };
+  // Zoom detents: a tick each time the zoom crosses into the next ring's level of detail.
+  const DET = [0.42, 0.95, 2.6, 5]; let det = -1;
+  const detent = () => { const d = DET.filter((x) => cam.s >= x).length; if (det >= 0 && d !== det) onDetent?.(d); det = d; };
   const toWorld = (sx, sy) => { const { cx, cy } = centre(); return { x: (sx - cx) / cam.s + cam.x, y: (sy - cy) / cam.s + cam.y }; };
   const local = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   canvas.addEventListener("pointerdown", (e) => {
     canvas.setPointerCapture(e.pointerId); pts.set(e.pointerId, local(e)); tween = null; vel = null;
-    if (pts.size === 1) { const p = local(e); pan = { p, cam: { ...cam } }; moved = false; samples = [{ t: performance.now(), ...p }]; }
-    if (pts.size === 2) { const [a, b] = [...pts.values()]; const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: cam.s, w: toWorld(m.x, m.y) }; pan = null; moved = true; }
+    if (pts.size === 1) { const p = local(e); pan = { p, cam: { ...cam } }; moved = false; samples = [{ t: performance.now(), ...p }];
+      if (onHold) { hold = { lx: p.x, ly: p.y, cx: e.clientX, cy: e.clientY, p0: e.pressure, on: false, armed: false }; hold.a = setTimeout(() => { if (hold && !hold.on) { hold.armed = true; onHold("arm", hit(hold.lx, hold.ly), hold.cx, hold.cy); } }, 110); hold.t = setTimeout(fireHold, HOLD_MS); } }
+    if (pts.size === 2) { dropHold(); det = DET.filter((x) => cam.s >= x).length; const [a, b] = [...pts.values()]; const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: cam.s, w: toWorld(m.x, m.y) }; pan = null; moved = true; }
   });
   canvas.addEventListener("pointermove", (e) => {
     if (!pts.has(e.pointerId)) return;
     pts.set(e.pointerId, local(e));
+    if (hold?.on) { const p = local(e); onHold("move", hit(p.x, p.y), e.clientX, e.clientY); return; }
+    if (hold) { const p = local(e); if (Math.hypot(p.x - hold.lx, p.y - hold.ly) > 6) dropHold(); else if (e.pointerType !== "mouse" && hold.p0 > 0 && e.pressure - hold.p0 > FORCE) { clearTimeout(hold.t); fireHold(); return; } }
     if (pinch && pts.size >= 2) {
       const [a, b] = [...pts.values()], m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, { cx, cy } = centre();
       cam.s = clamp(pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, 0.05, 12);
       cam.x = pinch.w.x - (m.x - cx) / cam.s; cam.y = pinch.w.y - (m.y - cy) / cam.s; // pinch point stays under the fingers
-      kick(); onCamera?.(); return;
+      detent(); kick(); onCamera?.(); return;
     }
     if (!pan) return;
     const p = local(e), dx = p.x - pan.p.x, dy = p.y - pan.p.y;
@@ -181,6 +193,8 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
   const end = (e) => {
     if (!pts.has(e.pointerId)) return;
     const p = local(e); pts.delete(e.pointerId);
+    if (hold?.on) { const h = hold; hold = null; clearTimeout(h.t); onHold("end", e.type === "pointercancel" ? null : hit(p.x, p.y), e.clientX, e.clientY); pan = null; return; }
+    dropHold();
     if (pinch) { if (pts.size < 2) { pinch = null; pan = null; } return; }
     if (pan && moved && samples.length > 1) {
       const a = samples[0], b = samples[samples.length - 1], dt = Math.max(16, b.t - a.t);
@@ -201,8 +215,9 @@ export function createAtlas({ canvas, region, onTap, onCamera }) {
     e.preventDefault(); tween = null; vel = null;
     const p = local(e), w = toWorld(p.x, p.y), { cx, cy } = centre();
     cam.s = clamp(cam.s * Math.exp(-e.deltaY * 0.0016), 0.05, 12);
-    cam.x = w.x - (p.x - cx) / cam.s; cam.y = w.y - (p.y - cy) / cam.s; kick(); onCamera?.();
+    cam.x = w.x - (p.x - cx) / cam.s; cam.y = w.y - (p.y - cy) / cam.s; detent(); kick(); onCamera?.();
   }, { passive: false });
+  canvas.addEventListener("contextmenu", (e) => e.preventDefault()); // a long press is ours, not the browser's
 
   function hit(sx, sy) {
     const w = toWorld(sx, sy); let best = null, bd = Infinity;

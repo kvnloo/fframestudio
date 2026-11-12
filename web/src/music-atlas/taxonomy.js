@@ -1,22 +1,26 @@
 // Music taxonomy for the Sound Atlas, filed four levels deep like the Taste Atlas
-// (oss/taste-skill/examples/taste-atlas): 01 Feel (what the viewer should feel) -> 02 Family ->
+// (oss/taste-skill/examples/taste-atlas): 01 Emotion (how the song makes you feel) -> 02 Family ->
 // 03 Style -> 04 Track. Shared by the catalog builder (tools/music-catalog.mjs) and the browser.
 
-export const LEVELS = ["FEEL", "FAMILY", "STYLE", "TRACK"];
+export const LEVELS = ["EMOTION", "FAMILY", "STYLE", "TRACK"];
 
-// Colours follow the Taste Atlas operation palette (day, night).
+// Emotions run round the ring like a circumplex (energy x mood): fired up -> joyful -> playful ->
+// confident -> at peace -> dreamy -> sad -> tense, and tense sits back beside fired up (both high
+// energy). Ids stay the old feel ids so shared links and saved picks keep working.
+// Colours follow the Taste Atlas operation palette (day, night); Sad is the one desaturated hue.
 export const FEELS = [
-  { id: "drive", name: "Drive", color: "#d6453d", night: "#ff6b5f", ask: "momentum, chase, action", words: ["driving", "intense", "action", "aggressive", "epic", "energetic", "powerful", "hard", "fast", "chase", "heroic", "battle"] },
-  { id: "lift", name: "Lift", color: "#c27c0e", night: "#ffbf4d", ask: "bright, hopeful, rising", words: ["uplifting", "bright", "happy", "hopeful", "inspiring", "positive", "sunny", "optimistic", "triumphant", "joyful", "upbeat"] },
-  { id: "play", name: "Play", color: "#c2457a", night: "#ff86b8", ask: "bouncy, cute, funny", words: ["bouncy", "humorous", "playful", "quirky", "fun", "silly", "cute", "comedy", "cartoon", "whimsical"] },
-  { id: "groove", name: "Groove", color: "#2f6fd6", night: "#6ea8ff", ask: "head-nod, cool, rhythmic", words: ["grooving", "groovy", "funky", "cool", "swing", "danceable", "rhythmic", "smooth", "dance"] },
-  { id: "calm", name: "Calm", color: "#1f8a5b", night: "#4fd69a", ask: "soft, relaxed, warm", words: ["calming", "relaxed", "relaxing", "chill", "mellow", "peaceful", "gentle", "soft", "dreamy", "lofi", "warm", "tranquil"] },
-  { id: "wonder", name: "Wonder", color: "#7b3fa0", night: "#c38bff", ask: "mystery, space, magic", words: ["mysterious", "mystical", "magical", "ethereal", "space", "cosmic", "wonder", "fantasy", "floating", "atmospheric"] },
-  { id: "shadow", name: "Shadow", color: "#2b8a93", night: "#5fd3dc", ask: "dark, tense, sombre", words: ["dark", "eerie", "unnerving", "suspenseful", "somber", "sad", "melancholy", "tense", "horror", "ominous", "creepy", "haunting"] },
+  { id: "drive", name: "Fired up", color: "#d6453d", night: "#ff6b5f", ask: "unstoppable, chasing, epic", words: ["driving", "intense", "action", "aggressive", "epic", "energetic", "powerful", "hard", "fast", "chase", "heroic", "battle"] },
+  { id: "lift", name: "Joyful", color: "#c27c0e", night: "#ffbf4d", ask: "hopeful, sunny, rising", words: ["uplifting", "bright", "happy", "hopeful", "inspiring", "positive", "sunny", "optimistic", "triumphant", "joyful", "upbeat"] },
+  { id: "play", name: "Playful", color: "#c2457a", night: "#ff86b8", ask: "giddy, cheeky, silly", words: ["bouncy", "humorous", "playful", "quirky", "fun", "silly", "cute", "comedy", "cartoon", "whimsical"] },
+  { id: "groove", name: "Confident", color: "#2f6fd6", night: "#6ea8ff", ask: "cool, head-nodding, smooth", words: ["grooving", "groovy", "funky", "cool", "swing", "danceable", "rhythmic", "smooth", "dance"] },
+  { id: "calm", name: "At peace", color: "#1f8a5b", night: "#4fd69a", ask: "relaxed, warm, safe", words: ["calming", "relaxed", "relaxing", "chill", "mellow", "peaceful", "gentle", "soft", "dreamy", "lofi", "warm", "tranquil"] },
+  { id: "wonder", name: "Dreamy", color: "#7b3fa0", night: "#c38bff", ask: "awed, curious, floating", words: ["mysterious", "mystical", "magical", "ethereal", "space", "cosmic", "wonder", "fantasy", "floating", "atmospheric"] },
+  { id: "sad", name: "Sad", color: "#5d6a8c", night: "#9aa8cc", ask: "heartbroken, wistful, alone", words: ["sad", "somber", "sombre", "melancholy", "melancholic", "grief", "mourning", "heartbreak", "lonely", "wistful", "longing", "tragic", "bittersweet", "nostalgic"] },
+  { id: "shadow", name: "Tense", color: "#2b8a93", night: "#5fd3dc", ask: "uneasy, haunted, on edge", words: ["dark", "eerie", "unnerving", "suspenseful", "tense", "horror", "ominous", "creepy", "haunting"] },
 ];
 
 // What each visual channel means, everywhere on the page:
-//   hue        = ring 1 (feel, or the lens group)      tint (hue/lightness shift) = ring 2 (family)
+//   hue        = ring 1 (emotion, or the lens group)      tint (hue/lightness shift) = ring 2 (family)
 //   Archivo Black = groups · Instrument Sans = names · IBM Plex Mono = measurements
 //   Instrument Serif italic = the work itself (track titles) and why it was suggested
 //   motion     = the playing track's metre: beat -> its dot, bar -> its lineage, phrase -> its wedge

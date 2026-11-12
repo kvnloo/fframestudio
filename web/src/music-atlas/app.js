@@ -5,6 +5,7 @@ import { createAtlas } from "./atlas.js";
 import { FEELS, BPM_BANDS, LEVELS, FAMILY_TINT, feelById, familyById, styleName, shade } from "./taxonomy.js";
 import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine } from "./search.js";
 import { loadSound, soundReady, neighbours, profileHTML, LENSES, bpmOf, organise, beatAt } from "./sound.js";
+import { haptic, pressable, pressRing } from "./gestures.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -19,7 +20,7 @@ const sub = (t) => { if (org) { const a = org.path(t)[0]; return [a[0], a[1], a[
 const tintCache = new Map();
 const tinted = (gid, tint) => { const k = gid + "|" + tint; let c = tintCache.get(k); if (!c) { const base = grp(gid)?.night ?? "#8f8a80"; tintCache.set(k, (c = tint ? shade(base, tint) : base)); } return c; };
 const tone = (t) => (lensFn && lensFn(t)) || tinted(grpOf(t), sub(t)[2]);
-const buzz = (ms = 6) => navigator.vibrate?.(ms);
+const buzz = (ms = 6) => haptic(ms >= 8 ? "select" : ms <= 4 ? "detent" : "tick");
 const wide = () => geo.W >= 900;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -40,11 +41,12 @@ const toast = (msg, ms = 2400) => { const t = $("#toast"); t.textContent = msg; 
 const sh = { y: innerHeight, v: 0, target: "peek", raf: 0, drag: null };
 // Geometry is measured once per resize, never per frame: reading layout inside rAF forces a style
 // recalc + layout every frame (it was ~15% of each playback frame).
-const geo = { H: innerHeight, W: innerWidth, top: 110, sat: 0, sab: 0 };
+const geo = { H: innerHeight, W: innerWidth, top: 40, sat: 0, sab: 0, dock: 250 };
 const inset = Object.assign(document.createElement("div"), { style: "position:fixed;visibility:hidden;pointer-events:none;top:0;height:env(safe-area-inset-top,0px);width:env(safe-area-inset-bottom,0px)" });
 document.body.appendChild(inset);
-function measure() { geo.H = innerHeight; geo.W = innerWidth; geo.sat = inset.offsetHeight; geo.sab = inset.offsetWidth; geo.top = $(".top").getBoundingClientRect().bottom + 4; geo.left = sheet.getBoundingClientRect().left; }
-const snaps = () => { const H = geo.H; return { peek: H - 198 - geo.sab, half: Math.round(H * 0.5), full: 72 + geo.sat }; };
+function measure() { geo.H = innerHeight; geo.W = innerWidth; geo.sat = inset.offsetHeight; geo.sab = inset.offsetWidth; geo.top = $(".top").getBoundingClientRect().bottom + 4; geo.left = sheet.getBoundingClientRect().left; geo.dock = body.offsetTop; }
+// Peek shows the dock (search + filters), the player and the view switch: everything above the list.
+const snaps = () => { const H = geo.H; return { peek: H - geo.dock - 4 - geo.sab, half: Math.round(H * 0.5), full: 72 + geo.sat }; };
 function sheetTo(name, v = 0) { if (wide()) return; if (sh.target !== name) buzz(4); sh.target = name; sh.v = v; if (!sh.raf) sh.raf = requestAnimationFrame(sheetStep); atlasRefit(); }
 let shLast = 0;
 function sheetStep(now) {
@@ -58,10 +60,10 @@ function sheetStep(now) {
   if (Math.abs(sh.y - goal) > 0.4 || Math.abs(sh.v) > 4) sh.raf = requestAnimationFrame(sheetStep); else { sh.y = goal; sheet.style.transform = `translate3d(0, ${goal}px, 0)`; shLast = 0; }
 }
 function sheetPointer() {
-  const grabs = [$(".grab"), $("#player")];
+  const grabs = [$(".grab"), $("#player"), $(".dock")];
   const down = (e) => {
-    if (wide() || e.target.closest("button, input, .scrub")) return;
-    sh.drag = { y0: e.clientY, s0: sh.y, t: performance.now(), y: e.clientY, v: 0, moved: false };
+    if (wide() || e.target.closest("button, input, .scrub, .filt")) return;
+    sh.drag = { x0: e.clientX, player: !!e.target.closest("#player"), y0: e.clientY, s0: sh.y, t: performance.now(), y: e.clientY, v: 0, moved: false };
     e.currentTarget.setPointerCapture(e.pointerId); cancelAnimationFrame(sh.raf); sh.raf = 0;
   };
   const move = (e) => {
@@ -71,8 +73,11 @@ function sheetPointer() {
     const S = snaps(); let y = d.s0 + dy; if (y < S.full) y = S.full - (S.full - y) * 0.25; if (y > S.peek) y = S.peek + (y - S.peek) * 0.25; // rubber band
     sh.y = y; sheet.style.transform = `translate3d(0, ${y}px, 0)`;
   };
-  const up = () => {
+  const up = (e) => {
     const d = sh.drag; sh.drag = null; if (!d) return;
+    // Swipe the player sideways: next / previous, the title sliding out the way it was thrown.
+    const dx = e.clientX - d.x0, dy = e.clientY - d.y0;
+    if (d.player && Math.abs(dx) > 56 && Math.abs(dx) > 1.6 * Math.abs(dy)) { sheetTo(sh.target); haptic("select"); const pt = $("#pt"); pt.classList.remove("sw-l", "sw-r"); void pt.offsetWidth; pt.classList.add(dx < 0 ? "sw-l" : "sw-r"); return step(dx < 0 ? 1 : -1); }
     if (!d.moved) return sheetTo(sh.target === "peek" ? "half" : sh.target === "half" ? "full" : "half");
     const S = snaps(), proj = sh.y + d.v * 0.18; // project the fling
     const name = Object.entries(S).sort((a, b) => Math.abs(a[1] - proj) - Math.abs(b[1] - proj))[0][0];
@@ -82,7 +87,7 @@ function sheetPointer() {
   // Pull the list down from its top to lower the sheet.
   let ty = null;
   body.addEventListener("touchstart", (e) => { ty = body.scrollTop <= 0 ? e.touches[0].clientY : null; }, { passive: true });
-  body.addEventListener("touchmove", (e) => { if (ty !== null && e.touches[0].clientY - ty > 70 && sh.target !== "peek") { ty = null; sheetTo(sh.target === "full" ? "half" : "peek"); } }, { passive: true });
+  body.addEventListener("touchmove", (e) => { if (heldGesture) return; if (ty !== null && e.touches[0].clientY - ty > 70 && sh.target !== "peek") { ty = null; sheetTo(sh.target === "full" ? "half" : "peek"); } }, { passive: true });
 }
 
 // --- atlas --------------------------------------------------------------------------------------
@@ -93,6 +98,19 @@ const A = createAtlas({
     if (wide()) return { x: 0, y: top, w: geo.left, h: geo.H - top };
     const bottom = snaps()[sh.target]; return { x: 0, y: top, w: geo.W, h: Math.max(140, bottom - top) };
   },
+  onHold: (phase, n, x, y) => {
+    if (phase === "arm") return pressRing.arm(x, y, n?.level === 4 ? tone(n.t) : n ? colorOfNode(n) : null);
+    if (phase === "cancel") return pressRing.hide();
+    if (phase === "move") { pressRing.move(x, y); if (au && n?.level === 4 && n.t !== au.t) audition(n.t); return; }
+    if (phase === "end") return au ? endAudition(n?.level === 4) : pressRing.hide();
+    // fire: a track auditions; an emotion filters to itself; any other ring zooms to its wedge.
+    if (n?.level === 4) return audition(n.t);
+    pressRing.hide(); if (!n) return;
+    haptic("keep");
+    if (n.level === 1 && !org) { toggle(state.feels, n.feel); state.view = "library"; like = null; toast(state.feels.has(n.feel) ? `Only ${feelById[n.feel].name.toLowerCase()} · hold again to undo` : `${feelById[n.feel].name} filter off`); return run({ fly: true }); }
+    A.focus(n.id); if (n.level >= 1) scrollToGroup(n.feel);
+  },
+  onDetent: () => haptic("detent"),
   onTap: (n) => {
     if (!n) { if (A.focusId !== "root") A.focus(A.graph.byId.get(A.focusId)?.parent?.id ?? "root"); return; } // empty tap steps out
     buzz(5);
@@ -101,6 +119,50 @@ const A = createAtlas({
     if (n.level >= 1) scrollToGroup(n.feel);
   },
 });
+const colorOfNode = (n) => (org ? grp(n.feel)?.night : feelById[n.feel]?.night) ?? null;
+
+// --- hold to listen ------------------------------------------------------------------------------
+// Hold a dot or a row and it plays from its body while you hold; the ring under your finger and the
+// phone's motor both keep its beat. Slide across the map to audition whatever dot is under you.
+// Let go on a track to keep it (it carries on from where you were listening); slide off into empty
+// space, or scroll the list, to cancel and go back to what was playing.
+const aud2 = new Audio(); aud2.preload = "auto";
+let au = null, heldGesture = false, pendingSeek = null;
+function audition(t) {
+  if (!t || au?.t === t) return;
+  if (!au) { au = { resume: !audio.paused, t: null, raf: 0, ph: 1 }; audio.pause(); }
+  au.t = t; heldGesture = true; haptic("tick");
+  aud2.src = streamUrl(t);
+  aud2.addEventListener("loadedmetadata", () => { if (au?.t !== t) return; const d = aud2.duration || t.dur || 60; aud2.currentTime = Math.max(0, Math.min(d * 0.33, d - 20)); aud2.play().catch(() => {}); }, { once: true });
+  pressRing.fire(tone(t)); A.focusId = t.id; // its pill names it on the map
+  if (!au.raf) au.raf = requestAnimationFrame(feelBeat);
+}
+function feelBeat() {
+  if (!au) return; au.raf = requestAnimationFrame(feelBeat);
+  if (aud2.paused || reduced) return;
+  const b = beatAt(aud2.currentTime, au.t); if (!b) return;
+  pressRing.pulse(Math.exp(-b.ph * 5) * b.acc);
+  if (b.ph < au.ph && b.acc >= 0.45) haptic(b.acc >= 0.7 ? "bar" : "beat"); // a new beat started
+  au.ph = b.ph;
+}
+function endAudition(keepIt) {
+  if (!au) return pressRing.hide();
+  const { t, resume } = au, at = aud2.currentTime; cancelAnimationFrame(au.raf); au = null; pressRing.hide(); aud2.pause();
+  if (keepIt && t) {
+    haptic("keep");
+    if (t.id === state.sel) { audio.currentTime = at; audio.play().catch(() => {}); return; }
+    pendingSeek = at; return select(t.id, { play: true, keepScroll: true, from: state.view === "track" ? null : state.view });
+  }
+  haptic("cancel"); A.focusId = state.sel ?? "root";
+  if (resume) audio.play().catch(() => {});
+}
+audio.addEventListener("loadedmetadata", () => { if (pendingSeek != null) { audio.currentTime = pendingSeek; pendingSeek = null; } });
+pressable(body, ".trk", {
+  color: (el) => tone(byId.get(el.dataset.id)),
+  onFire: (el) => { el.classList.add("held"); audition(byId.get(el.dataset.id)); },
+  onEnd: (el, e, cancelled) => { el.classList.remove("held"); endAudition(!cancelled); },
+});
+
 let refitT = 0;
 // A selected track with neighbours frames its whole "sounds like" constellation, not just itself.
 const focusSel = (ms) => { if (!nbrs.length) return A.focus(state.sel, ms); A.flyToIds([state.sel, ...nbrs.slice(0, 6).map((n) => n.t.id)], ms); A.focusId = state.sel; };
@@ -169,7 +231,7 @@ async function run({ fly = false, scroll = true } = {}) {
   if (fly) { if (result.ranked || filtered) A.flyToIds(result.hits.slice(0, result.ranked ? 40 : 400).map((h) => h.t.id)); else A.focus("root"); }
 }
 q.addEventListener("input", () => { like = null; state.view = "library"; clearTimeout(debounce); debounce = setTimeout(() => run({ fly: true }), 180); });
-q.addEventListener("focus", () => { warmModel(); if (!wide() && sh.target === "peek") sheetTo("half"); });
+q.addEventListener("focus", () => { warmModel(); if (!wide()) sheetTo("full"); }); // the keyboard takes the bottom; results go above it
 q.addEventListener("keydown", (e) => { if (e.key === "Enter") { q.blur(); run({ fly: true }); if (state.q) searchWeb(); } if (e.key === "Escape") { q.value = ""; like = null; run({ fly: true }); q.blur(); } });
 $("#clear").onclick = () => { q.value = ""; like = null; run({ fly: true }); };
 
@@ -264,8 +326,8 @@ function reseed() { const t = byId.get(state.sel); simSeed = t?.id ?? null; sim 
 $("#views").addEventListener("click", (e) => { const b = e.target.closest("[data-view]"); if (b && !b.disabled) { buzz(4); setView(b.dataset.view); } });
 { // swipe the body sideways to move between views
   let x0 = null, y0 = 0;
-  body.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
-  body.addEventListener("touchend", (e) => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) setView(VIEWS[VIEWS.indexOf(state.view) + (dx < 0 ? 1 : -1)]); }, { passive: true });
+  body.addEventListener("touchstart", (e) => { heldGesture = false; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  body.addEventListener("touchend", (e) => { if (x0 === null || heldGesture) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) setView(VIEWS[VIEWS.indexOf(state.view) + (dx < 0 ? 1 : -1)]); }, { passive: true });
 }
 const sourcesLine = () => { const n = {}; for (const t of all) n[t.src] = (n[t.src] ?? 0) + 1; return `Sources: ${[["shortlist", "Glide shortlist"], ["incompetech", "Incompetech"], ["ccmixter", "ccMixter"], ["web", "Openverse"]].filter(([k]) => n[k]).map(([k, v]) => `${v} ${n[k].toLocaleString()}`).join(" · ")}. CC0 and CC BY only; no NC, ND or SA. Credit CC BY tracks with the line on each card.`; };
 
@@ -443,7 +505,7 @@ async function copy(text) {
 }
 
 // --- boot ---------------------------------------------------------------------------------------
-new ResizeObserver(() => { measure(); atlasRefit(); }).observe($(".top")); // chips wrap / fonts load
+{ const ro = new ResizeObserver(() => { measure(); if (!wide() && !sh.drag) sheetTo(sh.target); atlasRefit(); }); ro.observe($(".top")); ro.observe($(".dock")); } // fonts load, lens row fills in
 addEventListener("resize", () => { measure(); if (!wide()) { sheet.style.transform = `translate3d(0, ${snaps()[sh.target]}px, 0)`; sh.y = snaps()[sh.target]; } else sheet.style.transform = ""; atlasRefit(); });
 // Phones get the whole screen: browsers only grant fullscreen inside a user gesture, so the first
 // tap anywhere asks for it. Skipped when installed (the manifest already launches fullscreen) and

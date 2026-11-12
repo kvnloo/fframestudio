@@ -26,18 +26,19 @@
 <header class="top">
   <div class="row1">
     <a class="brand" href="./"><span class="dot"></span><b>Sound Atlas</b><small id="count"></small></a>
+  </div>
+</header>
+<section id="sheet" class="sheet">
+  <div class="grab"><i></i></div>
+  <div class="dock">
     <div class="search">
       <svg viewBox="0 0 20 20" class="mag"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M13 13l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       <input id="q" type="search" placeholder="Search a vibe…" autocomplete="off" enterkeyhint="search" spellcheck="false" />
       <span id="ai" class="ai" data-state="idle" title="Semantic search loads when you search">AI</span>
       <button id="clear" aria-label="Clear">×</button>
     </div>
+    <div class="filt"><nav id="lens" class="lens" aria-label="Sort the atlas by"></nav><nav id="chips" class="chips"></nav></div>
   </div>
-  <nav id="chips" class="chips"></nav>
-  <nav id="lens" class="lens" aria-label="Colour the atlas by"></nav>
-</header>
-<section id="sheet" class="sheet">
-  <div class="grab"><i></i></div>
   <div id="player" class="player">
     <button id="pv" class="ib sm" aria-label="Previous"><svg viewBox="0 0 20 20"><path d="M14 5v10l-7-5zM5 5h2v10H5z" fill="currentColor"/></svg></button>
     <button id="pp" class="ib pp" aria-label="Play"></button>

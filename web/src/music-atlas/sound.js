@@ -8,12 +8,12 @@ const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
 // Scalar descriptors: [key, label, low word, high word, value formatter].
 export const METERS = [
-  ["bright", "Brightness", "dark", "bright", (f) => `${(f.bright / 1000).toFixed(1)} kHz centroid`],
-  ["clarity", "Clarity", "washy", "separated", (f) => `${f.clarity} dB contrast`],
-  ["width", "Soundstage", "narrow", "wide", (f) => `side/mid ${f.width.toFixed(2)} · L/R ${f.corr.toFixed(2)}`],
-  ["busy", "Busyness", "sparse", "dense", (f) => `${f.busy} onsets/s`],
-  ["lra", "Dynamics", "flat", "breathing", (f) => `LRA ${(+f.lra).toFixed(1)} dB · crest ${(+f.crest).toFixed(1)} dB`],
-  ["low", "Low end", "light", "heavy", (f) => `${Math.round(f.low * 100)}% below 120 Hz`],
+  ["bright", "Tonality", "warm", "bright", (f) => `${(f.bright / 1000).toFixed(1)} kHz centroid`],
+  ["clarity", "Separation", "congested", "transparent", (f) => `${f.clarity} dB contrast`],
+  ["width", "Soundstage", "intimate", "expansive", (f) => `side/mid ${f.width.toFixed(2)} · L/R ${f.corr.toFixed(2)}`],
+  ["busy", "Density", "sparse", "dense", (f) => `${f.busy} onsets/s`],
+  ["lra", "Dynamics", "compressed", "breathing", (f) => `LRA ${(+f.lra).toFixed(1)} dB · crest ${(+f.crest).toFixed(1)} dB`],
+  ["low", "Weight", "lean", "full", (f) => `${Math.round(f.low * 100)}% below 120 Hz`],
 ];
 const pctKeys = ["tempo", ...METERS.map((m) => m[0])];
 // Listed BPM wins where a source publishes one: measured tempo matched Incompetech's within 4% on
@@ -128,21 +128,21 @@ const COOL_WARM = [[64, 120, 220], [95, 211, 220], [236, 232, 223], [244, 178, 9
 const DARK_LIGHT = [[110, 70, 40], [196, 132, 60], [240, 214, 150], [220, 246, 255]];
 const QUIET_LOUD = [[70, 92, 110], [95, 211, 220], [255, 214, 102], [255, 110, 150]];
 export const LENSES = [
-  { id: "feel", name: "Feel" },
+  { id: "feel", name: "Emotions" },
   { id: "key", name: "Key", legend: "Camelot wheel · A minor, B major", color: (t) => { const c = cam(t.f?.camelot); return c ? `hsl(${(c.n - 1) * 30},${c.l === "B" ? 70 : 55}%,${c.l === "B" ? 66 : 52}%)` : null; } },
   { id: "tempo", name: "Tempo", legend: "slow ↔ fast", color: (t) => (t.p?.tempo == null ? null : ramp(COOL_WARM, q(t.p.tempo))) },
-  { id: "bright", name: "Bright", legend: "dark ↔ bright", color: (t) => (t.p?.bright == null ? null : ramp(DARK_LIGHT, q(t.p.bright))) },
-  { id: "busy", name: "Busy", legend: "sparse ↔ dense", color: (t) => (t.p?.busy == null ? null : ramp(QUIET_LOUD, q(t.p.busy))) },
-  { id: "width", name: "Space", legend: "narrow ↔ wide stereo", color: (t) => (t.p?.width == null ? null : ramp(COOL_WARM, q(t.p.width))) },
+  { id: "bright", name: "Tonality", legend: "warm ↔ bright", color: (t) => (t.p?.bright == null ? null : ramp(DARK_LIGHT, q(t.p.bright))) },
+  { id: "busy", name: "Density", legend: "sparse ↔ dense", color: (t) => (t.p?.busy == null ? null : ramp(QUIET_LOUD, q(t.p.busy))) },
+  { id: "width", name: "Soundstage", legend: "intimate ↔ expansive", color: (t) => (t.p?.width == null ? null : ramp(COOL_WARM, q(t.p.width))) },
 ];
 
 // --- organisations: a lens also re-sorts the atlas into its own rings ------------------------------
 // Feel keeps the taxonomy (feel -> family -> style). Every other lens becomes ring 1 itself, with
 // feel and family nested inside, so switching lens regroups the whole map and the list below.
-const BANDS5 = { bright: ["Dark", "Mellow", "Even", "Bright", "Airy"], busy: ["Sparse", "Light", "Moving", "Busy", "Dense"], width: ["Mono", "Narrow", "Even", "Wide", "Huge"] };
+const BANDS5 = { bright: ["Dark", "Warm", "Neutral", "Bright", "Airy"], busy: ["Sparse", "Open", "Moving", "Dense", "Congested"], width: ["Mono", "Intimate", "Natural", "Wide", "Expansive"] };
 const RAMPS = { tempo: COOL_WARM, bright: DARK_LIGHT, busy: QUIET_LOUD, width: COOL_WARM };
 const TEMPO = [["slow", "Slow", 0, 90], ["mid", "Mid", 90, 115], ["up", "Up", 115, 135], ["fast", "Fast", 135, 160], ["rush", "Rush", 160, 999]];
-const FEEL_LIGHT = { drive: 12, lift: 9, play: 6, groove: 2, calm: -3, wonder: -7, shadow: -12 };
+const FEEL_LIGHT = { drive: 12, lift: 9, play: 6, groove: 2, calm: -3, wonder: -7, sad: -14, shadow: -10 };
 const UNMEASURED = { id: "none", name: "Unmeasured", color: "#8a857a", night: "#8f8a80", ask: "no listening profile" };
 export function organise(id, feels, families) {
   if (!id || id === "feel") return null;
