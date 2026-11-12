@@ -169,6 +169,9 @@ export const LENSES = [
 // feel and family nested inside, so switching lens regroups the whole map and the list below.
 const BANDS5 = { bright: ["Dark", "Warm", "Neutral", "Bright", "Airy"], busy: ["Sparse", "Open", "Moving", "Dense", "Congested"], width: ["Mono", "Intimate", "Natural", "Wide", "Expansive"] };
 const RAMPS = { tempo: COOL_WARM, bright: DARK_LIGHT, busy: QUIET_LOUD, width: COOL_WARM };
+// A meter that is also a Sort lens wears that lens's ramp, so its colours mean what the Sort chips mean.
+export const meterColor = (k, x) => (RAMPS[k] ? ramp(RAMPS[k], x) : null);
+const meterStyle = (k, x) => (RAMPS[k] ? ` style="--g:linear-gradient(90deg,${RAMPS[k].map((s) => `rgb(${s})`).join(",")});--k:${ramp(RAMPS[k], x)}"` : "");
 const TEMPO = [["slow", "Slow", 0, 90], ["mid", "Mid", 90, 115], ["up", "Up", 115, 135], ["fast", "Fast", 135, 160], ["rush", "Rush", 160, 999]];
 const FEEL_LIGHT = { drive: 12, lift: 9, play: 6, groove: 2, calm: -3, wonder: -7, sad: -14, shadow: -10 };
 const UNMEASURED = { id: "none", name: "Unmeasured", color: "#8a857a", night: "#8f8a80", ask: "no listening profile" };
@@ -208,7 +211,7 @@ export function profileHTML(t, tune = null) {
     const tv = tune?.[k] ?? p, moved = Math.abs(tv - p) > 0.02;
     const extra = k === "busy" && f.busyBands ? `<span class="bb">${["low", "mid", "high"].map((b) => `<i style="--h:${clamp(f.busyBands[b] / 9, 0.04, 1).toFixed(2)}" title="${b} ${f.busyBands[b]}/s"></i>`).join("")}</span>`
       : k === "width" ? `<svg class="stage" viewBox="0 0 44 22" aria-hidden="true"><ellipse cx="22" cy="11" rx="${(4 + clamp(f.width, 0, 1) * 17).toFixed(1)}" ry="8" /><circle cx="22" cy="11" r="1.6" /></svg>` : "";
-    return `<div class="mt"><span class="ml">${label}</span><span class="mb"><i style="left:${(p * 100).toFixed(1)}%"></i>${tune ? `<i class="tg" style="left:${(tv * 100).toFixed(1)}%"></i>` : ""}<input class="tune" type="range" min="0" max="100" value="${Math.round(tv * 100)}" data-k="${k}" aria-label="Find a song with this ${esc(label.toLowerCase())}"></span>${extra}<span class="mw"><span>${lo}</span><b>${moved ? `${ord(p * 100)} → ${ord(tv * 100)} pct` : `${ord(p * 100)} pct`}</b><span>${hi}</span></span><span class="mv">${esc(fmt(f))}</span></div>`;
+    return `<div class="mt"${meterStyle(k, tv)}><span class="ml">${label}</span><span class="mb"><i style="left:${(p * 100).toFixed(1)}%"></i>${tune ? `<i class="tg" style="left:${(tv * 100).toFixed(1)}%"></i>` : ""}<input class="tune" type="range" min="0" max="100" value="${Math.round(tv * 100)}" data-k="${k}" aria-label="Find a song with this ${esc(label.toLowerCase())}"></span>${extra}<span class="mw"><span>${lo}</span><b>${moved ? `${ord(p * 100)} → ${ord(tv * 100)} pct` : `${ord(p * 100)} pct`}</b><span>${hi}</span></span><span class="mv">${esc(fmt(f))}</span></div>`;
   };
   const bands = (f.bands ?? []).map((d, i) => `<i style="--n:${i};--h:${clamp((d + 40) / 40, 0.03, 1).toFixed(2)}" title="${[32, 63, 125, 250, 500, "1k", "2k", "4k", "8k", "16k"][i]} Hz ${d} dB"></i>`).join("");
   const inst = (f.inst ?? []).slice(0, 4).map((x) => `<span>${esc(x[0])}</span>`).join("");

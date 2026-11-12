@@ -260,7 +260,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .meters { margin-top: 10px; }
 .mt { display: grid; grid-template-columns: 82px 1fr 44px; grid-template-rows: auto auto auto; gap: 3px 10px; align-items: center; padding: 7px 0; border-bottom: 1px dashed var(--line2); }
 .mt .ml { font: 10px "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
-.mt .mb { position: relative; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--line2), color-mix(in srgb, var(--c) 55%, var(--line2))); }
+.mt .mb { position: relative; height: 6px; border-radius: 3px; background: var(--g, linear-gradient(90deg, var(--line2), color-mix(in srgb, var(--c) 55%, var(--line2)))); }
 .mt .mb i { position: absolute; left: 0; top: -4px; width: 0; height: 14px; }
 .mt .mb i::after { content: ""; position: absolute; left: -2px; width: 4px; height: 14px; border-radius: 2px; background: var(--ink); box-shadow: 0 0 0 2px var(--panel2); }
 .mt .mw { grid-column: 2; display: flex; justify-content: space-between; font: 10px "IBM Plex Mono", monospace; color: var(--mute); }
@@ -330,7 +330,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .meters.tuning .hint { color: var(--c); }
 .mt .mb input.tune { position: absolute; inset: -12px -8px; width: calc(100% + 16px); height: 30px; margin: 0; opacity: 0; cursor: ew-resize; touch-action: pan-y; }
 .mt .mb i.tg { position: absolute; top: -5px; width: 0; height: 16px; pointer-events: none; }
-.mt .mb i.tg::after { content: ""; position: absolute; left: -6px; width: 12px; height: 16px; border-radius: 6px; background: var(--c); box-shadow: 0 0 0 2px var(--panel2), 0 0 12px var(--c); }
+.mt .mb i.tg::after { content: ""; position: absolute; left: -6px; width: 12px; height: 16px; border-radius: 6px; background: var(--k, var(--c)); box-shadow: 0 0 0 2px var(--panel2), 0 0 12px var(--k, var(--c)); }
 .meters.tuning .mt .mb > i:not(.tg)::after { opacity: .45; }
 .tunes { margin: 10px 0 4px; padding: 10px 0 2px; border-top: 1px solid color-mix(in srgb, var(--c) 40%, transparent); animation: tunein .28s ease-out; }
 .tunes.still, .body.calm .card, .body.calm .tunes, .body.calm .spec i { animation: none; }

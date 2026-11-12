@@ -4,7 +4,7 @@
 import { createAtlas } from "./atlas.js";
 import { FEELS, BPM_BANDS, LEVELS, FAMILY_TINT, feelById, familyById, styleName, shade } from "./taxonomy.js";
 import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine, prep } from "./search.js";
-import { loadSound, soundReady, neighbours, tuneMatch, profileHTML, ord, LENSES, bpmOf, organise, beatAt } from "./sound.js";
+import { loadSound, soundReady, neighbours, tuneMatch, profileHTML, meterColor, ord, LENSES, bpmOf, organise, beatAt } from "./sound.js";
 import { haptic, pressable, pressRing, HOLD, SLOP, FORCE } from "./gestures.js";
 import * as social from "./social.js";
 import * as cast from "./cast.js";
@@ -646,6 +646,7 @@ body.addEventListener("input", (e) => {
   const k = inp.dataset.k, v = inp.value / 100; tune.p[k] = v;
   const mb = inp.parentElement; let g = mb.querySelector(".tg"); if (!g) { g = document.createElement("i"); g.className = "tg"; mb.prepend(g); }
   g.style.left = `${v * 100}%`;
+  const kc = meterColor(k, v); if (kc) mb.parentElement.style.setProperty("--k", kc);
   const b = mb.parentElement.querySelector(".mw b"), p0 = Math.round((t.p[k] ?? v) * 100), p1 = Math.round(v * 100);
   if (b) b.textContent = p0 === p1 ? `${ord(p0)} pct` : `${ord(p0)} → ${ord(p1)} pct`;
   clearTimeout(tuneT); tuneT = setTimeout(retune, 260); // a pause in the drag is enough to change the song
