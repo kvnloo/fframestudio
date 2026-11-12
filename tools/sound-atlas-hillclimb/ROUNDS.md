@@ -6,6 +6,7 @@
 | 0b | 06cb6c9 | parent re-scored after the scorer fixes (3-run majority, frame-synced scrub probe) | pass | 80 | 65 | 100 | 100 | 33 | 100 | new baseline |
 | 1 | (this commit) | idle player line: "Tap a dot to hear it · 1,815 free songs" (was "1,815 free CC tracks") | pass | 87 | 65 | 100 | 100 | 33 | 100 | **kept**: first_open_explains_dots now passes; Opus text layer picks the candidate in both orders at 360 and 393; no layer picks the parent in both orders |
 | 2 | d00b25f + diff | chip tap at peek raises the sheet to half | pass | 93 | 65 | 100 | 100 | 33 | 100 | **reset**: case passed, but Opus layout picked the parent in both orders at 360 and 393 ("the map stops being the hero"); art split/parent. Next try: sheet stays down, the player line names the result |
+| 3 | e0217e6 + diff | idle player: **Tap a dot** / *to hear it* (round 1's line ellipsized to "Tap a dot to h…" in a 78–130 px slot) | pass | 88 | 65 | 100 | 100 | 33 | 100 | **kept**: idle_hint_fits passes at 360/393/412; Opus picks the candidate in both orders on 7 of 8 layer×width verdicts (360 layout split) |
 
 Baseline notes:
 - **Failing cases:**
