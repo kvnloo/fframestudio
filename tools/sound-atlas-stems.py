@@ -10,7 +10,9 @@ ring at full zoom. Output, next to the catalogue:
   stems/<id>/<stem>.webm           one file per kept stem; the stems sum back to the mix
 
 Usage (in an env with demucs + soundfile, e.g. <local>/project-envs/sound-atlas-stems):
-  python tools/sound-atlas-stems.py <catalog-dir> [--ids a,b] [--src shortlist] [--tracks-base DIR]
+  python tools/sound-atlas-stems.py <catalog-dir> [--ids a,b] [--src shortlist|all] [--tracks-base DIR] [--push REPO]
+--ids go first (in order); --src then adds the rest. --push publishes every few tracks to a public HF
+dataset (stems.json, stems/, CREDITS.md), which the atlas reads directly, so layers appear without a redeploy.
 Only CC0 / CC BY tracks are split: layers are derivatives, and NC/ND/SA terms forbid or bind them.
 """
 import argparse, json, os, subprocess, sys, tempfile
@@ -60,11 +62,16 @@ def main():
     ap.add_argument("--src", default="shortlist")
     ap.add_argument("--tracks-base", type=Path, default=None, help="where relative audio paths resolve (default: catalog dir)")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--push", default="", help="HF dataset repo to publish to, e.g. kvnloo/sound-atlas-stems")
+    ap.add_argument("--every", type=int, default=10)
     a = ap.parse_args()
     cat = json.loads((a.catalog_dir / "catalog.json").read_text())
     base = a.tracks_base or a.catalog_dir
-    want = set(filter(None, a.ids.split(",")))
-    todo = [t for t in cat["tracks"] if (t["id"] in want if want else t.get("src") == a.src)]
+    want = list(dict.fromkeys(filter(None, a.ids.split(","))))
+    by = {t["id"]: t for t in cat["tracks"]}
+    todo = [by[i] for i in want if i in by]
+    if a.src != "none" and (a.src == "all" or not want):
+        todo += [t for t in cat["tracks"] if t["id"] not in want and (a.src == "all" or t.get("src") == a.src)]
     skipped = [t["id"] for t in todo if not licensed(t)]
     todo = [t for t in todo if licensed(t)]
     out_json = a.catalog_dir / "stems.json"
@@ -73,7 +80,9 @@ def main():
     print(f"{len(todo)} to split, {len(skipped)} skipped for licence", file=sys.stderr)
     if not todo:
         return
+    batch = []
     for t in todo:
+      try:
         # One track per demucs run: a batch run holds every separated track in RAM and got OOM-killed.
         with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as tmp:
             src = fetch(t, base, tmp)
@@ -95,6 +104,33 @@ def main():
             doc["tracks"][t["id"]] = {"dur": round(dur, 2), "stems": stems}
             print(t["id"], [s["k"] for s in stems], file=sys.stderr)
             out_json.write_text(json.dumps(doc, separators=(",", ":")))  # checkpoint per track
+            batch.append(t["id"])
+      except Exception as e:  # one bad download or split never kills the run
+        print(t["id"], "FAILED", repr(e)[:200], file=sys.stderr)
+      if a.push and len(batch) >= a.every:
+        push(a.push, a.catalog_dir, doc, by, batch); batch = []
+    if a.push and batch:
+        push(a.push, a.catalog_dir, doc, by, batch)
+
+
+def push(repo, d, doc, by, ids):
+    """Publish new stems plus the index and credits in one commit; retried, never fatal."""
+    from huggingface_hub import HfApi
+    lines = ["# Credits", "", "Layers (stems) separated with Demucs htdemucs_6s from these CC0 / CC BY tracks. Each stem is a",
+             "derivative of the original; credit the original as below when you use it.", ""]
+    for i in sorted(doc["tracks"]):
+        t = by.get(i)
+        if t:
+            lines.append(f'- `{i}`: "{t["title"]}" by {t.get("author") or "unknown"}, {t.get("license")}, {t.get("sourceUrl") or t.get("audio")}')
+    (d / "CREDITS.md").write_text("\n".join(lines) + "\n")
+    for k in range(4):
+        try:
+            HfApi().upload_folder(repo_id=repo, repo_type="dataset", folder_path=str(d), commit_message=f"stems: +{len(ids)} tracks ({len(doc['tracks'])} total)",
+                                  allow_patterns=["stems.json", "CREDITS.md", *[f"stems/{i}/*" for i in ids]])
+            print(f"pushed {len(ids)} ({len(doc['tracks'])} total)", file=sys.stderr)
+            return
+        except Exception as e:
+            print("push retry", k, repr(e)[:200], file=sys.stderr); __import__("time").sleep(30 * (k + 1))
 
 
 if __name__ == "__main__":

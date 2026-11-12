@@ -64,7 +64,7 @@ export function layout(tracks, org = null) {
   return { root, byId, leaves, styles, R4, radii, step, outer: R4 + 14 + ROWS * SPACING, colors: org?.byId ?? null };
 }
 
-export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent }) {
+export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent, onLayer }) {
   // Two layers: `layer` caches the static atlas (bands, edges, dots, nodes, labels) and is only
   // redrawn when the camera, data or an animation changes it; playback then costs one blit plus
   // the beat ring and pills per frame.
@@ -120,6 +120,14 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
   function setLit(ids) { lit = ids ? new Set(ids) : null; applyLit(); kick(); }
   function setFeatured(ids) { featured = ids.slice(0, 8); kick(); }
   function setPlaying(p) { playing = p; kick(); }
+  // Layers: the playing track's stems as rings around its dot, from LAYER_S zoom in (all the way in).
+  // fn(id) -> { lanes: [{ k, name, color, env, on }] } | null; onLayer(k) when a ring is tapped.
+  let layersOf = null, rings = null;
+  const LAYER_S = 5.2, LAYER_FULL = 8, RING0 = 30, RING_W = 13;
+  function setLayers(fn) { layersOf = fn; kick(); }
+  const layerK = () => clamp((cam.s - LAYER_S) / (LAYER_FULL - LAYER_S), 0, 1);
+  function zoomOn(id, s = 9, ms) { const n = g.byId.get(id); if (!n) return; focusId = id; flyTo({ x: n.x, y: n.y, s }, ms); }
+  function ringAt(x, y) { if (!rings) return null; const d = Math.hypot(x - rings.x, y - rings.y), i = Math.floor((d - RING0 + RING_W / 2) / RING_W); return i >= 0 && i < rings.lanes.length ? rings.lanes[i].k : null; }
   function setTheme(t) { theme = t; gen++; kick(); }
   // Lens: recolour lit tracks by a measurement (key, tempo, brightness...) instead of their feel.
   function setLens(fn) { lens = fn; gen++; kick(); }
@@ -211,7 +219,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
         const w = toWorld(p.x, p.y); lastTap = 0;
         const s = clamp(cam.s * 2.2, 0.05, 12), { cx, cy } = centre();
         flyTo({ x: w.x - (p.x - cx) / s, y: w.y - (p.y - cy) / s, s }, 420);
-      } else { lastTap = now; onTap?.(hit(p.x, p.y)); }
+      } else { lastTap = now; const k = onLayer && ringAt(p.x, p.y); if (k) onLayer(k); else onTap?.(hit(p.x, p.y)); }
     }
     pan = null;
   };
@@ -460,8 +468,9 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
       ctx.fillStyle = P.ink; ctx.beginPath(); ctx.arc(x, y, DOT * 0.55, 0, TAU); ctx.fill();
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1; ctx.textBaseline = "middle";
+    drawRings(P, sx, sy);
     // Track pills: playing, focused and the top results, when zoomed in enough to place them.
-    const pills = lblK < 0.05 ? [] : [...new Set([playing?.id, focusId, ...(links && linkK > 0.9 ? links.list.slice(0, 5).map((l) => l.id) : []), ...(s > 0.7 ? featured : [])])].map((id) => g.byId.get(id)).filter((n) => n?.level === 4);
+    const pills = lblK < 0.05 ? [] : [...new Set([rings ? null : playing?.id, rings ? null : focusId, ...(links && linkK > 0.9 ? links.list.slice(0, 5).map((l) => l.id) : []), ...(s > 0.7 ? featured : [])])].map((id) => g.byId.get(id)).filter((n) => n?.level === 4);
     ctx.font = "italic 14px 'Instrument Serif', serif"; // track titles: the work itself
     const placed = [];
     for (const n of pills) {
@@ -475,6 +484,45 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
       ctx.fillStyle = P.ink; ctx.textAlign = "left"; ctx.fillText(label, bx + 8, by + h / 2 + 0.5);
     }
   }
+  // Each layer is a ring; one turn = the whole song from 12 o'clock, tick length = that layer's loudness.
+  // The played part is solid, the rest faint, a muted layer fades out; a hand marks the playhead.
+  const ranges = new Map(); // env string -> [lo, hi], so each frame skips re-scanning ~500 samples per lane
+  const envRange = (env) => { let r = ranges.get(env); if (!r) { const xs = [...env].map(Number), lo = Math.min(...xs); ranges.set(env, (r = [lo, Math.max(lo + 1, ...xs)])); } return r; };
+  function drawRings(P, sx, sy) {
+    rings = null;
+    const k = layerK(), pn = playing && g.byId.get(playing.id), L = k > 0 && pn && layersOf?.(pn.id);
+    if (!L?.lanes?.length) return;
+    const x = sx(pn), y = sy(pn), prog = clamp(playing.progress?.() ?? 0, 0, 1), now = -Math.PI / 2 + TAU * prog;
+    rings = { x, y, lanes: L.lanes };
+    ctx.lineCap = "butt";
+    L.lanes.forEach((ln, i) => {
+      const r = RING0 + i * RING_W, env = ln.env, [lo, hi] = envRange(env), N = Math.min(env.length, Math.max(48, Math.round(r * 2.2))), step = env.length / N;
+      ctx.globalAlpha = k * 0.12; ctx.strokeStyle = ln.color; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke();
+      ctx.lineWidth = Math.max(1.2, (TAU * r / N) * 0.62);
+      for (const played of [true, false]) {
+        ctx.globalAlpha = k * (ln.on ? (played ? 1 : 0.3) : 0.08); ctx.beginPath();
+        for (let j = 0; j < N; j++) {
+          const f = j / N; if ((f < prog) !== played) continue;
+          let v = 0; for (let q = Math.floor(j * step); q < Math.min(env.length, Math.floor((j + 1) * step) || 1); q++) v = Math.max(v, +env[q]);
+          if (v <= lo && lo === 0) continue;
+          const a = -Math.PI / 2 + TAU * (f + 0.5 / N), h = (RING_W - 3) * (0.12 + 0.88 * (v - lo) / (hi - lo)) / 2, c = Math.cos(a), s2 = Math.sin(a);
+          ctx.moveTo(x + c * (r - h), y + s2 * (r - h)); ctx.lineTo(x + c * (r + h), y + s2 * (r + h));
+        }
+        ctx.stroke();
+      }
+    });
+    const rOut = RING0 + L.lanes.length * RING_W;
+    ctx.globalAlpha = k; ctx.strokeStyle = P.ink; ctx.lineWidth = 1.5; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(x + Math.cos(now) * (RING0 - 6), y + Math.sin(now) * (RING0 - 6)); ctx.lineTo(x + Math.cos(now) * (rOut - 2), y + Math.sin(now) * (rOut - 2)); ctx.stroke();
+    // Legend to the left of the rings, inner lane at the bottom like the rings themselves (mono: a measurement).
+    ctx.font = "10px 'IBM Plex Mono', monospace"; ctx.textBaseline = "middle";
+    const lx = x - rOut - 10, n = L.lanes.length;
+    L.lanes.forEach((ln, i) => {
+      const ly = y + ((n - 1) / 2 - i) * 14;
+      ctx.globalAlpha = k * (ln.on ? 1 : 0.35); text(ln.name.split(" ")[0].toLowerCase(), lx - 10, ly, -1, ln.color, P.bg); // short names keep the legend on screen
+      ctx.fillStyle = ln.color; ctx.beginPath(); ctx.arc(lx - 3, ly, 3, 0, TAU); ctx.fill();
+    });
+  }
   function text(str, x, y, ux, fill, halo) {
     ctx.textAlign = Math.abs(ux) < 0.3 ? "center" : ux > 0 ? "left" : "right";
     ctx.strokeStyle = halo; ctx.lineWidth = 6; ctx.lineJoin = "round"; ctx.strokeText(str, x, y); ctx.fillStyle = fill; ctx.fillText(str, x, y);
@@ -487,7 +535,8 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent 
   return {
     get graph() { return g; }, get cam() { return cam; },
     setMotion(v) { motion = !!v; kick(); }, get motion() { return motion; }, get labels() { return lblK; },
-    setTracks, setLit, setFeatured, setPlaying, setTheme, setLens, setLinks, focus, flyToIds, fitAll, kick, resize,
+    setTracks, setLit, setFeatured, setPlaying, setTheme, setLens, setLinks, setLayers, zoomOn, focus, flyToIds, fitAll, kick, resize,
+    flyCam(c, ms) { flyTo({ ...c }, ms); }, get layerK() { return layerK(); },
     get focusId() { return focusId; }, set focusId(v) { focusId = v; kick(); },
   };
 }

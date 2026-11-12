@@ -14,9 +14,15 @@ export const STEMS = {
   vocals: { name: "Voice", tint: [70, 22] },
 };
 
-let doc = null;
+// Stems live in a public HF dataset that the GPU job publishes to as it goes, so new layers appear
+// without a redeploy; a stems.json next to the catalogue is the offline fallback.
+export const STEM_HUB = "https://huggingface.co/datasets/kvnloo/sound-atlas-stems/resolve/main/";
+let doc = null, root = STEM_HUB;
+const get = (u) => fetch(u, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
 export async function loadLayers(base) {
-  doc = await fetch(new URL("stems.json", new URL(base, location.href))).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  doc = await get(STEM_HUB + "stems.json");
+  if (!doc) { const local = new URL(base, location.href); doc = await get(new URL("stems.json", local)); if (doc) root = local.href; }
+  if (!doc) console.warn("[layers] no stems index: layers stay hidden");
   // A one-layer split (everything landed in one stem) has nothing to isolate.
   if (doc) for (const [id, L] of Object.entries(doc.tracks)) if (L.stems.length < 2) delete doc.tracks[id];
   return doc;
@@ -24,6 +30,7 @@ export async function loadLayers(base) {
 export const layersOf = (id) => doc?.tracks?.[id] ?? null;
 export const layerCount = () => (doc ? Object.keys(doc.tracks).length : 0);
 export const layerHop = () => doc?.hop ?? 0.5;
+export const stemUrl = (f) => new URL(f, root).href;
 export const laneColor = (base, k) => shade(base, STEMS[k]?.tint ?? [0, 0]);
 
 // Mixer: the master <audio> stays the clock (seek bar, beat grid, next-track all keep working);

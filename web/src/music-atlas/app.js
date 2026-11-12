@@ -7,6 +7,7 @@ import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLin
 import { loadSound, soundReady, neighbours, profileHTML, LENSES, bpmOf, organise, beatAt } from "./sound.js";
 import { haptic, pressable, pressRing, HOLD, SLOP, FORCE } from "./gestures.js";
 import * as social from "./social.js";
+import { loadLayers, layersOf, layerCount, STEMS, laneColor, createMixer, stemUrl } from "./layers.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -116,6 +117,8 @@ const A = createAtlas({
     A.focus(n.id); if (n.level >= 1) scrollToGroup(n.feel);
   },
   onDetent: () => haptic("detent"),
+  onCamera: () => layerCam(),
+  onLayer: (k) => { buzz(6); mixAct("solo", k); },
   onTap: (n) => {
     if (!n) { if (A.focusId !== "root") A.focus(A.graph.byId.get(A.focusId)?.parent?.id ?? "root"); return; } // empty tap steps out
     buzz(5);
@@ -125,6 +128,53 @@ const A = createAtlas({
   },
 });
 const colorOfNode = (n) => (org ? grp(n.feel)?.night : feelById[n.feel]?.night) ?? null;
+
+// --- layers (stems) ------------------------------------------------------------------------------
+// Two halves of one view: zoomed all the way in on the playing track, its layers ring its dot; the
+// Track pane lists the same layers with mute / solo. Scrolling the pane to Layers zooms the map in
+// (and back out when you scroll away); zooming the map all the way in brings the pane to Layers.
+const mixer = createMixer(audio, stemUrl);
+const lanesOf = (id) => { const L = layersOf(id), t = byId.get(id); if (!L || !t) return null; const on = mixer.id === id; return L.stems.map((s) => ({ ...s, share: s.on, name: STEMS[s.k]?.name ?? s.k, color: laneColor(tone(t), s.k), on: !on || mixer.audible(s.k) })); };
+A.setLayers((id) => { const lanes = lanesOf(id); return lanes && { lanes }; });
+function mixAct(op, k) {
+  const id = state.sel, L = id && layersOf(id); if (!L) return;
+  if (mixer.id !== id) mixer.load(id, L);
+  if (op === "solo") mixer.toggleSolo(k); else if (op === "mute") mixer.toggleMute(k); else mixer.reset();
+  if (audio.paused && op !== "reset") audio.play().catch(() => {});
+  const lane = STEMS[k]?.name ?? "";
+  toast(op === "reset" || !mixer.changed ? "Full mix" : mixer.solo ? `Only ${lane.toLowerCase()}` : `${lane} ${mixer.muted(k) ? "muted" : "back in"}`);
+  paintLayers(); A.kick();
+}
+function layersHTML(t) {
+  const lanes = lanesOf(t.id);
+  if (!lanes) return layerCount() ? `<section class="layers none"><h4>Layers</h4><p>Not split yet. Layers appear here and on the map as the splitter works through the catalogue (${layerCount()} so far).</p></section>` : "";
+  return `<section class="layers"><h4>Layers<small>${lanes.length} · split by Demucs · zoom all the way in on the map</small><button data-lmix="reset" class="${mixer.id === t.id && mixer.changed ? "" : "off"}">Full mix</button></h4>
+    ${lanes.map((l) => `<div class="lane${l.on ? "" : " out"}${mixer.id === t.id && mixer.solo === l.k ? " solo" : ""}" style="--l:${l.color}"><i></i><b>${esc(l.name)}</b>${envSVG(l.env)}<small>${Math.round(l.share * 100)}%</small><button data-lmix="mute" data-k="${l.k}" aria-label="Mute ${esc(l.name)}">M</button><button data-lmix="solo" data-k="${l.k}" aria-label="Solo ${esc(l.name)}">S</button></div>`).join("")}
+  </section>`;
+}
+// Envelope sparkline, stretched to the lane's own range so a steady drum part still shows its shape.
+const envSVG = (env) => { const N = 96, st = env.length / N, xs = [...env].map(Number), lo = Math.min(...xs), hi = Math.max(lo + 1, ...xs); let d = "M0 10"; for (let j = 0; j < N; j++) { let v = 0; for (let q = Math.floor(j * st); q < Math.max(Math.floor(j * st) + 1, Math.floor((j + 1) * st)); q++) v = Math.max(v, xs[q] ?? 0); const y = (10 - 0.6 - 9.4 * (v - lo) / (hi - lo)).toFixed(1); d += `L${j} ${y}L${j + 1} ${y}`; } return `<svg class="env" viewBox="0 0 ${N} 10" preserveAspectRatio="none" aria-hidden="true"><path d="${d}L${N} 10Z"/></svg>`; };
+function paintLayers() { const el = body.querySelector(".layers"), t = state.sel && byId.get(state.sel); if (el && t) { el.outerHTML = layersHTML(t); watchLayers(); } }
+let layerIO = null, layerHome = null, layerAuto = 0;
+function watchLayers() {
+  layerIO?.disconnect(); const el = body.querySelector(".layers:not(.none)"); if (!el) return;
+  layerIO = new IntersectionObserver(([e]) => {
+    const id = state.sel; if (!id || performance.now() < layerAuto) return;
+    if (e.isIntersecting && A.layerK < 1) { layerHome = { ...A.cam }; layerAuto = performance.now() + 900; A.zoomOn(id); }
+    else if (!e.isIntersecting && layerHome && A.layerK >= 1) { const h = layerHome; layerHome = null; layerAuto = performance.now() + 900; A.flyCam(h); }
+  }, { root: body, threshold: 0.35 });
+  layerIO.observe(el);
+}
+let layerDeep = false;
+function layerCam() {
+  const deep = A.layerK >= 1 && !!(state.sel && layersOf(state.sel));
+  if (deep && !layerDeep && performance.now() > layerAuto && state.view === "track") {
+    const el = body.querySelector(".layers:not(.none)");
+    if (el) { layerAuto = performance.now() + 900; if (!wide() && sh.target === "peek") sheetTo("half"); body.scrollTo({ top: body.scrollTop + el.getBoundingClientRect().top - body.getBoundingClientRect().top - 8, behavior: reduced ? "auto" : "smooth" }); }
+  }
+  if (!deep && layerDeep) layerHome = null; // you zoomed out yourself: nothing to restore
+  layerDeep = deep;
+}
 
 // --- hold to listen ------------------------------------------------------------------------------
 // Hold a dot or a row and it plays from its body while you hold; the ring under your finger and the
@@ -349,7 +399,7 @@ function renderBody(scroll = true) {
   html += `<footer class="src">${sourcesLine()}</footer>`;
   paint(html, scroll);
 }
-function paint(html, scroll) { body.innerHTML = html; restPulse(); if (scroll) body.scrollTop = 0; }
+function paint(html, scroll) { body.innerHTML = html; restPulse(); if (scroll) body.scrollTop = 0; watchLayers(); }
 // Similar: one flat by-ear list around a seed. The seed stays put while you play through its list,
 // so rows never reshuffle under your thumb; "Re-centre" re-seeds on whatever is playing now.
 function similarHTML() {
@@ -436,6 +486,7 @@ function cardHTML(t) {
   return `<article class="card" style="--c:${c}">
     <div class="lin">${LEVELS.map((L, i) => `<div class="lv"><b>0${i + 1}</b><span class="k">${L}</span><span class="v">${i === 3 ? rows[i][0] : esc(rows[i][0])}</span>${rows[i][1] ? `<span class="s">${i === 3 ? rows[i][1] : esc(rows[i][1])}</span>` : ""}</div>`).join("")}</div>
     ${profileHTML(t)}
+    ${layersHTML(t)}
     ${nbrs.length ? `<button class="tease" data-act="similar"><b>Sounds like</b><span>${nbrs.slice(0, 3).map((n) => `<em style="--c:${tone(n.t)}">${esc(n.t.title)}</em>`).join("")}</span><small>see ${Math.max(nbrs.length, sim.length)}+ →</small></button>` : ""}
     ${t.tags?.length ? `<div class="tags">${t.tags.slice(0, 8).map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : ""}
     ${t.desc ? `<p class="desc">${esc(t.desc)}</p>` : ""}
@@ -458,6 +509,7 @@ body.addEventListener("click", async (e) => {
   const pp = e.target.closest("[data-plplay]"); if (pp) { buzz(5); return playPlaylist(pp.dataset.plplay); }
   const px = e.target.closest("[data-plx]"); if (px) { buzz(5); await social.unpublish(px.dataset.plx).catch(() => {}); return toast("Playlist unpublished"); }
   const rb = e.target.closest("[data-radio]"); if (rb) return startRadio(rb.dataset.radio);
+  const lm = e.target.closest("[data-lmix]"); if (lm) { buzz(5); return mixAct(lm.dataset.lmix, lm.dataset.k); }
   const act = e.target.closest("[data-act]")?.dataset.act, t = state.sel && byId.get(state.sel);
   if (!act || !t) return;
   if (act === "pick") pick(t.id);
@@ -659,6 +711,7 @@ if (matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fulls
   share = await fetch(base + "share.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
   all = cat.tracks; byId = new Map(all.map((t) => [t.id, t]));
   await loadSound(base, all); // optional: measured tempo/key/texture + CLAP neighbours
+  loadLayers(base).then(() => { if (state.view === "track" && state.sel) renderBody(false); A.kick(); }); // optional: stems
   $("#count").textContent = all.length.toLocaleString();
   await document.fonts?.ready;
   A.setTracks(all); A.fitAll(1);
