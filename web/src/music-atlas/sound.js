@@ -112,12 +112,12 @@ export function neighbours(t, pool, k = 8) {
 // --- tune: drag a track's meters and find the song that measures like that -------------------------
 // target = percentiles per meter (0..1). Moved meters weigh 3x the ones left alone, so "this, but
 // brighter" keeps the rest of the song's character; the seed's timbre is a soft tiebreak.
-export function tuneMatch(seed, target, pool, k = 6) {
+export function tuneMatch(seed, target, pool, k = 6, { withSeed = false } = {}) {
   const keys = Object.keys(target).filter((m) => seed.p?.[m] != null);
   const moved = new Set(keys.filter((m) => Math.abs(target[m] - seed.p[m]) > 0.02));
   const na = seed.cv && clapNorm?.get(seed), rows = [];
   for (const u of pool) {
-    if (u === seed || !u.p) continue;
+    if ((u === seed && !withSeed) || !u.p) continue;
     let s = 0, w = 0;
     for (const m of keys) { if (u.p[m] == null) continue; const wt = moved.has(m) ? 3 : 1, d = Math.abs(u.p[m] - target[m]); s += wt * (1 - d) ** 2; w += wt; }
     if (!w) continue;

@@ -234,7 +234,7 @@ pressable(body, ".trk", {
 let refitT = 0;
 // A selected track with neighbours frames its whole "sounds like" constellation, not just itself.
 // While you tune, it frames the songs your settings matched instead.
-const focusSel = (ms) => { const ids = tune?.id === state.sel && tune.rows?.length ? tune.rows.map((r) => r.t.id) : nbrs.slice(0, 6).map((n) => n.t.id); if (!ids.length) return A.focus(state.sel, ms); A.flyToIds([state.sel, ...ids], ms); A.focusId = state.sel; };
+const focusSel = (ms) => { const ids = tune?.rows?.length ? tune.rows.map((r) => r.t.id) : nbrs.slice(0, 6).map((n) => n.t.id); if (!ids.length) return A.focus(state.sel, ms); A.flyToIds([state.sel, ...ids], ms); A.focusId = state.sel; };
 function atlasRefit() { clearTimeout(refitT); refitT = setTimeout(() => { if (state.sel) focusSel(600); else if (result.ranked) A.flyToIds(result.hits.slice(0, 40).map((h) => h.t.id), 600); else A.focus(A.focusId, 600); }, 30); }
 
 // --- sort + filters: one dense rail riding the sheet's top edge ----------------------------------
@@ -499,7 +499,7 @@ function cardHTML(t) {
   ];
   return `<article class="card" style="--c:${c}">
     <div class="lin">${LEVELS.map((L, i) => `<div class="lv"><b>0${i + 1}</b><span class="k">${L}</span><span class="v">${i === 3 ? rows[i][0] : esc(rows[i][0])}</span>${rows[i][1] ? `<span class="s">${i === 3 ? rows[i][1] : esc(rows[i][1])}</span>` : ""}</div>`).join("")}</div>
-    ${profileHTML(t, tune?.id === t.id ? tune.p : null)}
+    ${profileHTML(t, tune ? tune.p : null)}
     ${tuneHTML(t)}
     ${layersHTML(t)}
     ${nbrs.length ? `<button class="tease" data-act="similar"><b>Sounds like</b><span>${nbrs.slice(0, 3).map((n) => `<em style="--c:${tone(n.t)}">${esc(n.t.title)}</em>`).join("")}</span><small>see ${Math.max(nbrs.length, sim.length)}+ →</small></button>` : ""}
@@ -509,23 +509,41 @@ function cardHTML(t) {
     <div class="acts"><button data-act="similar">More like this</button><button data-act="credit">Copy credit</button><button data-act="pick" class="${state.picks.has(t.id) ? "on" : ""}">${state.picks.has(t.id) ? "♥ Picked" : "♥ Pick"}</button>${t.sourceUrl ? `<a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener">Source ↗</a>` : ""}</div>
   </article>`;
 }
-// --- tune: drag the Track pane's meters and the songs that measure like that rise underneath ----
-// The map answers too: its sounds-like chords re-aim at the matches and the camera frames them.
-let tune = null, tuneT = 0, tuning = false; // tune = { id, p: { meter: target pct }, rows }
+// --- tune: the Track pane's meters steer what plays ----------------------------------------------
+// Drag a meter and the now-playing song becomes the one that measures closest to your settings,
+// picking up at the same point in its own run; the dim tick on each meter is where the playing song
+// really sits, the bright knob is what you asked for. The next-closest wait underneath, and the map
+// draws chords from the playing dot to them. Tapping any other song by hand ends the tune.
+let tune = null, tuneT = 0, tuning = false, tunePaint = false; // tune = { seed, p: { meter: target pct }, rows }
 function tuneHTML(t) {
-  if (tune?.id !== t.id || !tune.rows) return "";
-  return `<section class="tunes"><h4>Closest to your settings<small>by ear</small><button data-act="untune">Reset</button></h4>
-    ${tune.rows.length ? tune.rows.map((r, i) => rowHTML(r.t, i, r.why)).join("") : `<div class="empty">Nothing measures like that yet.</div>`}</section>`;
+  if (!tune?.rows) return "";
+  const next = tune.rows.filter((r) => r.t.id !== t.id).slice(0, 5);
+  return `<section class="tunes"><h4>Next closest<small>to your settings</small><button data-act="untune">Reset</button></h4>
+    ${next.length ? next.map((r, i) => rowHTML(r.t, i, r.why)).join("") : `<div class="empty">Nothing else measures like that yet.</div>`}</section>`;
 }
 function retune() {
-  const t = byId.get(tune?.id); if (!t) return;
-  tune.rows = tuneMatch(t, tune.p, all, 6);
+  const seed = byId.get(tune?.seed); if (!seed) return;
+  tune.rows = tuneMatch(seed, tune.p, all, 6, { withSeed: true });
+  const best = tune.rows[0]?.t;
+  if (best && best.id !== state.sel) {
+    const frac = audio.duration ? audio.currentTime / audio.duration : 0;
+    pendingSeek = best.dur ? Math.min(frac * best.dur, Math.max(0, best.dur - 15)) : null;
+    buzz(10); toast(`Now playing “${best.title}” · ${tune.rows[0].why}`);
+    select(best.id, { play: true, keepScroll: true, tuned: true });
+  } else paintTune();
+  const cur = byId.get(state.sel);
+  A.setLinks(cur.id, tune.rows.filter((r) => r.t !== cur).map((r, i) => ({ id: r.t.id, w: 1 - i * 0.12 })));
+  focusSel(700);
+}
+// Mid-drag, the card can't be rebuilt (it would drop the slider under your thumb): patch in place.
+function paintTune() {
+  const t = byId.get(state.sel); if (!t) return;
   const el = body.querySelector(".tunes"), html = tuneHTML(t);
   if (el) el.outerHTML = html; else body.querySelector(".snd")?.insertAdjacentHTML("afterend", html);
-  const hint = body.querySelector(".meters .hint"); if (hint) hint.textContent = "Your settings · the closest songs are below";
+  const hint = body.querySelector(".meters .hint"); if (hint) hint.textContent = "Your settings steer what plays · dim tick = this song";
   body.querySelector(".meters")?.classList.add("tuning");
-  A.setLinks(t.id, tune.rows.map((r, i) => ({ id: r.t.id, w: 1 - i * 0.1 })));
-  focusSel(700);
+  for (const inp of body.querySelectorAll("input.tune")) { const p = t.p?.[inp.dataset.k], tick = inp.parentElement.querySelector("i:not(.tg)"); if (p != null && tick) tick.style.left = `${(p * 100).toFixed(1)}%`; }
+  const top = body.querySelector(".card .lin .lv:last-child .v"); if (top) top.innerHTML = `<em>${esc(t.title)}</em>`;
 }
 function untune() {
   tune = null; const t = byId.get(state.sel); if (!t) return;
@@ -534,17 +552,20 @@ function untune() {
   const st = body.scrollTop; renderBody(false); body.scrollTop = st; focusSel(600);
 }
 body.addEventListener("pointerdown", (e) => { if (e.target.closest("input.tune")) tuning = true; });
-addEventListener("pointerup", () => { if (tuning) { tuning = false; buzz(6); } });
+addEventListener("pointerup", () => {
+  if (!tuning) return; tuning = false; buzz(6);
+  clearTimeout(tuneT); if (tune) retune();
+  if (tunePaint) { tunePaint = false; const st = body.scrollTop; renderBody(false); body.scrollTop = st; }
+});
 body.addEventListener("input", (e) => {
   const inp = e.target.closest("input.tune"), t = state.sel && byId.get(state.sel); if (!inp || !t?.p) return;
-  if (tune?.id !== t.id) tune = { id: t.id, p: Object.fromEntries(Object.entries(t.p).filter(([, v]) => v != null)), rows: null };
+  if (!tune) tune = { seed: t.id, p: Object.fromEntries(Object.entries(t.p).filter(([, v]) => v != null)), rows: null };
   const k = inp.dataset.k, v = inp.value / 100; tune.p[k] = v;
   const mb = inp.parentElement; let g = mb.querySelector(".tg"); if (!g) { g = document.createElement("i"); g.className = "tg"; mb.prepend(g); }
   g.style.left = `${v * 100}%`;
-  const b = mb.parentElement.querySelector(".mw b"), p0 = Math.round(t.p[k] * 100), p1 = Math.round(v * 100);
+  const b = mb.parentElement.querySelector(".mw b"), p0 = Math.round((t.p[k] ?? v) * 100), p1 = Math.round(v * 100);
   if (b) b.textContent = p0 === p1 ? `${p0}th pct` : `${p0} → ${p1}th pct`;
-  haptic?.("tick");
-  clearTimeout(tuneT); tuneT = setTimeout(retune, 120);
+  clearTimeout(tuneT); tuneT = setTimeout(retune, 260); // a pause in the drag is enough to change the song
 });
 
 function scrollToGroup(feel) { if (state.view !== "library") setView("library", false); const g = body.querySelector(`.grp[data-feel="${feel}"]`); if (g) { if (!wide() && sh.target === "peek") sheetTo("half"); body.scrollTo({ top: g.offsetTop - 8, behavior: reduced ? "auto" : "smooth" }); } }
@@ -553,7 +574,7 @@ body.addEventListener("click", async (e) => {
   const heart = e.target.closest("[data-heart]");
   if (heart) { e.stopPropagation(); return pick(heart.dataset.heart); }
   const row = e.target.closest(".trk");
-  if (row) { buzz(5); const id = row.dataset.id; return id === state.sel ? togglePlay() : select(id, { play: true, fly: true, keepScroll: true, from: state.view }); }
+  if (row) { buzz(5); const id = row.dataset.id; return id === state.sel ? togglePlay() : select(id, { play: true, fly: true, keepScroll: true, from: state.view, tuned: !!row.closest(".tunes") }); }
   const h = e.target.closest("[data-focus]"); if (h) { buzz(4); return A.focus(h.dataset.focus); }
   const desc = e.target.closest(".desc"); if (desc) return desc.classList.toggle("open");
   const more = e.target.closest("[data-more]"); if (more) { more.outerHTML = (result.hits.filter((x) => grpOf(x.t) === more.dataset.more).slice(result.ranked ? 40 : 30).map((x, i) => rowHTML(x.t, i)).join("")); return; }
@@ -588,8 +609,9 @@ function pick(id) {
 const CCM = "https://ccmixter.org/content/";
 const proxied = !/^(localhost|127\.|\[::1\])/.test(location.hostname) && location.protocol === "https:";
 const streamUrl = (t) => (proxied && t.audio.startsWith(CCM) ? "/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)) : new URL(t.audio, new URL(base, location.href)).href);
-function select(id, { play = false, fly = false, keepScroll = false, from = null, view = null } = {}) {
+function select(id, { play = false, fly = false, keepScroll = false, from = null, view = null, tuned = false } = {}) {
   const t = byId.get(id); if (!t) return;
+  if (!tuned && tune && id !== state.sel) tune = null; // picking a song by hand ends the tune
   const changed = state.sel !== id;
   state.sel = id; A.focusId = id;
   if (from === "library" || from === "similar") { state.queue = from; state.radio = null; state.plist = null; } // started from a list: that list is the queue
@@ -605,7 +627,7 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   }
   if (fly) focusSel();
   A.setPlaying(playState());
-  renderViews(); const st = body.scrollTop; renderBody(false); if (keepScroll) body.scrollTop = st; else body.scrollTop = 0;
+  renderViews(); if (tuned && tuning) { tunePaint = true; paintTune(); } else { const st = body.scrollTop; renderBody(false); if (keepScroll) body.scrollTop = st; else body.scrollTop = 0; }
   renderPlayer(); saveHash();
   if (!wide() && sh.target === "peek" && !play) sheetTo("half");
 }

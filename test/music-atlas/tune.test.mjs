@@ -24,3 +24,8 @@ test("untouched settings return the closest twin and never the seed itself", () 
 test("tracks without a listening profile are skipped", () => {
   assert.equal(tuneMatch(seed, { ...seed.p }, [seed, { id: "x" }], 4).length, 0);
 });
+
+test("with the seed in the pool, untouched settings keep the seed playing; a big move changes it", () => {
+  assert.equal(tuneMatch(seed, { ...seed.p }, pool, 3, { withSeed: true })[0].t.id, "seed");
+  assert.equal(tuneMatch(seed, { ...seed.p, bright: 0.9 }, pool, 3, { withSeed: true })[0].t.id, "bright-only");
+});
