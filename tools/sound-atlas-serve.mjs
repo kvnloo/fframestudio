@@ -9,14 +9,19 @@ import { pathToFileURL } from "node:url";
 const dir = resolve(process.argv[2] ?? "."), port = +(process.argv[3] ?? 0);
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".webmanifest": "application/manifest+json", ".ttf": "font/ttf", ".bin": "application/octet-stream", ".mp3": "audio/mpeg" };
 const fns = new Map();
+// vercel.json rewrites ("/song/:slug" -> "/api/page?path=/song/:slug"), as the deploy applies them
+const rewrites = JSON.parse(await readFile(join(dir, "vercel.json"), "utf8").catch(() => "{}")).rewrites ?? [];
+const rules = rewrites.map(({ source, destination }) => ({ re: new RegExp("^" + source.replace(/:(\w+)/g, "(?<$1>[^/]+)") + "/?$"), destination }));
+const rewrite = (path) => { for (const r of rules) { const m = r.re.exec(path); if (m) return r.destination.replace(/:(\w+)/g, (_, k) => m.groups[k]); } return null; };
 createServer(async (req, res) => {
+  const to = rewrite(new URL(req.url, "http://x").pathname); if (to) req.url = to;
   const u = new URL(req.url, "http://x");
   try {
     const m = u.pathname.match(/^\/api\/(\w+)$/);
     if (m) {
       if (!fns.has(m[1])) fns.set(m[1], (await import(pathToFileURL(join(dir, "api", m[1] + ".js")).href)).default);
       const body = ["GET", "HEAD"].includes(req.method) ? undefined : await new Promise((ok) => { const c = []; req.on("data", (d) => c.push(d)); req.on("end", () => ok(Buffer.concat(c))); });
-      const r = await fns.get(m[1])(new Request("http://x" + req.url, { method: req.method, headers: req.headers, body }));
+      const r = await fns.get(m[1])(new Request(`http://${req.headers.host}` + req.url, { method: req.method, headers: req.headers, body }));
       res.writeHead(r.status, Object.fromEntries(r.headers)); return res.end(Buffer.from(await r.arrayBuffer()));
     }
     let p = normalize(join(dir, decodeURIComponent(u.pathname))); if (!p.startsWith(dir)) throw 0;

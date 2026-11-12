@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/song/:slug",
+      "destination": "/api/page?path=/song/:slug"
+    },
+    {
+      "source": "/room/:code",
+      "destination": "/api/page?path=/room/:code"
+    },
+    {
+      "source": "/playlist/:id",
+      "destination": "/api/page?path=/playlist/:id"
+    }
+  ]
+}

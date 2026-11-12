@@ -374,7 +374,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .castmenu button.ghost { min-height: 40px; justify-content: center; border-color: transparent; color: var(--mute); font: 12px "IBM Plex Mono", monospace; }
 
 /* --- TV view: what a cast lands on. 10-foot: big type, no touch chrome, the map is the wallpaper ---- */
-html.tv .dock, html.tv .views, html.tv .grab, html.tv #ps, html.tv #pc, html.tv #ph, html.tv #pr, html.tv .rail, html.tv .motion, html.tv .live { display: none !important; }
+html.tv .dock, html.tv .views, html.tv .grab, html.tv #ps, html.tv #pc, html.tv #ph, html.tv #pr, html.tv .rail, html.tv .motion, html.tv .live, html.tv .party { display: none !important; }
 html.tv #atlas { top: 0; left: 0; right: 0; bottom: 0; cursor: none; } /* longhands: Tizen 6.5 (Chromium 85) has no `inset` */
 html.tv .scrub .thumbw { top: 0; left: 0; right: 0; bottom: 0; }
 html.tv .sheet { left: auto; right: 24px; top: 24px; bottom: 24px; width: 400px; height: auto; border-radius: 22px; border-bottom: 1px solid var(--line2); transform: none !important; background: rgba(21, 26, 27, .88); }
@@ -396,3 +396,41 @@ html.tv .toast { top: auto; bottom: 40px; font-size: 18px; }
 .tvcode span { color: #c9c4ba; font-size: 15px; } .tvcode em { font-style: normal; color: var(--acc); font-weight: 700; }
 .tvcode code { font: 600 44px/1.1 "IBM Plex Mono", monospace; letter-spacing: .14em; color: var(--ink); margin: 8px 0 4px; }
 .tvcode small { font: 12px "IBM Plex Mono", monospace; color: var(--mute); }
+/* share sheet, room sheet and join prompt (app.js: shareLink, roomSheet, joinPrompt) */
+.shm { position: fixed; inset: 0; z-index: 12; display: flex; align-items: flex-end; justify-content: center; box-sizing: border-box; padding: 0 10px calc(10px + env(safe-area-inset-bottom)); background: rgba(5, 8, 9, 0); transition: background .26s var(--ease); }
+.shm.on { background: rgba(5, 8, 9, .55); }
+.shc { box-sizing: border-box; width: min(380px, 100%); min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 18px 16px; border-radius: 24px; background: #151b1c; border: 1px solid var(--line2);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .55); transform: translate3d(0, 40px, 0) scale(.97); opacity: 0; transition: transform .38s var(--spring), opacity .2s var(--ease); }
+.shm.on .shc { transform: none; opacity: 1; }
+@media (min-width: 900px) { .shm { align-items: center; } }
+.sht { font: 600 11px "IBM Plex Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.shq { width: 188px; height: 188px; padding: 6px; border-radius: 18px; background: #ece8df; box-shadow: 0 0 0 1px rgba(255, 255, 255, .06), 0 10px 30px rgba(0, 0, 0, .35); }
+.shq svg { display: block; width: 100%; height: 100%; border-radius: 12px; }
+.shn { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; max-width: 100%; }
+.shn b { font: italic 26px/1.1 "Instrument Serif", serif; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.shn small { font: 13px "Instrument Sans", sans-serif; color: var(--mute); }
+.shu { max-width: 100%; padding: 6px 12px; border-radius: 10px; background: rgba(255, 255, 255, .04); border: 1px dashed var(--line2); font: 11px "IBM Plex Mono", monospace; color: #bdb8ae; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sha { display: flex; gap: 8px; width: 100%; }
+.sha button { flex: 1; min-height: 44px; border-radius: 14px; border: 1px solid var(--line2); background: rgba(255, 255, 255, .06); color: var(--ink); font: 600 14px "Instrument Sans", sans-serif; transition: transform .3s var(--spring), background .2s; }
+.sha button:active, .pcta:active, .shu:active { transform: scale(.95); }
+.sha button.go { background: var(--acc); border-color: var(--acc); color: #0d1112; }
+.sha button.ghost { flex: .7; background: none; color: var(--mute); }
+.pcta { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; text-align: left; border: 1px solid rgba(79, 214, 154, .35); background: linear-gradient(120deg, rgba(79, 214, 154, .12), rgba(95, 211, 220, .06)); transition: transform .3s var(--spring); }
+.pcta i, .party i { flex: none; width: 9px; height: 9px; border-radius: 50%; background: #4fd69a; box-shadow: 0 0 10px #4fd69a; animation: breathe 2.4s ease-in-out infinite; }
+.pcta span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pcta b { font: 600 14px "Instrument Sans", sans-serif; color: var(--ink); }
+.pcta small { font: 12px "Instrument Sans", sans-serif; color: var(--mute); }
+.rcode { font: 34px/1 "Archivo Black", sans-serif; letter-spacing: .14em; color: var(--ink); }
+.rcode span { color: #4fd69a; }
+.shs { text-wrap: balance; margin: 0; text-align: center; font: 13px/1.4 "Instrument Sans", sans-serif; color: #bdb8ae; max-width: 300px; }
+.nudge { width: 100%; display: grid; grid-template-columns: auto 1fr 58px; align-items: center; gap: 10px; font: 12px "Instrument Sans", sans-serif; color: var(--mute); }
+.nudge input { width: 100%; accent-color: #4fd69a; }
+.nudge output { font: 11px "IBM Plex Mono", monospace; color: var(--ink); text-align: right; }
+.nhelp { text-wrap: balance; margin-top: -6px; font: 11px "Instrument Sans", sans-serif; color: var(--mute); text-align: center; }
+.party { color: #4fd69a; border-color: rgba(79, 214, 154, .35); }
+.party b { color: var(--ink); font-weight: 400; letter-spacing: .08em; }
+.party svg { width: 13px; height: 13px; }
+.party[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .shc { transition: opacity .2s; transform: none; } .pcta i, .party i { animation: none; } }
+.party { margin-left: auto; }
+.party:not([hidden]) + .live { display: none; } /* in a room the room pill takes the community pill's place */

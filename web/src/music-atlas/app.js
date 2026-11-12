@@ -8,6 +8,9 @@ import { loadSound, soundReady, neighbours, tuneMatch, profileHTML, ord, LENSES,
 import { haptic, pressable, pressRing, HOLD, SLOP, FORCE } from "./gestures.js";
 import * as social from "./social.js";
 import * as cast from "./cast.js";
+import { slugIndex, readPath } from "./links.js";
+import { party, join as joinParty, leave as leaveParty, heard, onEnded as partyEnded, setNudge, drift, rid as roomId } from "./party.js";
+import { renderSVG } from "./uqr.js";
 import { loadLayers, layersOf, layerCount, STEMS, laneColor, createMixer, stemUrl, lenders } from "./layers.js";
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -631,7 +634,7 @@ function pick(id) {
 // (tools/sound-atlas-api/ccm.js). Catalogue paths are relative to the catalogue.
 const CCM = "https://ccmixter.org/content/";
 const proxied = !/^(localhost|127\.|\[::1\])/.test(location.hostname) && location.protocol === "https:";
-const streamUrl = (t) => (proxied && t.audio.startsWith(CCM) ? "/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)) : new URL(t.audio, new URL(base, location.href)).href);
+const streamUrl = (t) => (proxied && t.audio.startsWith(CCM) ? "/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)) : new URL(t.audio, new URL(base, document.baseURI)).href);
 function select(id, { play = false, fly = false, keepScroll = false, from = null, view = null, tuned = false } = {}) {
   const t = byId.get(id); if (!t) return;
   if (!tuned && tune && id !== state.sel) tune = null; // picking a song by hand ends the tune
@@ -709,7 +712,8 @@ const syncPlay = () => { A.setPlaying(playState()); renderPlayer(); if (audio.pa
 audio.addEventListener("play", () => { if (state.sel) { playedIds.add(state.sel); social.played(state.sel); } social.pulse(); });
 audio.addEventListener("pause", () => social.pulse());
 audio.addEventListener("play", syncPlay); audio.addEventListener("pause", syncPlay); audio.addEventListener("loadedmetadata", tick);
-audio.addEventListener("ended", () => step(1));
+audio.addEventListener("ended", () => partyEnded(() => step(1))); // in a room, whoever set the song picks the next
+for (const k of ["play", "pause", "seeked", "loadstart"]) audio.addEventListener(k, () => heard(k)); // what you do leads the room
 audio.addEventListener("error", () => { if (audio.src && state.sel) toast("This one won't stream here; open its source ↗"); });
 $("#pp").onclick = (e) => { e.stopPropagation(); buzz(5); togglePlay(); };
 $("#pn").onclick = (e) => { e.stopPropagation(); step(1); };
@@ -763,14 +767,29 @@ function hashOf() {
   const gq = [...state.gs].filter(([k, v]) => k !== "tempo" && v.size).map(([k, v]) => `${k}:${[...v].join(".")}`).join(";"); if (gq) h.set("g", gq);
   if (state.cc0) h.set("cc0", "1");
   if (state.picks.size) h.set("p", [...state.picks].join(","));
-  if (state.sel) h.set("t", state.sel);
+  if (state.sel && !(pretty && !share?.base)) h.set("t", state.sel); // deployed: the path names the song
   if (state.lens !== "feel") h.set("l", state.lens);
   if (state.view !== "library") h.set("v", state.view);
   if (state.plist) h.set("pl", state.plist.id);
   return h.toString();
 }
 let hashT = 0;
-function saveHash() { clearTimeout(hashT); hashT = setTimeout(() => history.replaceState(null, "", location.pathname + location.search + (hashOf() ? "#" + hashOf() : "")), 250); }
+function saveHash() { clearTimeout(hashT); hashT = setTimeout(() => history.replaceState(null, "", urlPath() + location.search + (hashOf() ? "#" + hashOf() : "")), 250); }
+// --- pretty links: /song/<title>-by-<artist>, /room/<code> (links.js; the deploy rewrites them to the app) --
+const pretty = !!document.querySelector("base[href='/']"); // the deployed bundle; the lab page keeps hash links
+let slugs = { bySlug: new Map(), byId: new Map() };
+const prettyOn = () => pretty && !share?.base; // a protected deploy's entry link only carries a hash through
+function urlPath() {
+  if (!prettyOn()) return location.pathname;
+  if (party.on) return "/room/" + party.room;
+  const s = state.sel && slugs.byId.get(state.sel); return s ? "/song/" + s : "/";
+}
+function songLink(t) {
+  if (prettyOn()) return `${location.origin}/song/${slugs.byId.get(t.id)}`;
+  return (share?.base ?? location.origin + location.pathname) + "#t=" + encodeURIComponent(t.id);
+}
+const roomLink = (code) => (prettyOn() ? `${location.origin}/room/${code}` : (share?.base ?? location.origin + location.pathname) + "#room=" + code);
+const appLink = () => (prettyOn() ? location.origin + "/" : share?.base ?? location.origin + location.pathname);
 function readHash() {
   const h = new URLSearchParams(location.hash.slice(1));
   q.value = h.get("q") ?? "";
@@ -783,17 +802,97 @@ function readHash() {
   if (VIEWS.includes(h.get("v"))) state.view = h.get("v");
   const shared = (h.get("p") ?? "").split(",").filter((id) => byId.has(id));
   if (shared.length) { shared.forEach((id) => state.picks.add(id)); toast(`${shared.length} shared picks · tap ♥ Liked to see them`); } // the full atlas still loads
-  pendingPlist = h.get("pl");
+  pendingPlist = h.get("pl"); pendingRoom = h.get("room");
+  const p = readPath(location.pathname); // a pretty link names the song, room or playlist in its path
+  if (p?.kind === "room") pendingRoom = p.k;
+  if (p?.kind === "playlist") pendingPlist = p.k;
+  if (p?.kind === "song") return slugs.bySlug.get(p.k)?.id ?? h.get("t");
   return h.get("t");
 }
-let pendingPlist = null;
-async function shareLink() {
-  // share.json (deploy-time, never in git) carries the protected-deploy entry link; the hash rides through its redirect.
-  // A shared song opens the whole atlas on that song: no filters, likes or search ride along.
-  const t = state.sel && byId.get(state.sel), url = (share?.base ?? location.origin + location.pathname) + (t ? "#t=" + encodeURIComponent(t.id) : "");
+let pendingPlist = null, pendingRoom = null;
+// --- share sheet: QR code, copy, the system share sheet, and "Listen together" -------------------------
+const qrSVG = (text) => renderSVG(text, { border: 2, pixelSize: 8, whiteColor: "#ece8df", blackColor: "#0d1112" });
+const bare = (u) => u.replace(/^https?:\/\//, "");
+function sheetUI(cls, html) {
+  document.querySelector(".shm")?.close();
+  const m = document.createElement("div"); m.className = `shm ${cls}`; m.innerHTML = `<div class="shc" role="dialog" aria-modal="true">${html}</div>`;
+  document.body.append(m); requestAnimationFrame(() => m.classList.add("on"));
+  m.close = () => { m.classList.remove("on"); setTimeout(() => m.remove(), 260); };
+  m.addEventListener("click", (e) => { if (e.target === m) m.close(); });
+  return m;
+}
+async function sendLink(url, title, what) {
+  if (navigator.share) { try { await navigator.share({ title, url }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  await copy(url); toast(`${what} copied`);
+}
+function shareLink() {
+  const t = state.sel && byId.get(state.sel), url = t ? songLink(t) : appLink(), title = t ? `${t.title} · Sound Atlas` : "Sound Atlas";
   buzz(8);
-  if (navigator.share && matchMedia("(pointer: coarse)").matches) { try { await navigator.share({ title: t ? `${t.title} · Sound Atlas` : "Sound Atlas", url }); return; } catch (e) { if (e.name === "AbortError") return; } }
-  await copy(url); toast(t ? `Link to “${t.title}” copied` : "Link copied");
+  const m = sheetUI("share", `
+    <div class="shq" aria-label="QR code for the link">${qrSVG(url)}</div>
+    <div class="shn"><b>${esc(t ? t.title : "Sound Atlas")}</b><small>${esc(t ? t.author : `${all.length.toLocaleString()} free songs by feel`)}</small></div>
+    <button class="shu" data-a="copy" title="Copy link">${esc(bare(url))}</button>
+    <div class="sha"><button data-a="copy">Copy link</button>${navigator.share ? `<button data-a="send">Share…</button>` : ""}</div>
+    <button class="pcta" data-a="party"><i></i><span><b>${party.on ? `Room ${party.room.toUpperCase()} · invite` : "Listen together"}</b><small>${party.on ? `${party.peers} speaker${party.peers === 1 ? "" : "s"} in sync` : "Every phone in the room plays this in sync, like one speaker system"}</small></span></button>`);
+  m.onclick = async (e) => {
+    const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return; buzz(5);
+    if (a === "copy") { await copy(url); toast(t ? `Link to “${t.title}” copied` : "Link copied"); m.close(); }
+    if (a === "send") { m.close(); sendLink(url, title, "Link"); }
+    if (a === "party") { if (!party.on) await startParty(roomId()); roomSheet(); }
+  };
+}
+
+// --- listen together (party.js) ----------------------------------------------------------------------------
+const partyHooks = {
+  sid: social.sid, audio, current: () => state.sel,
+  apply: (st) => { if (byId.has(st.t)) select(st.t, { play: st.playing, fly: true, keepScroll: true }); },
+  onChange: () => renderParty(), blocked: () => toast("Tap ▶ to hear the room", 4000),
+};
+async function startParty(code) {
+  try { await joinParty(code, partyHooks); haptic("keep"); saveHash(); renderParty(); }
+  catch { toast("Couldn't reach the room right now"); }
+}
+function renderParty() {
+  let b = $("#party");
+  if (!b) { b = document.createElement("button"); b.id = "party"; b.className = "live party"; b.setAttribute("aria-label", "Listen together room"); $(".row1").insertBefore(b, $("#live")); b.onclick = () => { buzz(5); roomSheet(); }; }
+  b.hidden = !party.on;
+  if (party.on) b.innerHTML = `<i></i><b>${party.room.toUpperCase()}</b><span class="sep"></span>${party.peers}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4v12M3 7v6M11 6v8M15 8v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+  const rs = document.querySelector(".shm.room .shs"); if (rs) rs.textContent = roomStatus();
+}
+const roomStatus = () => { const d = drift(); return `${party.peers} speaker${party.peers === 1 ? "" : "s"} in the room${d != null && !audio.paused ? ` · this one within ${d} ms` : ""}`; };
+function roomSheet() {
+  if (!party.on) return;
+  const url = roomLink(party.room), code = party.room.toUpperCase();
+  const m = sheetUI("room", `
+    <div class="sht">Listen together</div>
+    <div class="shq" aria-label="QR code to join">${qrSVG(url)}</div>
+    <div class="rcode">${code.slice(0, 3)}<span>${code.slice(3)}</span></div>
+    <p class="shs">${roomStatus()}</p>
+    <label class="nudge"><span>Speaker delay</span><input type="range" min="-300" max="300" step="10" value="${party.nudge}" /><output>${party.nudge > 0 ? "+" : ""}${party.nudge} ms</output></label>
+    <small class="nhelp">On a Bluetooth speaker and it sounds late? Slide right until it lines up.</small>
+    <div class="sha"><button data-a="copy">Copy invite</button>${navigator.share ? `<button data-a="send">Share…</button>` : ""}<button data-a="leave" class="ghost">Leave</button></div>`);
+  const r = m.querySelector("input"), o = m.querySelector("output");
+  r.oninput = () => { const v = +r.value; o.textContent = `${v > 0 ? "+" : ""}${v} ms`; setNudge(v); if (v % 50 === 0) buzz(3); };
+  const live = setInterval(() => { if (!m.isConnected) return clearInterval(live); renderParty(); }, 1000);
+  m.onclick = async (e) => {
+    const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return; buzz(5);
+    if (a === "copy") { await copy(url); toast(`Invite to room ${code} copied`); }
+    if (a === "send") sendLink(url, `Listen together · Sound Atlas room ${code}`, "Invite");
+    if (a === "leave") { leaveParty(); m.close(); saveHash(); toast("Left the room"); }
+  };
+}
+// Arriving on a room link: joining needs a tap (browsers start sound only inside one).
+function joinPrompt(code) {
+  const m = sheetUI("join", `
+    <div class="sht">Listen together</div>
+    <div class="rcode">${code.slice(0, 3).toUpperCase()}<span>${code.slice(3).toUpperCase()}</span></div>
+    <p class="shs">Join and this phone becomes one of the room's speakers, playing the same song in sync.</p>
+    <div class="sha"><button data-a="join" class="go">Join the room</button><button data-a="no" class="ghost">Not now</button></div>`);
+  m.onclick = async (e) => {
+    const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return; buzz(5); m.close();
+    if (a === "join") { await startParty(code); if (party.on) toast(`In room ${code.toUpperCase()} · ${party.peers} speaker${party.peers === 1 ? "" : "s"}`); }
+    else saveHash();
+  };
 }
 async function copy(text) {
   try { await navigator.clipboard.writeText(text); return true; }
@@ -879,7 +978,7 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
   sh.y = innerHeight; sheetTo("peek");
   const cat = await loadCatalog(base).catch((e) => { body.innerHTML = `<div class="empty">Could not load the catalogue (${esc(e.message)}).</div>`; throw e; });
   share = await fetch(base + "share.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
-  all = cat.tracks; byId = new Map(all.map((t) => [t.id, t]));
+  all = cat.tracks; byId = new Map(all.map((t) => [t.id, t])); slugs = slugIndex(all);
   await loadSound(base, all); // optional: measured tempo/key/texture + CLAP neighbours
   loadLayers(base).then(() => { if (state.view === "track" && state.sel) renderBody(false); A.kick(); }); // optional: stems
   $("#count").textContent = all.length.toLocaleString();
@@ -892,9 +991,10 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
   renderPlayer();
   if (cast.isTV) { if (state.view === "library") setView("track", false); cast.receive({ sid: social.sid, audio, current: () => state.sel, apply: tvApply, next: () => step(1), onStatus: tvBadge }); }
   else cast.attach({ sid: social.sid, audio, current: () => state.sel, follow: castFollow, toast, haptic, onChange: () => { $("#pc").classList.toggle("on", cast.send.on); $("#pc").title = cast.send.on ? `Casting to ${cast.send.name} · tap to stop` : "Play on a TV"; } });
+  if (pendingRoom && /^[a-z0-9]{6}$/i.test(pendingRoom)) joinPrompt(pendingRoom.toLowerCase());
   social.join(() => ({ track: state.sel, playing: !audio.paused })).then(async () => {
     renderBody(false);
     if (pendingPlist) { await social.loadPlaylists(); if (social.room.playlists.some((p) => p.id === pendingPlist)) { setView("community"); const p = social.room.playlists.find((x) => x.id === pendingPlist); state.plist = { id: p.id, name: p.name, ids: p.tracks.filter((x) => byId.has(x)) }; toast(`“${p.name}” · tap ▶ to play`); renderBody(false); } }
   });
-  window.__sa = { social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
+  window.__sa = { party, slugs: () => slugs, social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
 })();
