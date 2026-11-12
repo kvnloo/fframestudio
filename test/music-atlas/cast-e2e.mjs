@@ -58,6 +58,23 @@ await until(() => ph.evaluate((id) => window.__sa.state.sel === id, a), 12000, "
 await ph.click("#pc"); // tap while casting = stop
 await until(() => tv.evaluate(() => window.__sa.audio.paused), 8000, "stop pauses the TV");
 assert.equal(await ph.evaluate(() => window.__sa.audio.muted), false, "phone unmuted after stop");
+// Scanning a fresh TV's dot QR connects on its own: the phone casts and the TV lets the map go, with no Cast tap.
+const room2 = Array.from({ length: 6 }, () => "abcdefghjkmnpqrstuvwxyz23456789"[Math.floor(Math.random() * 31)]).join("");
+const tv2 = await tvCtx.newPage(); tv2.on("pageerror", (e) => errs.push("tv2: " + e.message));
+await tv2.goto(`${base}?tv=samsung&name=Den%20TV&ip=192.0.2.1&app=TEST.app#room=${room2}`);
+await until(() => tv2.evaluate(() => window.__sa?.A.formation), 30000, "second TV forms its QR");
+await wait(3500);
+const qr2 = join(shots ?? mkdtempSync(join(tmpdir(), "tvqr-")), "tv-qr2.png"); await tv2.screenshot({ path: qr2 });
+const link2 = spawnSync("zbarimg", ["-q", "--raw", "-Stest-inverted", qr2], { encoding: "utf8" }).stdout.trim();
+assert.match(link2, new RegExp(`#tvpair=${room2}~`), "second QR decodes: " + link2);
+const sc = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true }), scan = await sc.newPage();
+scan.on("pageerror", (e) => errs.push("scan: " + e.message));
+await scan.goto(base + link2.slice(link2.indexOf("#")));
+await until(() => scan.evaluate(() => document.querySelector("#pc")?.classList.contains("on")), 20000, "the scan alone starts casting");
+await until(() => tv2.evaluate(() => !window.__sa.A.formation && !document.querySelector("#tvcode").classList.contains("on")), 8000, "the TV lets go of the QR once the phone is on");
+assert.equal(JSON.parse(await scan.evaluate(() => localStorage.getItem("sa-tv"))).room, room2);
+assert.ok(!(await scan.evaluate(() => location.hash.includes("tvpair"))), "the pairing link drops out of the URL");
+
 assert.deepEqual(errs, []);
 console.log("cast e2e ok · room", room);
 await browser.close();

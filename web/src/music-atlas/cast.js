@@ -85,7 +85,7 @@ export function attach(h) {
   const hp = new URLSearchParams(location.hash.slice(1)), pr = hp.get("tvpair");
   if (pr) {
     const [room, ip, app, name] = pr.split("~");
-    if (ROOM.test(room)) { saveTV({ room, ip, app, name: name || "Samsung TV" }); setTimeout(() => h.toast(`Paired with ${name || "your Samsung TV"} · tap Cast to play there`, 4000), 800); }
+    if (ROOM.test(room)) { saveTV({ room, ip, app, name: name || "Samsung TV" }); setTimeout(() => castSamsung(), 0); } // scanning the TV's code is the cast: no second tap
     hp.delete("tvpair"); history.replaceState(null, "", location.pathname + location.search + (hp.toString() ? "#" + hp : ""));
   }
   if (window.chrome && !isTV) setTimeout(loadCastSDK, 1500); // the Cast picker must open inside the tap, so the SDK loads ahead
