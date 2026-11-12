@@ -30,7 +30,8 @@ export function receive({ sid, audio, current, apply, next, onStatus }) {
   let after = 0, last = 0, err = null, wait = 0;
   addEventListener("error", (e) => { err = String(e.message).slice(0, 160); });
   audio.addEventListener("ended", () => { const at = after; clearTimeout(wait); wait = setTimeout(() => { if (after === at) next(); }, 4000); });
-  const status = () => ({ ...info, t: current(), pos: Math.round(audio.currentTime * 10) / 10, playing: !audio.paused, err });
+  const hw = probe();
+  const status = () => ({ ...info, t: current(), pos: Math.round(audio.currentTime * 10) / 10, playing: !audio.paused, err, hw });
   async function poll() {
     if (ROOM.test(room)) {
       try {
@@ -43,6 +44,21 @@ export function receive({ sid, audio, current, apply, next, onStatus }) {
   }
   poll();
   return room;
+}
+
+// What the screen really is, reported in the heartbeat so TV tuning rests on measurements:
+// viewport and pixel ratio, refresh rate (median rAF interval), GPU (WebGL renderer), cores, memory.
+export function probe() {
+  const hw = { w: innerWidth, h: innerHeight, sw: screen.width, sh: screen.height, dpr: devicePixelRatio, cores: navigator.hardwareConcurrency, mem: navigator.deviceMemory, ua: (navigator.userAgent.match(/Chrome\/[\d.]+/) || [""])[0] };
+  try {
+    const gl = document.createElement("canvas").getContext("webgl"), x = gl && gl.getExtension("WEBGL_debug_renderer_info");
+    hw.gl = gl ? String(x ? gl.getParameter(x.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)).slice(0, 80) : "none";
+    hw.glmax = gl ? gl.getParameter(gl.MAX_TEXTURE_SIZE) : 0;
+  } catch { hw.gl = "error"; }
+  const d = []; let t0 = 0;
+  const step = (t) => { if (t0) d.push(t - t0); t0 = t; if (d.length < 90) requestAnimationFrame(step); else { d.sort((a, b) => a - b); hw.hz = Math.round(1000 / d[45]); } };
+  requestAnimationFrame(step);
+  return hw;
 }
 
 // --- the phone ------------------------------------------------------------------------------------
