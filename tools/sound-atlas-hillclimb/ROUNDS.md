@@ -7,6 +7,7 @@
 | 1 | (this commit) | idle player line: "Tap a dot to hear it · 1,815 free songs" (was "1,815 free CC tracks") | pass | 87 | 65 | 100 | 100 | 33 | 100 | **kept**: first_open_explains_dots now passes; Opus text layer picks the candidate in both orders at 360 and 393; no layer picks the parent in both orders |
 | 2 | d00b25f + diff | chip tap at peek raises the sheet to half | pass | 93 | 65 | 100 | 100 | 33 | 100 | **reset**: case passed, but Opus layout picked the parent in both orders at 360 and 393 ("the map stops being the hero"); art split/parent. Next try: sheet stays down, the player line names the result |
 | 3 | e0217e6 + diff | idle player: **Tap a dot** / *to hear it* (round 1's line ellipsized to "Tap a dot to h…" in a 78–130 px slot) | pass | 88 | 65 | 100 | 100 | 33 | 100 | **kept**: idle_hint_fits passes at 360/393/412; Opus picks the candidate in both orders on 7 of 8 layer×width verdicts (360 layout split) |
+| 4 | 8884440 + diff | radio picks its next song ahead; the radio button says `next: "<title>"` and skip plays exactly that (6/6 verified) | pass | 88 | 65 | 100 | 100 | 33 | 100 | **reset**: radio_shows_next_up still fails, because the line lives only on the Community tab and the radio is usually started from the player. Next try needs the owner: show next-up in the player, which displaces bpm · key · artist while the radio plays |
 
 Baseline notes:
 - **Failing cases:**
