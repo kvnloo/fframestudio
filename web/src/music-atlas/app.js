@@ -2,7 +2,7 @@
 // below (a side panel on wide screens). State lives in the URL hash so it survives redirects such as
 // Vercel's protection-bypass 307, which drops the query string.
 import { createAtlas } from "./atlas.js";
-import { FEELS, BPM_BANDS, LEVELS, feelById, familyById, styleName } from "./taxonomy.js";
+import { FEELS, BPM_BANDS, LEVELS, FAMILY_TINT, feelById, familyById, styleName, shade } from "./taxonomy.js";
 import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine } from "./search.js";
 import { loadSound, soundReady, neighbours, profileHTML, LENSES, bpmOf, organise, beatAt } from "./sound.js";
 
@@ -14,7 +14,11 @@ const night = (f) => feelById[f]?.night ?? "#8f8a80";
 // legend, the atlas wedges, list headers, rows, card and player all read from these three.
 const grpOf = (t) => (org ? org.of(t) : t.feel);
 const grp = (id) => (org ? org.byId[id] : feelById[id]);
-const tone = (t) => (lensFn && lensFn(t)) || (org ? grp(grpOf(t))?.night : night(t.feel)) || "#8f8a80";
+// Ring 2 (the sub-mood: family, or key mode / feel under a lens) as [id, name, tint], same rule as the atlas.
+const sub = (t) => { if (org) { const a = org.path(t)[0]; return [a[0], a[1], a[3]]; } return [t.family, familyById[t.family]?.name ?? t.family, FAMILY_TINT[t.family]]; };
+const tintCache = new Map();
+const tinted = (gid, tint) => { const k = gid + "|" + tint; let c = tintCache.get(k); if (!c) { const base = grp(gid)?.night ?? "#8f8a80"; tintCache.set(k, (c = tint ? shade(base, tint) : base)); } return c; };
+const tone = (t) => (lensFn && lensFn(t)) || tinted(grpOf(t), sub(t)[2]);
 const buzz = (ms = 6) => navigator.vibrate?.(ms);
 const wide = () => geo.W >= 900;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -103,7 +107,7 @@ const lensNav = $("#lens");
 function setLens(id, save = true) {
   const L = LENSES.find((x) => x.id === id) ?? LENSES[0]; state.lens = L.id;
   const changed = save && (org?.id ?? "feel") !== L.id;
-  lensFn = L.color ?? null; org = organise(L.id, FEELS, familyById); if (org) org.id = L.id;
+  lensFn = L.color ?? null; org = organise(L.id, FEELS, familyById); if (org) org.id = L.id; tintCache.clear();
   A.setLens(lensFn);
   lensNav.innerHTML = soundReady() ? `<span class="lk">Sort</span>${LENSES.map((x) => `<button class="${x.id === L.id ? "on" : ""}" data-lens="${x.id}">${x.name}</button>`).join("")}` : "";
   if (save) saveHash();
@@ -213,8 +217,10 @@ function renderBody(scroll = true) {
   if (like?.f) html += `<section class="grp" style="--c:${night(like.feel)}"><h3><i></i>By ear<small>CLAP timbre · tempo · Camelot · texture</small></h3>${hits.slice(0, 80).map((h, i) => rowHTML(h.t, i)).join("")}</section>`;
   else for (const g of order) {
     const F = grp(g.f), bpms = g.rows.map((t) => t.bpm).filter(Boolean), more = g.rows.length - LIM;
-    const styles = org ? (F.ask ?? "") : [...new Set(g.rows.slice(0, 40).map((t) => styleName(t.family, t.style)))].slice(0, 3).join(" · ");
-    html += `<section class="grp" data-feel="${g.f}" style="--c:${F.night}"><h3 data-focus="f:${g.f}"><i></i>${F.name}<small>${g.rows.length}${bpms.length ? ` · ${Math.min(...bpms)}–${Math.max(...bpms)} bpm` : ""}</small><em>${esc(styles)}</em></h3>
+    // The group's sub-moods as tinted swatches, biggest first: the same shades the atlas draws.
+    const subs = new Map(); for (const t of g.rows) { const [id, name, tint] = sub(t), e = subs.get(id) ?? { name, tint, n: 0 }; e.n++; subs.set(id, e); }
+    const styles = [...subs.values()].sort((a, b) => b.n - a.n).slice(0, 4).map((e) => `<span style="--t:${tinted(g.f, e.tint)}"><i></i>${esc(e.name)}</span>`).join("");
+    html += `<section class="grp" data-feel="${g.f}" style="--c:${F.night}"><h3 data-focus="f:${g.f}"><i></i>${F.name}<small>${g.rows.length}${bpms.length ? ` · ${Math.min(...bpms)}–${Math.max(...bpms)} bpm` : ""}</small><em class="subs">${styles}</em></h3>
       ${g.rows.slice(0, g.open ? 400 : LIM).map((t, i) => rowHTML(t, i)).join("")}${more > 0 ? `<button class="more" data-more="${g.f}">Show ${more} more ${F.name.toLowerCase()} tracks</button>` : ""}</section>`;
   }
   if (!hits.length) html += `<div class="empty">Nothing in the catalogue matches. ${state.q ? "Try the open web below, or fewer filters." : "Try fewer filters."}</div>`;

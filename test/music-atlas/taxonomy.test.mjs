@@ -2,7 +2,7 @@
 // and search stays inside the licence allow-list (CC0 / CC BY only).
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classify, FEELS, FAMILIES, INCOMPETECH_GENRE, bpmBand, BPM_BANDS, expand } from "../../web/src/music-atlas/taxonomy.js";
+import { classify, FEELS, FAMILIES, INCOMPETECH_GENRE, bpmBand, BPM_BANDS, expand, FAMILY_TINT, shade } from "../../web/src/music-atlas/taxonomy.js";
 import { search, creditLine } from "../../web/src/music-atlas/search.js";
 
 const feelIds = new Set(FEELS.map((f) => f.id));
@@ -26,4 +26,14 @@ test("search ranks lexical matches and never needs the model", () => {
   assert.equal(hits.ranked, true);
   assert.deepEqual(hits.hits.map((h) => h.t.id), ["a"]);
   assert.match(creditLine(tracks[0]), /"Bright Energy Run" by A, CC BY 4\.0/);
+});
+
+test("every family has a distinct tint, and tinting keeps the feel's hue family readable", () => {
+  for (const f of FAMILIES) assert.ok(FAMILY_TINT[f.id], `tint for ${f.id}`);
+  const shadow = FEELS.find((f) => f.id === "shadow");
+  const shades = FAMILIES.map((f) => shade(shadow.night, FAMILY_TINT[f.id]));
+  assert.equal(new Set(shades).size, FAMILIES.length);
+  for (const c of shades) { const [, h, , l] = /^hsl\((\d+),(\d+)%,(\d+)%\)$/.exec(c).map(Number); assert.ok(l >= 18 && l <= 88); assert.ok(h >= 0 && h < 360); }
+  assert.equal(shade("#ff0000", [0, 0]), "hsl(0,100%,50%)");
+  assert.equal(shade("rgb(0,0,255)", [120, 0]), "hsl(0,100%,50%)");
 });

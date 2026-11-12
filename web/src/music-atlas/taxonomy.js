@@ -15,6 +15,30 @@ export const FEELS = [
   { id: "shadow", name: "Shadow", color: "#2b8a93", night: "#5fd3dc", ask: "dark, tense, sombre", words: ["dark", "eerie", "unnerving", "suspenseful", "somber", "sad", "melancholy", "tense", "horror", "ominous", "creepy", "haunting"] },
 ];
 
+// What each visual channel means, everywhere on the page:
+//   hue        = ring 1 (feel, or the lens group)      tint (hue/lightness shift) = ring 2 (family)
+//   Archivo Black = groups · Instrument Sans = names · IBM Plex Mono = measurements
+//   Instrument Serif italic = the work itself (track titles) and why it was suggested
+//   motion     = the playing track's metre: beat -> its dot, bar -> its lineage, phrase -> its wedge
+// Family tints [hue deg, lightness %] shift a feel's colour the same way in every feel, so a shade
+// reads as a kind of sound: warmer = organic / acoustic, cooler = synthetic, lighter = airy,
+// deeper = heavy or orchestral.
+export const FAMILY_TINT = { electronic: [16, 6], retro: [26, 12], beats: [10, -8], ambient: [4, 16], cinematic: [-6, -13], rockpop: [-12, -5], jazzfunk: [-18, 4], world: [-26, 10] };
+const toRgb = (c) => {
+  let m = /^#([0-9a-f]{6})$/i.exec(c); if (m) { const v = parseInt(m[1], 16); return [v >> 16, (v >> 8) & 255, v & 255]; }
+  m = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(c); if (m) return m.slice(1).map(Number);
+  m = /^hsl\(([\d.]+),\s*([\d.]+)%,\s*([\d.]+)%\)$/.exec(c); if (m) return { h: +m[1], s: +m[2], l: +m[3] };
+  return null;
+};
+// Shift a colour (hex, rgb() or hsl()) by [hue deg, lightness %]; returns hsl().
+export function shade(c, [dh, dl] = [0, 0]) {
+  let v = toRgb(c); if (!v) return c;
+  if (Array.isArray(v)) { const [r, g, b] = v.map((x) => x / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    const s = d ? d / (1 - Math.abs(2 * l - 1)) : 0, h = !d ? 0 : mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    v = { h: h * 60, s: s * 100, l: l * 100 }; }
+  return `hsl(${Math.round((v.h + dh + 360) % 360)},${Math.round(v.s)}%,${Math.round(Math.max(18, Math.min(88, v.l + dl)))}%)`;
+}
+
 // Families and their styles. `re` matches the track's text (title, tags, instruments, description).
 export const FAMILIES = [
   { id: "electronic", name: "Electronic", re: /electr|synth|edm|techno|house|trance|chip|8.?bit|dubstep|dnb|drum.?and.?bass|idm|glitch|disco|dance|club|future|electronica/, styles: [

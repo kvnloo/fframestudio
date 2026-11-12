@@ -142,16 +142,18 @@ export const LENSES = [
 const BANDS5 = { bright: ["Dark", "Mellow", "Even", "Bright", "Airy"], busy: ["Sparse", "Light", "Moving", "Busy", "Dense"], width: ["Mono", "Narrow", "Even", "Wide", "Huge"] };
 const RAMPS = { tempo: COOL_WARM, bright: DARK_LIGHT, busy: QUIET_LOUD, width: COOL_WARM };
 const TEMPO = [["slow", "Slow", 0, 90], ["mid", "Mid", 90, 115], ["up", "Up", 115, 135], ["fast", "Fast", 135, 160], ["rush", "Rush", 160, 999]];
+const FEEL_LIGHT = { drive: 12, lift: 9, play: 6, groove: 2, calm: -3, wonder: -7, shadow: -12 };
 const UNMEASURED = { id: "none", name: "Unmeasured", color: "#8a857a", night: "#8f8a80", ask: "no listening profile" };
 export function organise(id, feels, families) {
   if (!id || id === "feel") return null;
   const feelIx = Object.fromEntries(feels.map((F, i) => [F.id, i]));
-  const inner = (t) => [[t.feel, feels[feelIx[t.feel]]?.name ?? t.feel, feelIx[t.feel] ?? 99], [t.family, families[t.family]?.name ?? t.family, 0]];
+  // Ring 2 tints: a feel shades by its energy (drive lightest, shadow deepest); minor keys sit deeper than major.
+  const inner = (t) => [[t.feel, feels[feelIx[t.feel]]?.name ?? t.feel, feelIx[t.feel] ?? 99, [0, FEEL_LIGHT[t.feel] ?? 0]], [t.family, families[t.family]?.name ?? t.family, 0]];
   let groups, top;
   if (id === "key") {
     groups = Array.from({ length: 12 }, (_, i) => { const c = `hsl(${i * 30},62%,60%)`, d = `hsl(${i * 30},55%,46%)`; return { id: String(i + 1), name: `${i + 1}`, color: d, night: c, ask: "Camelot neighbours mix" }; });
     top = (t) => { const c = cam(t.f?.camelot); return c ? String(c.n) : null; };
-    const path = (t) => { const c = cam(t.f.camelot); return [[c.l, `${t.f.camelot} ${t.f.key}`, c.l === "A" ? 0 : 1], inner(t)[0]]; };
+    const path = (t) => { const c = cam(t.f.camelot); return [[c.l, `${t.f.camelot} ${t.f.key}`, c.l === "A" ? 0 : 1, c.l === "A" ? [-6, -11] : [6, 11]], inner(t)[0]]; };
     return finish(groups, top, path, inner);
   }
   if (id === "tempo") {
