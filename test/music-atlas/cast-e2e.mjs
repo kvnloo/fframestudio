@@ -37,6 +37,7 @@ await ph.goto(base);
 await until(() => ph.evaluate(() => window.__sa?.all.length > 0), 30000, "phone boots");
 const [a, b] = await ph.evaluate(() => window.__sa.result.hits.slice(0, 2).map((h) => h.t.id));
 await ph.evaluate((id) => window.__sa.select(id, { play: true }), a);
+await ph.evaluate(() => window.__sa.sheetTo("half")); await ph.waitForTimeout(500); // cast lives in the comfortable player; peek shows it only while casting
 await ph.click("#pc");
 await ph.waitForSelector(".castmenu.on");
 if (shots) await ph.screenshot({ path: `${shots}/phone-menu.png` });

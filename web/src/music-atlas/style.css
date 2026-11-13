@@ -106,7 +106,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .tease span { min-width: 0; display: flex; gap: 8px; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(90deg, #000 85%, transparent); }
 .tease em { font: italic 15px "Instrument Serif", serif; color: var(--c); }
 .tease small { font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
-.body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 12px calc(var(--sab) + 90px); -webkit-overflow-scrolling: touch; }
+.body { position: relative; /* offsetTop inside the list is list-relative, whatever the player above it grows to */ flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 12px calc(var(--sab) + 90px); -webkit-overflow-scrolling: touch; }
 
 .sum { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 12px 4px 4px; }
 .sum b { font: italic 22px "Instrument Serif", serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -518,3 +518,48 @@ html.tv .toast { top: auto; bottom: 40px; font-size: 18px; }
 .bplay button:first-child { background: var(--c, var(--acc)); border-color: transparent; color: var(--bg); }
 .bplay svg { width: 16px; height: 16px; }
 a.aref { color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 3px; cursor: pointer; }
+
+/* --- the player's density follows the pane (app.js setSnap: data-snap = peek | half | full | side | find) ------
+   Three steps, more room -> more player:
+   peek / find (searching: the results need the room): one row of prev, play, next, title, like.
+   half: the same row plus radio, cast and share.
+   full / side (the desktop panel): a now-playing widget. Title on its own line, a detail line, the scrub, then a
+   centred transport with like/radio on the left and cast/share on the right. */
+#pt { grid-area: t; } #pm { grid-area: m; } .player .scrub { grid-area: s; } #ph { grid-area: h; } #pr { grid-area: r; }
+#pv { grid-area: v; } #pp { grid-area: p; } #pn { grid-area: n; } #pc { grid-area: c; } #ps { grid-area: x; }
+.sheet .player { grid-template-columns: auto auto auto 1fr auto auto auto auto; grid-template-rows: none; grid-template-areas: "v p n t h r c x" "s s s s s s s s"; }
+.sheet:is([data-snap="peek"], [data-snap="half"], [data-snap="find"]) #pm { display: none; }
+.sheet:is([data-snap="full"], [data-snap="side"]) .player { grid-template-columns: auto auto 1fr auto auto auto 1fr auto auto;
+  grid-template-areas: "t t t t t t t t t" "m m m m m m m m m" "s s s s s s s s s" "h r . v p n . c x"; gap: 6px 4px; padding: 2px 16px 12px; }
+.sheet:is([data-snap="full"], [data-snap="side"]) #pp { width: 58px; height: 58px; }
+.sheet:is([data-snap="full"], [data-snap="side"]) :is(#pv, #pn) { width: 46px; height: 46px; }
+.sheet:is([data-snap="full"], [data-snap="side"]) :is(#pv, #pn) svg { width: 22px; height: 22px; }
+.sheet:is([data-snap="full"], [data-snap="side"]) :is(#ph, #pr, #pc, #ps) { width: 42px; height: 42px; }
+.sheet:is([data-snap="full"], [data-snap="side"]) .pt { padding: 4px 0 0; }
+.sheet:is([data-snap="full"], [data-snap="side"]) .pt b { font-size: 25px; line-height: 1.05; }
+.sheet:is([data-snap="full"], [data-snap="side"]) .pt small { font-size: 12px; margin-top: 3px; }
+.sheet:is([data-snap="full"], [data-snap="side"]) .scrub .track { height: 6px; border-radius: 3px; }
+.sheet:is([data-snap="full"], [data-snap="side"]) .scrub.on .track { height: 10px; }
+@media (max-width: 379px) { .sheet:is([data-snap="full"], [data-snap="side"]) .player { column-gap: 0; padding-inline: 10px; } .sheet[data-snap="full"] :is(#ph, #pr, #pc, #ps) { width: 40px; } }
+.sheet:is([data-snap="peek"], [data-snap="find"]) .player { grid-template-columns: auto auto auto 1fr auto auto auto; grid-template-areas: "v p n t r c h" "s s s s s s s"; column-gap: 0; }
+.sheet:is([data-snap="peek"], [data-snap="find"]) :is(#pp, #pn, #pt, #pr, #pc, #ph) { margin-left: 6px; } /* margins, not gaps: hidden columns cost nothing */
+/* Radio and cast stay in the compact row while they're on: then they're state, not options. */
+.sheet:is([data-snap="peek"], [data-snap="find"]) :is(#pr:not(.on), #pc:not(.on), #ps) { display: none; }
+.pm { display: flex; align-items: center; gap: 6px; height: 22px; min-width: 0; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+.pm span { flex: none; display: inline-flex; align-items: center; height: 22px; box-sizing: border-box; padding: 0 8px; line-height: 1; border-radius: 8px; border: 1px solid var(--line); background: rgba(255, 255, 255, .04); font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
+.pm .f { color: var(--ink); } .pm .f i { width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }
+/* The handle answers the finger: it widens and brightens while the sheet is held. Vertical drags on the rail are
+   the sheet's too (app.js sheetPointer), so the rail only claims sideways pans. */
+.grab i { transition: width .28s var(--spring), background .2s var(--ease); }
+.sheet.grabbed .grab i { width: 58px; background: var(--ink); }
+.rail .railrow, .rail .filt { touch-action: pan-x; }
+
+/* A family/style scope (map tap on Rock & Pop, or its swatch in a feel heading): its styles are the way further in. */
+.bhead .scopes { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 2px 0 0; font: 600 12px "Instrument Sans", sans-serif; font-style: normal; }
+.grp h3 em.subs span[data-scope], .bhead .scopes span { cursor: pointer; }
+/* At half height the songs must show, so the scope header is two lines: back + title, then the path and its styles. */
+.bhead.scope { flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: 10px; row-gap: 0; padding: 4px 4px 2px; }
+.bhead.scope h2 { font-size: 24px; }
+.bhead.scope p { flex-basis: 100%; margin: 0; }
+.bhead.scope .scopes { flex-basis: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.bhead .scopes span, .bhead .scopes span:nth-child(n+3) { display: inline-flex; padding: 6px 0; } /* every style shows here, finger-sized */

@@ -111,6 +111,16 @@ await until(() => sa(() => !!document.querySelector(".bhead h2")), 20000, "the o
 assert.equal(await sa(() => document.querySelector(".bhead h2")?.textContent), "Tide Room", "the open page comes back from the link");
 assert.ok((await sa(() => window.__sa.state.recent.length)) >= 2, "recent survives a reload");
 
+// A family on the map (Rock & Pop) or its swatch in a feel heading opens a page of just its songs, under its own
+// heading, not the whole feel (owner report). Back steps out one level at a time.
+await sa(() => { window.__sa.state.browse = "feel"; window.__sa.state.open = null; window.__sa.setView("library"); }); await wait(600);
+await page.locator(".grp[data-feel] h3 em.subs span[data-scope]").first().tap(); await wait(800);
+const sc = await sa(() => { const n = window.__sa.A.graph.byId.get(window.__sa.A.focusId), ids = new Set((n.level === 3 ? n.tracks : n.children.flatMap((c) => c.tracks)).map((t) => t.id)), rows = [...document.querySelectorAll("#body .trk")].map((r) => r.dataset.id), h = document.querySelector("#body .bhead h2");
+  return { level: n.level, name: n.name, head: h?.textContent, rows: rows.length, inside: rows.every((id) => ids.has(id)), headOnScreen: h && h.getBoundingClientRect().bottom < innerHeight }; });
+assert.ok(sc.level === 2 && sc.head === sc.name && sc.rows > 0 && sc.inside && sc.headOnScreen, "a family opens its own list: " + JSON.stringify(sc));
+await page.locator("#body .bhead .bback").tap(); await wait(800);
+assert.equal(await sa(() => window.__sa.A.graph.byId.get(window.__sa.A.focusId).level), 1, "back steps out to the feel");
+
 assert.deepEqual(errs, []);
 await browser.close();
 console.log("browse-e2e ok:", { artists: artists.length, artistPage: pageIds.length, recent: recent.length, album: order });

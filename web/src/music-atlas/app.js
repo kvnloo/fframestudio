@@ -62,7 +62,29 @@ const zrect = (el) => { const r = el.getBoundingClientRect(), cs = getComputedSt
 function measure() { geo.H = innerHeight; geo.W = innerWidth; geo.sat = inset.offsetHeight; geo.sab = inset.offsetWidth; geo.top = zrect($(".top")).bottom + 4; geo.left = zrect(sheet).left; geo.dock = body.offsetTop; geo.views = $("#views").offsetTop; geo.rail = wide() ? 0 : rail.offsetHeight; }
 // Peek shows the dock (search + filters) and the player; the view switch waits below the edge until you raise the sheet.
 const snaps = () => { const H = geo.H; return { peek: H - geo.views - geo.sab, half: Math.round(H * 0.5), full: 72 + geo.sat }; };
-function sheetTo(name, v = 0) { if (wide()) return; if (sh.target !== name) buzz(4); sh.target = name; sh.v = v; if (!sh.raf) sh.raf = requestAnimationFrame(sheetStep); atlasRefit(); }
+// The player's density follows the pane, three steps (style.css): compact at peek (and while searching: the results
+// need the room), plus radio/cast/share at half, a full now-playing widget at full. It flips as a drag crosses into
+// a snap's catchment, not after release, and the re-layout is FLIPped relative to the sheet (which is mid-spring),
+// so each control glides from where it was.
+const DENSITY = { peek: 0, find: 0, half: 1, full: 2, side: 2 };
+const FLIP = ["#pv", "#pp", "#pn", "#pt", "#ph", "#pr", "#pc", "#ps", "#pm", "#player .scrub", "#views", "#body"];
+const snapFor = (name) => (wide() ? "side" : name === "full" && document.activeElement === q ? "find" : name);
+function setSnap(name) {
+  const was = sheet.dataset.snap; if (was === name) return;
+  if (reduced || !was || DENSITY[was] === DENSITY[name]) { sheet.dataset.snap = name; return; }
+  const els = FLIP.map((s) => $(s)).filter(Boolean), s0 = sheet.getBoundingClientRect(), r0 = els.map((e) => e.getBoundingClientRect());
+  sheet.dataset.snap = name;
+  const s1 = sheet.getBoundingClientRect();
+  els.forEach((e, i) => {
+    const a = r0[i], b = e.getBoundingClientRect(); if (!b.width) return;
+    if (!a.width) return e.animate([{ opacity: 0, transform: "scale(.6)" }, { opacity: 1, transform: "none" }], { duration: 300, delay: 70, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" });
+    const text = e.id === "pt" || e.id === "pm", wideEl = text || e.id === "body" || e.id === "views" || e.classList.contains("scrub");
+    const dx = a.left - s0.left - (b.left - s1.left), dy = a.top - s0.top - (b.top - s1.top), sx = wideEl ? 1 : a.width / b.width, sy = wideEl ? 1 : a.height / b.height;
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && Math.abs(sx - 1) < 0.01) return;
+    e.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, transformOrigin: "0 0", ...(text ? { opacity: 0.35 } : {}) }, { transform: "none", transformOrigin: "0 0", opacity: 1 }], { duration: 380, easing: "cubic-bezier(.22, 1.18, .36, 1)" });
+  });
+}
+function sheetTo(name, v = 0) { setSnap(snapFor(name)); if (wide()) return; if (sh.target !== name) buzz(4); sh.target = name; sh.v = v; if (!sh.raf) sh.raf = requestAnimationFrame(sheetStep); atlasRefit(); }
 let shLast = 0;
 function sheetStep(now) {
   sh.raf = 0;
@@ -75,21 +97,42 @@ function sheetStep(now) {
   if (Math.abs(sh.y - goal) > 0.4 || Math.abs(sh.v) > 4) sh.raf = requestAnimationFrame(sheetStep); else { sh.y = goal; setSheetY(goal); shLast = 0; }
 }
 function sheetPointer() {
-  const grabs = [$(".grab"), $("#player"), $(".dock")];
+  // The Sort + filter rail rides the sheet's top edge and reads as its header, so a vertical drag there moves the
+  // sheet too. Its chips still scroll sideways (touch-action: pan-x) and still tap: the drag only claims the
+  // pointer after 8 px of mostly-vertical travel, and then eats the click the chip would get on release.
+  const grabs = [$(".grab"), $("#player"), $(".dock"), rail];
+  const eatClick = () => { const f = (e) => { e.stopPropagation(); e.preventDefault(); }; addEventListener("click", f, { capture: true, once: true }); setTimeout(() => removeEventListener("click", f, { capture: true }), 450); };
+  const grabbed = (on) => sheet.classList.toggle("grabbed", on);
   const down = (e) => {
-    if (wide() || e.target.closest("button, input, .scrub, .filt")) return;
-    sh.drag = { x0: e.clientX, player: !!e.target.closest("#player"), y0: e.clientY, s0: sh.y, t: performance.now(), y: e.clientY, v: 0, moved: false };
-    e.currentTarget.setPointerCapture(e.pointerId); cancelAnimationFrame(sh.raf); sh.raf = 0;
+    const onRail = e.currentTarget === rail;
+    if (wide() || sh.drag || (onRail ? e.target.closest("#sortmenu, #sortbtn") || sm.open : e.target.closest("button, input, .scrub, .filt"))) return; // the Sort pill keeps its own hold-and-slide
+    sh.drag = { x0: e.clientX, player: !!e.target.closest("#player"), y0: e.clientY, s0: sh.y, t: performance.now(), y: e.clientY, v: 0, moved: false, rail: onRail, pending: onRail };
+    if (onRail) return;
+    e.currentTarget.setPointerCapture(e.pointerId); cancelAnimationFrame(sh.raf); sh.raf = 0; grabbed(true);
   };
   const move = (e) => {
     const d = sh.drag; if (!d) return;
+    if (d.pending) {
+      const ax = Math.abs(e.clientX - d.x0), ay = Math.abs(e.clientY - d.y0);
+      if (heldGesture || (ax > 8 && ax > ay)) { sh.drag = null; return; } // a held chip, or a sideways swipe: the row scrolls
+      if (ay < 8) return;
+      d.pending = false; d.y0 = d.y = e.clientY; d.s0 = sh.y; d.t = performance.now();
+      e.target.setPointerCapture?.(e.pointerId); cancelAnimationFrame(sh.raf); sh.raf = 0; grabbed(true); eatClick();
+    }
     const now = performance.now(), dy = e.clientY - d.y0; if (Math.abs(dy) > 4) d.moved = true;
     d.v = ((e.clientY - d.y) / Math.max(1, now - d.t)) * 1000; d.y = e.clientY; d.t = now;
     const S = snaps(); let y = d.s0 + dy; if (y < S.full) y = S.full - (S.full - y) * 0.25; if (y > S.peek) y = S.peek + (y - S.peek) * 0.25; // rubber band
     sh.y = y; setSheetY(y);
+    // The player's density steps at the midpoints between snaps, with a detent tick, so the controls grow under
+    // the finger instead of popping in after release.
+    const near = y > (S.peek + S.half) / 2 ? "peek" : y > (S.half + S.full) / 2 ? "half" : "full", snap = snapFor(near);
+    if (DENSITY[sheet.dataset.snap] !== DENSITY[snap]) { setSnap(snap); haptic("detent"); }
   };
   const up = (e) => {
     const d = sh.drag; sh.drag = null; if (!d) return;
+    grabbed(false);
+    if (d.rail && d.pending) return; // a tap on a chip stays a tap
+    if (d.rail && !d.moved) return sheetTo(sh.target);
     // Swipe the player sideways: next / previous, the title sliding out the way it was thrown.
     const dx = e.clientX - d.x0, dy = e.clientY - d.y0;
     if (d.player && Math.abs(dx) > 56 && Math.abs(dx) > 1.6 * Math.abs(dy)) { sheetTo(sh.target); haptic("select"); const pt = $("#pt"); pt.classList.remove("sw-l", "sw-r"); void pt.offsetWidth; pt.classList.add(dx < 0 ? "sw-l" : "sw-r"); return step(dx < 0 ? 1 : -1); }
@@ -123,17 +166,17 @@ const A = createAtlas({
     pressRing.hide(); if (!n) return;
     haptic("keep");
     if (n.level === 1) { toggleGroup(n.feel); state.view = "library"; like = null; const nm = grp(n.feel)?.name ?? n.feel; toast(groupOn(n.feel) ? `Only ${nm.toLowerCase()} · hold again to undo` : `${nm} filter off`); return run({ fly: true }); }
-    A.focus(n.id); if (n.level >= 1) scrollToGroup(n.feel);
+    A.focus(n.id); showNode(n);
   },
   onDetent: () => haptic("detent"),
   onCamera: () => layerCam(),
   onLayer: (k) => { buzz(6); mixAct("solo", k); },
   onTap: (n) => {
-    if (!n) { if (A.focusId !== "root") A.focus(A.graph.byId.get(A.focusId)?.parent?.id ?? "root"); return; } // empty tap steps out
+    if (!n) { if (A.focusId !== "root") { const up = A.graph.byId.get(A.focusId)?.parent ?? A.graph.root; A.focus(up.id); showNode(up); } return; } // empty tap steps out
     buzz(5);
     if (n.level === 4) return select(n.id, { play: true, fly: true, view: "track" });
-    A.focus(n.id === A.focusId ? n.parent?.id ?? "root" : n.id);
-    if (n.level >= 1) scrollToGroup(n.feel);
+    const to = n.id === A.focusId ? n.parent ?? A.graph.root : n;
+    A.focus(to.id); showNode(to);
   },
 });
 const colorOfNode = (n) => (org ? grp(n.feel)?.night : feelById[n.feel]?.night) ?? null;
@@ -400,6 +443,7 @@ async function run({ fly = false, scroll = true } = {}) {
 }
 q.addEventListener("input", () => { like = null; state.view = "library"; clearTimeout(debounce); debounce = setTimeout(() => run({ fly: true }), 180); });
 q.addEventListener("focus", () => { warmModel(); if (!wide()) sheetTo("full"); }); // the keyboard takes the bottom; results go above it
+q.addEventListener("blur", () => setSnap(snapFor(sh.target))); // done searching: the full player comes back
 q.addEventListener("keydown", (e) => { if (e.key === "Enter") { q.blur(); run({ fly: true }); if (state.q) searchWeb(true); } if (e.key === "Escape") { q.value = ""; like = null; run({ fly: true }); q.blur(); } });
 $("#clear").onclick = () => { q.value = ""; like = null; run({ fly: true }); };
 
@@ -443,6 +487,8 @@ function renderBody(scroll = true) {
   if (state.view === "community") return paint(communityHTML(), scroll);
   if (state.view === "library" && (state.browse !== "feel" || state.open)) return paint(browseHTML(), scroll);
   let html = browseBar();
+  const sn = scope && !like && !state.q && A.graph.byId.get(scope);
+  if (sn) return paint(html + scopeHTML(sn, hits), scroll); // a scoped page opens on its own heading
   const label = like ? `Sounds like “${esc(like.title)}”` : state.q ? `“${esc(state.q)}”` : state.feels.size || state.bands.size || state.cc0 || state.picksOnly ? "Filtered" : "Every track";
   html += `<div class="sum"><b>${label}</b><span>${hits.length.toLocaleString()} ${hits.length === 1 ? "track" : "tracks"}${result.ranked ? (like?.f ? " · by ear" : qv || like ? " · semantic" : " · words") : ""}</span></div>`;
   // Group by feel (the atlas's first ring); ranked searches keep their order inside each group and
@@ -458,8 +504,8 @@ function renderBody(scroll = true) {
   else for (const g of order) {
     const F = grp(g.f), bpms = g.rows.map((t) => t.bpm).filter(Boolean), more = g.rows.length - LIM;
     // The group's sub-moods as tinted swatches, biggest first: the same shades the atlas draws.
-    const subs = new Map(); for (const t of g.rows) { const [id, name, tint] = sub(t), e = subs.get(id) ?? { name, tint, n: 0 }; e.n++; subs.set(id, e); }
-    const styles = [...subs.values()].sort((a, b) => b.n - a.n).slice(0, 4).map((e) => `<span style="--t:${tinted(g.f, e.tint)}"><i></i>${esc(e.name)}</span>`).join("");
+    const subs = new Map(); for (const t of g.rows) { const [id, name, tint] = sub(t), e = subs.get(id) ?? { name, tint, n: 0, node: `a:${g.f}:${id}` }; e.n++; subs.set(id, e); }
+    const styles = [...subs.values()].sort((a, b) => b.n - a.n).slice(0, 4).map((e) => `<span data-scope="${esc(e.node)}" style="--t:${tinted(g.f, e.tint)}"><i></i>${esc(e.name)}</span>`).join("");
     html += `<section class="grp" data-feel="${g.f}" style="--c:${F.night}"><h3 data-focus="f:${g.f}"><i></i>${F.name}<small>${g.rows.length}${bpms.length ? ` · ${Math.min(...bpms)}–${Math.max(...bpms)} bpm` : ""}</small><em class="subs">${styles}</em></h3>
       ${g.rows.slice(0, g.open ? 400 : LIM).map((t, i) => rowHTML(t, i)).join("")}${more > 0 ? `<button class="more" data-more="${g.f}">Show ${more} more ${F.name.toLowerCase()} tracks</button>` : ""}</section>`;
   }
@@ -690,6 +736,27 @@ body.addEventListener("input", (e) => {
   clearTimeout(tuneT); tuneT = setTimeout(retune, 260); // a pause in the drag is enough to change the song
 });
 
+// A family or style (Rock & Pop, Indie…) scopes the list to its own songs under its own heading; a feel jumps to its
+// group; the root clears the scope. The map and the list always name the same place.
+let scope = null;
+const scopeTracks = (n) => (n.level === 3 ? n.tracks : n.children.flatMap((c) => c.tracks ?? []));
+function showNode(n) {
+  const was = scope; scope = n && n.level >= 2 ? n.id : null;
+  if (scope) { if (!wide() && sh.target === "peek") sheetTo("half"); state.view = "library"; state.browse = "feel"; state.open = null; renderViews(); renderBody(true);
+    const hd = body.querySelector(".bhead.scope"); if (hd) body.scrollTop = hd.offsetTop - 10; return; } // open on its heading, the mode bar just above
+  if (was) { if (state.view === "library") renderBody(true); }
+  if (n?.level === 1) scrollToGroup(n.feel);
+}
+function scopeHTML(n, hits) {
+  const ids = new Set(scopeTracks(n).map((t) => t.id)), rows = hits.filter((h) => ids.has(h.t.id)).map((h) => h.t);
+  const top = n.parent?.level === 2 ? n.parent.parent : n.parent, F = grp(n.feel), bpms = rows.map((t) => t.bpm).filter(Boolean);
+  const path = [top?.name, n.level === 3 ? n.parent.name : null].filter(Boolean).map(esc).join(" · ");
+  const kids = n.level === 2 && n.children.length > 1 ? `<em class="subs scopes">${n.children.map((c) => `<span data-scope="${esc(c.id)}" style="--t:${tinted(n.feel, c.tint)}"><i></i>${esc(c.name)}</span>`).join("")}</em>` : "";
+  return `<div class="bhead scope" style="--c:${F?.night ?? "var(--ink)"}"><button class="bback" data-scope="${esc(n.parent?.id ?? "root")}" aria-label="Back to ${esc(n.parent?.name ?? "every track")}">‹ ${esc(n.parent?.name ?? "Every track")}</button>
+    <h2>${esc(n.name)}</h2><p>${path ? `${path} · ` : ""}${rows.length} ${rows.length === 1 ? "song" : "songs"}${bpms.length ? ` · ${Math.min(...bpms)}–${Math.max(...bpms)} bpm` : ""}</p>${kids}</div>
+    <section class="grp scoped" data-scope-id="${esc(n.id)}" style="--c:${F?.night ?? "var(--ink)"}">
+    ${rows.length ? rows.map((t, i) => rowHTML(t, i)).join("") : `<div class="empty">No ${esc(n.name)} tracks match these filters.</div>`}</section>`;
+}
 function scrollToGroup(feel) { if (state.view !== "library") setView("library", false); const g = body.querySelector(`.grp[data-feel="${feel}"]`); if (g) { if (!wide() && sh.target === "peek") sheetTo("half"); body.scrollTo({ top: g.offsetTop - 8, behavior: reduced ? "auto" : "smooth" }); } }
 
 body.addEventListener("click", async (e) => {
@@ -702,6 +769,7 @@ body.addEventListener("click", async (e) => {
   const row = e.target.closest(".trk");
   if (row && row.closest("[data-blist]")) { buzz(5); return row.dataset.id === state.sel && state.plist?.id?.startsWith("page:") ? togglePlay() : playPage(row.dataset.id); }
   if (row) { buzz(5); const id = row.dataset.id; return id === state.sel ? togglePlay() : select(id, { play: true, fly: true, keepScroll: true, from: state.view, tuned: !!row.closest(".tunes") }); }
+  const sc = e.target.closest("[data-scope]"); if (sc) { e.stopPropagation(); buzz(4); const n = A.graph.byId.get(sc.dataset.scope) ?? A.graph.root; A.focus(n.id); return showNode(n); }
   const h = e.target.closest("[data-focus]"); if (h) { buzz(4); return A.focus(h.dataset.focus); }
   const desc = e.target.closest(".desc"); if (desc) return desc.classList.toggle("open");
   const more = e.target.closest("[data-more]"); if (more) { more.outerHTML = (result.hits.filter((x) => grpOf(x.t) === more.dataset.more).slice(result.ranked ? 40 : 30).map((x, i) => rowHTML(x.t, i)).join("")); return; }
@@ -858,6 +926,9 @@ function renderPlayer() {
   if (fresh) nowPlaying(t);
   if (fresh && !reduced && !pt.classList.contains("sw-l") && !pt.classList.contains("sw-r")) { pt.classList.remove("in"); void pt.offsetWidth; pt.classList.add("in"); }
   pt.innerHTML = t ? `<b>${esc(t.title)}</b><small>${bpmOf(t) ? `${bpmOf(t)} bpm · ` : ""}${t.f?.camelot ? `${t.f.camelot} · ` : ""}${esc(t.author)}</small>` : `<b>Tap a dot</b><small>to hear it</small>`; // the header already names the app and the count; #pt is ~80 px wide at 360
+  // The comfortable player's detail line (hidden at peek): what kind of song this is and whether you may use it.
+  const F = t && feelById[t.feel], sty = t && styleName(t.family, t.style);
+  $("#pm").innerHTML = t ? [F && `<span class="f"><i></i>${esc(F.name)}</span>`, sty && `<span>${esc(sty)}</span>`, t.dur && `<span>${mmss(t.dur)}</span>`, t.license && `<span class="cc">${esc(t.license)}</span>`].filter(Boolean).join("") : `<span>Drag the map to wander · search a vibe</span>`;
   $("#pp").innerHTML = audio.paused ? ICON.play : ICON.pause;
   $("#ph").classList.toggle("on", !!t && state.picks.has(t.id));
   const lk = t && social.room.likes[t.id]; $("#ph").dataset.n = lk ? social.compact(lk) : "";
@@ -938,7 +1009,7 @@ addEventListener("keydown", (e) => {
   if (e.key === "ArrowUp" || e.key === "k") step(-1);
   if (e.key === "ArrowRight" && audio.duration) audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
   if (e.key === "ArrowLeft") audio.currentTime = Math.max(0, audio.currentTime - 5);
-  if (e.key === "Escape") { A.focus("root"); }
+  if (e.key === "Escape") { A.focus("root"); showNode(null); }
 });
 
 // --- url state & sharing ------------------------------------------------------------------------
@@ -1088,7 +1159,10 @@ async function copy(text) {
 }
 
 // --- boot ---------------------------------------------------------------------------------------
-{ const ro = new ResizeObserver(() => { measure(); if (!wide() && !sh.drag) sheetTo(sh.target); atlasRefit(); }); ro.observe($(".top")); ro.observe($(".dock")); ro.observe(rail); } // fonts load, lens row fills in
+{ const ro = new ResizeObserver(() => { measure(); if (!wide() && !sh.drag) sheetTo(sh.target); atlasRefit(); }); ro.observe($(".top")); ro.observe($(".dock")); ro.observe(rail); }  // fonts load, lens row fills in
+// The player changes height with its density step: re-measure so peek still ends at the view switch. Only the
+// sheet re-aims; the map stays put (a title wrapping to two lines must not move the camera).
+new ResizeObserver(() => { measure(); if (!wide() && !sh.drag && !sh.raf) sh.raf = requestAnimationFrame(sheetStep); }).observe($("#player"));
 addEventListener("resize", () => { measure(); if (!wide()) { sh.y = snaps()[sh.target]; setSheetY(sh.y); } else { sheet.style.transform = rail.style.transform = ""; } atlasRefit(); });
 // Phones get the whole screen: browsers only grant fullscreen inside a user gesture, so a tap
 // anywhere asks for it. Skipped when installed (the manifest already launches fullscreen). Leaving it
