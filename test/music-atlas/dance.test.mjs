@@ -69,3 +69,20 @@ test("the dance settles as you zoom in", () => {
   // offsets are world px, so on-screen motion is s * damp: it must shrink as you zoom in
   for (let s = fit; s < 3; s += 0.02) assert.ok((s + 0.02) * zoomDamp(s + 0.02, fit) < s * zoomDamp(s, fit) + 1e-9, `screen motion grows at ${s}`);
 });
+
+test("tufts follow the arm with inertia: bunch on the thrust, space out when it stops, settle back", async () => {
+  const { tuft } = await import("../../web/src/music-atlas/dance.js");
+  const run = (dt) => { let T = tuft(null, 1, 0), lo = 0, hi = 0, tHi = 0; const out = [];
+    for (let t = 0; t < 3; t += dt) { const k = t < 0.15 ? 1 + 0.06 * (t / 0.15) : 1.06; T = tuft(T, k, 0, dt); out.push(T.spread);
+      if (T.spread < lo) lo = T.spread; if (T.spread > hi) { hi = T.spread; tHi = t; } }
+    return { lo, hi, tHi, end: out.at(-1) }; };
+  const a = run(1 / 60), b = run(1 / 30), c = run(1 / 120);
+  assert.ok(a.lo < -0.02, "thrust outward: the tuft lags and bunches");
+  assert.ok(a.hi > 0.05 && a.tHi > 0.15, "arm stops: the tuft flies on and spaces out");
+  assert.ok(Math.abs(a.end) < 0.005, "the spring brings it back together");
+  for (const x of [b, c]) assert.ok(Math.abs(x.hi - a.hi) < 0.01, "same motion at any frame rate");
+  let T = tuft(null, 1, 0); for (let i = 0; i < 120; i++) T = tuft(T, 1, 0, 1 / 60);
+  assert.equal(T.spread, 0, "at rest it stays at rest");
+  T = tuft(null, 1, 0); for (let i = 0; i < 60; i++) T = tuft(T, 1.2, 0.1, 5); // a backgrounded tab's huge dt
+  assert.ok(Number.isFinite(T.y) && Math.abs(T.y - 1.2) < 1e-3 && Math.abs(T.a - 0.1) < 1e-3, "stable with long frames");
+});

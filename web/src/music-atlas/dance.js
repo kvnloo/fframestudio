@@ -84,5 +84,24 @@ export function pose(lens, gid, gi, pos, tune = {}) {
   return { ...REST, k: 1 + 0.02 * kick };
 }
 
+// Tufts: the tracks at the end of an arm ride on springy stalks from its tip (the style node), so they carry
+// momentum instead of moving rigidly with the arm. Per group, a damped spring (TUFT.hz, damping ratio TUFT.zeta)
+// chases the arm's radial scale k and sway da. The arm thrusts out: the tuft lags and bunches against the tip.
+// The arm stops: the tuft flies on past it and its stalks stretch, so the balls space out (spread > 0), then the
+// spring pulls them back together with one small overshoot. Sway does the same sideways (the tuft trails, then
+// swings through). Fixed 4 ms substeps keep it the same at 30, 60 or 120 fps; a step in k is just a stretched spring.
+export const TUFT = Object.freeze({ hz: 2.2, zeta: 0.32, gain: 8 });
+export function tuft(s, k, da, dt) {
+  if (!s) return { y: k, v: 0, a: da, va: 0, spread: 0 };
+  const w = TAU * TUFT.hz, c = 2 * TUFT.zeta * w, t = Math.min(Math.max(dt, 0), 0.1), n = Math.ceil(t / 0.004), h = n ? t / n : 0;
+  for (let j = 0; j < n; j++) { // semi-implicit Euler: stable at w*h ~ 0.06
+    s.v += (w * w * (k - s.y) - c * s.v) * h; s.y += s.v * h;
+    s.va += (w * w * (da - s.a) - c * s.va) * h; s.a += s.va * h;
+  }
+  const e = TUFT.gain * (s.y - k); // stalks are cords: they stretch freely but barely push, so bunching is half as strong
+  s.spread = Math.max(-0.15, Math.min(0.5, e < 0 ? e / 2 : e));
+  return s;
+}
+
 // Stable per-dot seed in [0,1) from a track id.
 export function seedOf(id) { let h = 2166136261; for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619); return (h >>> 0) / 4294967296; }

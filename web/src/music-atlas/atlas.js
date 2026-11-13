@@ -3,7 +3,7 @@
 // pinch and fly at 60 fps on a phone. Tracks sit in the outer band of their style's wedge, slow on
 // the inside, fast on the outside, so BPM reads as distance from the centre.
 import { FEELS, FAMILIES, FAMILY_TINT, feelById, shade } from "./taxonomy.js";
-import { pose, seedOf, zoomDamp } from "./dance.js";
+import { pose, seedOf, tuft, zoomDamp } from "./dance.js";
 
 const ROWS = 7, SPACING = 15, GAP_FEEL = 5, GAP_STYLE = 1.4, DOT = 4.4;
 const TAU = Math.PI * 2;
@@ -92,7 +92,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   // Dance: while a track plays, every ring-1 group moves to its beat in the current sort's vocabulary
   // (dance.js). `dk` fades the dance in on play and out on pause; `poses` is this frame's per-group pose.
   // `motion` is the owner's toggle; `lblK` fades canvas labels out while the map is actually dancing.
-  let dk = 0, poses = null, dpos = 0, motion = true, lblK = 1;
+  let dk = 0, poses = null, tufts = new Map(), dpos = 0, motion = true, lblK = 1;
   // Formation: the leaves fly onto a QR code's dark modules (the TV's pairing code, drawn with the map's own
   // dots on a light plate so phone cameras read it), the rest of the map fades out. `fe` is the eased mix.
   let form = null, fe = 0;
@@ -345,7 +345,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     const dm = (1 - fe) * dk * zoomDamp(cam.s, Math.min(W, H) * 0.95 / (2 * (g.outer + 30))); // vs the whole-map scale: zoomed in, settle and stop forcing redraws
     lblK = lite ? 1 - fe : (1 - clamp(dm * 4, 0, 1)) * (1 - fe); // dancing: labels step aside; paused, motion off or zoomed in: back (a TV's skeleton holds still, so its labels stay)
     const settled = !busy; // nothing but the dance moves this frame
-    if (dm < 0.003) poses = null; else { poses = dancePoses(dm); busy = true; }
+    if (dm < 0.003) { poses = null; tufts.clear(); } else { poses = dancePoses(dm, dt / 1000); busy = true; }
     // ...and it steps every other frame: the tracks' JS is ~11 ms a frame on the QN85B's CPU, so stepping every frame
     // dropped every other one anyway (24 ms frames); stepping on alternate frames holds the screen at 60 fps (16.8 ms).
     if (fly && poses && settled && flyOn && (step = !step)) { kick(); return; }
@@ -354,7 +354,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     if (busy || (playing && !playing.paused)) kick();
   }
 
-  function dancePoses(dm) {
+  function dancePoses(dm, dts) {
     const b = playing?.beat?.(); if (!b) return null;
     const pn = g.byId.get(playing.id), c = pn?.t?.f?.camelot, lensId = org?.id ?? "feel";
     const tune = { bpm: 60 / b.len, key: c ? +String(c).slice(0, -1) : null };
@@ -362,7 +362,9 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     const out = new Map();
     for (const f of g.root.children) {
       const p = pose(lensId, f.feel, org?.byId?.[f.feel]?.i ?? 0, dpos, tune), m = dm * (pn && pn.feel === f.feel ? 1.3 : 1);
-      out.set(f.feel, { k: 1 + (p.k - 1) * m, da: p.da * m, spread: p.spread * m, hop: p.hop * m, jit: p.jit * m, tw: p.tw * m, ac: f.a, step: Math.floor(dpos * 4) });
+      const k = 1 + (p.k - 1) * m, da = p.da * m, T = tufts.get(f.feel) ?? tufts.set(f.feel, tuft(null, k, da)).get(f.feel);
+      tuft(T, k, da, dts);
+      out.set(f.feel, { k, da, spread: p.spread * m, hop: p.hop * m, jit: p.jit * m, tw: p.tw * m, ac: f.a, step: Math.floor(dpos * 4), T });
     }
     return out;
   }
@@ -378,8 +380,9 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       const x = n.dx * gl[n.level], y = n.dy * gl[n.level], P = poses && (lite ? n.level === 4 : n.level > 0) ? poses.get(n.feel) : null;
       if (!P) { n.vx = x; n.vy = y; n.va = n.a; n.vr = 1; continue; }
       if (n.px !== x || n.py !== y) { n.px = x; n.py = y; n.pr = Math.hypot(x, y); n.pa = Math.atan2(y, x); }
-      let r = n.pr * P.k, a = n.pa;
-      a += P.da + wrap(a - P.ac) * P.spread;
+      const T = n.level === 4 ? P.T : null; // tracks swing on their tuft's spring, not rigidly with the arm
+      let r = n.pr * (T ? T.y : P.k), a = n.pa;
+      a += (T ? T.a : P.da) + wrap(a - P.ac) * P.spread;
       n.va = n.a == null ? a : n.a + P.da + wrap(n.a - P.ac) * P.spread; n.vr = 1;
       let jx = 0, jy = 0;
       if (n.level === 4) {
@@ -389,6 +392,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
         if (P.tw) n.vr = 1 + 0.6 * P.tw * (0.5 + 0.5 * Math.sin(TAU * (dpos / 4 + s)));
       }
       n.vx = Math.cos(a) * r + jx; n.vy = Math.sin(a) * r + jy;
+      if (T?.spread) { const p = n.parent, e = 1 + T.spread * (0.8 + 0.4 * n.seed); n.vx = p.vx + (n.vx - p.vx) * e; n.vy = p.vy + (n.vy - p.vy) * e; } // stalks stretch from the tip: every gap in the tuft grows alike
     }
     if (!fe) return;
     const F = formGeom();
