@@ -53,6 +53,10 @@ class StudioMusicTest(unittest.TestCase):
         self.assertEqual(self.source.read_bytes(), b"hi")
         self.assertEqual(music, {"id": "t1", "title": "X"})
         self.assertIsNot(result, music)
+        self.assertEqual(
+            [path.relative_to(self.project) for path in self.project.rglob("*")],
+            [Path("media"), Path("media/soundtrack.mp3")],
+        )
 
     def test_root_level_studio_missing_file(self):
         music = {"id": "t1"}
@@ -98,6 +102,19 @@ class StudioMusicTest(unittest.TestCase):
             resolve_music(self.base, None, self.project, "sub/page.html"), {}
         )
         self.assertEqual(list(self.project.iterdir()), [])
+
+    def test_missing_id_never_selects_an_unnamed_track(self):
+        tracks = [{"full": "a/T.MP3", "beats": [0.5]}]
+        for catalogue_id in (None, "", 0):
+            with self.subTest(catalogue_id=catalogue_id):
+                tracks[0]["id"] = catalogue_id
+                self.catalogue.write_text(json.dumps(tracks), encoding="utf-8")
+                for music in (None, {}, {"id": catalogue_id}):
+                    with self.subTest(music=music), tempfile.TemporaryDirectory(dir=self.root) as target:
+                        project = Path(target)
+                        result = resolve_music(self.base, music, project, "sub/page.html")
+                        self.assertEqual(result, dict(music or {}))
+                        self.assertEqual(list(project.iterdir()), [])
 
     def test_no_catalogue(self):
         self.catalogue.unlink()

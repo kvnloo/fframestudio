@@ -13,6 +13,8 @@ def resolve_music(base, music, project_dir, studio=None):
     """
     base, project_dir = pathlib.Path(base), pathlib.Path(project_dir)
     result = dict(music or {})
+    if not result.get("id"):
+        return result
     catalogue = base / "music" / "tracks.json"
     if not catalogue.is_file():
         return result
