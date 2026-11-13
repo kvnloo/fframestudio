@@ -1,0 +1,22 @@
+{
+  "name": "Sound Atlas",
+  "short_name": "Sound Atlas",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
+  "orientation": "portrait",
+  "background_color": "#0d1112",
+  "theme_color": "#0d1112",
+  "icons": [
+    {
+      "src": "sound-atlas-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

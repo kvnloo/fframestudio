@@ -1,0 +1,270 @@
+{
+ "version": "sound-atlas-v1",
+ "product": "Sound Atlas: a phone-first atlas of free CC0/CC BY music you can hear, read like an audiophile, steer, remix and share",
+ "users": {
+  "creator": "Kevin and people like him cutting a launch video: needs a song that fits the vibe, its bpm and key, a licence they can use and a credit line, fast",
+  "listener": "a first-time visitor opening a shared link on a phone: should understand the map and be playing music in one tap",
+  "audiophile": "someone who wants the measured truth (key, soundstage, dynamics, stems) and to steer by it"
+ },
+ "fixture_track": "inc-USUAN2000020",
+ "meaningful_anims": [
+  "view-l",
+  "view-r",
+  "pt-in",
+  "sw-l",
+  "sw-r",
+  "breathe",
+  "eq",
+  "pop",
+  "spin",
+  "press-arm",
+  "press-on",
+  "press-out",
+  "wig"
+ ],
+ "meaningful_anims_why": "navigation direction, a new song arriving, the playing pulse and press feedback: these are meant to run on every change. Any other animation firing on a revisit or a steer is a replayed entrance",
+ "widths": [
+  [
+   360,
+   780
+  ],
+  [
+   393,
+   852
+  ],
+  [
+   412,
+   915
+  ]
+ ],
+ "gates": {
+  "note": "Blocking. Measured by score.py on the real build; any failure rejects the round before a critic runs.",
+  "console_errors": 0,
+  "overflow_x_px": 0,
+  "clipped_text": 0,
+  "header_rail_edge_crossers": 0,
+  "e2e_errors": 0,
+  "unit_tests": "node --test test/music-atlas/ all pass",
+  "licence": "every track CC0 or CC BY; every CC BY track has a copyable credit line",
+  "shared_db": "deployed e2e leaves counters net zero (owner rule)",
+  "min_tap_px": 44,
+  "haptic_gap_ms": 60,
+  "min_pulse_ms": 8,
+  "frame_p95_ms": 20,
+  "ready_s": 3.0,
+  "longtasks": 3,
+  "js_css_kb": 400
+ },
+ "categories": {
+  "owner_cases": {
+   "weight": 3,
+   "scored_by": "code",
+   "what": "Theo-style evals: every past owner correction and every journey failure becomes a pass/fail case; a fixed case may never fail again"
+  },
+  "journey": {
+   "weight": 3,
+   "scored_by": "critic (first-time visitor, phone) + code subchecks",
+   "what": "17 stages from first open to desktop; works 1, rough 0.5, broken 0"
+  },
+  "motion": {
+   "weight": 2,
+   "scored_by": "code + Opus motion panel on film.py filmstrips",
+   "what": "every motion says something (what changed, where it went, that it registered); no hard cuts, no replayed entrances, transform/opacity only, reduced motion honoured, smooth frames"
+  },
+  "haptics": {
+   "weight": 2,
+   "scored_by": "code + owner on the phone",
+   "what": "one pulse per gesture, stronger pulse for a bigger commitment, >= 8 ms, no supersede; holds show the ring"
+  },
+  "meaning": {
+   "weight": 2,
+   "scored_by": "code + Opus panel",
+   "what": "each channel means one thing (hue = feel, tint = sub-mood, motion = metre, type roles); one colour source; map and pane pair for every section"
+  },
+  "utility": {
+   "weight": 2,
+   "scored_by": "code + creator critic",
+   "what": "the creator job: from cold to a usable song with bpm, key, licence and credit; measured coverage of the catalogue (features, stems)"
+  },
+  "craft": {
+   "weight": 1,
+   "scored_by": "code + Haiku layout/text critics",
+   "what": "44 px targets, WCAG AA contrast, no truncation, plain words, density without clutter"
+  },
+  "perf": {
+   "weight": 1,
+   "scored_by": "code (median of 3 runs for timing)",
+   "what": "time to ready, long tasks, shipped bytes; real-phone smoothness is the owner's call"
+  }
+ },
+ "cases": {
+  "first_open_explains_dots": {
+   "source": "journey 1 (rough): no hint what a dot is",
+   "any_of": [
+    "tap a dot",
+    "each dot",
+    "tap a colour",
+    "tap any dot"
+   ]
+  },
+  "track_card_plain_words": {
+   "source": "journey 8/9 (rough): engineer-only meter lines",
+   "jargon": [
+    "Camelot wheel",
+    "LUFS",
+    "spectral centroid",
+    "RMS"
+   ],
+   "note": "The meter lines (pct, side/mid, crest, LRA) are the audiophile layer the owner asked for, and 'pct' carries its own gloss line (582504d). This case catches unglossed engineer terms in the plain-language parts only."
+  },
+  "credit_or_no_credit_on_card": {
+   "source": "standing rule: every CC BY track carries a copyable credit line"
+  },
+  "search_toast_agrees": {
+   "source": "journey 6 (broken): 'No new … on Openverse' while 108 matches showed"
+  },
+  "chip_at_peek_shows_list": {
+   "source": "journey 5 (rough): chip at peek keeps the sheet down",
+   "note": "Round 2 (raise the sheet to half) passed this case but Opus layout rejected it in both orders at 360 and 393: the map stops being the hero. Next mechanism: keep the sheet down and let the player line name the result."
+  },
+  "radio_shows_next_up": {
+   "source": "journey 16 (rough): next-up song is never shown"
+  },
+  "share_link_opens_whole_app": {
+   "source": "owner: a shared link opens the WHOLE app, no filters ride along"
+  },
+  "one_colour_source": {
+   "source": "owner: legend colours carry into the pane; colour means one thing"
+  },
+  "borrow_keeps_layers_zoom": {
+   "source": "journey 12 (broken): borrow zooms the map out while Layers is on screen"
+  },
+  "fullscreen_hint_clears_rail": {
+   "source": "owner: hint overlapped the rail"
+  },
+  "sort_hold_feedback": {
+   "source": "motion audit: Sort hold felt dead for 435 ms"
+  },
+  "steer_switches_song_mid_drag": {
+   "source": "owner: sliders STEER playback; a list of matches was 'not what I meant'"
+  },
+  "steer_no_entrance_replay": {
+   "source": "owner: slider flash while steering"
+  },
+  "scrub_follows_finger": {
+   "source": "owner: scrub jank"
+  },
+  "hand_pick_ends_tune": {
+   "source": "steer contract"
+  },
+  "idle_hint_fits": {
+   "source": "round 1 review: the first-open hint ellipsized to 'Tap a dot to h…' at 393; #pt is excluded from the generic truncation check because song titles may ellipsize, so the idle line gets its own check at every width"
+  }
+ },
+ "case_backlog": {
+  "note": "Owner corrections not yet automated; add a check before the climb that touches them.",
+  "pins_never_offscreen": "'the heart and cc0 filters are hidden offscreen lol' (covered by the edge gate at 360/393/412)",
+  "rail_two_rows_looks_right": "'lmao.... this looks bad' (needs the vision anchor pair, see README calibration)",
+  "sort_reorganises_not_recolours": "recolouring alone reads as 'selecting does nothing': assert most dots move on a lens change",
+  "similar_is_one_flat_list": "grouping by feel hides cross-feel neighbours",
+  "steered_from_undo_line": "journey 13: say which song you steered from and offer undo",
+  "desktop_chips_not_under_panel": "journey 17: 'Tense' clipped under the side panel",
+  "map_pane_pairing_all_sections": "open ask on #81: only Layers and the meters pair with the map",
+  "accent_is_not_a_feel": "Opus art critic: play button and header audio button use the Tense cyan, so the main action reads as a mood (colour = feel rule)",
+  "no_credit_label_unambiguous": "Opus text critic: 'No credit' reads as 'credit missing' rather than 'no credit line needed'",
+  "no_empty_counts": "Opus text critic: 'Liked 0' shows an empty count",
+  "genre_tags_not_feel_colours": "Opus art (round 2): genre tags (Cinematic, Electronic) and row accent bars use colours from the emotion palette, diluting colour = feel",
+  "map_genre_labels_legible": "Opus art (round 2): grey genre labels on the wheel are low-contrast and collide with dots and the FIRED UP label"
+ },
+ "critics": {
+  "first_time_visitor": {
+   "model": "claude-haiku-5-5 (calibrate first)",
+   "evidence": "phone screenshots per journey stage",
+   "judges": "journey verdicts, plain words, what to tap next"
+  },
+  "creator": {
+   "model": "claude-haiku-5-5 (calibrate first)",
+   "evidence": "screens of the find -> fit -> licence -> credit path",
+   "judges": "could I use this song in my video in under a minute"
+  },
+  "motion_panel": {
+   "model": "claude-opus-5-5",
+   "evidence": "film.py slow-motion filmstrips + scorecard motion numbers; never stills",
+   "judges": "what each motion means, whether it says it, timing, continuity"
+  },
+  "art_director": {
+   "model": "claude-opus-5-5",
+   "evidence": "whole frame + native crops at 393",
+   "judges": "hierarchy, the map as hero, type roles, colour as meaning, density"
+  },
+  "owner": {
+   "evidence": "the phone",
+   "judges": "feel: haptics, smoothness, taste. Final word on every milestone"
+  },
+  "calibration": {
+   "run": "calib-01, 2026-11-12, claude-opus-5-5, 4 layers x 2 orders, fresh one-shot per verdict (~25 s each)",
+   "anchors": {
+    "rail (582504d -> 7f388f2, owner: 'this looks bad')": "360: all 4 layers owner side in both orders. 393: task + art owner side, layout + text split (the defect was 360-specific)",
+    "pins (ed2ea64 -> 582504d, owner: 'filters hidden offscreen')": "task owner side in both orders at both widths; layout/text/art preferred the parent, citing a real regression 582504d introduced ('here now' wrapping to two lines, fixed by 7f388f2), so this anchor is confounded, not a critic miss",
+    "null (same image twice)": "all 4 layers tie in both orders: no position bias"
+   },
+   "result": "Opus passes. No layer ever picked the rejected side of an unconfounded anchor. All 4 layers gate rounds; run them at 360 AND 393 because defects are width-specific; any confident (both-order) regression on any layer rejects the round",
+   "haiku": "not yet calibrated on these anchors; Opus stays the critic until Haiku passes the same set"
+  }
+ },
+ "promotion": {
+  "rule": "one change per round; all gates pass; the targeted category improves; no other category or previously passing case regresses",
+  "timing": "timing metrics compare medians of 3 runs, never single runs (autoresearch #651)",
+  "pairwise": "vision critics compare parent vs candidate side by side in both orders; a split is a tie, and a tie is not a win",
+  "milestone": "every 3 kept rounds: Opus motion + art panels, then a phone checkpoint for the owner",
+  "defect_guard": "the same failure surviving 2 rounds changes mechanism class, not wording",
+  "simplicity": "equal score with less code is a win; a tiny gain that adds ugly code is not",
+  "runs": "score.py runs the interaction suite 3 times: booleans by majority, numbers by median (host load flips single runs)"
+ },
+ "icp": "Kevin and people like him cutting a launch video: needs a song that fits the vibe, its bpm and key, a licence they can use and a credit line, fast. Also: a first-time visitor opening a shared link on a phone: should understand the map and be playing music in one tap.",
+ "jobs": {
+  "find": "find a song that fits a mood or a reference song in under a minute",
+  "judge": "hear it and read its bpm, key, feel and texture at a glance",
+  "use": "know the licence is free (CC0 / CC BY) and copy the credit line",
+  "explore": "wander the map: the map is the hero, the sheet is the instrument panel",
+  "share": "send a link that opens the whole app on that song"
+ },
+ "layers": {
+  "task": {
+   "who": "video creator looking for a free song",
+   "criteria": {
+    "next_step": "It is obvious what to tap to find, hear or filter songs; key filters (liked, free/no-credit, sort, moods) are on screen, not hidden",
+    "answers": "The screen shows what a creator needs to decide (feel, tempo, licence) without digging",
+    "reach": "Primary controls sit in thumb reach and are large enough to hit"
+   }
+  },
+  "layout": {
+   "who": "senior product designer",
+   "criteria": {
+    "hierarchy": "One clear focal point (the map); the sheet and rail recede but stay legible",
+    "fit": "Nothing cut off, squeezed into stubs, crowded or crossing the screen edge; rows have room to breathe",
+    "grouping": "Related controls grouped; rows read as deliberate, aligned rhythm"
+   }
+  },
+  "text": {
+   "who": "copy editor who hates jargon",
+   "criteria": {
+    "plain": "Labels are plain words a non-engineer understands",
+    "legible": "Text is readable at phone size with good contrast; no important label truncated",
+    "density": "Information dense without clutter; no redundant words"
+   }
+  },
+  "art": {
+   "who": "art director with high taste (Teenage Engineering, Linear, Apple Music)",
+   "criteria": {
+    "meaning": "Colour, shape and motion cues each mean one thing (colour = feel) and read consistently",
+    "craft": "Spacing, alignment, type roles and edges feel intentional and premium, not default",
+    "character": "Has a distinct point of view without sacrificing clarity"
+   }
+  }
+ },
+ "models": {
+  "critic": "anthropic claude-opus-5-5 via hermes oneshot (owner: 'try opus critics'); haiku only after it passes the same calibration",
+  "rules": "GPT text models only via fx/pi; Gemini only via agy; never let the builder judge its own round"
+ }
+}
