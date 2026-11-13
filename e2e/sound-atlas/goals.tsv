@@ -1,0 +1,20 @@
+d-first-open	desktop	You have never seen this site. Find out what it is and get a song playing using only what the screen tells you. Report anything confusing, any dead click, and anything that looks broken or unreadable.
+p-first-open	phone	You have never seen this site and you are on a phone. Find out what it is and get a song playing. Report anything you cannot reach, read, or tap, and anything clipped or overlapping.
+d-search	desktop	Search for a mood like "rainy night" and then "rain". Judge whether the results match what you typed, whether any message contradicts what is on screen, and whether clearing the search brings everything back.
+p-search	phone	On a phone, search for "piano" and play the second result. Check that the playing song is the one you tapped and that the player shows its name.
+d-sort-filter	desktop	Open the sort menu and try every sort. For each, check that the map and the list agree and labels are understandable. Then tap a filter chip and check the list really narrows and you can undo it.
+p-filter	phone	On a phone, tap a feeling chip like "Sad". Check the list shows sad tracks, the count is right, and you can get back to all tracks.
+d-player	desktop	Play a song, pause, skip next twice, go previous. Check the player always names the right song, the time moves, and the play/pause button matches what you hear.
+d-track-detail	desktop	Play a song and open its Track view. Read everything there. Report text that is jargon, cut off, overlapping, or controls that do nothing.
+d-layers	desktop	Play a song, open its Track view and find the layers / stems. Solo one stem, then borrow a layer from another song. Check the map and the panel stay consistent and nothing jumps away.
+d-similar	desktop	Play a song and open Similar. Play one of the similar songs. Check it really plays and that you can tell why it is similar.
+d-pick-share	desktop	Like (pick) two songs, then use Share. Check you get a link and QR code, and that the Liked filter shows exactly your two songs.
+p-pick-share	phone	On a phone, like a song and open Share. Check the share sheet fits on screen, the QR code is visible, and you can close it.
+d-community	desktop	Open the Community tab. Try everything there: playlists, radio, who is listening. Report anything empty, broken, or confusing.
+d-radio	desktop	Start Radio. Let it play and skip. Check you can tell radio is on, what is next, and how to stop it.
+d-cast	desktop	Try "Play on a TV". Report what happens: is it clear whether casting is possible and what to do next?
+d-byom	desktop	Find "Bring your own music" and follow it as far as you can without real files. Report anything unclear or broken.
+d-deeplink	desktop	Open the site at /song/inspired-by-kevin-macleod. Check that it lands on that song, makes clear how to play it, and plays it.
+p-deeplink	phone	On a phone, open /song/inspired-by-kevin-macleod. Check it lands on that song and you can play it with one tap.
+d-keyboard	desktop	Use only the keyboard (Tab, Enter, Space, arrows, Escape) to search, play a song, and open its details. Report anything you cannot reach or any focus you cannot see.
+d-break-it	desktop	Try to break the app: rapid clicks on play/next, very long or odd search text, toggling every filter, switching tabs fast. Report errors, freezes, wrong song names, or stuck states.

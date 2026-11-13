@@ -1,0 +1,5 @@
+node_modules
+runs
+.e2e
+site
+site-canary
