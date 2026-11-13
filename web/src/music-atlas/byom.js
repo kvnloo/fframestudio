@@ -198,8 +198,47 @@ export async function spotifyPlay(t, posMs = 0) {
 }
 export const spotifyPause = () => sp("/me/player/pause", { method: "PUT" }).catch(() => null);
 
+// --- a playlist from any app (/api/import) ------------------------------------------------------
+// A Spotify / YouTube / Apple Music / Tidal / Deezer link, or pasted "Artist - Title" lines (any app's export,
+// e.g. Exportify or TuneMyMusic CSV). Only the words are kept (IndexedDB "imports"). Each song plays from the
+// catalogue when it's there, else the tiny YouTube player (ytmini.js) finds it. Ids hash artist|title, so the
+// same song from two playlists is one dot. Spotify's terms bar its data from ML models: words only, as above.
+const key = (s) => String(s ?? "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+export const songKey = (artist, title) => key(artist) + "|" + key(String(title).replace(/\s*[([](feat|ft|with)\.?\s[^)\]]*[)\]]|\s+(feat|ft)\.?\s.*$/i, ""));
+const importedTrack = (it, words) => mineTrack({ id: "yt-" + hash(songKey(it.artist, it.title)), provider: "yt", title: it.title, author: it.artist, dur: it.dur, yt: it.yt || null, noEmbed: words });
+export function parseSongList(text) {
+  const rows = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean), cells = (l) => (l.includes("\t") ? l.split("\t") : l.match(/("([^"]|"")*"|[^,]*)(,|$)/g).map((c) => c.replace(/,$/, "").replace(/^"|"$/g, "").replace(/""/g, '"').trim()));
+  const head = rows[0] && /track|title|song/i.test(rows[0]) && /artist/i.test(rows[0]) ? cells(rows[0]).map((h) => h.toLowerCase()) : null;
+  if (head) { const ti = head.findIndex((h) => /track name|title|song/.test(h)), ai = head.findIndex((h) => /artist/.test(h)); return rows.slice(1).map(cells).map((c) => ({ title: c[ti], artist: (c[ai] || "").replace(/;/g, ", ") })).filter((t) => t.title); }
+  return rows.filter((l) => !l.startsWith("#")).map((l) => { l = l.replace(/^\d{1,3}[.)]\s+/, ""); const by = l.match(/^(.+?)\s+by\s+(.+)$/i), m = l.split(/\s+[-–—]\s+/); return by ? { title: by[1], artist: by[2] } : m.length > 1 ? { artist: m[0], title: m.slice(1).join(" - ") } : { title: l, artist: "" }; });
+}
+const fromImport = (im) => { const tracks = im.tracks.map((it) => importedTrack(it, im.source === "spotify")); return { tracks, playlists: [{ id: im.id, name: im.name, ids: [...new Set(tracks.map((t) => t.id))] }] }; };
+export async function importPlaylist(input, api = "/api/import") {
+  const link = /^https?:\/\/\S+$/.test(input.trim());
+  let im;
+  if (link) { const r = await fetch(`${api}?url=${encodeURIComponent(input.trim())}`), j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Couldn't read that link"); im = j; }
+  else im = { source: "text", name: "Pasted songs", tracks: parseSongList(input) };
+  if (!im.tracks?.length) throw new Error("No songs in that");
+  im.id = "im-" + hash(link ? input.trim() : im.tracks.map((t) => t.artist + t.title).join("|"));
+  const all = ((await kv.get("imports")) ?? []).filter((x) => x.id !== im.id); await kv.set("imports", [...all, im]);
+  return fromImport(im);
+}
+// Songs the catalogue already has play from it (and through Aural); only the rest go to YouTube.
+export function matchCatalog(r, catalog) {
+  const yts = r.tracks.filter((t) => t.provider === "yt"); if (!yts.length) return r;
+  const have = new Map(catalog.filter((t) => t.src !== "mine").map((t) => [songKey(t.author, t.title), t.id])), swap = new Map();
+  for (const t of yts) { const id = have.get(songKey(t.author, t.title)); if (id) swap.set(t.id, id); }
+  return swap.size ? { ...r, tracks: r.tracks.filter((t) => !swap.has(t.id)), playlists: r.playlists.map((p) => ({ ...p, ids: p.ids.map((i) => swap.get(i) ?? i) })) } : r;
+}
+// The YouTube id a search found, kept so the next play skips the search.
+export async function rememberVideo(trackId, yt) {
+  const all = (await kv.get("imports")) ?? []; let hit = false;
+  for (const im of all) for (const it of im.tracks) if ("yt-" + hash(songKey(it.artist, it.title)) === trackId && it.yt !== yt) { it.yt = yt; hit = true; }
+  if (hit) await kv.set("imports", all);
+}
+
 // --- restore on boot -----------------------------------------------------------------------------
-export const sources = async () => ({ dir: await kv.get("dir"), files: ((await kv.get("files")) ?? []).length, plex: !!(await kv.get("plex")), spotify: !!(await kv.get("spotify")) });
+export const sources = async () => ({ dir: await kv.get("dir"), files: ((await kv.get("files")) ?? []).length, plex: !!(await kv.get("plex")), spotify: !!(await kv.get("spotify")), imports: ((await kv.get("imports")) ?? []).length });
 // Everything kept from earlier visits. A folder whose permission lapsed reports `needsFolder` (re-grant needs a tap).
 export async function restore(onProgress) {
   const out = { tracks: [], playlists: [], needsFolder: false, errors: [] };
@@ -209,6 +248,7 @@ export async function restore(onProgress) {
   const files = (await kv.get("files")) ?? []; if (files.length) add(await filesToTracks(files.map((f) => [f.webkitRelativePath || f.name, () => f]), onProgress));
   const plex = await kv.get("plex"); if (plex) await plexLibrary(plex.token).then(add, (e) => out.errors.push("Plex: " + e.message));
   if (await kv.get("spotify")) await spotifyLibrary().then(add, (e) => out.errors.push("Spotify: " + e.message));
+  for (const im of (await kv.get("imports")) ?? []) add(fromImport(im));
   return out;
 }
 export async function regrantFolder(onProgress) { const dir = await kv.get("dir"); if ((await dir.requestPermission({ mode: "read" })) !== "granted") throw new Error("Folder access not allowed"); return scanFolder(dir, onProgress); }

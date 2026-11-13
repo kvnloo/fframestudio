@@ -706,10 +706,13 @@ function pick(id) {
 }
 
 // --- your own music (byom.js, loaded on first use; never on the TV) -----------------------------------
-const byom = () => import("./byom.js");
+let byomMod = null, ytMod = null;
+const byom = () => import("./byom.js").then((m) => (byomMod = m));
+const ytm = () => import("./ytmini.js").then((m) => (ytMod = m));
 const mine = { plists: [], regrant: false, busy: "" };
 const mineIds = () => all.filter((t) => t.src === "mine").map((t) => t.id);
-function addMine({ tracks, playlists }, from) {
+function addMine(r, from) {
+  const { tracks, playlists } = byomMod ? byomMod.matchCatalog(r, all) : r; // imported songs the catalogue has play from it
   for (const t of tracks) { const o = byId.get(t.id); if (o?.src === "mine") Object.assign(o, { audio: t.audio, art: t.art }); } // a rescan mints fresh blob URLs
   const fresh = tracks.filter((t) => !byId.has(t.id)).map(prep);
   if (fresh.length) { all = [...all, ...fresh]; fresh.forEach((t) => byId.set(t.id, t)); A.setTracks(all); $("#count").textContent = all.length.toLocaleString(); }
@@ -740,6 +743,7 @@ async function mineMenu() {
   m.innerHTML = `<div class="cm"><b>Bring your own music</b>
     <button data-m="files"><i>▤</i><span>${B.canKeepFolder() ? "A music folder" : "Music files"}<small>${B.canKeepFolder() ? "Your VLC or music folder · playlists come along" : "Pick songs and .m3u / .xspf playlists"}</small></span></button>
     <button data-m="plex"><i>▶</i><span>Plex<small>${s.plex ? "Signed in · tap to reload" : "Sign in with plex.tv · streams from your server"}</small></span></button>
+    <button data-m="import"><i>⇣</i><span>A playlist from another app<small>${s.imports ? `${s.imports} imported · add another` : "Spotify, YouTube, Apple Music, Tidal or Deezer link · plays here"}</small></span></button>
     <button data-m="spotify" ${B.SPOTIFY_ID ? "" : "disabled"}><i>●</i><span>Spotify<small>${!B.SPOTIFY_ID ? "Coming soon" : s.spotify ? "Signed in · tap to reload" : "Liked songs and playlists · plays in Spotify (Premium)"}</small></span></button>
     ${any ? `<button data-m="forget" class="ghost">Forget my music on this device</button>` : ""}</div>`;
   document.body.append(m); requestAnimationFrame(() => m.classList.add("on"));
@@ -752,11 +756,36 @@ async function mineMenu() {
     const tab = k === "plex" && !s.plex ? window.open("about:blank", "_blank") : null; // opened inside the tap, or popup blockers eat it
     if (k === "plex") mineDo("Plex", async (B, p) => { if (!s.plex) { toast("Sign in on the Plex tab, then come back"); await B.plexSignIn((u) => (tab ? (tab.location.href = u) : window.open(u, "_blank"))); } return B.plexLibrary((await B.kv.get("plex")).token, p); });
     if (k === "spotify") s.spotify ? mineDo("Spotify", (B, p) => B.spotifyLibrary(p)) : B.spotifySignIn();
+    if (k === "import") importMenu();
     if (k === "forget") forgetMine(B);
   };
 }
+// Any app's playlist: paste its share link (or a list of songs). Songs the catalogue lacks play in the tiny YouTube tile.
+function importMenu() {
+  const m = sheetUI("imp", `<b>Import a playlist</b><small>Paste a share link from Spotify, YouTube / YT Music, Apple Music, Tidal or Deezer. Anything else: paste its songs, one “Artist - Title” per line, or a CSV export.</small>
+    <textarea rows="4" placeholder="https://open.spotify.com/playlist/…" aria-label="Playlist link or songs"></textarea><button class="pcta" data-go>Import</button>`);
+  const ta = m.querySelector("textarea"); setTimeout(() => ta.focus(), 50);
+  m.querySelector("[data-go]").onclick = () => {
+    const v = ta.value.trim(); if (!v) return; m.close(); buzz(5);
+    mineDo("your playlist", async (B) => { const r = await B.importPlaylist(v); setTimeout(() => playMine(r.playlists[0].id), 0); return r; });
+  };
+}
+// Imported songs the catalogue lacks: found and played by the tiny YouTube tile (ytmini.js). The bar drives it.
+function ytGo(t) {
+  if (!audio.paused) audio.pause();
+  ytm().then((Y) => Y.play(t, { onChange: ytSync, onEnded: () => partyEnded(() => step(1)), onError: (m) => toast(m), onFound: (id) => byom().then((B) => B.rememberVideo(t.id, id)) }))
+    .catch((e) => { toast(e.message); renderPlayer(); });
+}
+function ytSync() {
+  const t = state.sel && byId.get(state.sel); if (t?.provider !== "yt" || !ytMod) return;
+  const { yt } = ytMod, k = yt.dur ? (scrubK ?? yt.time / yt.dur) : 0;
+  bar.style.transform = `scaleX(${k})`; thumb.style.transform = `translate3d(${(k * 100).toFixed(2)}%, 0, 0)`; tc.textContent = `${mmss(k * yt.dur)} / ${mmss(yt.dur)}`;
+  A.setPlaying({ id: t.id, paused: yt.paused, beat: () => beatAt(yt.time, t), progress: () => k }); renderPlayer();
+}
+const ytPlaying = () => byId.get(state.sel)?.provider === "yt";
 async function forgetMine(B) {
-  for (const k of ["files", "plex", "spotify"]) await B.forget(k);
+  for (const k of ["files", "plex", "spotify", "imports"]) await B.forget(k);
+  ytMod?.stop();
   if (state.sel && byId.get(state.sel)?.src === "mine") { audio.pause(); state.sel = null; }
   all = all.filter((t) => t.src !== "mine"); byId = new Map(all.map((t) => [t.id, t])); mine.plists = []; mine.regrant = false;
   A.setTracks(all); $("#count").textContent = all.length.toLocaleString(); toast("Your music is gone from this device"); run({ fly: true });
@@ -786,7 +815,34 @@ const spotify = { on: false };
 // (tools/sound-atlas-api/ccm.js). Catalogue paths are relative to the catalogue.
 const CCM = "https://ccmixter.org/content/";
 const proxied = !/^(localhost|127\.|\[::1\])/.test(location.hostname) && location.protocol === "https:";
-const streamUrl = (t) => (proxied && t.audio.startsWith(CCM) ? "/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)) : new URL(t.audio, new URL(base, document.baseURI)).href);
+// With Aural on, the page's Web Audio graph needs CORS-readable media, so both hosts stream through it.
+const INC = "https://incompetech.com/music/";
+const streamUrl = (t) => ((proxied || auralOn()) && t.audio.startsWith(CCM) ? "/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)) : auralOn() && t.audio.startsWith(INC) ? "/api/ccm?u=" + encodeURIComponent(t.audio) : new URL(t.audio, new URL(base, document.baseURI)).href);
+
+// --- Aural (hidden audiophile pane, aural-pane.js) ----------------------------------------------------
+// Type "aural", open #aural, or long-press the logo. Loaded only then, or at boot when it was left on.
+const auralOn = () => { try { return !!JSON.parse(localStorage.getItem("sa-aural"))?.on; } catch { return false; } };
+let auralMod = null;
+const aural = () => import("./aural-pane.js").then((m) => {
+  if (!auralMod) {
+    auralMod = m;
+    m.attach({ audio, A, toast, track: () => byId.get(state.sel), reroute() {
+      if (audio.crossOrigin === "anonymous") return;
+      const t = byId.get(state.sel), at = audio.currentTime, was = !audio.paused;
+      audio.crossOrigin = "anonymous";
+      if (t?.audio) { audio.src = streamUrl(t); audio.addEventListener("loadedmetadata", () => { audio.currentTime = at; if (was) audio.play().catch(() => {}); }, { once: true }); audio.load(); }
+    } });
+  }
+  return m;
+});
+if (auralOn()) audio.crossOrigin = "anonymous"; // before the first src: the graph can only read CORS media
+const openAural = () => aural().then((m) => (m.isOpen() ? m.close() : m.open()));
+{ let typed = ""; addEventListener("keydown", (e) => { if (e.target.closest?.("input, textarea") || e.key.length !== 1) return; typed = (typed + e.key.toLowerCase()).slice(-5); if (typed === "aural") { typed = ""; openAural(); } }); }
+{ const brand = $(".brand"); let lp = 0, fired = false;
+  brand?.addEventListener("pointerdown", () => { fired = false; lp = setTimeout(() => { fired = true; haptic("tick"); openAural(); }, 650); });
+  for (const ev of ["pointerup", "pointercancel", "pointerleave"]) brand?.addEventListener(ev, () => clearTimeout(lp));
+  brand?.addEventListener("click", (e) => { if (fired) e.preventDefault(); });
+  brand?.addEventListener("contextmenu", (e) => e.preventDefault()); }
 function select(id, { play = false, fly = false, keepScroll = false, from = null, view = null, tuned = false } = {}) {
   const t = byId.get(id); if (!t) return;
   if (!tuned && tune && id !== state.sel) tune = null; // picking a song by hand ends the tune
@@ -799,7 +855,10 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   if (changed && spotify.on && t.provider !== "spotify") { spotify.on = false; byom().then((B) => B.spotifyPause()); }
   if (changed && t.src === "mine" && cast.send.on) { cast.stop(); toast("Your own music plays on this device; the TV has the shared catalogue"); }
   if (changed) { if (t.audio) { audio.src = streamUrl(t); audio.load(); } else { audio.pause(); audio.removeAttribute("src"); audio.load(); } }
+  if (changed && auralMod) auralMod.onTrack(t);
+  if (changed && ytMod && t.provider !== "yt") ytMod.stop();
   if (play && t.provider === "spotify") spotifyGo(t);
+  else if (play && t.provider === "yt") ytGo(t);
   else if (play) audio.play().catch((e) => { if (e.name !== "AbortError") toast("Tap ▶ to play"); });
   if (changed) {
     nbrs = soundReady() ? neighbours(t, all, 8) : [];
@@ -812,7 +871,7 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   renderPlayer(); saveHash();
   if (!wide() && sh.target === "peek" && !play) sheetTo("half");
 }
-function togglePlay() { if (!state.sel) { const first = result.hits[0]?.t; return first && select(first.id, { play: true, fly: true }); } const cur = byId.get(state.sel); if (cur?.provider === "spotify") return spotify.on ? (spotify.on = false, byom().then((B) => B.spotifyPause()), renderPlayer()) : spotifyGo(cur); audio.paused ? audio.play().catch(() => {}) : audio.pause(); }
+function togglePlay() { if (!state.sel) { const first = result.hits[0]?.t; return first && select(first.id, { play: true, fly: true }); } const cur = byId.get(state.sel); if (cur?.provider === "yt") return ytMod?.yt.id && ytMod.yt.id === cur.yt ? ytMod.toggle() : ytGo(cur); if (cur?.provider === "spotify") return spotify.on ? (spotify.on = false, byom().then((B) => B.spotifyPause()), renderPlayer()) : spotifyGo(cur); audio.paused ? audio.play().catch(() => {}) : audio.pause(); }
 function step(d) {
   if (state.radio && d > 0) { // radio only goes forward; back walks what it already played
     const t = social.radioNext({ kind: state.radio, cur: byId.get(state.sel), all: search(all, { feels: state.feels, bands: state.bands, cc0: state.cc0 }).hits.map((h) => h.t), byId, playedIds, neighbours });
@@ -831,7 +890,7 @@ function renderPlayer() {
   if (fresh) nowPlaying(t);
   if (fresh && !reduced && !pt.classList.contains("sw-l") && !pt.classList.contains("sw-r")) { pt.classList.remove("in"); void pt.offsetWidth; pt.classList.add("in"); }
   pt.innerHTML = t ? `<b>${esc(t.title)}</b><small>${bpmOf(t) ? `${bpmOf(t)} bpm · ` : ""}${t.f?.camelot ? `${t.f.camelot} · ` : ""}${esc(t.author)}</small>` : `<b>Tap a dot</b><small>to hear it</small>`; // the header already names the app and the count; #pt is ~80 px wide at 360
-  $("#pp").innerHTML = audio.paused ? ICON.play : ICON.pause;
+  $("#pp").innerHTML = (ytPlaying() ? (ytMod?.yt.paused ?? true) : audio.paused) ? ICON.play : ICON.pause;
   $("#ph").classList.toggle("on", !!t && state.picks.has(t.id));
   const lk = t && social.room.likes[t.id]; $("#ph").dataset.n = lk ? social.compact(lk) : "";
   const here = t && social.room.now.find(([id]) => id === t.id)?.[1]; // people (you included) on this track right now
@@ -895,7 +954,7 @@ $("#body").addEventListener("submit", async (e) => {
   const tr = sc.querySelector(".track"), at = (e) => { const r = tr.getBoundingClientRect(); scrubK = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); tick(); };
   sc.addEventListener("pointerdown", (e) => { e.stopPropagation(); on = true; sc.setPointerCapture(e.pointerId); sc.classList.add("on"); at(e); });
   sc.addEventListener("pointermove", (e) => on && at(e));
-  const off = (e) => { if (on && e.type === "pointerup" && audio.duration) audio.currentTime = scrubK * audio.duration; on = false; scrubK = null; sc.classList.remove("on"); tick(); };
+  const off = (e) => { if (on && e.type === "pointerup" && ytPlaying()) ytMod?.seek(scrubK); else if (on && e.type === "pointerup" && audio.duration) audio.currentTime = scrubK * audio.duration; on = false; scrubK = null; sc.classList.remove("on"); tick(); };
   sc.addEventListener("pointerup", off); sc.addEventListener("pointercancel", off);
 }
 addEventListener("keydown", (e) => {
@@ -1068,7 +1127,7 @@ addEventListener("resize", () => { measure(); if (!wide()) { sh.y = snaps()[sh.t
 // (back gesture / swipe) is respected on the spot; the hint comes back with the next touch, so the tap
 // after that restores fullscreen. "Never mind" turns it off on this device. The hint's text lets taps through.
 if (!cast.isTV && matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fullscreen), (display-mode: standalone)").matches && document.documentElement.requestFullscreen) {
-  const off = () => localStorage.getItem("sa-fs") === "no";
+  const off = () => localStorage.getItem("sa-fs") === "no", FSH_MS = 3500;
   const fsHint = (delay, armNow) => {
     if (off() || document.fullscreenElement || $(".fsh")) return;
     const hint = document.createElement("div"); hint.className = "fsh";
@@ -1080,6 +1139,10 @@ if (!cast.isTV && matchMedia("(pointer: coarse)").matches && !matchMedia("(displ
     setTimeout(() => {
       if (!hint.isConnected) return; const a = $(".top").getBoundingClientRect().bottom, z = rail.getBoundingClientRect().top;
       hint.style.top = `${Math.round((a + z) / 2 - hint.offsetHeight / 2)}px`; hint.classList.add("on"); if (!armNow) arm();
+      // It fades by itself: a scroll (pointercancel) or a tap inside the YouTube iframe never reaches us, so
+      // waiting for a tap could leave it up for good. The next tap still goes fullscreen.
+      // Removed (not just faded) so it can come back after leaving fullscreen; the tap listener stays armed.
+      setTimeout(() => { hint.classList.remove("on"); setTimeout(() => hint.remove(), 400); }, FSH_MS);
     }, delay);
     const arm = () => { addEventListener("click", go, true); addEventListener("pointerup", go, true); }; // a drag on the atlas never makes a click
     if (armNow) arm();
@@ -1203,8 +1266,12 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
     if (pendingPlist) { await social.loadPlaylists(); if (social.room.playlists.some((p) => p.id === pendingPlist)) { setView("community"); const p = social.room.playlists.find((x) => x.id === pendingPlist); state.plist = { id: p.id, name: p.name, ids: p.tracks.filter((x) => byId.has(x)) }; toast(`“${p.name}” · tap ▶ to play`); renderBody(false); } }
   });
   if (!cast.isTV) byom().then(async (B) => {
-    const s = await B.sources(); if (!(s.dir || s.files || s.plex || s.spotify)) return;
+    const s = await B.sources(); if (!(s.dir || s.files || s.plex || s.spotify || s.imports)) return;
     const r = await B.restore(); mine.regrant = r.needsFolder; addMine(r, mine.spotifyNew ? "Spotify" : null); r.errors.forEach((m) => toast(m));
   }).catch((e) => toast("Your music: " + e.message));
-  window.__sa = { party, mine, addMine, slugs: () => slugs, social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
+  // #aural opens the pane; #aural=<https://pc.tailnet.ts.net:4317> (the computer's phone code) also points it at that server.
+  const auralHash = () => { const m = /^#aural(?:=(.+))?$/.exec(location.hash); if (!m) return;
+    aural().then((p) => { p.open(); if (m[1]) { p.useServer(decodeURIComponent(m[1])); history.replaceState(null, "", "#aural"); } }); };
+  if (auralOn()) aural(); auralHash(); addEventListener("hashchange", auralHash);
+  window.__sa = { aural, party, mine, addMine, importMenu, get yt() { return ytMod; }, slugs: () => slugs, social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
 })();

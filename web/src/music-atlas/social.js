@@ -56,6 +56,9 @@ export async function likePlaylist(id, on) {
   const p = room.playlists.find((x) => x.id === id); if (p) { p.liked = on; p.likes += on ? 1 : -1; emit(); }
   try { const j = await api("plike", { id, on }); if (p) { p.likes = j.likes; emit(); } } catch {}
 }
+// Aural: community evolution of filter-song combos (aural.js comboKey). A round reports every variant heard and the one kept.
+export const combos = (track) => api("combos", { track });
+export const evolved = (track, heard, kept) => api("combo", { track, heard, kept });
 export const playlistPlayed = (id) => api("pplay", { id }).catch(() => {});
 
 // --- radio ----------------------------------------------------------------------------------------
