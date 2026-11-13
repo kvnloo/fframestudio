@@ -67,6 +67,81 @@ export function layout(tracks, org = null) {
   return { root, byId, leaves, styles, R4, radii, step, outer: R4 + 14 + ROWS * SPACING, colors: org?.byId ?? null };
 }
 
+// A TV's dancing tracks on the GPU: each dot's undanced position, radius, seed, colour and group upload once per dot
+// set (`load`), and the vertex shader applies place()'s dance per frame from its group's pose (`dance`), so a frame costs
+// no per-dot JS. QN85B traces: ~1.8k 2D-canvas paths took ~9 ms a frame to flush, and per-dot JS ~9 ms more.
+// Returns null when the shaders don't build (callers keep the 2D path).
+const GROUPS = 16;
+function glDance(gl) {
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  const pr = gl.createProgram();
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, `precision highp float;
+attribute vec4 p; attribute vec4 c; attribute vec3 q; // q: undanced parent x, y; group index
+uniform vec4 m; uniform vec2 u; uniform vec4 A[${GROUPS}]; uniform vec4 B[${GROUPS}]; uniform vec4 C[${GROUPS}]; uniform float dpos;
+varying float r; varying vec4 col;
+const float TAU = 6.2831853;
+float rnd(float s, float n) { return fract(sin(s * 9301.17 + n * 49.297) * 43758.5453); }
+void main() {
+  int i = int(q.z); vec4 P = A[i], Q = B[i], T = C[i]; // P: k, da, spread, ac; Q: hop, jit, tw, step; T: the tuft's k, da, stretch
+  float a = atan(p.y, p.x), rr = length(p.xy) * T.x, d = a - P.w;
+  a += T.y + (d - TAU * floor(d / TAU + 0.5)) * P.z;
+  rr += Q.x * (p.w < 0.5 ? 1.0 : -0.6);
+  vec2 w = vec2(cos(a), sin(a)) * rr + (vec2(rnd(p.w, Q.w), rnd(p.w + 0.37, Q.w)) - 0.5) * 2.0 * Q.y;
+  w = q.xy + (w - q.xy) * (1.0 + T.z * (0.8 + 0.4 * p.w));
+  vec2 v = w * m.xy + m.zw;
+  gl_Position = vec4(v.x / u.x * 2.0 - 1.0, 1.0 - v.y / u.y * 2.0, 0.0, 1.0);
+  r = p.z * (1.0 + 0.6 * Q.z * (0.5 + 0.5 * sin(TAU * (dpos / 4.0 + p.w)))) * m.x;
+  gl_PointSize = 2.0 * r + 1.0; col = c;
+}`));
+  gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, "precision mediump float; varying float r; varying vec4 col;" +
+    "void main() { float q = length((gl_PointCoord - 0.5) * (2.0 * r + 1.0)); gl_FragColor = col * clamp(r + 0.5 - q, 0.0, 1.0); }"));
+  gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return null;
+  gl.useProgram(pr);
+  const U = (k) => gl.getUniformLocation(pr, k), uM = U("m"), uU = U("u"), uA = U("A"), uB = U("B"), uC = U("C"), uD = U("dpos");
+  const aP = gl.getAttribLocation(pr, "p"), aC = gl.getAttribLocation(pr, "c"), aQ = gl.getAttribLocation(pr, "q");
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  for (const k of [aP, aC, aQ]) gl.enableVertexAttribArray(k);
+  gl.vertexAttribPointer(aP, 4, gl.FLOAT, false, 44, 0); gl.vertexAttribPointer(aC, 4, gl.FLOAT, false, 44, 16); gl.vertexAttribPointer(aQ, 3, gl.FLOAT, false, 44, 32);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.clearColor(0, 0, 0, 0);
+  const rgb = new Map(), probe = document.createElement("canvas").getContext("2d");
+  const parse = (c) => { // any CSS colour -> [r, g, b, a] in 0..1, via the 2D canvas's own normalisation
+    let v = rgb.get(c); if (v) return v;
+    probe.fillStyle = "#000"; probe.fillStyle = c; const s = probe.fillStyle;
+    v = s[0] === "#" ? [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16) / 255).concat(1) : s.match(/[\d.]+/g).map(Number).map((x, i) => (i < 3 ? x / 255 : x));
+    if (v.length < 4) v.push(1); rgb.set(c, v); return v;
+  };
+  const pa = new Float32Array(GROUPS * 4), pb = new Float32Array(GROUPS * 4), pc = new Float32Array(GROUPS * 4);
+  let count = 0, groups = [], src = null;
+  return {
+    get src() { return src; },
+    clear() { gl.clear(gl.COLOR_BUFFER_BIT); },
+    // set: { b: Map("colour|alpha" -> nodes) } with each node's undanced px, py and base radius br; parents hold still.
+    load(set, seedOf) {
+      src = set; groups = []; let n = 0; for (const ns of set.b.values()) n += ns.length;
+      const f = new Float32Array(n * 11); let o = 0;
+      for (const [k, ns] of set.b) {
+        const i = k.lastIndexOf("|"), al = +k.slice(i + 1); if (al < 0.02) continue; const c = parse(k.slice(0, i)), a = al * c[3];
+        for (const d of ns) {
+          let gi = groups.indexOf(d.feel); if (gi < 0) { gi = groups.length; groups.push(d.feel); }
+          f.set([d.px, d.py, d.br, (d.seed ??= seedOf(d.id)), c[0] * a, c[1] * a, c[2] * a, a, d.parent?.vx ?? 0, d.parent?.vy ?? 0, Math.min(gi, GROUPS - 1)], o); o += 11;
+        }
+      }
+      count = o / 11; gl.bufferData(gl.ARRAY_BUFFER, f.subarray(0, o), gl.STATIC_DRAW);
+    },
+    dance(t, w, h, poses, dpos) {
+      pa.fill(0); pb.fill(0); pc.fill(0);
+      for (let i = 0; i < groups.length && i < GROUPS; i++) {
+        const P = poses?.get(groups[i]); if (!P) { pc[i * 4] = 1; continue; }
+        const T = P.T; // a tuft spring, when the dance has one; else the arm's own pose
+        pa.set([P.k, P.da, P.spread, P.ac], i * 4); pb.set([P.hop, P.jit, P.tw, P.step], i * 4); pc.set(T ? [T.y, T.a, T.spread || 0] : [P.k, P.da, 0], i * 4);
+      }
+      gl.viewport(0, 0, w, h); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform4f(uM, t.a, t.d, t.e, t.f); gl.uniform2f(uU, w, h); gl.uniform4fv(uA, pa); gl.uniform4fv(uB, pb); gl.uniform4fv(uC, pc); gl.uniform1f(uD, dpos);
+      gl.drawArrays(gl.POINTS, 0, count);
+    },
+  };
+}
+
 export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent, onLayer, lite = false }) {
   // Two layers: `layer` caches the static atlas (bands, edges, dots, nodes, labels) and is only
   // redrawn when the camera, data or an animation changes it; playback then costs one blit plus
@@ -77,6 +152,12 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   // compositor never re-rasters the full-screen map (QN85B probe: 16.9 ms frames split vs 23.2 ms blitting one canvas).
   const fly = lite ? document.createElement("canvas") : null, fctx = fly?.getContext("2d");
   if (fly) { fly.className = "atlas-fly"; fly.setAttribute("aria-hidden", "true"); canvas.after(fly); }
+  // The dancing dots themselves go to WebGL points under that overlay: as ~1.8k 2D-canvas paths the QN85B spent ~9 ms a
+  // frame flushing them plus a GPU finish (play2 trace: 193 frames drawn in 5 s). 2D stays the fallback.
+  const glc = fly ? document.createElement("canvas") : null;
+  const gl = glc && glc.getContext("webgl", { antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false });
+  const gp = gl && glDance(gl);
+  if (gp) { glc.className = "atlas-fly"; glc.setAttribute("aria-hidden", "true"); canvas.after(glc); }
   let flyOn = false, step = false;
   let dots = null, g = layout([]), dpr = 1, W = 0, H = 0, theme = "dark";
   const cam = { x: 0, y: 0, s: 0.3 };
@@ -108,6 +189,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     dpr = Math.min(devicePixelRatio || 1, 3); W = r.width; H = r.height;
     canvas.width = layer.width = Math.round(W * dpr); canvas.height = layer.height = Math.round(H * dpr);
     if (fly) { fly.width = canvas.width; fly.height = canvas.height; flyOn = false; layerKey = ""; }
+    if (gp) { glc.width = canvas.width; glc.height = canvas.height; }
     gen++; kick();
   }
   new ResizeObserver(resize).observe(canvas);
@@ -348,7 +430,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     if (dm < 0.003) { poses = null; tufts.clear(); } else { poses = dancePoses(dm, dt / 1000); busy = true; }
     // ...and it steps every other frame: the tracks' JS is ~11 ms a frame on the QN85B's CPU, so stepping every frame
     // dropped every other one anyway (24 ms frames); stepping on alternate frames holds the screen at 60 fps (16.8 ms).
-    if (fly && poses && settled && flyOn && (step = !step)) { kick(); return; }
+    if (fly && !gp && poses && settled && flyOn && (step = !step)) { kick(); return; } // (the GPU path needs no skipping)
     place(bt);
     draw(now, bt, busy, settled);
     if (busy || (playing && !playing.paused)) kick();
@@ -376,7 +458,11 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   // Leaves also get vr, a radius multiplier for twinkles. Hit-testing keeps the undanced layout.
   function place(bt) {
     const gl = [0, 1, 2, 3, 4].map((l) => grow(bt, l));
+    // The GPU dances a TV's tracks (glDance): only the few the 2D overlay draws (web rings, the playing and focused
+    // track) need JS positions; the rest keep their last ones, which only the pills read.
+    const lean = gp && dots && gp.src === dots && flyOn && poses;
     for (const n of g.byId.values()) {
+      if (lean && n.level === 4 && n.t.src !== "web" && n.id !== playing?.id && n.id !== focusId) continue;
       const x = n.dx * gl[n.level], y = n.dy * gl[n.level], P = poses && (lite ? n.level === 4 : n.level > 0) ? poses.get(n.feel) : null;
       if (!P) { n.vx = x; n.vy = y; n.va = n.a; n.vr = 1; continue; }
       if (n.px !== x || n.py !== y) { n.px = x; n.py = y; n.pr = Math.hypot(x, y); n.pa = Math.atan2(y, x); }
@@ -413,7 +499,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       drawStatic(bt, "dots"); if (fe < 0.05) drawOverlay(bt);
       ctx = screen; return;
     }
-    if (flyOn) { fctx.setTransform(1, 0, 0, 1, 0, 0); fctx.clearRect(0, 0, fly.width, fly.height); flyOn = false; }
+    if (flyOn) { fctx.setTransform(1, 0, 0, 1, 0, 0); fctx.clearRect(0, 0, fly.width, fly.height); flyOn = false; gp?.clear(); }
     if (busy) { ctx = screen; drawStatic(bt); layerKey = ""; }
     else {
       if (key !== layerKey) { ctx = lctx; drawStatic(bt); ctx = screen; layerKey = key; }
@@ -480,7 +566,9 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     // Batched: one path per colour and alpha step instead of a fill per dot (~1.8k dots).
     let buckets = new Map(), rings = [];
     const keep = part === "dots" ? dots && dots.key === layerKey && dots : null, rec = part === "dots" && !keep ? (dots = { key: layerKey, b: new Map(), rings: [] }) : null;
-    if (keep) { // QN85B: the per-dot colour key and Map lookup were ~4 of the ~13 ms a dancing frame took
+    const onGpu = gp && ctx === fctx; // the GPU dances the dots (glDance); only the few web-source rings stay on the 2D overlay
+    if (keep && onGpu) for (const n of keep.rings) rings.push(n.vx, n.vy, n.br * n.vr);
+    else if (keep) { // QN85B: the per-dot colour key and Map lookup were ~4 of the ~13 ms a dancing frame took
       for (const [k, ns] of keep.b) { const b = []; for (const n of ns) b.push(n.vx, n.vy, n.br * n.vr); buckets.set(k, b); }
       for (const n of keep.rings) rings.push(n.vx, n.vy, n.br * n.vr);
     } else for (const n of g.leaves) {
@@ -501,7 +589,8 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     // Dots under ~2.5 device px can't read as round (least of all from a sofa), and squares of the same area
     // rasterise far cheaper than arcs: on a TV the zoomed-out map is all such dots, ~1.8k a frame while dancing.
     const tiny = 2.5 / (s * dpr);
-    for (const [k, b] of buckets) {
+    if (onGpu) { if (gp.src !== dots) gp.load(dots, seedOf); gp.dance(ctx.getTransform(), glc.width, glc.height, poses, dpos); }
+    else for (const [k, b] of buckets) {
       const [c, a] = k.split("|"); if (+a < 0.02) continue; ctx.beginPath();
       for (let i = 0; i < b.length; i += 3) {
         const r = b[i + 2];

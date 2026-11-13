@@ -56,7 +56,10 @@ const geo = { H: innerHeight, W: innerWidth, top: 40, sat: 0, sab: 0, dock: 250,
 const setSheetY = (y) => { sheet.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0)`; rail.style.transform = wide() ? "" : `translate3d(0, ${(y - geo.rail).toFixed(2)}px, 0)`; };
 const inset = Object.assign(document.createElement("div"), { style: "position:fixed;visibility:hidden;pointer-events:none;top:0;height:env(safe-area-inset-top,0px);width:env(safe-area-inset-bottom,0px)" });
 document.body.appendChild(inset);
-function measure() { geo.H = innerHeight; geo.W = innerWidth; geo.sat = inset.offsetHeight; geo.sab = inset.offsetWidth; geo.top = $(".top").getBoundingClientRect().bottom + 4; geo.left = sheet.getBoundingClientRect().left; geo.dock = body.offsetTop; geo.rail = wide() ? 0 : rail.offsetHeight; }
+// A zoomed element's rect in viewport px. Chromium before 128 (a TV's Tizen 6.5 is 85) reports it unzoomed, so on a TV
+// (panel zoom 1.65) the map took the panel's left edge as x 740 instead of 1221 and squeezed into the left third.
+const zrect = (el) => { const r = el.getBoundingClientRect(), cs = getComputedStyle(el), z = +cs.zoom || 1; const k = z !== 1 && Math.abs(r.width - parseFloat(cs.width)) < 1 ? z : 1; return { left: r.left * k, bottom: r.bottom * k }; };
+function measure() { geo.H = innerHeight; geo.W = innerWidth; geo.sat = inset.offsetHeight; geo.sab = inset.offsetWidth; geo.top = zrect($(".top")).bottom + 4; geo.left = zrect(sheet).left; geo.dock = body.offsetTop; geo.rail = wide() ? 0 : rail.offsetHeight; }
 // Peek shows the dock (search + filters), the player and the view switch: everything above the list.
 const snaps = () => { const H = geo.H; return { peek: H - geo.dock - 4 - geo.sab, half: Math.round(H * 0.5), full: 72 + geo.sat }; };
 function sheetTo(name, v = 0) { if (wide()) return; if (sh.target !== name) buzz(4); sh.target = name; sh.v = v; if (!sh.raf) sh.raf = requestAnimationFrame(sheetStep); atlasRefit(); }
