@@ -529,3 +529,23 @@ a.aref { color: inherit; text-decoration: underline; text-decoration-color: colo
 .aural .vars button.heard:not(.on) { border-color: var(--line2); background: var(--panel2); }
 .aural .vars small, .aural .sinks small, .aural .comm small { font: 10px "IBM Plex Mono", monospace; color: var(--mute); }
 .aural .sinks, .aural .comm { display: grid; gap: 6px; }
+
+/* Import a playlist (importMenu) */
+.shm.imp .shc > b { font: 600 16px "Instrument Sans", sans-serif; color: var(--ink); align-self: flex-start; }
+.shm.imp .shc > small { font: 12.5px/1.45 "Instrument Sans", sans-serif; color: var(--mute); align-self: flex-start; }
+.shm.imp textarea { box-sizing: border-box; width: 100%; resize: vertical; min-height: 84px; padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(236, 232, 223, .14); background: #0d1112; color: var(--ink); font: 13px/1.4 ui-monospace, monospace; }
+.shm.imp .pcta { justify-content: center; font: 600 14px "Instrument Sans", sans-serif; color: var(--ink); }
+
+/* The tiny YouTube tile (ytmini.js): music first, the video stays a postage stamp until pressed */
+.ytmini { position: fixed; z-index: 11; width: 96px; height: 54px; border-radius: 10px; overflow: hidden; background: #000; box-shadow: 0 8px 24px -8px rgba(0, 0, 0, .7), 0 0 0 1px rgba(236, 232, 223, .12);
+  opacity: 0; pointer-events: none; transform: translateY(8px) scale(.9); transform-origin: 100% 100%; transition: opacity .25s var(--ease), transform .35s var(--spring), width .35s var(--spring), height .35s var(--spring), border-radius .35s var(--ease); }
+.ytmini.on { opacity: 1; pointer-events: auto; transform: none; }
+.ytmini.busy::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(236, 232, 223, .14) 50%, transparent 70%) 0 0 / 200% 100%; animation: ytshim 1.1s linear infinite; }
+@keyframes ytshim { to { background-position: -200% 0; } }
+.ytmini .ytf, .ytmini .ytf iframe { position: absolute; inset: 0; width: 100% !important; height: 100% !important; border: 0; }
+.ytmini .ytc { position: absolute; inset: 0; cursor: pointer; touch-action: none; -webkit-touch-callout: none; user-select: none; }
+.ytmini .ytx { position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; border-radius: 50%; background: rgba(13, 17, 18, .8); color: var(--ink); font-size: 15px; display: none; }
+.ytmini.big { width: min(320px, calc(100vw - 16px)); height: calc(min(320px, calc(100vw - 16px)) * 9 / 16); border-radius: 14px; }
+.ytmini.big .ytc { display: none; }
+.ytmini.big .ytx { display: grid; place-items: center; }
+@media (prefers-reduced-motion: reduce) { .ytmini { transition: opacity .2s; } }
