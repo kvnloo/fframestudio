@@ -47,7 +47,7 @@ describe('sound atlas', { tags: ['journey'] }, () => {
     await wait(browser, `(${ready})()`, 60000);
     await screen.getByPlaceholder('Search a vibe…').fill('rain');
     await wait(browser, `location.hash.includes('q=rain')`);
-    const titles: string[] = await browser.evaluate(() => [...document.querySelectorAll('#body button')].map((b) => b.textContent ?? '').slice(0, 5).map((t) => t.trim()));
+    const titles: string[] = await browser.evaluate(() => [...document.querySelectorAll('#body .trk')].map((b) => b.textContent ?? '').slice(0, 5).map((t) => t.trim()));
     // the best hits for "rain" are songs about rain, not words that merely contain the letters (Brain, Braineating)
     expect(titles.filter((t) => /\brain/i.test(t)).length).toBeGreaterThanOrEqual(3);
     expect(titles[0]).toMatch(/\brain/i);

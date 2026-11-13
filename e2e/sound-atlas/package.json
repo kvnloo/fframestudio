@@ -5,12 +5,13 @@
   "description": "Sound Atlas user-journey suite (tester-army e2e): deterministic journeys + feature gate + exploratory army with seeded-defect recall.",
   "scripts": {
     "bundle": "bash bundle.sh",
-    "test": "E2E_TELEMETRY_DISABLED=1 DO_NOT_TRACK=1 e2e run --exclude-tag bugbash",
-    "test:bugbash": "E2E_TELEMETRY_DISABLED=1 DO_NOT_TRACK=1 e2e run --tag bugbash",
+    "test": "E2E_TELEMETRY_DISABLED=1 DO_NOT_TRACK=1 e2e run --config army.config.ts --reporter list --exclude-tag bugbash",
+    "test:bugbash": "E2E_TELEMETRY_DISABLED=1 DO_NOT_TRACK=1 e2e run --config army.config.ts --reporter list --tag bugbash",
     "gate": "node features-gate.mjs",
     "army": "bash run.sh",
     "army:boat": "bash boat/up.sh",
-    "findings": "python3 findings.py runs"
+    "findings": "python3 findings.py runs",
+    "perf": "node perf-frames.mjs"
   },
   "devDependencies": {
     "@ai-sdk/openai-compatible": "^3.0.85",
