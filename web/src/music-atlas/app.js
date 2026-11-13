@@ -53,7 +53,9 @@ const sh = { y: innerHeight, v: 0, target: "peek", raf: 0, drag: null };
 // recalc + layout every frame (it was ~15% of each playback frame).
 const geo = { H: innerHeight, W: innerWidth, top: 40, sat: 0, sab: 0, dock: 250, views: 210, rail: 0 };
 // The sort + filter rail rides the sheet's top edge, over the canvas: one transform for both.
-const setSheetY = (y) => { sheet.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0)`; rail.style.transform = wide() ? "" : `translate3d(0, ${(y - geo.rail).toFixed(2)}px, 0)`; };
+let vid = null, vidSong = null; // score to picture (M8), below
+let kickMap = () => {}; // the atlas, once it exists: the map follows the sheet frame by frame
+const setSheetY = (y) => { kickMap(); sheet.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0)`; rail.style.transform = wide() ? "" : `translate3d(0, ${(y - geo.rail).toFixed(2)}px, 0)`; };
 const inset = Object.assign(document.createElement("div"), { style: "position:fixed;visibility:hidden;pointer-events:none;top:0;height:env(safe-area-inset-top,0px);width:env(safe-area-inset-bottom,0px)" });
 document.body.appendChild(inset);
 // A zoomed element's rect in viewport px. Chromium before 128 (a TV's Tizen 6.5 is 85) reports it unzoomed, so on a TV
@@ -154,10 +156,10 @@ const A = createAtlas({
   region: () => {
     const top = geo.top;
     if (wide()) return { x: 0, y: top, w: geo.left, h: geo.H - top };
-    const bottom = snaps()[sh.target]; return { x: 0, y: top, w: geo.W, h: Math.max(140, bottom - top - geo.rail) };
+    const bottom = Number.isFinite(sh.y) ? sh.y : snaps()[sh.target]; return { x: 0, y: top, w: geo.W, h: Math.max(140, bottom - top - geo.rail) }; // the sheet's live edge, not where it's headed
   },
   onHold: (phase, n, x, y) => {
-    if (phase === "arm") return pressRing.arm(x, y, n?.level === 4 ? tone(n.t) : n ? colorOfNode(n) : null);
+    if (phase === "arm") { return pressRing.arm(x, y, n?.level === 4 ? tone(n.t) : n ? colorOfNode(n) : null); }
     if (phase === "cancel") return pressRing.hide();
     if (phase === "move") { pressRing.move(x, y); if (au && n?.level === 4 && n.t !== au.t) audition(n.t); return; }
     if (phase === "end") return au ? endAudition(n?.level === 4) : pressRing.hide();
@@ -168,19 +170,32 @@ const A = createAtlas({
     if (n.level === 1) { toggleGroup(n.feel); state.view = "library"; like = null; const nm = grp(n.feel)?.name ?? n.feel; toast(groupOn(n.feel) ? `Only ${nm.toLowerCase()} · hold again to undo` : `${nm} filter off`); return run({ fly: true }); }
     A.focus(n.id); showNode(n);
   },
+  onDown: (n) => { if (n?.level === 4) warm(n.t); },
   onDetent: () => haptic("detent"),
+  onFeel: () => haptic("touch"),
   onCamera: () => layerCam(),
   onLayer: (k) => { buzz(6); mixAct("solo", k); },
   onTap: (n) => {
+    if (!n && state.mapFeel) { state.mapFeel = null; return lightFeel(); } // empty tap: the lit feel lets go first
     if (!n) { if (A.focusId !== "root") { const up = A.graph.byId.get(A.focusId)?.parent ?? A.graph.root; A.focus(up.id); showNode(up); } return; } // empty tap steps out
     buzz(5);
     // Stay where I touched: a dot well inside the free map plays where the finger is; only one near an edge
     // (half under the rail or the sheet) flies in. Rows, radio and steer still fly: there it means "here it lives".
     if (n.level === 4) return select(n.id, { play: true, fly: !A.inView(n.id, 56), view: "track" });
+    // the map is the filter (M3): a feel's name lights that feel in place (the sheet stays put); tap the lit one to go in
+    if (n.level === 1 && n.feel && state.mapFeel !== n.feel) { state.mapFeel = n.feel; return lightFeel(); }
+    state.mapFeel = null;
     const to = n.id === A.focusId ? n.parent ?? A.graph.root : n;
     A.focus(to.id); showNode(to);
   },
 });
+// M3: a lit feel dims the rest of the map in place (no re-pack, no sheet move) and the player line names the count
+function lightFeel() {
+  buzz(5); const ids = state.mapFeel ? A.graph.leaves.filter((n) => n.feel === state.mapFeel).map((n) => n.id) : null;
+  if (!result.ranked) A.setLit(ids); lit = ids?.length ?? 0; renderPlayer();
+}
+let lit = 0;
+kickMap = () => { A.kick(); if (vid) placeVid(); };
 const colorOfNode = (n) => (org ? grp(n.feel)?.night : feelById[n.feel]?.night) ?? null;
 
 // --- layers (stems) ------------------------------------------------------------------------------
@@ -439,6 +454,7 @@ async function run({ fly = false, scroll = true } = {}) {
   if (ids !== atlasIds) { atlasIds = ids; A.setTracks(pool, org); }
   $("#count").textContent = pool.length === all.length ? all.length.toLocaleString() : `${pool.length.toLocaleString()} / ${all.length.toLocaleString()}`;
   const filtered = result.ranked;
+  state.mapFeel = null; lit = 0; // any new search or filter supersedes a lit feel
   A.setLit(filtered ? result.hits.map((h) => h.t.id) : null);
   A.setFeatured(result.ranked ? result.hits.slice(0, 8).map((h) => h.t.id) : []);
   renderChips(); renderViews(); renderBody(scroll); saveHash();
@@ -626,7 +642,10 @@ function renderLive() {
   el.hidden = !R.on;
   el.innerHTML = `<i></i><b>${R.here}</b><span>here</span><span class="sep"></span><b>${social.compact(R.views)}</b><span>visits</span>`;
   el.title = `${R.here} here now, ${R.listening} listening · ${R.views.toLocaleString()} views · ${R.visitors.toLocaleString()} listeners`;
+  // live counts grow ("1.2k visits"): when the header row can't hold them, the pill keeps "here" and drops visits
+  el.classList.remove("tight"); const row = el.parentElement; if (row.scrollWidth > row.clientWidth + 1) el.classList.add("tight");
 }
+addEventListener("resize", () => renderLive());
 let roomT = 0;
 social.onRoom(() => { renderLive(); renderPlayer(); clearTimeout(roomT); roomT = setTimeout(() => { if (tuning) return; if (state.view === "community" || state.view === "track") { const st = body.scrollTop; renderBody(false); body.scrollTop = st; } }, 120); });
 function startRadio(kind) {
@@ -685,7 +704,7 @@ function cardHTML(t) {
     ${t.tags?.length ? `<div class="tags">${t.tags.slice(0, 8).map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : ""}
     ${t.desc ? `<p class="desc">${esc(t.desc)}</p>` : ""}
     <div class="lic"><span class="badge">${esc(t.license)}</span><code>${esc(creditLine(t))}</code></div>
-    <div class="acts"><button data-act="similar">More like this</button><button data-act="credit">Copy credit</button><button data-act="pick" class="${state.picks.has(t.id) ? "on" : ""}">${state.picks.has(t.id) ? "♥ Picked" : "♥ Pick"}</button>${t.sourceUrl ? `<a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener">Source ↗</a>` : ""}</div>
+    <div class="acts"><button data-act="similar">More like this</button><button data-act="credit">Copy credit</button><button data-act="video" class="${vid ? "on" : ""}">${vid ? "▣ Video off" : "▶ Under your video"}</button><button data-act="pick" class="${state.picks.has(t.id) ? "on" : ""}">${state.picks.has(t.id) ? "♥ Picked" : "♥ Pick"}</button>${t.sourceUrl ? `<a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener">Source ↗</a>` : ""}</div>
   </article>`;
 }
 // --- tune: the Track pane's meters steer what plays ----------------------------------------------
@@ -746,6 +765,14 @@ body.addEventListener("input", (e) => {
   const kc = meterColor(k, v); if (kc) mb.parentElement.style.setProperty("--k", kc);
   const b = mb.parentElement.querySelector(".mw b"), p0 = Math.round((t.p[k] ?? v) * 100), p1 = Math.round(v * 100);
   if (b) b.textContent = p0 === p1 ? `${ord(p0)} pct` : `${ord(p0)} → ${ord(p1)} pct`;
+  // Steering is felt (M4): each time the closest song under the meter changes, one touch (at most every 90 ms),
+  // so a drag counts the songs it passes. tune.path keeps them in order. The match (~12 ms over 1,815 songs) runs
+  // off the input event, at most once per 90 ms, so the thumb and the meter never wait on it.
+  if (!tune.leadT) tune.leadT = setTimeout(() => {
+    if (!tune) return; tune.leadT = 0;
+    const lead = tuneMatch(byId.get(tune.seed), tune.p, all, 1, { withSeed: true })[0]?.t.id;
+    if (lead && lead !== tune.lead) { (tune.path ??= []).push(lead); tune.lead = lead; buzz(); }
+  }, 90);
   clearTimeout(tuneT); tuneT = setTimeout(retune, 260); // a pause in the drag is enough to change the song
 });
 
@@ -797,6 +824,7 @@ body.addEventListener("click", async (e) => {
   const act = e.target.closest("[data-act]")?.dataset.act, t = state.sel && byId.get(state.sel);
   if (!act || !t) return;
   if (act === "pick") pick(t.id);
+  if (act === "video") { if (vid) vidOff(); else pickVid(); return; }
   if (act === "credit") { await copy(creditLine(t)); toast("Credit line copied"); }
   if (act === "similar" && t.f && soundReady()) return setView("similar");
   if (act === "reseed") { reseed(); return renderBody(true); }
@@ -893,6 +921,19 @@ const spotify = { on: false };
 // ccMixter serves mp3s only with its own Referer, so deployed builds stream them through /api/ccm
 // (tools/sound-atlas-api/ccm.js). Catalogue paths are relative to the catalogue.
 const CCM = "https://ccmixter.org/content/";
+// Touch is sound (M1, stage 1). Most songs stream from incompetech.com: its connection is opened at boot. The
+// ccMixter songs go through /api/ccm, whose cold start is ~6 s (0.2 s warm): the first touch on a ccMixter dot
+// wakes it with a 2-byte request, so it is up by the time the finger lifts or the next tap lands. (Warming the
+// song itself would fetch it twice: the proxy is no-store, so the browser can't reuse the bytes.)
+// Other hosts serve plain cacheable files: a muted element starts that song's first bytes at contact, and the
+// real request ~100 ms later is served from the media cache.
+let ccmWarm = 0; const warmEl = new Audio(); warmEl.muted = true; warmEl.preload = "auto";
+function warm(t) {
+  if (!t?.audio || t.id === state.sel || t.provider === "spotify") return;
+  if (t.audio.startsWith(CCM)) { if (proxied && performance.now() - ccmWarm > 240e3) { ccmWarm = performance.now(); fetch(streamUrl(t), { headers: { Range: "bytes=0-1" } }).catch(() => {}); } return; }
+  const u = streamUrl(t); if (warmEl.src !== u) { warmEl.src = u; warmEl.load(); }
+}
+for (const h of ["https://incompetech.com"]) document.head.append(Object.assign(document.createElement("link"), { rel: "preconnect", href: h }));
 const proxied = !/^(localhost|127\.|\[::1\])/.test(location.hostname) && location.protocol === "https:";
 const streamUrl = (t) => (proxied && t.audio.startsWith(CCM) ? "/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)) : new URL(t.audio, new URL(base, document.baseURI)).href);
 function select(id, { play = false, fly = false, keepScroll = false, from = null, view = null, tuned = false } = {}) {
@@ -939,7 +980,7 @@ function renderPlayer() {
   const pt = $("#pt"), fresh = (t?.id ?? null) !== renderPlayer.id; renderPlayer.id = t?.id ?? null;
   if (fresh) nowPlaying(t);
   if (fresh && !reduced && !pt.classList.contains("sw-l") && !pt.classList.contains("sw-r")) { pt.classList.remove("in"); void pt.offsetWidth; pt.classList.add("in"); }
-  pt.innerHTML = t ? `<b>${esc(t.title)}</b><small>${bpmOf(t) ? `${bpmOf(t)} bpm · ` : ""}${t.f?.camelot ? `${t.f.camelot} · ` : ""}${esc(t.author)}</small>` : `<b>Tap a dot</b><small>to hear it</small>`; // the header already names the app and the count; #pt is ~80 px wide at 360
+  pt.innerHTML = t ? `<b>${esc(t.title)}</b><small>${bpmOf(t) ? `${bpmOf(t)} bpm · ` : ""}${t.f?.camelot ? `${t.f.camelot} · ` : ""}${esc(t.author)}</small>` : (state.mapFeel && lit ? `<b>${lit.toLocaleString()} ${esc(feelById[state.mapFeel]?.name ?? "")}</b><small>tap a dot</small>` : `<b>Tap a dot</b><small>to hear it</small>`); // the header already names the app and the count; #pt is ~80 px wide at 360
   // The comfortable player's detail line (hidden at peek): what kind of song this is and whether you may use it.
   const F = t && feelById[t.feel], sty = t && styleName(t.family, t.style);
   $("#pm").innerHTML = t ? [F && `<span class="f"><i></i>${esc(F.name)}</span>`, sty && `<span>${esc(sty)}</span>`, t.dur && `<span>${mmss(t.dur)}</span>`, t.license && `<span class="cc">${esc(t.license)}</span>`].filter(Boolean).join("") : `<span>Drag the map to wander · search a vibe</span>`;
@@ -989,6 +1030,25 @@ audio.addEventListener("play", () => { wait = audio.readyState < 3; if (wait) sy
 audio.addEventListener("waiting", () => { if (!audio.paused) { wait = true; syncPlay(); } });
 audio.addEventListener("playing", () => { wait = false; if (landAt) { haptic("land"); landAt = 0; } syncPlay(); });
 audio.addEventListener("pause", () => { wait = false; landAt = 0; });
+
+// --- score to picture (M8): your video plays muted under the map while you audition songs against it -----
+// A local file (object URL; never uploaded). Each new song restarts it from frame 0 as its sound arrives, so
+// every audition is the same cut; pausing the song holds the picture. It fills the map's room and follows
+// the sheet. Open it from a track card, or drop a video file anywhere.
+function placeVid() { const r = A.region; Object.assign(vid.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` }); }
+function vidOn(file) {
+  if (!file?.type?.startsWith("video/")) return toast("That isn't a video file");
+  if (vid) URL.revokeObjectURL(vid.src); else { vid = Object.assign(document.createElement("video"), { id: "sv", muted: true, playsInline: true, loop: true, preload: "auto" }); $("#atlas").before(vid); }
+  vid.src = URL.createObjectURL(file); vidSong = null; placeVid(); A.setBackdrop(true); haptic("keep");
+  if (!audio.paused) { vidSong = state.sel; vid.play().catch(() => {}); }
+  toast(`${file.name} plays under the map · each song starts it over`); renderBody(false);
+}
+function vidOff() { URL.revokeObjectURL(vid.src); vid.remove(); vid = null; A.setBackdrop(false); haptic("release"); renderBody(false); }
+function pickVid() { const f = Object.assign(document.createElement("input"), { type: "file", accept: "video/*" }); f.onchange = () => vidOn(f.files[0]); f.click(); }
+audio.addEventListener("playing", () => { if (!vid) return; if (vidSong !== state.sel) { vidSong = state.sel; vid.currentTime = 0; } vid.play().catch(() => {}); });
+audio.addEventListener("pause", () => vid?.pause());
+addEventListener("dragover", (e) => { if ([...(e.dataTransfer?.items ?? [])].some((i) => i.type.startsWith("video/"))) e.preventDefault(); });
+addEventListener("drop", (e) => { const f = [...(e.dataTransfer?.files ?? [])].find((x) => x.type.startsWith("video/")); if (f) { e.preventDefault(); vidOn(f); } });
 $("#pp").onclick = (e) => { e.stopPropagation(); if (!audio.paused) haptic("touch"); togglePlay(); }; // play lands on the sound; pause is a touch
 $("#pn").onclick = (e) => { e.stopPropagation(); step(1); };
 $("#pv").onclick = (e) => { e.stopPropagation(); step(-1); };

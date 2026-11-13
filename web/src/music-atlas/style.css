@@ -10,6 +10,7 @@
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 15px/1.35 "Instrument Sans", system-ui, sans-serif; overflow: hidden; overscroll-behavior: none; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 #atlas { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; display: block; }
+#sv { position: fixed; object-fit: contain; pointer-events: none; background: #000; } /* your video, under the map (M8) */
 
 /* top bar */
 .top { position: fixed; top: 0; left: 0; right: 0; padding: calc(var(--sat) + 10px) 14px 8px; z-index: 3; pointer-events: none;
@@ -325,6 +326,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 @media (max-width: 419px) { .motion { width: 32px; padding: 0; justify-content: center; } .motion span { display: none; } } /* icon-only on phones: the label pushed it off-screen */
 .live b { color: var(--ink); font-weight: 400; }
 .live i, .live-big i { width: 7px; height: 7px; border-radius: 50%; background: #4fd69a; box-shadow: 0 0 8px #4fd69a; animation: breathe 2.4s ease-in-out infinite; }
+.live.tight .sep, .live.tight .sep ~ * { display: none; }
 .live .sep { width: 1px; height: 11px; background: var(--line2); margin: 0 3px; }
 @keyframes breathe { 50% { opacity: .35; transform: scale(.75); } }
 .trk .hv, .pl-card .hv { position: relative; }

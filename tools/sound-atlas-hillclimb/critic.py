@@ -47,7 +47,7 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument('out'); ap.add_argument('--pair', nargs=3, action='append', metavar=('NAME', 'PARENT', 'CANDIDATE'), required=True)
     ap.add_argument('--layers', default=','.join(R['layers'])); ap.add_argument('--model', default=R['models']['critic'].split()[1])
     a = ap.parse_args(); out = Path(a.out); out.mkdir(parents=True, exist_ok=True); log = (out / 'verdicts.jsonl').open('a')
-    done = {(j['pair'], j['layer'], j['order']) for j in map(json.loads, open(out / 'verdicts.jsonl'))} if (out / 'verdicts.jsonl').stat().st_size else set()  # resumable
+    done = {(j['pair'], j['layer'], j['order']) for j in map(json.loads, open(out / 'verdicts.jsonl')) if j.get('verdict') is not None} if (out / 'verdicts.jsonl').stat().st_size else set()  # resumable
     for name, parent, cand in a.pair:
         for order, (x, y) in {'PC': (parent, cand), 'CP': (cand, parent)}.items():
             img = out / f'{name}-{order}.png'; sheet(x, y, img)
@@ -58,6 +58,7 @@ def main():
                 pref = (v or {}).get('preference')
                 rec = dict(pair=name, layer=layer, order=order, model=a.model, rc=rc, secs=secs, sheet=str(img), parent=sha(parent), candidate=sha(cand),
                            verdict=v, winner=None if pref not in ('A', 'B') else ('candidate' if pref == cand_side else 'parent'))
+                if rec['verdict'] is None: print(name, layer, order, 'NO VERDICT (rc', rec['rc'], ') - not logged, so a rerun retries it', flush=True); continue
                 log.write(json.dumps(rec) + '\n'); log.flush(); print(name, layer, order, rec['winner'], secs, flush=True)
     rows = list(map(json.loads, open(out / 'verdicts.jsonl'))); summ = {}
     for r in rows:

@@ -146,7 +146,7 @@ void main() {
   };
 }
 
-export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent, onLayer, lite = false }) {
+export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, onDetent, onFeel, onLayer, lite = false }) {
   // Two layers: `layer` caches the static atlas (bands, edges, dots, nodes, labels) and is only
   // redrawn when the camera, data or an animation changes it; playback then costs one blit plus
   // the beat ring and pills per frame.
@@ -220,6 +220,8 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     for (const n of g.byId.values()) n.target = !on || on.has(n.id) ? 1 : n.level === 4 ? 0.1 : 0.22;
   }
   function setLit(ids) { lit = ids ? new Set(ids) : null; applyLit(); kick(); }
+  let backdrop = false;
+  function setBackdrop(v) { backdrop = !!v; layerKey = ""; kick(); }
   function setFeatured(ids) { featured = ids.slice(0, 8); kick(); }
   // The sound arriving is an event: the ring that drew in while it loaded lets go outward (M5).
   let landT = -1e9;
@@ -322,34 +324,79 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   let hold = null;
   const HOLD_MS = 420, FORCE = 0.22;
   const dropHold = () => { if (!hold) return; clearTimeout(hold.t); clearTimeout(hold.a); if (hold.armed && !hold.on) onHold?.("cancel"); hold = null; };
-  const fireHold = () => { if (!hold || hold.on) return; hold.on = true; pan = null; vel = null; onHold?.("fire", hit(hold.lx, hold.ly), hold.cx, hold.cy); };
+  const fireHold = () => { if (!hold || hold.on) return; hold.on = true; pan = null; vel = null; const n0 = hit(hold.lx, hold.ly); loupe = n0?.level === 4 ? openLoupe({ x: hold.lx, y: hold.ly }) : null; if (loupe) loupe.n = n0; kick(); onHold?.("fire", n0, hold.cx, hold.cy); };
+  // A loupe under the held finger (M2). A fingertip covers ~40 dots at the overview zoom, so a held slide steers
+  // a crosshair at 1/m of the finger's speed and a lens 100 px above the finger (clear of the press ring) shows that neighbourhood m times
+  // larger (m spreads the dots to >= 12 px apart). The song auditioned is the one nearest the crosshair, the one
+  // drawn under the lens's centre: what you see in the lens is what you hear.
+  const LENS_R = 54, LENS_UP = 100;
+  let loupe = null;
+  const leafNear = (w, rad) => { let best = null, bd = rad; for (const n of g.byId.values()) if (n.level === 4 && (n.al ?? 1) > 0.5) { const d = Math.hypot(n.x - w.x, n.y - w.y); if (d < bd) { bd = d; best = n; } } return best; };
+  const openLoupe = (p) => {
+    const w = toWorld(p.x, p.y), near = [];
+    for (const n of g.byId.values()) if (n.level === 4 && Math.abs(n.x - w.x) < 40 / cam.s && Math.abs(n.y - w.y) < 40 / cam.s) near.push(n);
+    let nn = Infinity; for (const a of near) for (const b of near) if (a !== b) nn = Math.min(nn, Math.hypot(a.x - b.x, a.y - b.y));
+    const m = clamp(12 / ((Number.isFinite(nn) ? nn : 99) * cam.s), 1, 10);
+    if (m < 1.5) return null; // already roomy (zoomed in): the plain hold is precise enough
+    return { m, p0: p, w0: w, w, p };
+  };
+  const loupeAt = () => { const r = R(); return { x: clamp(loupe.p.x, r.x + LENS_R + 4, r.x + r.w - LENS_R - 4), y: Math.max(r.y + LENS_R + 4, loupe.p.y - LENS_UP) }; };
+  function drawLoupe() {
+    if (!loupe) return; const L = loupeAt(), k = cam.s * loupe.m, c = ctx, P = pal();
+    c.save(); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.globalAlpha = 1;
+    c.beginPath(); c.arc(L.x, L.y, LENS_R, 0, TAU); c.fillStyle = P.bg; c.shadowColor = "rgba(0,0,0,.45)"; c.shadowBlur = 18; c.fill(); c.shadowBlur = 0;
+    c.save(); c.clip();
+    const reach = (LENS_R + 6) / k, cur = loupe.n;
+    for (const n of g.byId.values()) {
+      if (n.level !== 4 || Math.abs(n.x - loupe.w.x) > reach || Math.abs(n.y - loupe.w.y) > reach) continue;
+      const x = L.x + (n.x - loupe.w.x) * k, y = L.y + (n.y - loupe.w.y) * k;
+      c.globalAlpha = (n.al ?? 1) > 0.5 ? 1 : 0.25; c.fillStyle = col(n.feel); c.beginPath(); c.arc(x, y, n === cur ? 6 : 4, 0, TAU); c.fill();
+      if (n === cur) { c.globalAlpha = 1; c.strokeStyle = P.ink; c.lineWidth = 1.6; c.beginPath(); c.arc(x, y, 9.5, 0, TAU); c.stroke(); }
+    }
+    c.restore();
+    c.globalAlpha = 0.5; c.strokeStyle = P.ink; c.lineWidth = 1; c.beginPath(); c.moveTo(L.x - 5, L.y); c.lineTo(L.x + 5, L.y); c.moveTo(L.x, L.y - 5); c.lineTo(L.x, L.y + 5); c.stroke();
+    c.globalAlpha = 0.9; c.lineWidth = 1.5; c.strokeStyle = cur ? col(cur.feel) : P.mute; c.beginPath(); c.arc(L.x, L.y, LENS_R, 0, TAU); c.stroke();
+    c.restore();
+  }
   // Zoom detents: a tick each time the zoom crosses into the next ring's level of detail.
   const DET = [0.42, 0.95, 2.6, 5]; let det = -1;
+  // Borders you can feel (M4): while a finger or a fling moves the map, the song nearest the view's centre
+  // (within 24 px) names the feel you are over; crossing into another feel is reported once (the app ticks).
+  // Empty space between feels names none, so a border is a single crossing, not a buzz along it.
+  let feelHere = null;
+  const feelEdge = () => {
+    if (!onFeel) return; let best = null, bd = 24 / cam.s;
+    for (const n of g.byId.values()) if (n.level === 4 && (n.al ?? 1) > 0.5) { const d = Math.abs(n.x - cam.x) + Math.abs(n.y - cam.y); if (d < bd) { bd = d; best = n; } }
+    if (best && best.feel !== feelHere) { if (feelHere) onFeel(best.feel); feelHere = best.feel; }
+  };
   const detent = () => { const d = DET.filter((x) => cam.s >= x).length; if (det >= 0 && d !== det) onDetent?.(d); det = d; };
   const toWorld = (sx, sy) => { const { cx, cy } = centre(); return { x: (sx - cx) / cam.s + cam.x, y: (sy - cy) / cam.s + cam.y }; };
   const local = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   canvas.addEventListener("pointerdown", (e) => {
     canvas.setPointerCapture(e.pointerId); pts.set(e.pointerId, local(e)); tween = null; vel = null;
     if (pts.size === 1) { const p = local(e); pan = { p, cam: { ...cam } }; moved = false; samples = [{ t: performance.now(), ...p }];
+      if (onDown && pts.size === 1) onDown(hit(p.x, p.y)); // contact: the app can start fetching what's under the finger
       if (onHold) { hold = { lx: p.x, ly: p.y, cx: e.clientX, cy: e.clientY, p0: e.pressure, on: false, armed: false }; hold.a = setTimeout(() => { if (hold && !hold.on) { hold.armed = true; onHold("arm", hit(hold.lx, hold.ly), hold.cx, hold.cy); } }, 110); hold.t = setTimeout(fireHold, HOLD_MS); } }
     if (pts.size === 2) { dropHold(); det = DET.filter((x) => cam.s >= x).length; const [a, b] = [...pts.values()]; const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: cam.s, w: toWorld(m.x, m.y) }; pan = null; moved = true; }
   });
   canvas.addEventListener("pointermove", (e) => {
     if (!pts.has(e.pointerId)) return;
     pts.set(e.pointerId, local(e));
-    if (hold?.on) { const p = local(e); onHold("move", hit(p.x, p.y), e.clientX, e.clientY); return; }
+    if (hold?.on) { const p = local(e);
+      if (loupe) { loupe.p = p; loupe.w = { x: loupe.w0.x + (p.x - loupe.p0.x) / (cam.s * loupe.m), y: loupe.w0.y + (p.y - loupe.p0.y) / (cam.s * loupe.m) }; const n = leafNear(loupe.w, (LENS_R * 0.8) / (cam.s * loupe.m)); loupe.n = n; kick(); onHold("move", n, e.clientX, e.clientY); return; }
+      onHold("move", hit(p.x, p.y), e.clientX, e.clientY); return; }
     if (hold) { const p = local(e); if (Math.hypot(p.x - hold.lx, p.y - hold.ly) > 6) dropHold(); else if (e.pointerType !== "mouse" && hold.p0 > 0 && e.pressure - hold.p0 > FORCE) { clearTimeout(hold.t); fireHold(); return; } }
     if (pinch && pts.size >= 2) {
       const [a, b] = [...pts.values()], m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, { cx, cy } = centre();
       cam.s = clamp(pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, 0.05, 12);
       cam.x = pinch.w.x - (m.x - cx) / cam.s; cam.y = pinch.w.y - (m.y - cy) / cam.s; // pinch point stays under the fingers
-      detent(); kick(); onCamera?.(); return;
+      detent(); feelEdge(); kick(); onCamera?.(); return;
     }
     if (!pan) return;
     const p = local(e), dx = p.x - pan.p.x, dy = p.y - pan.p.y;
     if (!moved && Math.hypot(dx, dy) > 6) moved = true;
     if (moved) {
-      cam.x = pan.cam.x - dx / cam.s; cam.y = pan.cam.y - dy / cam.s;
+      cam.x = pan.cam.x - dx / cam.s; cam.y = pan.cam.y - dy / cam.s; if (moved) feelEdge();
       samples.push({ t: performance.now(), ...p }); if (samples.length > 6) samples.shift();
       kick(); onCamera?.();
     }
@@ -357,7 +404,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   const end = (e) => {
     if (!pts.has(e.pointerId)) return;
     const p = local(e); pts.delete(e.pointerId);
-    if (hold?.on) { const h = hold; hold = null; clearTimeout(h.t); onHold("end", e.type === "pointercancel" ? null : hit(p.x, p.y), e.clientX, e.clientY); pan = null; return; }
+    if (hold?.on) { const h = hold, lp = loupe; hold = null; loupe = null; kick(); clearTimeout(h.t); onHold("end", e.type === "pointercancel" ? null : lp ? lp.n : hit(p.x, p.y), e.clientX, e.clientY); pan = null; return; }
     dropHold();
     if (pinch) { if (pts.size < 2) { pinch = null; pan = null; } return; }
     if (pan && moved && samples.length > 1) {
@@ -384,6 +431,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   canvas.addEventListener("contextmenu", (e) => e.preventDefault()); // a long press is ours, not the browser's
 
   function hit(sx, sy) {
+    for (const g of tags) if (sx >= g.l && sx <= g.r && sy >= g.t && sy <= g.b) return g.n; // names first: they are what you aim at
     const w = toWorld(sx, sy); let best = null, bd = Infinity;
     for (const n of g.byId.values()) {
       if (n.level === 0 || (n.al ?? 1) < 0.2) continue;
@@ -395,6 +443,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   }
 
   // --- render -------------------------------------------------------------------------------
+  let lastFit = 0; const tags = [];
   function kick() { if (!raf) raf = requestAnimationFrame(frame); }
   function frame(now) {
     raf = 0;
@@ -408,8 +457,11 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     } else if (vel) {
       cam.x += vel.x * dt; cam.y += vel.y * dt;
       const decay = Math.exp(-dt / 260); vel.x *= decay; vel.y *= decay;
-      if (Math.hypot(vel.x, vel.y) * cam.s < 0.01) vel = null; busy = true; onCamera?.();
+      if (Math.hypot(vel.x, vel.y) * cam.s < 0.01) vel = null; busy = true; onCamera?.(); feelEdge();
     }
+    // The map is the room above the sheet, one body with it (M6): as the sheet rises the map shrinks in the
+    // same frame, about the free region's centre, by the side that limits a fit (the width on a phone at rest).
+    { const r = R(), fit = Math.min(r.w, r.h); if (lastFit && Math.abs(fit - lastFit) > 0.5 && !tween && !pinch) { cam.s = clamp(cam.s * fit / lastFit, 0.015, 12); /* below the pinch floor: a 140 px map still holds the whole map */ busy = true; onCamera?.(); } lastFit = fit; }
     const kA = 1 - Math.exp(-dt / 110), kP = 1 - Math.exp(-dt / 150);
     for (const n of g.byId.values()) {
       const t = n.target ?? 1;
@@ -508,16 +560,17 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     if (fly && poses && settled) { // a TV dancing: the still skeleton (glow, bands, edges, nodes, labels) stays put; only the tracks redraw (QN85B: the skeleton was ~60 of 70 ms a frame)
       if (key + "|base" !== layerKey) { const pz = poses; poses = null; ctx = screen; drawStatic(bt, "base"); poses = pz; layerKey = key + "|base"; }
       ctx = fctx; fctx.setTransform(1, 0, 0, 1, 0, 0); fctx.clearRect(0, 0, fly.width, fly.height); flyOn = true;
-      drawStatic(bt, "dots"); if (fe < 0.05) drawOverlay(bt);
+      drawStatic(bt, "dots"); if (fe < 0.05) drawOverlay(bt); drawLoupe();
       ctx = screen; return;
     }
     if (flyOn) { fctx.setTransform(1, 0, 0, 1, 0, 0); fctx.clearRect(0, 0, fly.width, fly.height); flyOn = false; gp?.clear(); }
     if (busy) { ctx = screen; drawStatic(bt); layerKey = ""; }
     else {
       if (key !== layerKey) { ctx = lctx; drawStatic(bt); ctx = screen; layerKey = key; }
-      screen.setTransform(1, 0, 0, 1, 0, 0); screen.globalAlpha = 1; screen.drawImage(layer, 0, 0);
+      screen.setTransform(1, 0, 0, 1, 0, 0); screen.globalAlpha = 1; if (backdrop) screen.clearRect(0, 0, canvas.width, canvas.height); screen.drawImage(layer, 0, 0);
     }
     if (fe < 0.05) drawOverlay(bt); // the beat ring and pills would sit on the code
+    drawLoupe();
   }
   const grow = (bt, lvl) => clamp(easeOutBack(clamp((bt - lvl * 0.11) / 0.75, 0, 1)), 0, 1.2);
 
@@ -525,7 +578,8 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     const P = pal(), { cx, cy } = centre(), s = cam.s;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1;
     if (part !== "dots") {
-    ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H);
+    if (backdrop) { ctx.clearRect(0, 0, W, H); ctx.globalAlpha = 0.62; } // a video plays under the map (M8): veil it, don't hide it
+    ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
     // Soft vignette glow behind the ring.
     const gx = cx - cam.x * s, gy = cy - cam.y * s, gr = Math.max(60, g.outer * s * 1.05);
     const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
@@ -632,6 +686,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       if (n.level === 1) { ctx.globalAlpha = a * 0.22; ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, r * 0.62, 0, TAU); ctx.fill(); }
     }
     // Labels in screen space at a constant size.
+    tags.length = 0; const away = [];
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1;
     const sx = (n) => cx + (X(n) - cam.x) * s, sy = (n) => cy + (Y(n) - cam.y) * s;
     ctx.lineJoin = "round"; ctx.textBaseline = "middle";
@@ -639,13 +694,30 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       if (n.level === 0 || n.level === 4) continue;
       const a = (n.al ?? 1) * clamp(gr4(n.level) * 1.2 - 0.2, 0, 1) * fo;
       const minS = [0, 0, 0.42, 0.95][n.level], fade = clamp((s - minS) / (minS * 0.35 + 0.05), 0, 1);
-      if (a * fade * lblK < 0.05) continue;
-      const x = sx(n), y = sy(n); if (x < -120 || x > W + 120 || y < -40 || y > H + 40) continue;
-      ctx.globalAlpha = a * fade * lblK;
+      // feel names are the legend (M3): they hold through the dance and, off-screen, pin to the nearest edge as a compass tag
+      const k = n.level === 1 ? Math.max(lblK, 0.9) : lblK;
+      if (a * fade * k < 0.05) continue;
+      let x = sx(n), y = sy(n);
+      if (x < -120 || x > W + 120 || y < -40 || y > H + 40) { if (n.level === 1 && s >= 1.2) away.push(n); continue; }
+      ctx.globalAlpha = a * fade * k;
       const ux = Math.cos(n.va), uy = Math.sin(n.va);
-      if (n.level === 1) { ctx.font = "13px 'Archivo Black', sans-serif"; text(n.name.toUpperCase(), x + ux * 38 * Math.min(1, 0.55 + s), y + uy * 30 * Math.min(1, 0.55 + s), ux, col(n.feel), P.bg); }
+      if (n.level === 1) { ctx.font = "13px 'Archivo Black', sans-serif"; text(n.name.toUpperCase(), x + ux * 38 * Math.min(1, 0.55 + s), y + uy * 30 * Math.min(1, 0.55 + s), ux, col(n.feel), P.bg, n); }
       else if (n.level === 2) { ctx.font = "600 12px 'Instrument Sans', sans-serif"; text(n.name, x + ux * 18, y + uy * 18, ux, P.ink, P.bg); }
       else { ctx.font = "11px 'IBM Plex Mono', monospace"; text(n.name, x + ux * 14, y + uy * 14, ux, P.mute, P.bg); }
+    }
+    // Compass: a feel with no song on screen points the way to its nearest song, from the edge of the free map.
+    // Hubs all sit near the centre, so aim at songs, not hubs; a tag that would overlap a nearer one is dropped.
+    if (away.length) {
+      const r = R(), mx = r.x + r.w / 2, my = r.y + r.h / 2, near = new Map();
+      for (const L of g.leaves) { const d = (X(L) - cam.x) ** 2 + (Y(L) - cam.y) ** 2, b = near.get(L.feel); if (!b || d < b.d) near.set(L.feel, { L, d }); }
+      ctx.font = "10px 'Archivo Black', sans-serif"; const put = [];
+      for (const n of away.map((n) => ({ n, b: near.get(n.feel) })).filter((o) => o.b).sort((a, b) => a.b.d - b.b.d)) {
+        const qx = sx(n.b.L), qy = sy(n.b.L); if (qx > r.x && qx < r.x + r.w && qy > r.y && qy < r.y + r.h) continue; // it is on screen already
+        const dx = qx - mx, dy = qy - my, k = Math.min((r.w / 2 - 44) / Math.abs(dx || 1e-6), (r.h / 2 - 14) / Math.abs(dy || 1e-6));
+        const px = mx + dx * k, py = my + dy * k, lab = (dx < 0 ? "‹ " : "") + n.n.name.toUpperCase() + (dx >= 0 ? " ›" : ""), w2 = ctx.measureText(lab).width / 2 + 6;
+        if (put.some((o) => Math.abs(o.x - px) < o.w + w2 && Math.abs(o.y - py) < 18)) continue;
+        put.push({ x: px, y: py, w: w2 }); ctx.globalAlpha = 0.8; text(lab, px, py, 0, col(n.n.feel), P.bg, n.n);
+      }
     }
     }
   }
@@ -805,8 +877,9 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       ctx.fillStyle = ln.color; ctx.beginPath(); ctx.arc(lx - 3, ly, 3, 0, TAU); ctx.fill();
     });
   }
-  function text(str, x, y, ux, fill, halo) {
+  function text(str, x, y, ux, fill, halo, node) {
     ctx.textAlign = Math.abs(ux) < 0.3 ? "center" : ux > 0 ? "left" : "right";
+    if (node) { const w = ctx.measureText(str).width, l = ctx.textAlign === "center" ? x - w / 2 : ctx.textAlign === "left" ? x : x - w; tags.push({ n: node, l: l - 8, r: l + w + 8, t: y - 16, b: y + 16 }); } // a feel's name is a 32 px target
     ctx.strokeStyle = halo; ctx.lineWidth = 6; ctx.lineJoin = "round"; ctx.strokeText(str, x, y); ctx.fillStyle = fill; ctx.fillText(str, x, y);
   }
 
@@ -816,10 +889,12 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   resize();
   return {
     get graph() { return g; }, get cam() { return cam; },
-    setMotion(v) { motion = !!v; kick(); }, get motion() { return motion; }, get labels() { return lblK; },
+    setMotion(v) { motion = !!v; kick(); }, get motion() { return motion; }, get labels() { return lblK; }, get tags() { return tags.map((g) => ({ id: g.n.id, feel: g.n.feel, x: (g.l + g.r) / 2, y: (g.t + g.b) / 2 })); },
     setFormation, get formation() { return !!form?.on; },
     setTracks, setGlow, get glow() { return glow && { gid: glow.gid, k: glow.k }; }, setLit, setFeatured, setPlaying, setTheme, setLens, setLinks, setLayers, zoomOn, focus, flyToIds, fitAll, kick, resize,
     flyCam(c, ms) { flyTo({ ...c }, ms); }, get layerK() { return layerK(); },
+    get region() { return R(); }, setBackdrop,
+    get loupe() { return loupe && { ...loupeAt(), m: loupe.m, id: loupe.n?.id ?? null, cross: loupe.w }; },
     // Is this node's dot at least m px inside the free region, on screen right now?
     screenOf(id) { const n = g.byId.get(id); if (!n) return null; const { cx, cy } = centre(); return { x: cx + (n.vx - cam.x) * cam.s, y: cy + (n.vy - cam.y) * cam.s }; },
     inView(id, m = 0) { const p = this.screenOf(id), r = R(); return !!p && p.x >= r.x + m && p.x <= r.x + r.w - m && p.y >= r.y + m && p.y <= r.y + r.h - m; },

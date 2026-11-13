@@ -212,6 +212,10 @@ def e2e(card):
         p = subprocess.run([sys.executable, str(HERE / f"{name}_e2e.py"), URL, str(OUT)], capture_output=True, text=True, timeout=240)
         try: card["e2e"][name] = json.loads(p.stdout[p.stdout.index("{"):])
         except ValueError: card["e2e"][name] = {"errors": ["no json: " + (p.stderr or p.stdout)[-300:]]}
+    # Fable 5.2's eight checks: recorded beside the scores (the target of rounds 5+), not folded into them
+    p = subprocess.run([sys.executable, str(HERE / "fable_probes.py"), URL, str(OUT)], capture_output=True, text=True, timeout=900)
+    try: card["fable"] = json.loads(p.stdout[p.stdout.index("{"):])
+    except ValueError: card["fable"] = {"errors": [(p.stderr or p.stdout)[-300:]]}
     runs = [card["e2e"]["steer"]]  # the steer timing checks sit near one frame of lag: majority of 3 runs
     for _ in range(2):
         p = subprocess.run([sys.executable, str(HERE / "steer_e2e.py"), URL, str(OUT)], capture_output=True, text=True, timeout=240)
@@ -231,7 +235,9 @@ def e2e(card):
 def score(card):
     G, M, H, C, P = RUBRIC["gates"], card["motion"], card["haptics"], card["cases"], card["perf"]
     # v2 grammar: a commit's pulses are [its pulse] or [its pulse, land when the sound starts]
-    ok = lambda v: len(v) <= 1 or (len(v) == 2 and v[1] == G["haptic_land"])
+    # a land that arrives BEFORE the commit's own pulse is the previous tap's sound starting late: not this commit's
+    own = lambda v: v[1:] if len(v) > 1 and v[0] == G["haptic_land"] and v[1] != G["haptic_land"] else v
+    ok = lambda v: (v := own(v)) is not None and (len(v) <= 1 or (len(v) == 2 and v[1] == G["haptic_land"]))
     if H.get("pulses"):
         H["one_pulse_per_tap"] = all(ok(v) for v in H["pulses"].values())
         H["commits_have_pulse"] = all(len(H["pulses"][k]) >= 1 and ok(H["pulses"][k]) for k in ("row_tap", "play_pause", "heart"))
