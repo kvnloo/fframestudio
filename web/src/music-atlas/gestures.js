@@ -15,20 +15,23 @@ const ios = (() => {
   document.body.append(label);
   return label;
 })();
-// Named patterns so every surface speaks the same language: detent < tick < select < press < keep.
-// Chrome on Android plays navigator.vibrate as a legacy one-shot at the motor's fixed strength (no
-// amplitude), so length is the only intensity dial. Android's guidance puts a crisp key click at
-// 10-20 ms; much shorter pulses barely move the actuator, so the scale starts at 8 ms.
-const PAT = { detent: 8, tick: 10, select: 14, press: 18, keep: [16, 60, 24], cancel: [8, 50, 8], beat: 8, bar: 14 };
-// A new vibrate cancels the one playing, so two calls in one gesture (press + audition, select +
-// sheet snap) left only the second, often weaker, pulse. Within GAP ms the stronger pulse wins.
-const RANK = { detent: 0, beat: 1, tick: 2, select: 3, cancel: 3, bar: 4, press: 5, keep: 6 }, GAP = 60;
-let lastT = -1e9, lastR = -1;
-export function haptic(kind = "tick") {
-  const now = performance.now(), r = RANK[kind] ?? 2;
-  if (now - lastT < GAP && r <= lastR) return;
-  lastT = now; lastR = r;
-  const p = typeof kind === "number" ? kind : PAT[kind] ?? 10;
+// One word per meaning, so a hand learns them. Chrome on Android plays navigator.vibrate at the motor's
+// fixed strength (no amplitude), so only length, count and rhythm can differ, and neighbours sit >= 1.6x
+// apart (8/10/14 ms all felt the same). touch: reversible navigation. land: something arrived (the first
+// sound). press: a hold fired. keep / release: committed / undone, mirror rhythms. error: failed, the only
+// triple. beat / bar: metre, inside a hold only.
+const PAT = { touch: 12, land: 22, press: 35, keep: [16, 60, 30], release: [24, 60, 12], error: [12, 40, 12, 40, 12], beat: 10, bar: 20 };
+const ALIAS = { detent: "touch", tick: "touch", select: "touch", cancel: "release" }; // older call sites
+// A new vibrate cuts the one playing, so while a pattern is still running (+20 ms) only a stronger one may
+// interrupt it: a flat 60 ms window let a touch cut keep's tail.
+const RANK = { touch: 0, beat: 1, land: 2, bar: 2, release: 3, press: 4, error: 5, keep: 5 };
+const span = (p) => (Array.isArray(p) ? p.reduce((a, b) => a + b, 0) : p) + 20;
+let lastT = -1e9, lastR = -1, lastS = 0;
+export function haptic(kind = "touch") {
+  kind = ALIAS[kind] ?? kind;
+  const now = performance.now(), r = RANK[kind] ?? 0, p = PAT[kind] ?? PAT.touch;
+  if (now - lastT < lastS && r <= lastR) return;
+  lastT = now; lastR = r; lastS = span(p);
   if (navigator.vibrate) { try { navigator.vibrate(p); } catch {} return; }
   ios?.click(); // one system tick, whatever the pattern
 }

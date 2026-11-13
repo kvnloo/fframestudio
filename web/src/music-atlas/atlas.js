@@ -221,7 +221,9 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   }
   function setLit(ids) { lit = ids ? new Set(ids) : null; applyLit(); kick(); }
   function setFeatured(ids) { featured = ids.slice(0, 8); kick(); }
-  function setPlaying(p) { playing = p; kick(); }
+  // The sound arriving is an event: the ring that drew in while it loaded lets go outward (M5).
+  let landT = -1e9;
+  function setPlaying(p) { if (playing?.loading && p && !p.loading && !p.paused && p.id === playing.id) landT = performance.now(); playing = p; kick(); }
   // Layers: the playing track's stems as rings around its dot, from LAYER_S zoom in (all the way in).
   // fn(id) -> { lanes: [{ k, name, color, env, on }] } | null; onLayer(k) when a ring is tapped.
   let layersOf = null, rings = null;
@@ -438,7 +440,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     if (fly && !gp && poses && settled && flyOn && (step = !step)) { kick(); return; } // (the GPU path needs no skipping)
     place(bt);
     draw(now, bt, busy, settled);
-    if (busy || glow || (playing && !playing.paused)) kick();
+    if (busy || glow || (playing && (!playing.paused || playing.loading)) || performance.now() - landT < 460) kick();
   }
 
   function dancePoses(dm, dts) {
@@ -732,8 +734,18 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
           ctx.globalAlpha = env * 0.18; ctx.lineWidth = 1.5 * px; ctx.beginPath(); ctx.arc(0, 0, g.R4 * (0.98 + 0.04 * (1 - env)) * g4, 0, TAU); ctx.stroke();
         }
       }
-      ctx.globalAlpha = 1; ctx.lineWidth = 2.6 * px; ctx.strokeStyle = P.line;
-      const rr = DOT + 4.5; ctx.beginPath(); ctx.arc(x, y, rr, 0, TAU); ctx.stroke();
+      const rr = DOT + 4.5, ago = performance.now() - landT;
+      if (playing.loading && !reduced) { // asked, not yet heard: a ring draws in toward the dot, again and again
+        const k = (performance.now() % 700) / 700;
+        ctx.globalAlpha = 0.25 + 0.6 * k; ctx.strokeStyle = c; ctx.lineWidth = 2 * px;
+        ctx.beginPath(); ctx.arc(x, y, rr + (1 - k) * (1 - k) * 22 * px, 0, TAU); ctx.stroke();
+      }
+      if (ago < 460 && !reduced) { // heard: it lets go, outward, once
+        const k = ago / 460;
+        ctx.globalAlpha = 0.85 * (1 - k); ctx.strokeStyle = c; ctx.lineWidth = (2.6 - 1.6 * k) * px;
+        ctx.beginPath(); ctx.arc(x, y, rr + (1 - (1 - k) ** 3) * 30 * px, 0, TAU); ctx.stroke();
+      }
+      ctx.globalAlpha = 1; ctx.lineWidth = 2.6 * px; ctx.strokeStyle = P.line; ctx.beginPath(); ctx.arc(x, y, rr, 0, TAU); ctx.stroke();
       ctx.strokeStyle = c; ctx.beginPath(); ctx.arc(x, y, rr, -Math.PI / 2, -Math.PI / 2 + TAU * clamp(playing.progress?.() ?? 0, 0, 1)); ctx.stroke();
       ctx.fillStyle = P.ink; ctx.beginPath(); ctx.arc(x, y, DOT * 0.55, 0, TAU); ctx.fill();
     }
@@ -808,6 +820,9 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     setFormation, get formation() { return !!form?.on; },
     setTracks, setGlow, get glow() { return glow && { gid: glow.gid, k: glow.k }; }, setLit, setFeatured, setPlaying, setTheme, setLens, setLinks, setLayers, zoomOn, focus, flyToIds, fitAll, kick, resize,
     flyCam(c, ms) { flyTo({ ...c }, ms); }, get layerK() { return layerK(); },
+    // Is this node's dot at least m px inside the free region, on screen right now?
+    screenOf(id) { const n = g.byId.get(id); if (!n) return null; const { cx, cy } = centre(); return { x: cx + (n.vx - cam.x) * cam.s, y: cy + (n.vy - cam.y) * cam.s }; },
+    inView(id, m = 0) { const p = this.screenOf(id), r = R(); return !!p && p.x >= r.x + m && p.x <= r.x + r.w - m && p.y >= r.y + m && p.y <= r.y + r.h - m; },
     get focusId() { return focusId; }, set focusId(v) { focusId = v; kick(); },
   };
 }

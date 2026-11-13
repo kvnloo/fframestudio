@@ -27,7 +27,7 @@ const sub = (t) => { if (org) { const a = org.path(t)[0]; return [a[0], a[1], a[
 const tintCache = new Map();
 const tinted = (gid, tint) => { const k = gid + "|" + tint; let c = tintCache.get(k); if (!c) { const base = grp(gid)?.night ?? "#8f8a80"; tintCache.set(k, (c = tint ? shade(base, tint) : base)); } return c; };
 const tone = (t) => (lensFn && lensFn(t)) || tinted(grpOf(t), sub(t)[2]);
-const buzz = (ms = 6) => haptic(ms >= 8 ? "select" : ms <= 4 ? "detent" : "tick");
+const buzz = () => haptic("touch"); // every tap-sized acknowledgement is one touch
 const wide = () => geo.W >= 900;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -84,7 +84,7 @@ function setSnap(name) {
     e.animate([{ transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, transformOrigin: "0 0", ...(text ? { opacity: 0.35 } : {}) }, { transform: "none", transformOrigin: "0 0", opacity: 1 }], { duration: 380, easing: "cubic-bezier(.22, 1.18, .36, 1)" });
   });
 }
-function sheetTo(name, v = 0) { setSnap(snapFor(name)); if (wide()) return; if (sh.target !== name) buzz(4); sh.target = name; sh.v = v; if (!sh.raf) sh.raf = requestAnimationFrame(sheetStep); atlasRefit(); }
+function sheetTo(name, v = 0) { const felt = sheet.dataset.snap === snapFor(name); setSnap(snapFor(name)); if (wide()) return; if (sh.target !== name && !felt) haptic("touch"); /* a drag already ticked as it crossed */ sh.target = name; sh.v = v; if (!sh.raf) sh.raf = requestAnimationFrame(sheetStep); atlasRefit(); }
 let shLast = 0;
 function sheetStep(now) {
   sh.raf = 0;
@@ -126,7 +126,7 @@ function sheetPointer() {
     // The player's density steps at the midpoints between snaps, with a detent tick, so the controls grow under
     // the finger instead of popping in after release.
     const near = y > (S.peek + S.half) / 2 ? "peek" : y > (S.half + S.full) / 2 ? "half" : "full", snap = snapFor(near);
-    if (DENSITY[sheet.dataset.snap] !== DENSITY[snap]) { setSnap(snap); haptic("detent"); }
+    if (DENSITY[sheet.dataset.snap] !== DENSITY[snap]) { setSnap(snap); haptic("touch"); }
   };
   const up = (e) => {
     const d = sh.drag; sh.drag = null; if (!d) return;
@@ -135,7 +135,7 @@ function sheetPointer() {
     if (d.rail && !d.moved) return sheetTo(sh.target);
     // Swipe the player sideways: next / previous, the title sliding out the way it was thrown.
     const dx = e.clientX - d.x0, dy = e.clientY - d.y0;
-    if (d.player && Math.abs(dx) > 56 && Math.abs(dx) > 1.6 * Math.abs(dy)) { sheetTo(sh.target); haptic("select"); const pt = $("#pt"); pt.classList.remove("sw-l", "sw-r"); void pt.offsetWidth; pt.classList.add(dx < 0 ? "sw-l" : "sw-r"); return step(dx < 0 ? 1 : -1); }
+    if (d.player && Math.abs(dx) > 56 && Math.abs(dx) > 1.6 * Math.abs(dy)) { sheetTo(sh.target); haptic("touch"); const pt = $("#pt"); pt.classList.remove("sw-l", "sw-r"); void pt.offsetWidth; pt.classList.add(dx < 0 ? "sw-l" : "sw-r"); return step(dx < 0 ? 1 : -1); }
     if (!d.moved) return sheetTo(sh.target === "peek" ? "half" : sh.target === "half" ? "full" : "half");
     const S = snaps(), proj = sh.y + d.v * 0.18; // project the fling
     const name = Object.entries(S).sort((a, b) => Math.abs(a[1] - proj) - Math.abs(b[1] - proj))[0][0];
@@ -162,7 +162,7 @@ const A = createAtlas({
     if (phase === "move") { pressRing.move(x, y); if (au && n?.level === 4 && n.t !== au.t) audition(n.t); return; }
     if (phase === "end") return au ? endAudition(n?.level === 4) : pressRing.hide();
     // fire: a track auditions; an emotion filters to itself; any other ring zooms to its wedge.
-    if (n?.level === 4) return audition(n.t);
+    if (n?.level === 4) { haptic("press"); return audition(n.t); }
     pressRing.hide(); if (!n) return;
     haptic("keep");
     if (n.level === 1) { toggleGroup(n.feel); state.view = "library"; like = null; const nm = grp(n.feel)?.name ?? n.feel; toast(groupOn(n.feel) ? `Only ${nm.toLowerCase()} · hold again to undo` : `${nm} filter off`); return run({ fly: true }); }
@@ -174,7 +174,9 @@ const A = createAtlas({
   onTap: (n) => {
     if (!n) { if (A.focusId !== "root") { const up = A.graph.byId.get(A.focusId)?.parent ?? A.graph.root; A.focus(up.id); showNode(up); } return; } // empty tap steps out
     buzz(5);
-    if (n.level === 4) return select(n.id, { play: true, fly: true, view: "track" });
+    // Stay where I touched: a dot well inside the free map plays where the finger is; only one near an edge
+    // (half under the rail or the sheet) flies in. Rows, radio and steer still fly: there it means "here it lives".
+    if (n.level === 4) return select(n.id, { play: true, fly: !A.inView(n.id, 56), view: "track" });
     const to = n.id === A.focusId ? n.parent ?? A.graph.root : n;
     A.focus(to.id); showNode(to);
   },
@@ -251,7 +253,7 @@ let au = null, heldGesture = false, pendingSeek = null;
 function audition(t) {
   if (!t || au?.t === t) return;
   if (!au) { au = { resume: !audio.paused, t: null, raf: 0, ph: 1 }; audio.pause(); }
-  au.t = t; heldGesture = true; haptic("tick");
+  au.t = t; au.at = performance.now(); au.failed = null; heldGesture = true; haptic("touch");
   aud2.src = streamUrl(t);
   aud2.addEventListener("loadedmetadata", () => { if (au?.t !== t) return; const d = aud2.duration || t.dur || 60; aud2.currentTime = Math.max(0, Math.min(d * 0.33, d - 20)); aud2.play().catch(() => {}); }, { once: true });
   pressRing.fire(tone(t)); A.focusId = t.id; // its pill names it on the map
@@ -262,20 +264,21 @@ function feelBeat() {
   if (aud2.paused || reduced) return;
   const b = beatAt(aud2.currentTime, au.t); if (!b) return;
   pressRing.pulse(Math.exp(-b.ph * 5) * b.acc);
-  if (b.ph < au.ph && b.acc >= 0.45) haptic(b.acc >= 0.7 ? "bar" : "beat"); // a new beat started
+  if (b.ph < au.ph && b.acc >= 0.45 && performance.now() - au.at > 250) haptic(b.acc >= 0.7 ? "bar" : "beat"); // a new beat started (not on top of the new-dot tick)
   au.ph = b.ph;
 }
 function endAudition(keepIt) {
   if (!au) return pressRing.hide();
-  const { t, resume } = au, at = aud2.currentTime; cancelAnimationFrame(au.raf); au = null; pressRing.hide(); aud2.pause();
-  if (keepIt && t) {
+  const { t, resume, failed: au0failed } = au, at = aud2.currentTime; cancelAnimationFrame(au.raf); au = null; pressRing.hide(); aud2.pause();
+  if (keepIt && t && au0failed !== t.id) {
     haptic("keep");
     if (t.id === state.sel) { audio.currentTime = at; audio.play().catch(() => {}); return; }
     pendingSeek = at; return select(t.id, { play: true, keepScroll: true, from: state.view === "track" ? null : state.view });
   }
-  haptic("cancel"); A.focusId = state.sel ?? "root";
+  if (au0failed !== t?.id) haptic("release"); A.focusId = state.sel ?? "root"; // a failed one already buzzed its error
   if (resume) audio.play().catch(() => {});
 }
+aud2.addEventListener("error", () => { if (!au?.t || !aud2.getAttribute("src")) return; au.failed = au.t.id; haptic("error"); toast("This one won't stream here; open its source ↗", 4000); });
 audio.addEventListener("loadedmetadata", () => { if (pendingSeek != null) { audio.currentTime = pendingSeek; pendingSeek = null; } });
 pressable(body, ".trk", {
   color: (el) => tone(byId.get(el.dataset.id)),
@@ -385,7 +388,7 @@ const sortUp = (e) => {
 sortBtn.addEventListener("pointerup", sortUp); sortBtn.addEventListener("pointercancel", sortUp);
 sortBtn.addEventListener("contextmenu", (e) => e.preventDefault());
 sortMenu.addEventListener("pointerdown", (e) => { const b = e.target.closest("[data-lens]"); if (b) lightRow(b, e.clientX, e.clientY); }); // a tap fills from the fingertip
-sortMenu.addEventListener("click", (e) => { const b = e.target.closest("[data-lens]"); if (!b) return; if (b !== sm.hot) lightRow(b, e.clientX, e.clientY); pickLens(b, () => { if (b.dataset.lens !== state.lens) { buzz(4); setLens(b.dataset.lens); } }); });
+sortMenu.addEventListener("click", (e) => { const b = e.target.closest("[data-lens]"); if (!b) return; if (b !== sm.hot) lightRow(b, e.clientX, e.clientY); pickLens(b, () => { if (b.dataset.lens !== state.lens) { haptic("keep"); setLens(b.dataset.lens); } }); });
 document.addEventListener("pointerdown", (e) => { if (sm.open && !e.target.closest("#sortmenu, #sortbtn")) closeSort(); }, true);
 
 function renderChips() {
@@ -905,7 +908,7 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   if (changed && t.src === "mine" && cast.send.on) { cast.stop(); toast("Your own music plays on this device; the TV has the shared catalogue"); }
   if (changed) { if (t.audio) { audio.src = streamUrl(t); audio.load(); } else { audio.pause(); audio.removeAttribute("src"); audio.load(); } }
   if (play && t.provider === "spotify") spotifyGo(t);
-  else if (play) audio.play().catch((e) => { if (e.name !== "AbortError") toast("Tap ▶ to play"); });
+  else if (play) { if (t.audio) landAt = performance.now(); audio.play().catch((e) => { if (e.name === "NotAllowedError") toast("Tap ▶ to play"); }); } // a failed stream says so itself (error), don't overwrite it
   if (changed) {
     nbrs = soundReady() ? neighbours(t, all, 8) : [];
     const top = nbrs[0]?.score || 1;
@@ -917,7 +920,8 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   renderPlayer(); saveHash();
   if (!wide() && sh.target === "peek" && !play) sheetTo("half");
 }
-function togglePlay() { if (!state.sel) { const first = result.hits[0]?.t; return first && select(first.id, { play: true, fly: true }); } const cur = byId.get(state.sel); if (cur?.provider === "spotify") return spotify.on ? (spotify.on = false, byom().then((B) => B.spotifyPause()), renderPlayer()) : spotifyGo(cur); audio.paused ? audio.play().catch(() => {}) : audio.pause(); }
+let landAt = 0; // a play you asked for: its pulse waits for the first sound
+function togglePlay() { if (!state.sel) { const first = result.hits[0]?.t; return first && select(first.id, { play: true, fly: true }); } const cur = byId.get(state.sel); if (cur?.provider === "spotify") return spotify.on ? (spotify.on = false, byom().then((B) => B.spotifyPause()), renderPlayer()) : spotifyGo(cur); if (audio.paused) { landAt = performance.now(); audio.play().catch(() => {}); } else audio.pause(); }
 function step(d) {
   if (state.radio && d > 0) { // radio only goes forward; back walks what it already played
     const t = social.radioNext({ kind: state.radio, cur: byId.get(state.sel), all: search(all, { feels: state.feels, bands: state.bands, cc0: state.cc0 }).hits.map((h) => h.t), byId, playedIds, neighbours });
@@ -947,7 +951,7 @@ function renderPlayer() {
   $("#pr").classList.toggle("on", !!state.radio); $("#pr").title = state.radio ? `${state.radio === "ear" ? "By-ear" : "Crowd"} radio on` : "Radio";
 }
 const bar = $("#bar"), thumb = $("#thumb"), tc = $("#tc"); let scrubK = null; // while scrubbing, the finger (not the audio) places the thumb
-const playState = () => { const t = state.sel && byId.get(state.sel); return t ? { id: t.id, paused: audio.paused, beat: () => beatAt(audio.currentTime, t), progress: () => (audio.duration ? audio.currentTime / audio.duration : 0) } : null; };
+const playState = () => { const t = state.sel && byId.get(state.sel); return t ? { id: t.id, paused: audio.paused || wait, loading: wait && !audio.paused, beat: () => beatAt(audio.currentTime, t), progress: () => (audio.duration ? audio.currentTime / audio.duration : 0) } : null; };
 // The page plays along: the player button, brand mark and the playing group's legend/header dots
 // swell on accented beats; the row's three bars read kick, off-beat and bar accent. Only the
 // `scale` property is written (compositor-only, and it composes with CSS transform animations).
@@ -970,16 +974,22 @@ function tick() {
   const d = audio.duration, c = scrubK != null && d ? scrubK * d : audio.currentTime;
   const k = d ? c / d : 0; bar.style.transform = `scaleX(${k})`; thumb.style.transform = `translate3d(${(k * 100).toFixed(2)}%, 0, 0)`; // compositor-only
   const label = `${mmss(c)} / ${mmss(d)}`; if (label !== tc.textContent) tc.textContent = label; // text changes re-layout: once a second, not per frame
-  if (!audio.paused) { beatFrame(); requestAnimationFrame(tick); }
+  if (!audio.paused) { if (!wait) beatFrame(); requestAnimationFrame(tick); }
 }
-const syncPlay = () => { A.setPlaying(playState()); renderPlayer(); if (audio.paused) restPulse(); const r = body.querySelector(".trk.sel"); if (r) { const t = byId.get(state.sel); r.classList.toggle("playing", !audio.paused); r.querySelector(".pl").innerHTML = !audio.paused ? `<span class="eq"><i></i><i></i><i></i></span>` : ICON.play; r.style.setProperty("--beat", (60 / (t?.bpm || 100)).toFixed(3) + "s"); } tick(); };
+const syncPlay = () => { A.setPlaying(playState()); renderPlayer(); $("#pp").classList.toggle("wait", wait && !audio.paused); if (audio.paused || wait) restPulse(); const r = body.querySelector(".trk.sel"); if (r) { const t = byId.get(state.sel); const on = !audio.paused && !wait; r.classList.toggle("playing", on); r.classList.toggle("wait", wait && !audio.paused); r.querySelector(".pl").innerHTML = on ? `<span class="eq"><i></i><i></i><i></i></span>` : wait && !audio.paused ? `<span class="ld"></span>` : ICON.play; r.style.setProperty("--beat", (60 / (t?.bpm || 100)).toFixed(3) + "s"); } tick(); };
 audio.addEventListener("play", () => { if (state.sel) { playedIds.add(state.sel); social.played(state.sel); if (state.recent[0] !== state.sel) { state.recent = browse.remember(state.recent, state.sel); localStorage.setItem("sa-recent", JSON.stringify(state.recent)); } } social.pulse(); });
 audio.addEventListener("pause", () => social.pulse());
 audio.addEventListener("play", syncPlay); audio.addEventListener("pause", syncPlay); audio.addEventListener("loadedmetadata", tick);
 audio.addEventListener("ended", () => partyEnded(() => step(1))); // in a room, whoever set the song picks the next
 for (const k of ["play", "pause", "seeked", "loadstart"]) audio.addEventListener(k, () => heard(k)); // what you do leads the room
-audio.addEventListener("error", () => { if (audio.src && state.sel) toast("This one won't stream here; open its source ↗"); });
-$("#pp").onclick = (e) => { e.stopPropagation(); buzz(5); togglePlay(); };
+audio.addEventListener("error", () => { wait = false; landAt = 0; if (!audio.getAttribute("src") || !state.sel) return; haptic("error"); toast("This one won't stream here; open its source ↗", 4000); syncPlay(); });
+// Between asking and hearing, the song is loading, not playing: the dot's ring draws in, the row and button wait.
+let wait = false;
+audio.addEventListener("play", () => { wait = audio.readyState < 3; if (wait) syncPlay(); });
+audio.addEventListener("waiting", () => { if (!audio.paused) { wait = true; syncPlay(); } });
+audio.addEventListener("playing", () => { wait = false; if (landAt) { haptic("land"); landAt = 0; } syncPlay(); });
+audio.addEventListener("pause", () => { wait = false; landAt = 0; });
+$("#pp").onclick = (e) => { e.stopPropagation(); if (!audio.paused) haptic("touch"); togglePlay(); }; // play lands on the sound; pause is a touch
 $("#pn").onclick = (e) => { e.stopPropagation(); step(1); };
 $("#pv").onclick = (e) => { e.stopPropagation(); step(-1); };
 $("#ph").onclick = (e) => { e.stopPropagation(); if (state.sel) pick(state.sel); };

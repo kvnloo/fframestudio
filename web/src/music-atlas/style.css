@@ -565,3 +565,11 @@ a.aref { color: inherit; text-decoration: underline; text-decoration-color: colo
 .bhead.scope p { flex-basis: 100%; margin: 0; }
 .bhead.scope .scopes { flex-basis: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
 .bhead .scopes span, .bhead .scopes span:nth-child(n+3) { display: inline-flex; padding: 6px 0; } /* every style shows here, finger-sized */
+
+/* Loading is not playing (M5): the row's slot and the play button draw in while the stream arrives; the eq bars
+   start only on the first sound. */
+.trk .pl .ld { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; opacity: .8; animation: ld .7s cubic-bezier(.5, 0, .5, 1) infinite; }
+@keyframes ld { from { transform: scale(1.7); opacity: 0; } to { transform: scale(.55); opacity: .9; } }
+#pp.wait { animation: ppwait .7s ease-in-out infinite alternate; }
+@keyframes ppwait { to { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .trk .pl .ld, #pp.wait { animation: none; } }

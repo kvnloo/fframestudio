@@ -10,11 +10,11 @@ from playwright.sync_api import sync_playwright
 
 HERE = Path(__file__).resolve().parent
 RUBRIC = json.loads((HERE / "rubric.json").read_text())
-URL, OUT = sys.argv[1], Path(sys.argv[2])
+URL, OUT = (sys.argv[1], Path(sys.argv[2])) if "--rescore" not in sys.argv else (None, None)
 ARGS = sys.argv[3:]
 JOURNEY = ARGS[ARGS.index("--journey") + 1] if "--journey" in ARGS else None
 TID = RUBRIC["fixture_track"]
-OUT.mkdir(parents=True, exist_ok=True)
+OUT and OUT.mkdir(parents=True, exist_ok=True)
 
 INIT = r"""(() => {
   window.__hap = []; navigator.vibrate = (p) => { __hap.push({ t: performance.now(), p }); return true; };
@@ -230,6 +230,11 @@ def e2e(card):
 
 def score(card):
     G, M, H, C, P = RUBRIC["gates"], card["motion"], card["haptics"], card["cases"], card["perf"]
+    # v2 grammar: a commit's pulses are [its pulse] or [its pulse, land when the sound starts]
+    ok = lambda v: len(v) <= 1 or (len(v) == 2 and v[1] == G["haptic_land"])
+    if H.get("pulses"):
+        H["one_pulse_per_tap"] = all(ok(v) for v in H["pulses"].values())
+        H["commits_have_pulse"] = all(len(H["pulses"][k]) >= 1 and ok(H["pulses"][k]) for k in ("row_tap", "play_pause", "heart"))
     checks = {
         "owner_cases": [v for v in C.values() if v is not None],
         "motion": [M["title_glides"], not M["revisit_replays"], not M["layout_property_animations"], not M["reduced_motion_anims"], (M["drag_frame_p95_ms"] or 99) <= G["frame_p95_ms"]],
@@ -259,6 +264,12 @@ def majority(vals):
 
 
 def main():
+    if "--rescore" in sys.argv:  # score.py --rescore <scorecard.json>: apply the current rubric to a stored card
+        p = Path(sys.argv[sys.argv.index("--rescore") + 1]); card = json.loads(p.read_text())
+        st = card["e2e"].get("steer") or {}
+        card["cases"]["steer_no_entrance_replay"] = not (set((st.get("flash") or {}).get("anims", {"?": 1})) - set(RUBRIC["meaningful_anims"]))
+        card["rubric"] = RUBRIC["version"]; score(card); p.write_text(json.dumps(card, indent=1, default=str))
+        print(f"RESCORED {RUBRIC['version']}  " + "  ".join(f"{k} {v}" for k, v in card["scores"].items())); print("failing cases:", ", ".join(card["failing_cases"]) or "none"); return
     card = {"url": URL, "rubric": RUBRIC["version"], "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "cases": {}, "motion": {}, "haptics": {}, "e2e": {}}
     runs = int(ARGS[ARGS.index("--runs") + 1]) if "--runs" in ARGS else 3
     with sync_playwright() as p:

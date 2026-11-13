@@ -1,5 +1,5 @@
 {
- "version": "sound-atlas-v1",
+ "version": "sound-atlas-v2",
  "product": "Sound Atlas: a phone-first atlas of free CC0/CC BY music you can hear, read like an audiophile, steer, remix and share",
  "users": {
   "creator": "Kevin and people like him cutting a launch video: needs a song that fits the vibe, its bpm and key, a licence they can use and a credit line, fast",
@@ -20,7 +20,8 @@
   "press-arm",
   "press-on",
   "press-out",
-  "wig"
+  "wig",
+  "ppwait"
  ],
  "meaningful_anims_why": "navigation direction, a new song arriving, the playing pulse and press feedback: these are meant to run on every change. Any other animation firing on a revisit or a steer is a replayed entrance",
  "widths": [
@@ -53,7 +54,8 @@
   "frame_p95_ms": 20,
   "ready_s": 3.0,
   "longtasks": 3,
-  "js_css_kb": 400
+  "js_css_kb": 400,
+  "haptic_land": 22
  },
  "categories": {
   "owner_cases": {
@@ -121,7 +123,7 @@
    "source": "standing rule: every CC BY track carries a copyable credit line"
   },
   "search_toast_agrees": {
-   "source": "journey 6 (broken): 'No new … on Openverse' while 108 matches showed"
+   "source": "journey 6 (broken): 'No new \u2026 on Openverse' while 108 matches showed"
   },
   "chip_at_peek_shows_list": {
    "source": "journey 5 (rough): chip at peek keeps the sheet down",
@@ -158,7 +160,7 @@
    "source": "steer contract"
   },
   "idle_hint_fits": {
-   "source": "round 1 review: the first-open hint ellipsized to 'Tap a dot to h…' at 393; #pt is excluded from the generic truncation check because song titles may ellipsize, so the idle line gets its own check at every width"
+   "source": "round 1 review: the first-open hint ellipsized to 'Tap a dot to h\u2026' at 393; #pt is excluded from the generic truncation check because song titles may ellipsize, so the idle line gets its own check at every width"
   }
  },
  "case_backlog": {
@@ -266,5 +268,6 @@
  "models": {
   "critic": "anthropic claude-opus-5-5 via hermes oneshot (owner: 'try opus critics'); haiku only after it passes the same calibration",
   "rules": "GPT text models only via fx/pi; Gemini only via agy; never let the builder judge its own round"
- }
+ },
+ "haptic_grammar_why": "v2 (round 5, Fable 5.2 report section 3): a commit is one pulse when it happens, plus at most one 'land' pulse when its sound starts (dot/row tap, play). ppwait is the play button saying 'the song is coming' while it loads."
 }
