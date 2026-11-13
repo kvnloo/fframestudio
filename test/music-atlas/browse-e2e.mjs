@@ -29,8 +29,16 @@ page.on("pageerror", (e) => errs.push(e.message));
 const shot = (n) => shots && page.screenshot({ path: join(shots, n + ".png") });
 await page.goto(base);
 await until(() => page.evaluate(() => window.__sa?.all.length > 0), 30000, "catalogue");
-await page.evaluate(() => window.__sa.sheetTo("full"));
 const sa = (f, a) => page.evaluate(f, a);
+
+// A minimized sheet keeps search + player on screen and tucks the Track/Similar/Library/Community bar below the edge.
+const edges = () => sa(() => ({ H: innerHeight, player: document.querySelector("#player").getBoundingClientRect().bottom, views: document.querySelector("#views").getBoundingClientRect().top }));
+await wait(1500); let e = await edges();
+assert.ok(e.player <= e.H + 1.5 && e.views >= e.H - 1, "peek hides the view bar: " + JSON.stringify(e));
+await shot("0-peek");
+await sa(() => window.__sa.sheetTo("half")); await wait(1200); e = await edges();
+assert.ok(e.views < e.H - 30, "raising the sheet shows the view bar: " + JSON.stringify(e));
+await sa(() => window.__sa.sheetTo("full"));
 
 // Artists: every credited act, most songs first; Kevin MacLeod leads the free catalogue.
 await page.click('[data-browse="artists"]');

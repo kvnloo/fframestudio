@@ -51,7 +51,7 @@ const toast = (msg, ms = 2400) => { const t = $("#toast"); t.textContent = msg; 
 const sh = { y: innerHeight, v: 0, target: "peek", raf: 0, drag: null };
 // Geometry is measured once per resize, never per frame: reading layout inside rAF forces a style
 // recalc + layout every frame (it was ~15% of each playback frame).
-const geo = { H: innerHeight, W: innerWidth, top: 40, sat: 0, sab: 0, dock: 250, rail: 0 };
+const geo = { H: innerHeight, W: innerWidth, top: 40, sat: 0, sab: 0, dock: 250, views: 210, rail: 0 };
 // The sort + filter rail rides the sheet's top edge, over the canvas: one transform for both.
 const setSheetY = (y) => { sheet.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0)`; rail.style.transform = wide() ? "" : `translate3d(0, ${(y - geo.rail).toFixed(2)}px, 0)`; };
 const inset = Object.assign(document.createElement("div"), { style: "position:fixed;visibility:hidden;pointer-events:none;top:0;height:env(safe-area-inset-top,0px);width:env(safe-area-inset-bottom,0px)" });
@@ -59,9 +59,9 @@ document.body.appendChild(inset);
 // A zoomed element's rect in viewport px. Chromium before 128 (a TV's Tizen 6.5 is 85) reports it unzoomed, so on a TV
 // (panel zoom 1.65) the map took the panel's left edge as x 740 instead of 1221 and squeezed into the left third.
 const zrect = (el) => { const r = el.getBoundingClientRect(), cs = getComputedStyle(el), z = +cs.zoom || 1; const k = z !== 1 && Math.abs(r.width - parseFloat(cs.width)) < 1 ? z : 1; return { left: r.left * k, bottom: r.bottom * k }; };
-function measure() { geo.H = innerHeight; geo.W = innerWidth; geo.sat = inset.offsetHeight; geo.sab = inset.offsetWidth; geo.top = zrect($(".top")).bottom + 4; geo.left = zrect(sheet).left; geo.dock = body.offsetTop; geo.rail = wide() ? 0 : rail.offsetHeight; }
-// Peek shows the dock (search + filters), the player and the view switch: everything above the list.
-const snaps = () => { const H = geo.H; return { peek: H - geo.dock - 4 - geo.sab, half: Math.round(H * 0.5), full: 72 + geo.sat }; };
+function measure() { geo.H = innerHeight; geo.W = innerWidth; geo.sat = inset.offsetHeight; geo.sab = inset.offsetWidth; geo.top = zrect($(".top")).bottom + 4; geo.left = zrect(sheet).left; geo.dock = body.offsetTop; geo.views = $("#views").offsetTop; geo.rail = wide() ? 0 : rail.offsetHeight; }
+// Peek shows the dock (search + filters) and the player; the view switch waits below the edge until you raise the sheet.
+const snaps = () => { const H = geo.H; return { peek: H - geo.views - geo.sab, half: Math.round(H * 0.5), full: 72 + geo.sat }; };
 function sheetTo(name, v = 0) { if (wide()) return; if (sh.target !== name) buzz(4); sh.target = name; sh.v = v; if (!sh.raf) sh.raf = requestAnimationFrame(sheetStep); atlasRefit(); }
 let shLast = 0;
 function sheetStep(now) {
@@ -179,7 +179,7 @@ const envSVG = (env) => { const N = 96, st = env.length / N, xs = [...env].map(N
 function paintLayers() { const el = body.querySelector(".layers"), t = state.sel && byId.get(state.sel); if (el && t) { el.outerHTML = layersHTML(t); watchLayers(); } }
 let layerIO = null, layerHome = null, layerAuto = 0;
 function watchLayers() {
-  layerIO?.disconnect(); const el = body.querySelector(".layers:not(.none)"); if (!el) return;
+  layerIO?.disconnect(); const el = body.querySelector(".layers:not(.none)"); if (!el || cast.isTV) return; // a TV pane never scrolls: Layers would always count as in view and zoom the map onto one song
   layerIO = new IntersectionObserver(([e]) => {
     const id = state.sel; if (!id || performance.now() < layerAuto) return;
     if (e.isIntersecting && A.layerK < 1) { layerHome = { ...A.cam }; layerAuto = performance.now() + 900; A.zoomOn(id); }

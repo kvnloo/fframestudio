@@ -380,7 +380,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .castmenu button.ghost { min-height: 40px; justify-content: center; border-color: transparent; color: var(--mute); font: 12px "IBM Plex Mono", monospace; }
 
 /* --- TV view: what a cast lands on. 10-foot: big type, no touch chrome, the map is the wallpaper ---- */
-html.tv .dock, html.tv .views, html.tv .grab, html.tv #ps, html.tv #pc, html.tv #ph, html.tv #pr, html.tv .rail, html.tv .motion, html.tv .live, html.tv .party { display: none !important; }
+html.tv .dock, html.tv .grab, html.tv #ps, html.tv #pc, html.tv .party { display: none !important; } /* the desktop layout minus typing and phone-only buttons */
+html.tv .rail { right: 448px;  html.tv .tvcode { bottom: 72px; } /* the Sort + feel rail sits under the map, clear of the panel, as on desktop */
 html.tv .brand .dot { animation: none; } /* the logo spin keeps the TV compositor busy every frame while idle */
 .atlas-fly { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; } /* a TV's dancing tracks, over the still map */
 html.tv #atlas { top: 0; left: 0; right: 0; bottom: 0; cursor: none; } /* longhands: Tizen 6.5 (Chromium 85) has no `inset` */
@@ -392,7 +393,7 @@ html.tv .player { padding: 18px 16px 10px; grid-template-columns: auto auto auto
 html.tv .pt b { font-size: 26px; -webkit-line-clamp: 3; } html.tv .pt small { font-size: 12.5px; white-space: normal; }
 html.tv .body { padding-bottom: 24px; overflow: hidden; -webkit-mask-image: linear-gradient(#000 82%, transparent); } /* no scrolling on a TV: the panel fades out instead of clipping */
 html.tv .toast { top: auto; bottom: 40px; font-size: 18px; }
-@media (min-width: 1600px) { html.tv .sheet, html.tv .top, html.tv .tvcode, html.tv .toast { zoom: 1.65; } } /* 1080p TVs (Tizen apps are 1920 wide); 720p Cast screens stay 1x */
+@media (min-width: 1600px) { html.tv .sheet, html.tv .top, html.tv .rail, html.tv .tvcode, html.tv .toast { zoom: 1.65; } } /* 1080p TVs (Tizen apps are 1920 wide); 720p Cast screens stay 1x */
 @media (max-width: 1100px) { html.tv .sheet { width: 340px; } html.tv .top { right: 388px; } } /* Nest Hub, 1024x600 */
 .tvcode { position: fixed; left: 32px; bottom: 32px; z-index: 6; display: flex; gap: 22px; align-items: center; padding: 18px 24px 18px 18px; border-radius: 22px; background: rgba(13, 17, 18, .92); border: 1px solid var(--line2); box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
   opacity: 0; transform: translate3d(0, 20px, 0); transition: opacity .4s var(--ease), transform .4s var(--ease); pointer-events: none; max-width: 640px; }

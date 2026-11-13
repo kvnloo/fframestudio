@@ -50,7 +50,7 @@ await until(() => tv.evaluate(() => new Promise((ok) => requestAnimationFrame(()
   const fs = [...document.querySelectorAll(".atlas-fly")]; if (!fs.length || !fs[0].width) return ok(false);
   const o = document.createElement("canvas"); o.width = fs[0].width; o.height = fs[0].height; const x = o.getContext("2d"); for (const f of fs) x.drawImage(f, 0, 0);
   const d = x.getImageData(0, 0, o.width, o.height).data; for (let i = 3; i < d.length; i += 4) if (d[i]) return ok(true); ok(false);
-})))), 10000, "TV dances its tracks on the overlay canvas");
+})))), 10000, "TV dances its tracks on the overlay canvas").catch(async (e) => { console.log(JSON.stringify(await tv.evaluate(() => ({ cam: window.__sa.A.cam, form: window.__sa.A.formation, paused: window.__sa.audio.paused, t: window.__sa.audio.currentTime, view: window.__sa.state.view, fly: [...document.querySelectorAll(".atlas-fly")].map((f) => [f.width, f.height]) })))); throw e; });
 assert.equal(await ph.evaluate(() => !!document.querySelector(".atlas-fly")), false, "phones keep one canvas");
 assert.equal(JSON.parse(await ph.evaluate(() => localStorage.getItem("sa-tv"))).room, room, "phone remembers the TV");
 await wait(1500); if (shots) { await tv.screenshot({ path: `${shots}/tv-playing.png` }); await ph.screenshot({ path: `${shots}/phone-casting.png` }); }
