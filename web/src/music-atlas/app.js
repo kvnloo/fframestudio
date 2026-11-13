@@ -286,13 +286,31 @@ const sm = { open: false, held: false, hot: null, t: 0, p0: 0, x: 0, y: 0, down:
 function openSort(held) {
   if (!soundReady()) return toast("Listening data is still loading");
   sm.open = true; sm.held = held; sm.hot = null;
-  sortMenu.innerHTML = LENSES.map((L) => `<button role="menuitem" data-lens="${L.id}" class="${L.id === state.lens ? "on" : ""}"><b>${L.name}</b><small class="lensink" style="--lens:${lensInk(L.id)}">${L.id === "feel" ? "how it makes you feel" : esc(L.legend ?? "")}</small></button>`).join("");
-  sortMenu.hidden = false; void sortMenu.offsetWidth; sortMenu.classList.add("on"); sortBtn.classList.add("open"); haptic(held ? "press" : "select");
+  sortMenu.innerHTML = LENSES.map((L) => `<button role="menuitem" data-lens="${L.id}" class="${L.id === state.lens ? "on" : ""}" style="--fill:${lensInk(L.id)}"><i class="fill"></i><b>${L.name}</b><small class="lensink" style="--lens:${lensInk(L.id)}">${L.id === "feel" ? "how it makes you feel" : esc(L.legend ?? "")}</small></button>`).join("");
+  sortMenu.hidden = false; sortMenu.classList.remove("picking"); const onB = sortMenu.querySelector("button.on"); if (onB) bloom(onB, null, null, true); void sortMenu.offsetWidth; sortMenu.classList.add("on"); sortBtn.classList.add("open"); haptic(held ? "press" : "select");
 }
+// The chosen sort fills its whole row with its colours, as tinted glass. The fill is a disc centred on the finger
+// that scales up to cover the row (transform only); its gradient is pinned to the row, so the colours land where
+// they belong as it grows. The row already chosen when the menu opens sits filled with no motion.
+function bloom(b, x, y, still = false) {
+  // Layout px, not the rect: the menu is still scaling in when it opens, so the rect is ~14% small.
+  const r = b.getBoundingClientRect(), f = b.querySelector(".fill"), W = b.offsetWidth, H = b.offsetHeight, k = r.width / W || 1; if (!f) return;
+  x = x == null ? W / 2 : (x - r.left) / k; y = y == null ? H / 2 : (y - r.top) / k;
+  const R = Math.ceil(Math.hypot(Math.max(x, W - x), Math.max(y, H - y))) + 2;
+  Object.assign(f.style, { left: `${x - R}px`, top: `${y - R}px`, width: `${2 * R}px`, height: `${2 * R}px`, backgroundSize: `${W}px ${H}px`, backgroundPosition: `${R - x}px ${R - y}px` });
+  clearTimeout(b._ink); b.classList.remove("lit", "inked"); b.classList.toggle("still", still); void f.offsetWidth; b.classList.add("lit");
+  if (still) b.classList.add("inked"); else b._ink = setTimeout(() => b.classList.contains("lit") && b.classList.add("inked"), 110); // text turns ink once the tint is under it
+}
+function lightRow(b, x, y) {
+  if (b === sm.hot) return; sm.hot?.classList.remove("hot", "lit", "inked"); sm.hot = b;
+  sortMenu.classList.toggle("picking", !!b && !b.classList.contains("on"));
+  if (b) { b.classList.add("hot"); if (!b.classList.contains("on")) bloom(b, x, y); haptic("detent"); }
+}
+const pickLens = (b, then) => setTimeout(() => { closeSort(); then(); }, 260); // let the fill land before the menu folds
 function closeSort() { sm.open = false; sm.hot = null; sortMenu.classList.remove("on"); sortBtn.classList.remove("open"); setTimeout(() => { if (!sm.open) sortMenu.hidden = true; }, 180); }
 function hotAt(x, y) {
   const b = document.elementFromPoint(x, y)?.closest?.("#sortmenu [data-lens]") ?? null;
-  if (b !== sm.hot) { sm.hot?.classList.remove("hot"); b?.classList.add("hot"); if (b) haptic("detent"); sm.hot = b; }
+  lightRow(b, x, y);
 }
 // A held finger that strays AWAY px past the menu (and the button it came from) dismisses it; a wobble on the border doesn't.
 const AWAY = 24, outBy = (r, x, y) => Math.hypot(Math.max(r.left - x, 0, x - r.right), Math.max(r.top - y, 0, y - r.bottom));
@@ -312,13 +330,14 @@ sortBtn.addEventListener("pointermove", (e) => {
 });
 const sortUp = (e) => {
   if (!sm.down) return; sm.down = false; clearTimeout(sm.t); clearTimeout(sm.a); pressRing.hide(); sortBtn.classList.remove("arming");
-  if (sm.fired) { const b = sm.hot; if (b) { closeSort(); if (b.dataset.lens !== state.lens) { haptic("keep"); setLens(b.dataset.lens); } } else sm.held = false; return; } // let go on nothing: the menu stays for a tap
+  if (sm.fired) { const b = sm.hot; if (b) pickLens(b, () => { if (b.dataset.lens !== state.lens) { haptic("keep"); setLens(b.dataset.lens); } }); else sm.held = false; return; } // let go on nothing: the menu stays for a tap
   if (e.type === "pointercancel" || Math.hypot(e.clientX - sm.x, e.clientY - sm.y) > SLOP) return;
   sm.open ? closeSort() : openSort(false);
 };
 sortBtn.addEventListener("pointerup", sortUp); sortBtn.addEventListener("pointercancel", sortUp);
 sortBtn.addEventListener("contextmenu", (e) => e.preventDefault());
-sortMenu.addEventListener("click", (e) => { const b = e.target.closest("[data-lens]"); if (!b) return; closeSort(); if (b.dataset.lens !== state.lens) { buzz(4); setLens(b.dataset.lens); } });
+sortMenu.addEventListener("pointerdown", (e) => { const b = e.target.closest("[data-lens]"); if (b) lightRow(b, e.clientX, e.clientY); }); // a tap fills from the fingertip
+sortMenu.addEventListener("click", (e) => { const b = e.target.closest("[data-lens]"); if (!b) return; if (b !== sm.hot) lightRow(b, e.clientX, e.clientY); pickLens(b, () => { if (b.dataset.lens !== state.lens) { buzz(4); setLens(b.dataset.lens); } }); });
 document.addEventListener("pointerdown", (e) => { if (sm.open && !e.target.closest("#sortmenu, #sortbtn")) closeSort(); }, true);
 
 function renderChips() {

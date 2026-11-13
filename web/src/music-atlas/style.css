@@ -227,7 +227,6 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .sortbtn { background: rgba(22, 28, 29, .96); border-color: rgba(236, 232, 223, .55); color: var(--ink); }
 .sortbtn .sk { color: var(--mute); opacity: 1; }
 .lensink { background: var(--lens); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
-.sortmenu button.hot small.lensink, .sortmenu button:active small.lensink { background: none; -webkit-text-fill-color: #0d1112; color: #0d1112; }
 .rail .chip { height: 28px; padding: 0 8px; gap: 5px; font-size: 12px; border-radius: 9px; background: rgba(22, 28, 29, .94); box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
 .rail .chip small { font-size: 9px; }
 .rail .chip.feel i { width: 7px; height: 7px; }
@@ -246,8 +245,28 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .sortmenu button b { font: 600 14px "Instrument Sans", sans-serif; }
 .sortmenu button small { font: 10px "IBM Plex Mono", monospace; color: var(--mute); white-space: nowrap; }
 .sortmenu button.on b::after { content: " ✓"; color: var(--acc); }
-.sortmenu button.hot, .sortmenu button:active { background: var(--ink); transform: scale(1.03); }
-.sortmenu button.hot b, .sortmenu button.hot small, .sortmenu button:active b { color: #0d1112; }
+/* Chosen / touched row = the lens's colours as liquid glass across the whole row. .fill is a disc grown from the
+   finger (transform only); ::after is the glass: a specular top sheen, a soft lower bounce and a light rim.
+   No backdrop-filter (it sits over the live canvas). Text turns ink on the tint (stops are >= 64% light). */
+.sortmenu button { position: relative; overflow: hidden; isolation: isolate; }
+.sortmenu button > * { position: relative; z-index: 1; }
+.sortmenu .fill { position: absolute; z-index: 0; border-radius: 50%; background: var(--fill) no-repeat; opacity: 0; transform: scale(0); pointer-events: none;
+  transition: transform .34s cubic-bezier(.2, .9, .25, 1), opacity .18s var(--ease); }
+.sortmenu button.lit .fill { opacity: 1; transform: none; }
+.sortmenu button.still .fill { transition: none; }
+.sortmenu button::after { content: ""; position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .25s var(--ease);
+  background: radial-gradient(120% 90% at 22% -30%, rgba(255, 255, 255, .55), rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, .28), rgba(255, 255, 255, .06) 46%, rgba(0, 0, 0, 0) 54%, rgba(0, 0, 0, .06) 80%, rgba(255, 255, 255, .2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), inset 0 -1px 1px rgba(255, 255, 255, .25), inset 0 -6px 10px -6px rgba(0, 0, 0, .25), inset 0 0 0 1px rgba(255, 255, 255, .2); }
+.sortmenu button.lit::after { opacity: 1; }
+.sortmenu button.lit { box-shadow: 0 6px 18px rgba(0, 0, 0, .35); transition: background .12s, transform .3s var(--spring), box-shadow .3s; }
+.sortmenu button.hot { transform: scale(1.03); }
+.sortmenu.picking button.on:not(.hot) .fill, .sortmenu.picking button.on:not(.hot)::after { opacity: .28; }
+.sortmenu.picking button.on:not(.hot) { box-shadow: none; }
+.sortmenu button.inked b, .sortmenu button.inked b::after { color: #0d1112; }
+.sortmenu button.inked small.lensink { background: none; -webkit-text-fill-color: rgba(13, 17, 18, .82); color: rgba(13, 17, 18, .82); }
+.sortmenu.picking button.on:not(.hot) b, .sortmenu.picking button.on:not(.hot) b::after { color: var(--ink); }
+.sortmenu.picking button.on:not(.hot) small.lensink { background: var(--lens); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 @media (min-width: 900px) { .rail { right: 424px; top: auto; bottom: 8px; transform: none !important; } .rail::before { display: none; } }
 
 /* --- sound profile on the card (Aural's vocabulary: tonal balance, soundstage, band activity) -- */
