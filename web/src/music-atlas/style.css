@@ -45,7 +45,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .chips::-webkit-scrollbar { display: none; }
 .chip { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line2); background: var(--panel); font: 600 13px "Instrument Sans", sans-serif; color: #cfcac0; scroll-snap-align: start;
   transition: transform .35s var(--spring), background .25s var(--ease), border-color .25s var(--ease), color .25s; }
-.chip:active { transform: scale(.93); }
+.chip:active { transform: scale(.97); }
+/* the rail is controls, not text: a held chip (glow) or Sort must never start a text selection or callout */
+#rail, #rail * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .chip small { font: 10px "IBM Plex Mono", monospace; color: var(--mute); }
 .chip.feel i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 0 var(--c); transition: box-shadow .3s; }
 .chip.on { background: var(--ink); color: #0d1112; border-color: var(--ink); }

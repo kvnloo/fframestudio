@@ -654,28 +654,29 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   let glow = null;
   function setGlow(gid) {
     const now = performance.now();
-    if (gid) { const f = g.byId.get("f:" + gid); glow = { gid, f, t0: now, out: 0, k: glow?.gid === gid ? glow.k : 0 }; }
+    if (gid) { const f = g.byId.get("f:" + gid); glow = { gid, f, t0: now, out: 0, k: 0, k0: 0 }; }
     else if (glow) glow.out = glow.out || now;
     kick();
   }
   function drawGlow(P) {
-    const now = performance.now(), G = glow, f = G.f;
-    G.k = G.out ? Math.max(0, 1 - (now - G.out) / 260) : Math.min(1, (now - G.t0) / 160);
+    const now = performance.now(), G = glow, f = G.f, sm = (x) => x * x * (3 - 2 * x);
+    G.k = G.out ? Math.max(0, G.k0 * (1 - (now - G.out) / 480)) : Math.min(1, (now - G.t0) / 320);
     if (G.out && G.k <= 0) { glow = null; return; }
-    const reach = g.outer + 30, run = reduced ? 1 : clamp((now - G.t0) / 620, 0, 1), R = reach * (1 - Math.pow(1 - run, 3)) + 1; // ease-out front
-    const s = cam.s, px = 1 / s, k = G.k, c = f ? colN(f) : P.ink;
-    // dim everything else, in screen space
-    ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 0.55 * k; ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H); ctx.restore();
+    if (!G.out) G.k0 = G.k;
+    const k = sm(G.k), reach = g.outer + 30, run = reduced ? 1 : clamp((now - G.t0) / 1100, 0, 1), R = reach * (1 - Math.pow(1 - run, 4)) + 1; // a slow ease-out front
+    const s = cam.s, px = 1 / s, c = f ? colN(f) : P.ink, FE = 90; // FE: the front's feather, world px
+    // the rest of the map steps back a little, in screen space
+    ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 0.32 * k; ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H); ctx.restore();
     ctx.save(); ctx.globalCompositeOperation = "lighter";
-    // the hub flares, then breathes while held
-    const br = 0.85 + 0.15 * Math.sin((now - G.t0) / 260), hr = (40 + 60 * run) * px * br;
-    const hub = ctx.createRadialGradient(0, 0, 0, 0, 0, hr); hub.addColorStop(0, c); hub.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.globalAlpha = k * (0.9 - 0.4 * run); ctx.fillStyle = hub; ctx.beginPath(); ctx.arc(0, 0, hr, 0, TAU); ctx.fill();
+    // a quiet light at the hub where it starts
+    const hr = 34 * px, hub = ctx.createRadialGradient(0, 0, 0, 0, 0, hr); hub.addColorStop(0, c); hub.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.globalAlpha = k * 0.45; ctx.fillStyle = hub; ctx.beginPath(); ctx.arc(0, 0, hr, 0, TAU); ctx.fill();
     if (f) {
-      ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.clip(); // everything beyond the front is still dark
       const nodes = subtree(f).map((id) => g.byId.get(id)), arms = nodes.filter((n) => n.level < 4), leaves = nodes.filter((n) => n.level === 4 && (n.al ?? 1) > 0.5);
-      ctx.lineCap = "round"; ctx.strokeStyle = c;
-      for (const [w, a] of [[7, 0.18], [2.2, 0.9]]) { // a soft bloom under a bright core
+      // the arms take the light through a feathered radial edge, so the front has no hard line
+      const fr = ctx.createRadialGradient(0, 0, Math.max(0, R - FE), 0, 0, R + 1); fr.addColorStop(0, c); fr.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.lineCap = "round"; ctx.strokeStyle = R > FE ? fr : c;
+      for (const [w, a] of [[4.5, 0.1], [1.5, 0.6]]) { // a faint bloom under a fine line
         ctx.globalAlpha = a * k; ctx.lineWidth = w * px; ctx.beginPath();
         for (const n of arms) {
           const p = n.parent, x = n.vx, y = n.vy;
@@ -685,17 +686,15 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
         }
         ctx.stroke();
       }
-      // tracks: a halo and a hot core, each lighting as the front passes (brighter right at the front)
-      const halo = [], core = [];
-      for (const n of leaves) { const d = R - Math.hypot(n.vx, n.vy); if (d > 0) (d < 40 ? halo : core).push(n); }
-      for (const [list, boost] of [[core, 1], [halo, 1.6]]) {
-        if (!list.length) continue;
-        ctx.fillStyle = c;
-        ctx.globalAlpha = 0.22 * k * boost; ctx.beginPath(); for (const n of list) { const r = DOT * 2.6 * n.vr * boost; ctx.moveTo(n.vx + r, n.vy); ctx.arc(n.vx, n.vy, r, 0, TAU); } ctx.fill();
-        ctx.globalAlpha = 0.95 * k; ctx.beginPath(); for (const n of list) { const r = DOT * 1.15 * n.vr; ctx.moveTo(n.vx + r, n.vy); ctx.arc(n.vx, n.vy, r, 0, TAU); } ctx.fill();
-      }
-      // the front itself: a thin ring of light, gone once it has passed the outermost track
-      if (run < 1) { ctx.globalAlpha = 0.35 * k * (1 - run); ctx.lineWidth = 2 * px; ctx.beginPath(); ctx.arc(0, 0, Math.max(1, R - 2 * px), 0, TAU); ctx.stroke(); }
+      // tracks ease in as the front passes them (four alpha steps keep it to a few batched paths)
+      const steps = [[], [], [], []];
+      for (const n of leaves) { const d = (R - Math.hypot(n.vx, n.vy)) / FE; if (d > 0) steps[Math.min(3, Math.floor(sm(Math.min(1, d)) * 4))].push(n); }
+      ctx.fillStyle = c;
+      steps.forEach((list, i) => {
+        if (!list.length) return; const a = k * (i + 1) / 4;
+        ctx.globalAlpha = 0.12 * a; ctx.beginPath(); for (const n of list) { const r = DOT * 2 * n.vr; ctx.moveTo(n.vx + r, n.vy); ctx.arc(n.vx, n.vy, r, 0, TAU); } ctx.fill();
+        ctx.globalAlpha = 0.7 * a; ctx.beginPath(); for (const n of list) { const r = DOT * 1.05 * n.vr; ctx.moveTo(n.vx + r, n.vy); ctx.arc(n.vx, n.vy, r, 0, TAU); } ctx.fill();
+      });
     }
     ctx.restore();
   }
