@@ -7,7 +7,11 @@
 //   node tools/aural-local/server.mjs            # then open the pane (type "aural") -> This computer
 //
 // Env: AURAL_PORT (4317), AURAL_ORIGINS (extra allowed origins, comma-separated), AURAL_DOTFILES
-// (dotfiles checkout; default ~/workspace/.files or /workspace/.files), AURAL_EVOLVE (audio-evolve path).
+// (dotfiles checkout; default ~/workspace/.files or /workspace/.files), AURAL_EVOLVE (audio-evolve path),
+// AURAL_TAILSCALE=0 (don't publish to your tailnet).
+// Phones: when Tailscale is up it also runs `tailscale serve` so your own devices reach it at
+// https://<this-machine>.<tailnet>.ts.net:4317 (tailnet only, never the internet; HTTPS, which the
+// https site needs). It still only listens on 127.0.0.1; Tailscale proxies to it. Stopped on exit.
 // Safety: browsers send Origin on every cross-origin request, so only the allowed origins can drive it,
 // and the Host check stops DNS-rebinding pages that pretend to be 127.0.0.1.
 import { createServer } from "node:http";
@@ -20,7 +24,13 @@ import { SOUNDSCAPES } from "../../web/src/music-atlas/aural.js";
 
 const PORT = +(process.env.AURAL_PORT ?? 4317);
 const ORIGINS = new Set(["https://glide-music-picker.vercel.app", ...(process.env.AURAL_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean)]);
-const localOrigin = (o) => /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(o);
+const localOrigin = (o) => /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(o)
+  || /^https:\/\/glide-music-picker-[a-z0-9]+-kvnloos-projects\.vercel\.app$/.test(o); // the site's preview deploys
+// This machine's tailnet name ("groot.tail1234.ts.net"), or "" without Tailscale.
+const TAILNET = process.env.AURAL_TAILSCALE === "0" ? "" : (() => {
+  try { return JSON.parse(execFileSync("tailscale", ["status", "--self", "--json"], { encoding: "utf8", timeout: 3000, stdio: ["ignore", "pipe", "ignore"] })).Self?.DNSName?.replace(/\.$/, "") ?? ""; } catch { return ""; }
+})();
+const hostOk = (h) => /^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(h) || (!!TAILNET && (h === TAILNET || h === `${TAILNET}:${PORT}`));
 const DOT = process.env.AURAL_DOTFILES ?? [join(homedir(), "workspace/.files"), "/workspace/.files"].find((d) => existsSync(d)) ?? "";
 const EVOLVE = process.env.AURAL_EVOLVE ?? join(DOT, "scripts/audio-evolve");
 const CAMILLA = join(DOT, "config/camilladsp");
@@ -85,7 +95,7 @@ function stopCava() { if (cava && !listeners.size) { cava.kill(); cava = null; }
 const body = (req) => new Promise((ok) => { const c = []; req.on("data", (d) => c.push(d)); req.on("end", () => { try { ok(JSON.parse(Buffer.concat(c).toString() || "{}")); } catch { ok({}); } }); });
 export function handler(req, res) {
   const origin = req.headers.origin, host = req.headers.host ?? "";
-  if (!/^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(host)) { res.writeHead(421); return res.end(); }
+  if (!hostOk(host)) { res.writeHead(421); return res.end(); }
   if (origin && !(ORIGINS.has(origin) || localOrigin(origin))) { res.writeHead(403, { "content-type": "application/json" }); return res.end(JSON.stringify({ error: "origin not allowed" })); }
   const h = { "content-type": "application/json", "cache-control": "no-store", vary: "origin" };
   if (origin) Object.assign(h, { "access-control-allow-origin": origin, "access-control-allow-headers": "content-type", "access-control-allow-methods": "GET, POST", "access-control-allow-private-network": "true" });
@@ -93,7 +103,7 @@ export function handler(req, res) {
   const send = (code, j) => { res.writeHead(code, h); res.end(JSON.stringify(j)); };
   const path = new URL(req.url, "http://x").pathname;
   (async () => {
-    if (path === "/health") return send(200, { ok: true, name: "aural-local", version: 1, caps: await caps() });
+    if (path === "/health") return send(200, { ok: true, name: "aural-local", version: 1, caps: await caps(), tailnet: tailnetUrl });
     if (path === "/state") return send(200, await state());
     const ir = /^\/brir\/([01])$/.exec(path); // your ASH true-stereo rooms, for the browser engine; never leaves this machine
     if (ir) { const f = join(DOT, "config/brir", BRIRS[+ir[1]]); if (!DOT || !existsSync(f)) return send(404, { error: "no BRIR" }); res.writeHead(200, { ...h, "content-type": "audio/wav", "cache-control": "max-age=86400" }); return createReadStream(f).pipe(res); }
@@ -122,7 +132,17 @@ export function handler(req, res) {
   })().catch((e) => send(500, { error: e.message }));
 }
 
+let tailnetUrl = null; // set once `tailscale serve` is publishing us
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const srv = createServer(handler).listen(PORT, "127.0.0.1", () => console.log(`aural-local on http://127.0.0.1:${srv.address().port} (dotfiles: ${DOT || "none"})`));
-  process.on("SIGINT", () => { listeners.clear(); stopCava(); process.exit(0); });
+  const srv = createServer(handler).listen(PORT, "127.0.0.1", () => {
+    console.log(`aural-local on http://127.0.0.1:${srv.address().port} (dotfiles: ${DOT || "none"})`);
+    if (!TAILNET) return console.log("phones: Tailscale isn't running here, so only this computer can connect");
+    execFile("tailscale", ["serve", "--bg", `--https=${PORT}`, `http://127.0.0.1:${PORT}`], { timeout: 15000 }, (e) => {
+      if (e) return console.log(`phones: \`tailscale serve\` failed (${e.message.split("\n")[0]}); run \`sudo tailscale set --operator=$USER\` once`);
+      tailnetUrl = `https://${TAILNET}:${PORT}`;
+      console.log(`phones (Tailscale on): ${tailnetUrl}\n  open on the phone: https://glide-music-picker.vercel.app/#aural=${encodeURIComponent(tailnetUrl)}`);
+    });
+  });
+  const bye = () => { listeners.clear(); stopCava(); if (tailnetUrl) try { execFileSync("tailscale", ["serve", `--https=${PORT}`, "off"], { timeout: 5000, stdio: "ignore" }); } catch {} process.exit(0); };
+  process.on("SIGINT", bye); process.on("SIGTERM", bye);
 }

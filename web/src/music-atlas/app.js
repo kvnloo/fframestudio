@@ -1116,7 +1116,7 @@ addEventListener("resize", () => { measure(); if (!wide()) { sh.y = snaps()[sh.t
 // (back gesture / swipe) is respected on the spot; the hint comes back with the next touch, so the tap
 // after that restores fullscreen. "Never mind" turns it off on this device. The hint's text lets taps through.
 if (!cast.isTV && matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fullscreen), (display-mode: standalone)").matches && document.documentElement.requestFullscreen) {
-  const off = () => localStorage.getItem("sa-fs") === "no";
+  const off = () => localStorage.getItem("sa-fs") === "no", FSH_MS = 3500;
   const fsHint = (delay, armNow) => {
     if (off() || document.fullscreenElement || $(".fsh")) return;
     const hint = document.createElement("div"); hint.className = "fsh";
@@ -1128,6 +1128,10 @@ if (!cast.isTV && matchMedia("(pointer: coarse)").matches && !matchMedia("(displ
     setTimeout(() => {
       if (!hint.isConnected) return; const a = $(".top").getBoundingClientRect().bottom, z = rail.getBoundingClientRect().top;
       hint.style.top = `${Math.round((a + z) / 2 - hint.offsetHeight / 2)}px`; hint.classList.add("on"); if (!armNow) arm();
+      // It fades by itself: a scroll (pointercancel) or a tap inside the YouTube iframe never reaches us, so
+      // waiting for a tap could leave it up for good. The next tap still goes fullscreen.
+      // Removed (not just faded) so it can come back after leaving fullscreen; the tap listener stays armed.
+      setTimeout(() => { hint.classList.remove("on"); setTimeout(() => hint.remove(), 400); }, FSH_MS);
     }, delay);
     const arm = () => { addEventListener("click", go, true); addEventListener("pointerup", go, true); }; // a drag on the atlas never makes a click
     if (armNow) arm();
@@ -1254,6 +1258,9 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
     const s = await B.sources(); if (!(s.dir || s.files || s.plex || s.spotify || s.imports)) return;
     const r = await B.restore(); mine.regrant = r.needsFolder; addMine(r, mine.spotifyNew ? "Spotify" : null); r.errors.forEach((m) => toast(m));
   }).catch((e) => toast("Your music: " + e.message));
-  if (auralOn() || location.hash === "#aural") { aural().then((m) => { if (location.hash === "#aural") m.open(); }); }
+  // #aural opens the pane; #aural=<https://pc.tailnet.ts.net:4317> (the computer's phone code) also points it at that server.
+  const auralHash = () => { const m = /^#aural(?:=(.+))?$/.exec(location.hash); if (!m) return;
+    aural().then((p) => { p.open(); if (m[1]) { p.useServer(decodeURIComponent(m[1])); history.replaceState(null, "", "#aural"); } }); };
+  if (auralOn()) aural(); auralHash(); addEventListener("hashchange", auralHash);
   window.__sa = { aural, party, mine, addMine, importMenu, get yt() { return ytMod; }, slugs: () => slugs, social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
 })();

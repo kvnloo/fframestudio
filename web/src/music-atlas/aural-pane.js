@@ -6,6 +6,7 @@
 // tools/aural-local server: PipeWire sinks, system-wide soundscapes, audio-evolve, cava spectrum).
 import { SPEC, DEFAULTS, SOUNDSCAPES, scapeById, normalize, variants, comboKey, parseCombo, describeEq, AXES, AuralEngine, local, LOCAL } from "./aural.js";
 import * as social from "./social.js";
+import { renderSVG } from "./uqr.js";
 
 const KEY = "sa-aural";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -30,7 +31,7 @@ export function attach(h) {
   }
 }
 async function start() {
-  if (!engine) { host.reroute(true); engine = new AuralEngine(host.audio); if (srv.up) engine.useLocalRooms(LOCAL); }
+  if (!engine) { host.reroute(true); engine = new AuralEngine(host.audio); if (srv.up) engine.useLocalRooms(srv.base); }
   if (!engine.ctx) await engine.init();
   await engine.ctx.resume(); if (engine.ctx.state !== "running") throw new Error("waiting for a tap");
   engine.apply(prefs.p);
@@ -114,31 +115,51 @@ async function fillCommunity(t) {
       + (c.scapes.length ? `<p class="desc">Across all songs: ${c.scapes.map((s) => `${esc(scapeById.get(s.scape)?.name ?? s.scape)} ${s.keeps}`).join(" · ")}</p>` : "");
   } catch { box.innerHTML = `<p class="hint">Community evolution needs the deployed site (or tools/sound-atlas-serve.mjs with a database).</p>`; }
 }
+// Where aural-local answers: this computer (127.0.0.1), or the tailnet address a phone was given
+// (https://<machine>.<tailnet>.ts.net:4317, published by the server through `tailscale serve`).
+const TS = /^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.ts\.net(:\d+)?$/i;
+const call = (path, body, timeout = 4000) => local(path, body, { base: srv.base ?? prefs.base ?? LOCAL, timeout });
+export function useServer(u) { // from #aural=<address> (the computer's phone code) or the address box
+  u = String(u ?? "").trim().replace(/\/+$/, ""); if (!TS.test(u) && u !== LOCAL) return false;
+  prefs.base = u === LOCAL ? null : u; tab = "pc"; connect(); return true;
+}
+const phoneHint = `<p class="hint"><b>On a phone?</b> Turn on Tailscale here, signed in to the same tailnet as the computer (on the same Wi‑Fi it goes direct; elsewhere it still works). Plain Wi‑Fi alone can't: browsers block local addresses from this https page. Then scan the code in the computer's Aural pane, or paste the address aural-local printed:</p>
+    <div class="row addr"><input data-addr type="url" inputmode="url" placeholder="https://your-pc.tailnet.ts.net:4317" value="${esc(prefs.base ?? "")}" spellcheck="false" autocomplete="off"><button data-useaddr class="primary">Connect</button></div>`;
+function phoneCode() { // shown on the computer: open the same site on the phone, pointed at this server
+  if (!srv.tailnet || srv.base !== LOCAL) return "";
+  const link = `${location.origin}${location.pathname}#aural=${encodeURIComponent(srv.tailnet)}`;
+  return `<h5>On your phone</h5><p class="hint">With Tailscale on, scan this (or open the link) to drive this computer from the phone.</p><div class="pcode">${renderSVG(link, { border: 2, pixelSize: 5, whiteColor: "#ece8df", blackColor: "#0d1112" })}</div><pre>${esc(link)}</pre>`;
+}
 function pc() {
   const cmd = `node tools/aural-local/server.mjs`;
-  if (!prefs.server) return `<p class="hint">Run Aural's backend on this computer to drive the real chain system-wide: PipeWire sinks, your AutoEQ + BRIR filter-chains, CamillaDSP experiences and Aural Evolution. It is a small local server you start yourself; it only listens on 127.0.0.1 and only answers this site.</p><pre>${esc(cmd)}</pre><div class="row"><button data-server class="primary">Connect to ${esc(LOCAL.replace("http://", ""))}</button></div>`;
-  if (!srv.up) return `<p class="hint">${esc(srv.err ?? "Looking for aural-local…")}</p><pre>${esc(cmd)}</pre><div class="row"><button data-server>Try again</button><button data-unserver>Stop using it</button></div>`;
+  if (!prefs.server) return `<p class="hint">Run Aural's backend on this computer to drive the real chain system-wide: PipeWire sinks, your AutoEQ + BRIR filter-chains, CamillaDSP experiences and Aural Evolution. It is a small local server you start yourself; it only listens on 127.0.0.1, and with Tailscale on your own devices can reach it too.</p><pre>${esc(cmd)}</pre><div class="row"><button data-server class="primary">Connect</button></div>${phoneHint}`;
+  if (!srv.up) return `<p class="hint">${esc(srv.err ?? "Looking for aural-local…")}</p><pre>${esc(cmd)}</pre><div class="row"><button data-server>Try again</button><button data-unserver>Stop using it</button></div>${phoneHint}`;
   const e = srv.evolve;
-  return `<p class="desc">Connected · dotfiles <code>${esc(srv.caps?.dotfiles ?? "none")}</code> · CamillaDSP ${srv.camilla ? "running" : "not running"}${srv.caps?.cava ? " · cava" : ""}</p>
+  return `<p class="desc">Connected${srv.base !== LOCAL ? ` over Tailscale (${esc(new URL(srv.base).hostname.split(".")[0])})` : ""} · dotfiles <code>${esc(srv.caps?.dotfiles ?? "none")}</code> · CamillaDSP ${srv.camilla ? "running" : "not running"}${srv.caps?.cava ? " · cava" : ""}</p>
     <h5>Output</h5><div class="sinks">${(srv.sinks ?? []).map((s) => `<button data-sink="${esc(s.name)}" class="${s.default ? "on" : ""}"><b>${esc(s.desc)}</b><small>${esc([s.format, s.rate && s.rate / 1000 + " kHz", s.channels && s.channels + " ch"].filter(Boolean).join(" · "))}</small></button>`).join("")}</div>
     <h5>System-wide soundscapes</h5><div class="chips">${(srv.scapes ?? []).map((id) => `<button data-sys="${id}" class="${srv.active === id ? "on" : ""}">${esc(scapeById.get(id)?.name ?? id)}</button>`).join("") || `<span class="hint">None available.</span>`}</div>
     ${e ? `<h5>Aural Evolution · ${esc(e.device)} · ${esc(e.mode)} · gen ${e.generation}</h5><div class="chips">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button data-ev="select" data-arg="${n}" class="${e.active === n ? "on" : ""}">${n}</button>`).join("")}<button data-ev="favorite">★ keep</button><button data-ev="mode" data-arg="${e.mode === "room" ? "native" : "room"}">→ ${e.mode === "room" ? "native" : "room"}</button></div>` : ""}
     ${srv.caps?.cava ? `<h5>Map</h5><div class="chips"><button data-spec class="${spectrum ? "on" : ""}">Draw the computer's whole output (cava) on the map</button></div>` : ""}
-    <div class="row"><button data-server>Refresh</button><button data-unserver>Disconnect</button></div>`;
+    <div class="row"><button data-server>Refresh</button><button data-unserver>Disconnect</button></div>${phoneCode()}`;
 }
 async function connect() {
   prefs.server = true; save(); srv = { up: false }; render();
-  try { const h = await local("/health"), s = await local("/state"); srv = { up: true, caps: h.caps, ...s }; engine?.useLocalRooms(LOCAL); }
-  catch (e) { srv = { up: false, err: e.name === "AbortError" || /fetch/i.test(e.message) ? "aural-local is not running (or the browser blocked local access: allow it when asked)." : e.message }; }
+  const base = prefs.base ?? LOCAL; // the address the phone was given, else this computer
+  try { const h = await local("/health", undefined, { base, timeout: 4000 }), s = await local("/state", undefined, { base, timeout: 4000 });
+    srv = { up: true, base, caps: h.caps, tailnet: h.tailnet, ...s }; engine?.useLocalRooms(base);
+  } catch (e) {
+    const gone = e.name === "AbortError" || /fetch/i.test(e.message);
+    srv = { up: false, err: !gone ? e.message : base !== LOCAL ? `Can't reach ${base}. Is Tailscale on here, and aural-local running on the computer?` : "aural-local is not running on this computer (or the browser blocked local access: allow it when asked)." };
+  }
   render();
 }
 async function sys(path, body) {
-  try { const r = await local(path, body, { timeout: 25000 }); host.toast(r.via ? `This computer: ${r.via}` : "Done"); } catch (e) { host.toast(e.message); }
+  try { const r = await call(path, body, 25000); host.toast(r.via ? `This computer: ${r.via}` : "Done"); } catch (e) { host.toast(e.message); }
   connect();
 }
 function toggleSpectrum() {
   if (spectrum) { spectrum.close(); spectrum = null; sysBars = null; return render(); }
-  spectrum = new EventSource(LOCAL + "/spectrum");
+  spectrum = new EventSource(srv.base + "/spectrum");
   spectrum.onmessage = (m) => { const b = JSON.parse(m.data), h = b.length / 2; // cava stereo: left mirrored, then right
     sysBars = Array.from({ length: h }, (_, i) => { const l = b[h - 1 - i], r = b[h + i]; return { db: -95 + 60 * Math.max(l, r), pan: (r - l) / (r + l + 1e-9), diffuse: 0.2 }; }); };
   host.A.setStage(() => sysBars ?? engine?.field()); render();
@@ -169,11 +190,12 @@ async function onClick(e) {
   if (d.follow) { prefs.follow = d.follow; save(); render(); return fillCommunity(t); }
   if (d.try) { const x = parseCombo(d.try); if (x) { applyP({ ...scapeById.get(x.scape).params, ...x.eq }, x.scape); ev = null; render(); fillCommunity(t); } return; }
   if ("server" in d) return connect();
-  if ("unserver" in d) { prefs.server = false; save(); spectrum?.close(); spectrum = null; sysBars = null; srv = { up: false }; return render(); }
+  if ("unserver" in d) { prefs.server = false; prefs.base = null; save(); engine?.useLocalRooms(null); spectrum?.close(); spectrum = null; sysBars = null; srv = { up: false }; return render(); }
   if (d.sink) return sys("/sink", { name: d.sink });
   if (d.sys) return sys("/scape", { id: d.sys });
   if (d.ev) return sys("/evolve", { cmd: d.ev, arg: d.arg && /^\d$/.test(d.arg) ? +d.arg : d.arg });
   if ("spec" in d) return toggleSpectrum();
+  if ("useaddr" in d) { const v = el.querySelector("[data-addr]")?.value; if (!useServer(v)) host.toast("Paste the https://….ts.net:4317 address aural-local printed"); return; }
 }
 // 1–4 audition variants while the Evolve tab is open.
 addEventListener("keydown", (e) => { if (!isOpen() || tab !== "evolve" || !ev || e.target.closest?.("input")) return; const n = +e.key; if (n >= 1 && n <= ev.list.length) { e.stopPropagation(); el.querySelector(`[data-var="${n - 1}"]`)?.click(); } }, true);

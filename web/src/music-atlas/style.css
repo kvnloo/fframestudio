@@ -183,6 +183,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .fsh { position: fixed; left: 50%; top: 30%; z-index: 8; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none;
   transform: translate3d(-50%, 8px, 0); opacity: 0; transition: opacity .3s var(--ease), transform .45s var(--spring); }
 .fsh.on { opacity: 1; transform: translate3d(-50%, 0, 0); }
+.fsh:not(.on) button { pointer-events: none; } /* faded: no invisible "Never mind" catching taps */
 .fsh span { padding: 10px 16px; border-radius: 999px; background: rgba(13, 17, 18, .82); backdrop-filter: blur(10px); border: 1px solid var(--line2); color: var(--ink); font: 600 14px "Instrument Sans", sans-serif; white-space: nowrap; box-shadow: 0 10px 30px rgba(0, 0, 0, .4); }
 .fsh button { pointer-events: auto; min-height: 32px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line2); background: rgba(13, 17, 18, .88); color: #d8d3c9; font: 500 12px "Instrument Sans", sans-serif; }
 .fsh button:active { transform: scale(.94); }
@@ -520,6 +521,9 @@ a.aref { color: inherit; text-decoration: underline; text-decoration-color: colo
 .aural .desc em { display: block; margin-top: 4px; font-style: normal; color: #b9b3a7; }
 .aural code, .aural pre { font: 11px "IBM Plex Mono", monospace; color: #b9b3a7; }
 .aural pre { padding: 8px 10px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; white-space: pre-wrap; user-select: all; }
+.aural .addr input { flex: 1; min-width: 0; padding: 8px 10px; background: var(--panel2); color: inherit; border: 1px solid var(--line); border-radius: 8px; font: 12px "IBM Plex Mono", monospace; }
+.aural .pcode { width: 168px; margin: 8px 0; border-radius: 8px; overflow: hidden; }
+.aural .pcode svg { display: block; width: 100%; height: auto; }
 .aural .knob { display: grid; grid-template-columns: minmax(0, 1fr) 104px 54px; align-items: center; gap: 8px; padding: 3px 0; }
 .aural .knob span { color: #c9c4b9; line-height: 1.25; }
 .aural .knob input { width: 100%; accent-color: var(--acc); }
