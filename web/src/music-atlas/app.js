@@ -526,7 +526,17 @@ function paint(html, scroll) {
   body.innerHTML = html; body.dataset.v = state.view; body.classList.toggle("calm", same || seen);
   if (was) GLIDE.forEach((s, g) => { const els = [...body.querySelectorAll(s)]; if (els.length !== was[g].length) return;
     const now = els.map((el) => el.style.cssText); els.forEach((el, i) => { el.style.cssText = was[g][i]; }); body.offsetWidth; els.forEach((el, i) => { el.style.cssText = now[i]; }); });
-  restPulse(); if (scroll) body.scrollTop = 0; watchLayers();
+  restPulse(); if (scroll) body.scrollTop = 0; watchLayers(); fitSubs();
+}
+// A feel heading shows as many of its styles as fit beside its name, whole, and drops the rest (they are
+// a tap away on the feel's page): a swatch cut in half, or slid under the name, can't be read or tapped.
+function fitSubs() {
+  for (const em of body.querySelectorAll(".grp h3 em.subs")) {
+    const ss = [...em.children]; ss.forEach((s) => { s.hidden = false; });
+    // Right-aligned, so overflow runs out the left edge (scrollWidth can't see it): compare the first one's edge.
+    const fits = () => ss[0].getBoundingClientRect().left >= em.getBoundingClientRect().left - 0.5;
+    for (let i = ss.length - 1; i > 0 && !fits(); i--) ss[i].hidden = true;
+  }
 }
 // --- browse: artists, albums, genres, recent (browse.js) -----------------------------------------------
 // Lists come from what the search and filters keep; a page's songs are its play order, so Play, Shuffle
@@ -1162,6 +1172,7 @@ async function copy(text) {
 { const ro = new ResizeObserver(() => { measure(); if (!wide() && !sh.drag) sheetTo(sh.target); atlasRefit(); }); ro.observe($(".top")); ro.observe($(".dock")); ro.observe(rail); }  // fonts load, lens row fills in
 // The player changes height with its density step: re-measure so peek still ends at the view switch. Only the
 // sheet re-aims; the map stays put (a title wrapping to two lines must not move the camera).
+new ResizeObserver(() => fitSubs()).observe(body);
 new ResizeObserver(() => { measure(); if (!wide() && !sh.drag && !sh.raf) sh.raf = requestAnimationFrame(sheetStep); }).observe($("#player"));
 addEventListener("resize", () => { measure(); if (!wide()) { sh.y = snaps()[sh.target]; setSheetY(sh.y); } else { sheet.style.transform = rail.style.transform = ""; } atlasRefit(); });
 // Phones get the whole screen: browsers only grant fullscreen inside a user gesture, so a tap
