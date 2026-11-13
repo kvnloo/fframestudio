@@ -5,7 +5,7 @@ import { parsePlaylist, plexTrack, spotifyTrack, mineTrack } from "../../web/src
 test("VLC/M3U playlists match library files by name, whatever the path style", () => {
   const m3u = "#EXTM3U\n#EXTINF:200,Artist - One\nC:\\Music\\Artist\\01 One.mp3\n../Two%20Song.flac\n\n";
   assert.deepEqual(parsePlaylist("Road trip.m3u8", m3u), { name: "Road trip", files: ["01 one.mp3", "two song.flac"] });
-  const xspf = `<?xml version="1.0"?><playlist version="1"><title>Night drive</title><trackList><track><location>file:///home/me/Music/A%20%26%20B.mp3</location></track></trackList></playlist>`;
+  const xspf = `<?xml version="1.0"?><playlist version="1"><title>Night drive</title><trackList><track><location>file:///srv/Music/A%20%26%20B.mp3</location></track></trackList></playlist>`;
   assert.deepEqual(parsePlaylist("x.xspf", xspf), { name: "Night drive", files: ["a & b.mp3"] });
 });
 
