@@ -367,6 +367,9 @@ const onChip = (e) => {
   like = null; run({ fly: true });
 };
 chips.addEventListener("click", onChip); $("#pins").addEventListener("click", onChip);
+// Hold (or press hard on) a filter chip: its tracks light up on the map, the light running out from the hub along
+// that group's arm. Letting go fades it; the hold never toggles the filter (pressable swallows the click).
+pressable(chips, ".chip.feel", { color: (el) => el.style.getPropertyValue("--c"), onFire: (el) => A.setGlow(el.dataset.g), onEnd: () => A.setGlow(null) });
 const toggle = (set, v) => (set.has(v) ? set.delete(v) : set.add(v));
 
 // --- search -------------------------------------------------------------------------------------

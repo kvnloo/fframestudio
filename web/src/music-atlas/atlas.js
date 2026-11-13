@@ -438,7 +438,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     if (fly && !gp && poses && settled && flyOn && (step = !step)) { kick(); return; } // (the GPU path needs no skipping)
     place(bt);
     draw(now, bt, busy, settled);
-    if (busy || (playing && !playing.paused)) kick();
+    if (busy || glow || (playing && !playing.paused)) kick();
   }
 
   function dancePoses(dm, dts) {
@@ -648,11 +648,63 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     }
   }
 
+  // A held filter chip lights its group: light leaves the hub, runs out along the group's own arm (feel -> family ->
+  // style) and each track lights as the front reaches it; the rest of the map dims under it. Let go: it fades.
+  // Overlay only (the cached map layer is untouched), drawn on the danced positions so it rides the beat.
+  let glow = null;
+  function setGlow(gid) {
+    const now = performance.now();
+    if (gid) { const f = g.byId.get("f:" + gid); glow = { gid, f, t0: now, out: 0, k: glow?.gid === gid ? glow.k : 0 }; }
+    else if (glow) glow.out = glow.out || now;
+    kick();
+  }
+  function drawGlow(P) {
+    const now = performance.now(), G = glow, f = G.f;
+    G.k = G.out ? Math.max(0, 1 - (now - G.out) / 260) : Math.min(1, (now - G.t0) / 160);
+    if (G.out && G.k <= 0) { glow = null; return; }
+    const reach = g.outer + 30, run = reduced ? 1 : clamp((now - G.t0) / 620, 0, 1), R = reach * (1 - Math.pow(1 - run, 3)) + 1; // ease-out front
+    const s = cam.s, px = 1 / s, k = G.k, c = f ? colN(f) : P.ink;
+    // dim everything else, in screen space
+    ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 0.55 * k; ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H); ctx.restore();
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    // the hub flares, then breathes while held
+    const br = 0.85 + 0.15 * Math.sin((now - G.t0) / 260), hr = (40 + 60 * run) * px * br;
+    const hub = ctx.createRadialGradient(0, 0, 0, 0, 0, hr); hub.addColorStop(0, c); hub.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.globalAlpha = k * (0.9 - 0.4 * run); ctx.fillStyle = hub; ctx.beginPath(); ctx.arc(0, 0, hr, 0, TAU); ctx.fill();
+    if (f) {
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.clip(); // everything beyond the front is still dark
+      const nodes = subtree(f).map((id) => g.byId.get(id)), arms = nodes.filter((n) => n.level < 4), leaves = nodes.filter((n) => n.level === 4 && (n.al ?? 1) > 0.5);
+      ctx.lineCap = "round"; ctx.strokeStyle = c;
+      for (const [w, a] of [[7, 0.18], [2.2, 0.9]]) { // a soft bloom under a bright core
+        ctx.globalAlpha = a * k; ctx.lineWidth = w * px; ctx.beginPath();
+        for (const n of arms) {
+          const p = n.parent, x = n.vx, y = n.vy;
+          if (p.level === 0) { ctx.moveTo(0, 0); ctx.lineTo(x, y); continue; }
+          const rm = (Math.hypot(p.vx, p.vy) + Math.hypot(x, y)) / 2;
+          ctx.moveTo(p.vx, p.vy); ctx.bezierCurveTo(Math.cos(p.va) * rm, Math.sin(p.va) * rm, Math.cos(n.va) * rm, Math.sin(n.va) * rm, x, y);
+        }
+        ctx.stroke();
+      }
+      // tracks: a halo and a hot core, each lighting as the front passes (brighter right at the front)
+      const halo = [], core = [];
+      for (const n of leaves) { const d = R - Math.hypot(n.vx, n.vy); if (d > 0) (d < 40 ? halo : core).push(n); }
+      for (const [list, boost] of [[core, 1], [halo, 1.6]]) {
+        if (!list.length) continue;
+        ctx.fillStyle = c;
+        ctx.globalAlpha = 0.22 * k * boost; ctx.beginPath(); for (const n of list) { const r = DOT * 2.6 * n.vr * boost; ctx.moveTo(n.vx + r, n.vy); ctx.arc(n.vx, n.vy, r, 0, TAU); } ctx.fill();
+        ctx.globalAlpha = 0.95 * k; ctx.beginPath(); for (const n of list) { const r = DOT * 1.15 * n.vr; ctx.moveTo(n.vx + r, n.vy); ctx.arc(n.vx, n.vy, r, 0, TAU); } ctx.fill();
+      }
+      // the front itself: a thin ring of light, gone once it has passed the outermost track
+      if (run < 1) { ctx.globalAlpha = 0.35 * k * (1 - run); ctx.lineWidth = 2 * px; ctx.beginPath(); ctx.arc(0, 0, Math.max(1, R - 2 * px), 0, TAU); ctx.stroke(); }
+    }
+    ctx.restore();
+  }
   function drawOverlay(bt) {
     const P = pal(), { cx, cy } = centre(), s = cam.s, g4 = grow(bt, 4);
     const X = (n) => n.vx, Y = (n) => n.vy;
     const sx = (n) => cx + (X(n) - cam.x) * s, sy = (n) => cy + (Y(n) - cam.y) * s;
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (cx - cam.x * s), dpr * (cy - cam.y * s));
+    if (glow) { drawGlow(P); ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (cx - cam.x * s), dpr * (cy - cam.y * s)); }
     // Playing track, scored like a metre: every beat ripples its dot, each bar's downbeat lights its
     // lineage (style -> family -> feel), and a four-bar phrase lights its wedge and breathes the ring. Phase comes
     // from the measured downbeat (sound.js beatAt), so pulses land on the kick, not just the tempo.
@@ -755,7 +807,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     get graph() { return g; }, get cam() { return cam; },
     setMotion(v) { motion = !!v; kick(); }, get motion() { return motion; }, get labels() { return lblK; },
     setFormation, get formation() { return !!form?.on; },
-    setTracks, setLit, setFeatured, setPlaying, setTheme, setLens, setLinks, setLayers, zoomOn, focus, flyToIds, fitAll, kick, resize,
+    setTracks, setGlow, get glow() { return glow && { gid: glow.gid, k: glow.k }; }, setLit, setFeatured, setPlaying, setTheme, setLens, setLinks, setLayers, zoomOn, focus, flyToIds, fitAll, kick, resize,
     flyCam(c, ms) { flyTo({ ...c }, ms); }, get layerK() { return layerK(); },
     get focusId() { return focusId; }, set focusId(v) { focusId = v; kick(); },
   };
