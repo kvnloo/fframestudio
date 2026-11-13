@@ -106,18 +106,22 @@ function sheetPointer() {
   const eatClick = () => { const f = (e) => { e.stopPropagation(); e.preventDefault(); }; addEventListener("click", f, { capture: true, once: true }); setTimeout(() => removeEventListener("click", f, { capture: true }), 450); };
   const grabbed = (on) => sheet.classList.toggle("grabbed", on);
   const down = (e) => {
-    const onRail = e.currentTarget === rail;
-    if (wide() || sh.drag || (onRail ? e.target.closest("#sortmenu, #sortbtn") || sm.open : e.target.closest("button, input, .scrub, .filt"))) return; // the Sort pill keeps its own hold-and-slide
-    sh.drag = { x0: e.clientX, player: !!e.target.closest("#player"), y0: e.clientY, s0: sh.y, t: performance.now(), y: e.clientY, v: 0, moved: false, rail: onRail, pending: onRail };
-    if (onRail) return;
+    // The search field drags too: a finger's contact patch on the grab pill is retargeted by Chrome's touch
+    // adjustment to the nearest tappable thing, which is the field, so excluding inputs made the pill dead on phones.
+    // Like the rail it claims the pointer only after 8 px of mostly-vertical travel; a tap still focuses it.
+    const onRail = e.currentTarget === rail, onQ = !onRail && !!e.target.closest("#q");
+    if (wide() || sh.drag || (onRail ? e.target.closest("#sortmenu, #sortbtn") || sm.open : e.target.closest("button, .scrub, .filt") || (!onQ && e.target.closest("input")))) return; // the Sort pill keeps its own hold-and-slide
+    sh.drag = { x0: e.clientX, player: !!e.target.closest("#player"), y0: e.clientY, s0: sh.y, t: performance.now(), y: e.clientY, v: 0, moved: false, rail: onRail, q: onQ, pending: onRail || onQ };
+    if (onRail || onQ) return;
     e.currentTarget.setPointerCapture(e.pointerId); cancelAnimationFrame(sh.raf); sh.raf = 0; grabbed(true);
   };
   const move = (e) => {
     const d = sh.drag; if (!d) return;
     if (d.pending) {
       const ax = Math.abs(e.clientX - d.x0), ay = Math.abs(e.clientY - d.y0);
-      if (heldGesture || (ax > 8 && ax > ay)) { sh.drag = null; return; } // a held chip, or a sideways swipe: the row scrolls
+      if ((d.rail && heldGesture) || (ax > 8 && ax > ay)) { sh.drag = null; return; } // a held chip, or a sideways swipe: the row scrolls / the caret moves
       if (ay < 8) return;
+      if (d.q && document.activeElement === q) q.blur(); // dragging out of search: the keyboard goes, the sheet follows the finger
       d.pending = false; d.y0 = d.y = e.clientY; d.s0 = sh.y; d.t = performance.now();
       e.target.setPointerCapture?.(e.pointerId); cancelAnimationFrame(sh.raf); sh.raf = 0; grabbed(true); eatClick();
     }
@@ -133,8 +137,8 @@ function sheetPointer() {
   const up = (e) => {
     const d = sh.drag; sh.drag = null; if (!d) return;
     grabbed(false);
-    if (d.rail && d.pending) return; // a tap on a chip stays a tap
-    if (d.rail && !d.moved) return sheetTo(sh.target);
+    if (d.pending) return; // a tap on a chip stays a tap, a tap on search focuses it
+    if ((d.rail || d.q) && !d.moved) return sheetTo(sh.target);
     // Swipe the player sideways: next / previous, the title sliding out the way it was thrown.
     const dx = e.clientX - d.x0, dy = e.clientY - d.y0;
     if (d.player && Math.abs(dx) > 56 && Math.abs(dx) > 1.6 * Math.abs(dy)) { sheetTo(sh.target); haptic("touch"); const pt = $("#pt"); pt.classList.remove("sw-l", "sw-r"); void pt.offsetWidth; pt.classList.add(dx < 0 ? "sw-l" : "sw-r"); return step(dx < 0 ? 1 : -1); }

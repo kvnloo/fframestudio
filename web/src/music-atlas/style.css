@@ -62,6 +62,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   background: var(--panel2); border: 1px solid var(--line2); border-bottom: 0; border-radius: 22px 22px 0 0; contain: layout paint;
   box-shadow: 0 -18px 50px rgba(0, 0, 0, .45); transform: translate3d(0, 100vh, 0); }
 .grab { height: 22px; display: grid; place-items: center; touch-action: none; cursor: grab; flex: none; }
+.dock { touch-action: none; } .search input { touch-action: pan-x; } /* the browser never claims a vertical drag here: it moves the sheet */
 .grab i { width: 38px; height: 5px; border-radius: 3px; background: var(--line2); }
 .player { --c: var(--acc); display: grid; grid-template-columns: auto auto auto 1fr auto auto auto auto; grid-template-rows: auto auto; gap: 4px 6px; align-items: center; padding: 0 12px 10px; touch-action: none; flex: none; contain: layout paint; }
 .ib { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; transition: transform .3s var(--spring), background .2s; }

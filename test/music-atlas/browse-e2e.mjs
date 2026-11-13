@@ -121,6 +121,21 @@ assert.ok(sc.level === 2 && sc.head === sc.name && sc.rows > 0 && sc.inside && s
 await page.locator("#body .bhead .bback").tap(); await wait(800);
 assert.equal(await sa(() => window.__sa.A.graph.byId.get(window.__sa.A.focusId).level), 1, "back steps out to the feel");
 
+// A finger-sized touch on the grab pill or the search field drags the sheet (owner report: both were dead on the
+// phone). Chrome's touch adjustment moves a fat contact on the pill onto the search field, so the field must drag too;
+// a radius-0 synthetic touch never reproduces this. A plain tap on search still focuses it.
+const cdp = await page.context().newCDPSession(page);
+const touch = (type, x, y) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y, radiusX: 18, radiusY: 18 }] });
+for (const sel of [".grab i", "#q"]) for (const [from, dir] of [["peek", -1], ["half", 1]]) {
+  await sa(() => document.activeElement?.blur?.()); await page.evaluate((s) => window.__sa.sheetTo(s), from); await wait(1200);
+  const [x, y] = await page.evaluate((s) => { const r = document.querySelector(s).getBoundingClientRect(); return [r.left + Math.min(r.width / 2, 60), r.top + r.height / 2]; }, sel);
+  await touch("touchStart", x, y); for (let i = 1; i < 16; i++) { await touch("touchMove", x, y + dir * i * 22); await wait(16); } await touch("touchEnd"); await wait(1300);
+  const to = await sa(() => document.querySelector("#sheet").dataset.snap);
+  assert.ok(to !== from && to !== "find", `a finger drag on ${sel} from ${from} moves the sheet (got ${to})`);
+}
+await sa(() => window.__sa.sheetTo("peek")); await wait(1200); await page.locator("#q").tap(); await wait(800);
+assert.equal(await sa(() => document.activeElement?.id), "q", "a tap on search still focuses it");
+
 assert.deepEqual(errs, []);
 await browser.close();
 console.log("browse-e2e ok:", { artists: artists.length, artistPage: pageIds.length, recent: recent.length, album: order });
