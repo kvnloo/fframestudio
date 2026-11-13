@@ -264,6 +264,7 @@ const sortBtn = $("#sortbtn"), sortMenu = $("#sortmenu");
 // Lens names wear their lens's colours. Text colours are lifted to >= 64% lightness so the darkest stops
 // (deep blue, brown, slate) still read on the dark rail. "Emotions" has 8 letters, one per emotion, in ring order.
 const inkC = (c) => shade(c).replace(/(\d+)%\)$/, (_, l) => `${Math.max(64, +l)}%)`);
+const lensGlow = (id) => { const s = lensStops(id, FEELS); return inkC(s[Math.floor(s.length / 2)]); }; // the halo a lit row casts
 const lensInk = (id) => `linear-gradient(90deg,${lensStops(id, FEELS).map(inkC).join(",")})`;
 function paintLensName(el, L) {
   if (L.id === "feel") { el.classList.remove("lensink"); el.innerHTML = [...L.name].map((ch, i) => `<span style="color:${inkC(FEELS[i % FEELS.length].night)}">${esc(ch)}</span>`).join(""); return; }
@@ -286,7 +287,7 @@ const sm = { open: false, held: false, hot: null, t: 0, p0: 0, x: 0, y: 0, down:
 function openSort(held) {
   if (!soundReady()) return toast("Listening data is still loading");
   sm.open = true; sm.held = held; sm.hot = null;
-  sortMenu.innerHTML = LENSES.map((L) => `<button role="menuitem" data-lens="${L.id}" class="${L.id === state.lens ? "on" : ""}" style="--fill:${lensInk(L.id)}"><i class="fill"></i><b>${L.name}</b><small class="lensink" style="--lens:${lensInk(L.id)}">${L.id === "feel" ? "how it makes you feel" : esc(L.legend ?? "")}</small></button>`).join("");
+  sortMenu.innerHTML = LENSES.map((L) => `<button role="menuitem" data-lens="${L.id}" class="${L.id === state.lens ? "on" : ""}" style="--fill:${lensInk(L.id)};--glow:${lensGlow(L.id)}"><i class="fill"></i><b>${L.name}</b><small class="lensink" style="--lens:${lensInk(L.id)}">${L.id === "feel" ? "how it makes you feel" : esc(L.legend ?? "")}</small></button>`).join("");
   sortMenu.hidden = false; sortMenu.classList.remove("picking"); const onB = sortMenu.querySelector("button.on"); if (onB) bloom(onB, null, null, true); void sortMenu.offsetWidth; sortMenu.classList.add("on"); sortBtn.classList.add("open"); haptic(held ? "press" : "select");
 }
 // The chosen sort fills its whole row with its colours, as tinted glass. The fill is a disc centred on the finger
