@@ -36,13 +36,13 @@ let ready = null; // first request on a cold isolate makes sure the tables exist
 const ensure = () => (ready ??= sql(SCHEMA.map((q) => [q])).catch((e) => { ready = null; throw e; }));
 
 const fresh = `at > now() - interval '${LIVE_S} seconds'`;
-// One snapshot of the room: counters, presence, what people are playing, every liked track's count.
+// One snapshot of the room: counters, presence, what people are playing, every track's likes and streams.
 const ROOM = () => [
   [`select k, n from ${S}.sa_counter`],
   [`select count(*)::int as here, count(*) filter (where playing)::int as listening from ${S}.sa_presence where ${fresh}`],
   [`select track, count(*)::int as n from ${S}.sa_presence where ${fresh} and playing and track is not null group by track order by n desc limit 24`],
   [`select track, count(*)::int as n from ${S}.sa_like group by track`],
-  [`select track, n::int from ${S}.sa_play order by n desc limit 40`],
+  [`select track, n::int from ${S}.sa_play order by n desc`], // every track's streams, most first
   [`select count(*)::int as n from ${S}.sa_visitor`],
 ];
 const room = ([counters, live, now, likes, plays, vis]) => {
@@ -52,7 +52,8 @@ const room = ([counters, live, now, likes, plays, vis]) => {
     here: live[0]?.here ?? 0, listening: live[0]?.listening ?? 0,
     now: now.map((r) => [r.track, r.n]),
     likes: Object.fromEntries(likes.map((r) => [r.track, r.n])),
-    top: plays.map((r) => [r.track, r.n]),
+    streams: Object.fromEntries(plays.map((r) => [r.track, r.n])),
+    top: plays.slice(0, 40).map((r) => [r.track, r.n]),
   };
 };
 const mine = (sid) => [[`select track from ${S}.sa_like where sid = $1`, [sid]]];

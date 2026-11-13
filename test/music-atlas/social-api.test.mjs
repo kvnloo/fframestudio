@@ -31,7 +31,7 @@ test("views, presence, likes, plays and playlists round-trip", { skip: !url && "
 
   await call("play", { sid: A, track: "inc:y" }); await call("play", { sid: B, track: "inc:y" });
   r = await call("stats", null, "GET");
-  assert.equal(r.plays, 2); assert.deepEqual(r.top, [["inc:y", 2]]); assert.deepEqual(r.likes, { "inc:x": 1 }); assert.equal(r.listening, 2);
+  assert.equal(r.plays, 2); assert.deepEqual(r.top, [["inc:y", 2]]); assert.deepEqual(r.streams, { "inc:y": 2 }, "every track's streams ride in the room"); assert.deepEqual(r.likes, { "inc:x": 1 }); assert.equal(r.listening, 2);
   r = await call("hello", { sid: A }); assert.deepEqual(r.mine, ["inc:x"]);
 
   r = await call("publish", { sid: A, name: "  late   night  ", tracks: ["inc:x", "inc:y", "inc:x", "bad id!"] });

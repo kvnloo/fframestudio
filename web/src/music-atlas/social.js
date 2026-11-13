@@ -11,7 +11,7 @@ export const sid = (() => {
   return s;
 })();
 
-const empty = () => ({ on: false, views: 0, visitors: 0, plays: 0, here: 0, listening: 0, now: [], likes: {}, top: [], playlists: [] });
+const empty = () => ({ on: false, views: 0, visitors: 0, plays: 0, here: 0, listening: 0, now: [], likes: {}, streams: {}, top: [], playlists: [] });
 export const room = empty();
 let listeners = [], now = () => ({ track: null, playing: false }), timer = 0;
 const emit = () => listeners.forEach((f) => f(room));
@@ -22,7 +22,7 @@ async function api(op, body) {
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error ?? `social ${r.status}`);
   return r.json();
 }
-const take = (j) => { Object.assign(room, { on: true, views: j.views, visitors: j.visitors, plays: j.plays, here: j.here, listening: j.listening, now: j.now, likes: j.likes, top: j.top }); emit(); };
+const take = (j) => { Object.assign(room, { on: true, views: j.views, visitors: j.visitors, plays: j.plays, here: j.here, listening: j.listening, now: j.now, likes: j.likes, streams: j.streams ?? {}, top: j.top }); emit(); };
 
 // hello once per page view, then a heartbeat that carries what this tab is playing.
 export async function join(getNow) {
@@ -46,8 +46,39 @@ export async function like(track, on) {
   room.likes[track] = Math.max(0, (room.likes[track] ?? 0) + (on ? 1 : -1)); emit(); // optimistic
   try { const j = await api("like", { track, on }); room.likes[track] = j.likes; emit(); } catch {}
 }
-const counted = new Set();
-export function played(track) { if (!room.on || counted.has(track)) return; counted.add(track); api("play", { track }).catch(() => {}); }
+// Likes are everyone's: the server keeps one like per listener per track and the room carries every
+// track's total. On join, reconcile this browser's hearts with the server's record of this listener:
+// hearts made while the shared layer was offline are sent now, and server-side likes come back.
+export async function syncLikes(local) {
+  if (!room.on) return [];
+  const server = new Set(room.mine ?? []), missing = [...local].filter((id) => !server.has(id));
+  await Promise.all(missing.map((track) => api("like", { track, on: true }).then((j) => { room.likes[track] = j.likes; }).catch(() => {})));
+  if (missing.length) emit();
+  return [...server].filter((id) => !local.has(id)); // liked here before (same listener), not in this browser's set
+}
+
+// A stream is a play-through heard for STREAM_S seconds (or to the end, for shorter tracks), counted
+// once per play-through: replaying a song counts again, pausing and resuming does not. Seeks don't
+// add listening time.
+export const STREAM_S = 30;
+export function streamMeter(send) {
+  let id = null, at = null, heard = 0, done = false;
+  return {
+    start(track) { if (track !== id) { id = track; heard = 0; done = false; } at = null; }, // a new track, or the same one replayed after reset()
+    reset() { id = null; },
+    time(track, t, dur, playing) {
+      if (track !== id) this.start(track);
+      if (playing && at != null) { const dt = t - at; if (dt > 0 && dt < 1.5) heard += dt; }
+      at = playing ? t : null;
+      if (!done && heard >= Math.min(STREAM_S, (dur || Infinity) * 0.9)) { done = true; send(track); }
+    },
+  };
+}
+export function streamed(track) {
+  if (!room.on) return;
+  room.streams[track] = (room.streams[track] ?? 0) + 1; room.plays += 1; emit(); // optimistic
+  api("play", { track }).catch(() => {});
+}
 
 export async function loadPlaylists() { try { room.playlists = (await api("playlists", {})).playlists; emit(); } catch {} return room.playlists; }
 export async function publish(name, tracks) { const j = await api("publish", { name, tracks }); room.playlists = j.playlists; emit(); return j.id; }

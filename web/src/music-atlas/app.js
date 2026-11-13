@@ -494,7 +494,7 @@ const rowHTML = (t, i, reason) => {
   return `<button class="trk ${state.sel === t.id ? "sel" : ""} ${playing ? "playing" : ""} ${i < 14 && animateRows ? "" : "q"}" data-id="${esc(t.id)}" style="--c:${tone(t)};--i:${i};--beat:${(60 / (t.bpm || 100)).toFixed(3)}s">
     <span class="pl">${playing ? `<span class="eq"><i></i><i></i><i></i></span>` : ICON.play}</span>
     <span class="tt"><b>${esc(t.title)}</b><small>${t.f ? `${bpmOf(t)} bpm · ${t.f.camelot} · ` : t.bpm ? `${t.bpm} bpm · ` : ""}${esc(styleName(t.family, t.style))} · ${esc(t.author)}${t.src === "web" ? ` · ${esc(t.provider)}` : ""}</small>${(reason ?? why.get(t.id)) ? `<em class="why">${esc(reason ?? why.get(t.id))}</em>` : ""}</span>
-    <span class="du">${mmss(t.dur)}</span><span class="hv ${state.picks.has(t.id) ? "on" : ""}" data-heart="${esc(t.id)}" role="button" aria-label="Like">${ICON.heart}${social.room.likes[t.id] ? `<small>${social.compact(social.room.likes[t.id])}</small>` : ""}</span></button>`;
+    <span class="du">${mmss(t.dur)}${social.room.streams[t.id] ? `<small title="streams">▶ ${social.compact(social.room.streams[t.id])}</small>` : ""}</span><span class="hv ${state.picks.has(t.id) ? "on" : ""}" data-heart="${esc(t.id)}" role="button" aria-label="Like">${ICON.heart}${social.room.likes[t.id] ? `<small>${social.compact(social.room.likes[t.id])}</small>` : ""}</span></button>`;
 };
 let animateRows = true;
 function renderBody(scroll = true) {
@@ -627,7 +627,7 @@ function communityHTML() {
   const pl = R.playlists.map((p) => `<div class="pl-card ${state.plist?.id === p.id ? "on" : ""}" data-pl="${p.id}"><button class="pl-go" data-plplay="${p.id}" aria-label="Play ${esc(p.name)}">${ICON.play}</button>
     <span class="tt"><b>${esc(p.name)}</b><small>${p.tracks.length} track${p.tracks.length === 1 ? "" : "s"} · ${p.plays} play${p.plays === 1 ? "" : "s"}${p.own ? " · yours" : ""}</small></span>
     <span class="hv ${p.liked ? "on" : ""}" data-plheart="${p.id}" role="button" aria-label="Like playlist">${ICON.heart}${p.likes ? `<small>${p.likes}</small>` : ""}</span>${p.own ? `<button class="pl-x" data-plx="${p.id}" aria-label="Unpublish">×</button>` : ""}</div>`).join("");
-  return `<div class="sum"><b>Community</b><span>${social.compact(R.views)} views · ${social.compact(R.visitors)} listeners · ${social.compact(R.plays)} plays</span></div>
+  return `<div class="sum"><b>Community</b><span>${social.compact(R.views)} views · ${social.compact(R.visitors)} listeners · ${social.compact(R.plays)} streams</span></div>
     <section class="room"><div class="live-big"><i></i><b>${R.here}</b> here now<span>${R.listening} listening</span></div>
       <div class="radio-row"><button data-radio="ear" class="${state.radio === "ear" ? "on" : ""}"><b>By-ear radio</b><small>${state.sel ? `from “${esc(byId.get(state.sel)?.title)}”, endless` : "endless, drifting by sound"}</small></button><button data-radio="crowd" class="${state.radio === "crowd" ? "on" : ""}"><b>Crowd radio</b><small>what people here love and play</small></button></div></section>
     ${nowIds.length ? `<section class="grp" style="--c:#4fd69a"><h3><i></i>Playing right now<small>${R.listening} listening</small></h3>${rows(nowIds, (t) => `${cnt[t.id]} listening now`)}</section>` : ""}
@@ -635,7 +635,7 @@ function communityHTML() {
       <form class="pub" id="pub"><input id="pubname" maxlength="60" placeholder="${state.picks.size ? `Name a playlist of your ${state.picks.size} ${state.picks.size === 1 ? "pick" : "picks"}…` : "Heart some tracks to publish a playlist"}" ${state.picks.size ? "" : "disabled"} /><button ${state.picks.size ? "" : "disabled"}>Publish</button></form>
       ${pl || `<div class="empty">No playlists yet. Publish your picks and be the first.</div>`}</section>
     ${liked.length ? `<section class="grp" style="--c:#ff86b8"><h3><i></i>Most liked</h3>${rows(liked, (t) => `♥ ${R.likes[t.id]}`)}</section>` : ""}
-    ${R.top.length ? `<section class="grp" style="--c:#6ea8ff"><h3><i></i>Most played</h3>${rows(R.top.slice(0, 20).map(([id]) => id), (t) => `${R.top.find(([id]) => id === t.id)[1]} plays`)}</section>` : ""}`;
+    ${R.top.length ? `<section class="grp" style="--c:#6ea8ff"><h3><i></i>Most streamed</h3>${rows(R.top.slice(0, 20).map(([id]) => id), (t) => `▶ ${social.compact(R.streams[t.id] ?? 0)} streams`)}</section>` : ""}`;
 }
 function renderLive() {
   const R = social.room, el = $("#live"); if (!el) return;
@@ -697,6 +697,7 @@ function cardHTML(t) {
   ];
   return `<article class="card" style="--c:${c}">
     <div class="lin">${LEVELS.map((L, i) => `<div class="lv"><b>0${i + 1}</b><span class="k">${L}</span><span class="v">${i === 3 ? rows[i][0] : esc(rows[i][0])}</span>${rows[i][1] ? `<span class="s">${i === 3 ? rows[i][1] : esc(rows[i][1])}</span>` : ""}</div>`).join("")}</div>
+    ${social.room.on ? `<div class="pop"><span>♥ <b>${social.compact(social.room.likes[t.id] ?? 0)}</b> ${(social.room.likes[t.id] ?? 0) === 1 ? "like" : "likes"}</span><span>▶ <b>${social.compact(social.room.streams[t.id] ?? 0)}</b> ${(social.room.streams[t.id] ?? 0) === 1 ? "stream" : "streams"}</span><small>from everyone</small></div>` : ""}
     ${profileHTML(t, tune ? tune.p : null)}
     ${tuneHTML(t)}
     ${layersHTML(t)}
@@ -1018,10 +1019,12 @@ function tick() {
   if (!audio.paused) { if (!wait) beatFrame(); requestAnimationFrame(tick); }
 }
 const syncPlay = () => { A.setPlaying(playState()); renderPlayer(); $("#pp").classList.toggle("wait", wait && !audio.paused); if (audio.paused || wait) restPulse(); const r = body.querySelector(".trk.sel"); if (r) { const t = byId.get(state.sel); const on = !audio.paused && !wait; r.classList.toggle("playing", on); r.classList.toggle("wait", wait && !audio.paused); r.querySelector(".pl").innerHTML = on ? `<span class="eq"><i></i><i></i><i></i></span>` : wait && !audio.paused ? `<span class="ld"></span>` : ICON.play; r.style.setProperty("--beat", (60 / (t?.bpm || 100)).toFixed(3) + "s"); } tick(); };
-audio.addEventListener("play", () => { if (state.sel) { playedIds.add(state.sel); social.played(state.sel); if (state.recent[0] !== state.sel) { state.recent = browse.remember(state.recent, state.sel); localStorage.setItem("sa-recent", JSON.stringify(state.recent)); } } social.pulse(); });
+const meter = social.streamMeter(social.streamed), metered = () => state.sel && meter.time(state.sel, audio.currentTime, audio.duration, !audio.paused);
+audio.addEventListener("timeupdate", metered); audio.addEventListener("pause", metered);
+audio.addEventListener("play", () => { if (state.sel) { playedIds.add(state.sel); meter.time(state.sel, audio.currentTime, audio.duration, true); if (state.recent[0] !== state.sel) { state.recent = browse.remember(state.recent, state.sel); localStorage.setItem("sa-recent", JSON.stringify(state.recent)); } } social.pulse(); });
 audio.addEventListener("pause", () => social.pulse());
 audio.addEventListener("play", syncPlay); audio.addEventListener("pause", syncPlay); audio.addEventListener("loadedmetadata", tick);
-audio.addEventListener("ended", () => partyEnded(() => step(1))); // in a room, whoever set the song picks the next
+audio.addEventListener("ended", () => { metered(); meter.reset(); partyEnded(() => step(1)); }); // a replay counts as a new stream; in a room, whoever set the song picks the next
 for (const k of ["play", "pause", "seeked", "loadstart"]) audio.addEventListener(k, () => heard(k)); // what you do leads the room
 audio.addEventListener("error", () => { wait = false; landAt = 0; if (!audio.getAttribute("src") || !state.sel) return; haptic("error"); toast("This one won't stream here; open its source ↗", 4000); syncPlay(); });
 // Between asking and hearing, the song is loading, not playing: the dot's ring draws in, the row and button wait.
@@ -1381,6 +1384,8 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
   else cast.attach({ sid: social.sid, audio, current: () => state.sel, follow: castFollow, toast, haptic, onChange: () => { $("#pc").classList.toggle("on", cast.send.on); $("#pc").title = cast.send.on ? `Casting to ${cast.send.name} · tap to stop` : "Play on a TV"; } });
   if (!cast.isTV && pendingRoom && /^[a-z0-9]{6}$/i.test(pendingRoom)) joinPrompt(pendingRoom.toLowerCase()); // a TV's #room= is its cast room, not a Listen together invite
   social.join(() => ({ track: state.sel, playing: !audio.paused })).then(async () => {
+    const back = await social.syncLikes(new Set(JSON.parse(localStorage.getItem("sa-picks") || "[]"))); // this browser's hearts, not shared-link picks
+    if (back.length) { back.forEach((id) => state.picks.add(id)); localStorage.setItem("sa-picks", JSON.stringify([...state.picks])); renderChips(); }
     renderBody(false);
     if (pendingPlist) { await social.loadPlaylists(); if (social.room.playlists.some((p) => p.id === pendingPlist)) { setView("community"); const p = social.room.playlists.find((x) => x.id === pendingPlist); state.plist = { id: p.id, name: p.name, ids: p.tracks.filter((x) => byId.has(x)) }; toast(`“${p.name}” · tap ▶ to play`); renderBody(false); } }
   });

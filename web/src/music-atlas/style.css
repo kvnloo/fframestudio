@@ -138,7 +138,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .trk .tt { min-width: 0; }
 .trk .tt b { display: block; font: italic 17px/1.2 "Instrument Serif", serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .trk .tt small { display: block; font: 11px "IBM Plex Mono", monospace; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.trk .du { font: 11px "IBM Plex Mono", monospace; color: var(--mute); }
+.trk .du { font: 11px "IBM Plex Mono", monospace; color: var(--mute); text-align: right; }
+.trk .du small { display: block; font-size: 9px; margin-top: 2px; opacity: .85; } /* everyone's streams */
 .trk .hv { width: 34px; height: 34px; display: grid; place-items: center; color: #4c524f; transition: color .2s; }
 .trk .hv svg { width: 16px; height: 16px; }
 .trk .hv.on { color: #ff86b8; }
@@ -168,6 +169,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .tags span { font: 10px "IBM Plex Mono", monospace; padding: 3px 7px; border-radius: 6px; background: rgba(255, 255, 255, .05); color: #bdb8ae; }
 .desc { margin: 10px 0 0; font-size: 13px; color: #bdb8ae; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
 .desc.open { -webkit-line-clamp: unset; }
+.pop { display: flex; align-items: baseline; gap: 14px; margin: 10px 0 2px; font: 12px "IBM Plex Mono", monospace; color: var(--mute); }
+.pop b { color: var(--ink, #fff); font-weight: 600; } .pop small { margin-left: auto; font-size: 10px; }
 .lic { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; margin-top: 12px; }
 .badge { font: 600 10px "IBM Plex Mono", monospace; padding: 3px 7px; border-radius: 6px; border: 1px solid var(--line2); color: var(--ink); white-space: nowrap; }
 .lic code { font: 10px/1.5 "IBM Plex Mono", monospace; color: #a9a49a; overflow-wrap: anywhere; }
