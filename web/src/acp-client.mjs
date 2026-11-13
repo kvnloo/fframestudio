@@ -68,6 +68,7 @@ export async function connectAgent({ bridge, token, agent, cwd, handlers = {}, W
     init, sessionId: session.sessionId, modes: session.modes, models: session.models,
     prompt: (text, extra = []) => conn.prompt({ sessionId: session.sessionId, prompt: [{ type: 'text', text }, ...extra] }),
     cancel: () => conn.cancel({ sessionId: session.sessionId }),
+    isOpen: () => ws.readyState === 1,
     close: () => ws.close(),
   };
 }

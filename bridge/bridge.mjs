@@ -21,6 +21,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { WebSocketServer } from 'ws';
 import { referenceAPI, stopReferenceHelpers } from './reference.mjs';
+import { liveAPI } from './live.mjs';
 import { AGENTS as BUILTIN } from './agents.mjs';
 import { watchTheme, detectTheme } from './system-theme.mjs';
 import { agentWebAdapter } from './taste.mjs';
@@ -97,7 +98,7 @@ const NOFOLLOW_WRITE = fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constan
 
 function cors(req, res) {
   const o = req.headers.origin;
-  if (o && originOk(o)) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-FFS-Expected'); res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS'); res.setHeader('Access-Control-Allow-Private-Network', 'true'); }
+  if (o && originOk(o)) { res.setHeader('Access-Control-Allow-Origin', o); res.setHeader('Vary', 'Origin'); res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-FFS-Expected, X-FFS-Live-Token'); res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS'); res.setHeader('Access-Control-Allow-Private-Network', 'true'); }
 }
 const send = (res, code, body, type = 'application/json') => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(type === 'application/json' ? JSON.stringify(body) : body); };
 
@@ -126,7 +127,8 @@ const theme = watchTheme({ ...themeOptions, onChange: state => {
 const generation = new GenerationQueue({ root: ROOT, providers: generationProviders({ fake: argv.includes('--generation-fake') }),
   publish: data => { const msg = `data: ${JSON.stringify(data)}\n\n`; watchers.forEach(r => r.write(msg)); } });
 await generation.ready;
-const shutdown = async () => { theme.close(); stopReferenceHelpers(); await generation.close(); process.exit(0); };
+const handleLive = liveAPI({ send });
+const shutdown = async () => { handleLive.close(); theme.close(); stopReferenceHelpers(); await generation.close(); process.exit(0); };
 process.once('SIGTERM', shutdown);
 process.once('SIGINT', shutdown);
 const handleReference = referenceAPI({ root: ROOT, safePath: fsPath, send });
@@ -149,6 +151,7 @@ const server = http.createServer(async (req, res) => {
   const auth = (req.headers.authorization || '').replace(/^Bearer /, '') || u.searchParams.get('token') || cookieTok(req); // query only for EventSource
   if (u.pathname === '/me') return send(res, 200, tokenOk(auth) ? { ok: true, root: ROOT } : { ok: false }); // lets the app show the sign-in page without a console error
   if (!tokenOk(auth)) return send(res, 401, { error: 'bad token' });
+  if (await handleLive(req, res, u)) return;
   if (await handleReference(req, res, u)) return;
   if (u.pathname === '/taste/profile') {
     if (req.method !== 'GET' || u.search) return send(res, 400, { error: 'Read-only owner-scoped profile; no query parameters' });

@@ -53,13 +53,17 @@ export const defaults = {
   settings: 'Mod+,',
 };
 export class Editor {
-  constructor(root, { api, onChange, toast, assistant }) {
+  constructor(root, { api, onChange, toast, assistant, submitAssistant, registerReviewCard, connectLiveAssistant, liveTranscript }) {
     Object.assign(this, {
       root,
       api,
       onChange,
       toast,
       assistant,
+      submitAssistant,
+      registerReviewCard,
+      connectLiveAssistant,
+      liveTranscript,
       frame: 0,
       rate: 0,
       zoom: 1,
@@ -93,8 +97,10 @@ export class Editor {
       if (m.decode && canvas?.isConnected) { this.posterDecoder.request(m.id, canvas); return; }
       this.thumbTargets.delete(m.id);
       if (canvas?.isConnected && m.bitmap) {
+        if (canvas.id === 'preview-still' && canvas.dataset.thumbRequestId !== String(m.id)) { m.bitmap.close(); return; }
         canvas.getContext('bitmaprenderer').transferFromImageBitmap(m.bitmap);
         canvas.dataset.ready = 'true';
+        if (canvas.id === 'preview-still') canvas.dataset.presentedSource = canvas.dataset.thumbSource;
       } else m.bitmap?.close();
     };
     this.observer = new IntersectionObserver(
@@ -115,6 +121,8 @@ export class Editor {
     this.voiceRelease = e => { if(e.code === 'KeyV') this.voiceHeld = false; };
     addEventListener('keyup',this.voiceRelease);
     this.voiceBlur=()=>{this.voiceHeld=false;};addEventListener('blur',this.voiceBlur);
+    this.feedbackKeyUp = (e) => { if (e.code === 'KeyR') this.feedback?.holdKey(false); };
+    addEventListener('keyup', this.feedbackKeyUp);
     this.beforeUnload = (e) => {
       if (this.dirty) {
         e.preventDefault();
@@ -176,6 +184,7 @@ export class Editor {
     this.onChange?.(this.doc);
     await journalOpening;
     this.metrics.journalDoneAt = performance.now();
+    if (matchMedia('(max-width: 767px), (max-height: 450px) and (max-width: 1023px)').matches) await (await this.ensureFeedback()).toggle();
     this.interactiveAt = performance.now();
     return this;
   }
@@ -236,7 +245,7 @@ export class Editor {
       $('#canvas').append(notice);
       $('.preview-label').textContent = 'Metadata-only import · no verified video or playable proxy';
     }
-    $('.editor-tools',this.root).insertAdjacentHTML('beforeend',button('voice','Voice · hold V')+button('import-reference','Import reference')+(this.doc.metadata?.reference ? button('compare-reference','Compare reference') : ''));
+    $('.editor-tools',this.root).insertAdjacentHTML('beforeend',button('feedback','Open viewer')+button('import-reference','Import reference')+(this.doc.metadata?.reference ? button('compare-reference','Compare reference') : ''));
     $('#recovery').oncancel = (e) => e.preventDefault();
     this.assistant?.($('#assistant-slot', this.root));
     this.root.onclick = (e) => {
@@ -827,7 +836,7 @@ export class Editor {
     if (+$('#seek').value !== Math.floor(this.frame))
       $('#seek').value = Math.floor(this.frame);
     if (!c) return;
-    const sig = JSON.stringify([c.id, textOf(c), this.video.styles[c.styleId]]);
+    const sig = JSON.stringify([c.id, textOf(c), this.video.styles[c.styleId], c.thumb, this.doc.preview.poster, c.mediaId]);
     if (sig !== this.previewSignature) {
       this.previewSignature = sig;
       $('#preview-text').innerHTML = Object.entries(textOf(c)).flatMap(([field,value]) => (Array.isArray(value) ? value : [value]).filter(Boolean).map(line => `<span class="preview-line" data-word="${esc(field)}">${esc(line)}</span>`)).join('');
@@ -845,6 +854,9 @@ export class Editor {
       if (src && this.previewThumb !== src) {
         this.previewThumb = src;
         const id = ++this.seq;
+        still.dataset.ready = 'false';
+        still.dataset.thumbRequestId = String(id);
+        still.dataset.thumbSource = this.url(src);
         this.thumbTargets.set(id, still);
         this.thumbs.postMessage({ id, url: this.url(src) });
       }
@@ -870,6 +882,7 @@ export class Editor {
         video.play().catch(() => {});
       } else video.pause();
     }
+    this.feedback?.notePreview();
   }
   async save() {
     if (this.loading) return false;
@@ -976,8 +989,10 @@ export class Editor {
     this.proposalPath = path;
     const box = $('#proposals');
     box.innerHTML = `<b>${esc(p.title || 'Assistant edit')}</b><p>Revision ${esc(p.baseRevision)} · ${p.commands?.length || 0} commands</p>${button('inspect-proposal', 'Inspect')}${button('apply-proposal', 'Apply')}${button('reject-proposal', 'Reject')}<pre id="proposal-diff"></pre>`;
-    this.studio.showTab('assistant');
-    if (this.settings.inspectorCollapsed) { this.settings.inspectorCollapsed = false; this.saveSettings(); }
+    if (!this.feedback?.active) {
+      this.studio.showTab('assistant');
+      if (this.settings.inspectorCollapsed) { this.settings.inspectorCollapsed = false; this.saveSettings(); }
+    }
     await this.inspectProposal();
   }
   async inspectProposal() {
@@ -1074,6 +1089,13 @@ export class Editor {
       if(this.dead)throw Error('Editor closed');this.voice=new VoiceControl(this);return this.voice;
     });
   }
+  ensureFeedback() {
+    return this.feedbackLoading ||= import('./feedback/desk.js').then(({FeedbackDesk}) => {
+      if (this.dead) throw Error('Editor closed');
+      this.feedback = new FeedbackDesk(this);
+      return this.feedback;
+    });
+  }
   ensureReference() {
     return this.referenceLoading ||= import('./reference.js').then(({ReferenceDesk})=>{
       if(this.dead)throw Error('Editor closed');this.reference=new ReferenceDesk(this);return this.reference;
@@ -1089,6 +1111,7 @@ export class Editor {
     if (a === 'apply-taste') { studioAction(a).preview(this, params); return this.run({type:a,...params}); }
     if (a === 'component-lab') return window.open('/app/labs/video-styles.html', '_blank', 'noopener,noreferrer');
     if (a === 'voice') return (await this.ensureVoice()).toggle();
+    if (a === 'feedback') return (await this.ensureFeedback()).toggle();
     if (a === 'import-reference') return (await this.ensureReference()).open();
     if (a === 'compare-reference') return (await this.ensureReference()).compareProject();
     if (a === 'seek') return this.seek(params.frame);
@@ -1330,6 +1353,12 @@ export class Editor {
     }
   }
   key(e) {
+    const field = e.target.isContentEditable || e.target.closest?.('input,textarea,select,[contenteditable]');
+    if (this.feedback?.active && e.code === 'KeyR' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && !field && !document.querySelector('dialog[open]')) {
+      e.preventDefault();
+      if (!e.repeat) this.feedback.holdKey(true);
+      return;
+    }
     if(e.code==='KeyV'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey&&!e.target.isContentEditable&&!e.target.closest('input,textarea,select,[contenteditable]')&&!document.querySelector('dialog[open]')) {
       e.preventDefault();
       if(!e.repeat){this.voiceHeld=true;this.ensureVoice().then(v=>{if(this.voiceHeld){v.held=true;v.start();}}).catch(e=>{if(!this.dead)this.toast(e.message);});}
@@ -1355,6 +1384,7 @@ export class Editor {
   }
   destroy() {
     this.dead = true;
+    this.feedback?.destroy();
     this.voice?.destroy();
     this.reference?.destroy();
     this.studio?.destroy();
@@ -1371,6 +1401,7 @@ export class Editor {
     removeEventListener('pointerup', this.panelResizeEnd);
     removeEventListener('keydown', this.keyHandler);
     removeEventListener('keyup',this.voiceRelease);removeEventListener('blur',this.voiceBlur);
+    removeEventListener('keyup', this.feedbackKeyUp);
     removeEventListener('beforeunload', this.beforeUnload);
   }
 }

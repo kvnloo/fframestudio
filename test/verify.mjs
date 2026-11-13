@@ -608,6 +608,7 @@ try {
   await journey('style components: lab preview equals runtime', () => verifyStyleComponents({context:ctx,base,out:OUT,root:ROOT,assert}));
   await verifyHosted({browser,source,out:OUT,root:ROOT,journey,assert});
   await verifyReference({page,base,out:OUT,journey,assert,library:path.join(HOME,'fframestudio/projects')});
+  await journey('feedback: record a review on the preview', () => JSON.parse(run(process.execPath, ['test/feedback-harness.mjs', '--out', path.join(OUT, 'feedback')]).trim()));
   await journey('console clean', async () => { assert(!report.console_errors.length && !report.failed_requests.length, JSON.stringify({ e: report.console_errors, r: report.failed_requests })); });
 } catch (e) {
   report.journeys.push({ name: 'setup', ok: false, error: String(e.message || e).slice(0, 800) });

@@ -72,6 +72,7 @@ When you change a feature, update its file and the matching journey in `test/ver
 | Crash recovery and autosave | [recovery.md](./recovery.md) | `recovery: unsaved title survives page close, undo and explicit save` and the other `recovery:` journeys |
 | Assistant | [assistant.md](./assistant.md) | `assistant: agents listed, unavailable ones disabled` |
 | Bridge security | [bridge-security.md](./bridge-security.md) | `gate: app refuses without the link` |
+| Recorded video feedback | [feedback.md](./feedback.md) | `feedback: record a review on the preview` |
 
 Two cross-cutting journeys check the whole app and are not owned by one feature file:
 

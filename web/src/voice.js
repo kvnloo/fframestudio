@@ -44,6 +44,10 @@ export class VoiceControl {
     await action(p.id).apply(this.editor, p.params); this.message('Applied · Undo is available');
   }
   async start() {
+    if (['acquiring', 'recording', 'finalizing'].includes(this.editor.feedback?.review?.phase)) {
+      this.editor.toast('Finish the recorded review before starting a short voice command');
+      return;
+    }
     this.panel.hidden = false; globalThis.speechSynthesis?.cancel();
     if (this.listening || this.starting) return;
     const generation = this.generation = (this.generation || 0) + 1;

@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import wave
 
 
 def run(args):
@@ -121,18 +122,25 @@ def main():
     parser.add_argument('--transcribe', action='store_true')
     parser.add_argument('--engine', default='faster-whisper')
     parser.add_argument('--model')
+    parser.add_argument('--max-seconds', type=int, choices=[30, 120], default=30)
     args = parser.parse_args()
     if args.transcribe:
         # Decode into bounded PCM with an explicit container/protocol allowlist before
         # handing data to PyAV/Whisper. Never let a playlist reach a model decoder.
-        wav = args.file.with_suffix('.wav')
-        ffmpeg(args.file, '-t', '30', '-ac', '1', '-ar', '16000', '-y', str(wav))
+        wav = args.file.with_name(args.file.stem + '.decoded.wav')
+        ffmpeg(args.file, '-t', str(args.max_seconds + 1), '-ac', '1', '-ar', '16000', '-c:a', 'pcm_s16le', '-y', str(wav))
+        with wave.open(str(wav), 'rb') as audio:
+            duration = audio.getnframes() / audio.getframerate()
+        if not 0 < duration <= args.max_seconds + 0.1:
+            raise ValueError(f'Audio exceeds the {args.max_seconds}-second transcription limit; no partial transcript was returned.')
+        timed_segments = []
         if args.engine == 'faster-whisper':
             from faster_whisper import WhisperModel
             # Installed, locally cached model only; never download weights implicitly.
             model = WhisperModel(args.model or 'tiny', device='cpu', compute_type='int8', local_files_only=True)
             segments, _ = model.transcribe(str(wav), beam_size=1)
-            text = ' '.join(s.text for s in segments)
+            timed_segments = [{'start':s.start, 'end':s.end, 'text':s.text.strip()} for s in segments]
+            text = ' '.join(s['text'] for s in timed_segments)
         else:
             if not args.model or not Path(args.model).is_file():
                 raise ValueError('Configure installed local Whisper weights with FFS_WHISPER_MODEL.')
@@ -140,8 +148,9 @@ def main():
                 run(['whisper', str(wav), '--model', args.model, '--device', 'cpu', '--fp16', 'False', '--output_format', 'txt', '--output_dir', str(args.file.parent)])
             else:
                 run([args.engine, '-m', args.model, '-f', str(wav), '-otxt', '-of', str(args.file.with_suffix(''))])
-            text = args.file.with_suffix('.txt').read_text()
-        print(json.dumps({'text':text}), flush=True)
+            transcript_file = wav.with_suffix('.txt') if args.engine == 'whisper' else args.file.with_suffix('.txt')
+            text = transcript_file.read_text()
+        print(json.dumps({'text':text, 'segments':timed_segments, 'durationSeconds':duration, 'maxSeconds':args.max_seconds, 'complete':True}), flush=True)
     elif args.probe:
         print(json.dumps(probe(args.file)), flush=True)
     else:

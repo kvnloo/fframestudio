@@ -1,0 +1,64 @@
+/* Immersive review is an alternate home for the same mounted preview and controls. */
+#review-viewer[hidden],#review-viewer [hidden]{display:none!important}
+#review-viewer{position:fixed;inset:0;z-index:30;box-sizing:border-box;height:100dvh;width:100%;display:grid;grid-template-columns:minmax(0,1fr) clamp(300px,28vw,420px);grid-template-rows:auto minmax(0,1fr) auto auto;gap:0;background:#080909;color:var(--ink);padding:max(8px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));isolation:isolate;overflow:hidden}
+#review-viewer .review-viewer-head{grid-column:1;grid-row:1;display:flex;align-items:center;gap:8px;min-width:0;padding-bottom:8px}
+#review-viewer .review-film-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+#review-viewer button,#review-viewer summary{min-height:44px!important;min-width:44px;box-sizing:border-box;cursor:pointer;font-size:12px;line-height:1.3;padding:10px 12px}
+#review-menu{position:relative}
+#review-menu summary{display:grid;place-items:center;list-style:none}
+#review-menu>div{position:absolute;right:0;top:100%;width:220px;max-height:60dvh;overflow:auto;z-index:12;display:grid;padding:8px;background:var(--bg2);border:1px solid var(--line2);box-shadow:0 8px 30px #0009}
+#review-menu>div button{text-align:left}
+#review-stage{grid-column:1;grid-row:2;display:flex;min-height:0;min-width:0;overflow:hidden}
+#review-viewer #review-stage .canvas-stage{display:grid;place-items:center;container-type:size;aspect-ratio:auto;width:100%;height:100%;min-height:0;flex:1;background:transparent}
+.film-workspace #review-viewer #canvas{width:min(100cqw,calc(100cqh * var(--film-aspect)));height:auto;max-height:100%;aspect-ratio:var(--film-ratio);flex:none;container-type:inline-size;background:#000}
+#review-viewer #preview-still{background:transparent}
+#review-viewer #feedback-ink{z-index:4;touch-action:none;cursor:crosshair;background:transparent}
+#review-viewer #review-transport{grid-column:1;grid-row:3;padding:8px 4px 0;min-width:0}
+#review-viewer .transport{display:flex;flex-wrap:wrap;gap:4px;min-height:0;padding:0;margin:0}
+#review-viewer .transport .pill{min-height:44px!important;font-size:11px;padding:6px 10px}
+#review-viewer .transport [data-action="reverse"],#review-viewer .transport [data-action="forward"],#review-viewer .transport [data-action="pause"]{display:none}
+#review-viewer #shot-readout{flex:1;max-width:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}
+#review-viewer #time{font-size:13px;min-width:70px}
+#review-viewer .screening-tools{display:none}
+#review-viewer #seek{width:100%;height:30px;min-height:30px!important;margin:0;flex-basis:100%}
+#review-instruction{grid-column:1;grid-row:4;padding:4px 0 0;min-width:0}
+#review-viewer #feedback-toolbar{position:relative;inset:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px;max-width:720px;margin:0 auto;background:#1c2020;border:1px solid var(--line2);border-radius:28px;z-index:6}
+#review-viewer #feedback-instruction{flex:1;min-width:60px;width:0;min-height:44px!important;background:transparent;border:0;font:14px/1.4 system-ui;color:var(--ink)}
+#review-viewer #feedback-wave{position:static;width:64px;height:28px;background:transparent;flex:1;max-width:180px}
+#review-viewer #feedback-status{position:static;font:11px/1.4 system-ui;color:var(--ink);min-width:0;overflow-wrap:anywhere}
+#feedback-toolbar:not([data-phase="recording"]):not([data-phase="acquiring"]) #feedback-status:not(:empty){flex-basis:100%;order:2;text-align:center;padding:0 10px}
+#review-viewer [data-feedback="record"],#review-viewer [data-feedback="pencil"],#review-viewer [data-feedback="undo"]{border-radius:50%;padding:8px;font-size:20px}
+#review-viewer [data-feedback="record"].on{color:#ff827d}
+#review-viewer [data-feedback="pencil"][aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+#review-conversation{grid-column:2;grid-row:1/-1;min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;margin-left:16px;padding:8px 12px;background:var(--bg);border-left:1px solid var(--line);overflow-wrap:anywhere}
+#review-conversation .review-conversation-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+#review-conversation .review-conversation-head button{display:none}
+#review-viewer #feedback-sheet{position:static;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;max-height:none;overflow:visible;background:var(--bg2);padding:12px;margin:12px 0;border:1px solid var(--line);border-radius:12px}
+#review-viewer #feedback-replay,#review-viewer .review-history-card video{position:static;display:block;width:100%;height:auto;max-height:210px;aspect-ratio:16/9;object-fit:contain;background:#000;z-index:auto}
+#review-viewer #feedback-sheet label{display:grid;gap:4px;font:12px/1.4 system-ui;color:var(--mute)}
+#review-viewer textarea{width:100%;box-sizing:border-box;min-width:0;min-height:64px;resize:vertical;font:13px/1.4 system-ui}
+#review-viewer #feedback-review-text{margin:0;white-space:pre-line;font:14px/1.5 system-ui;color:var(--ink)}
+#review-viewer #feedback-review-edit label{margin-top:8px}
+#review-viewer .feedback-actions{display:flex;flex-wrap:wrap;gap:8px}
+#review-viewer .review-history-card{display:grid;gap:8px;padding:12px;margin:12px 0;border:1px solid var(--line);border-radius:12px;font-size:11px}
+#review-viewer .assistant-box{margin:12px 0;padding:8px 0;background:transparent}
+#review-viewer .chat{max-height:40dvh;overflow:auto}
+#review-viewer #review-changes section{max-width:100%;margin:12px 0}
+#review-viewer .panel::before,#review-viewer .panel::after{display:none}
+@media(min-width:768px) and (min-height:451px), (min-width:1024px){#review-viewer .review-viewer-head [data-feedback="conversation"]{display:none}}
+@media(max-width:767px), (max-height:450px) and (max-width:1023px){
+  .film-workspace #review-viewer{grid-template-columns:minmax(0,1fr);padding-left:max(6px,env(safe-area-inset-left));padding-right:max(6px,env(safe-area-inset-right));padding-top:max(4px,env(safe-area-inset-top));padding-bottom:max(6px,env(safe-area-inset-bottom))}
+  .film-workspace #review-viewer button,.film-workspace #review-viewer summary{min-height:44px!important;min-width:44px}
+  #review-viewer .review-viewer-head{padding-bottom:2px;gap:2px}
+  #review-viewer .review-film-title{font-size:11px}
+  #review-conversation{grid-column:1/-1;grid-row:1/-1;display:none;position:absolute;inset:0 0 0 auto;width:min(92%,420px);margin:0;z-index:10;box-shadow:-15px 0 50px #000a;padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom));padding-right:max(12px,env(safe-area-inset-right))}
+  #review-viewer.conversation-open #review-conversation{display:block}
+  #review-conversation .review-conversation-head button{display:block}
+  #review-viewer #feedback-toolbar{gap:2px;padding:4px;border-radius:24px}
+  #review-viewer #feedback-wave{width:36px;max-width:70px}
+  #review-viewer .transport{gap:2px}
+  #review-viewer #review-transport{padding-top:2px}
+  #review-viewer #shot-readout{font-size:8px;flex:1}
+}
+@media(max-width:480px){#review-viewer .review-film-title{display:none}#review-viewer .review-viewer-head [data-feedback="conversation"]{margin-left:auto}}
+@media(max-height:450px){#review-viewer .review-viewer-head{padding-bottom:0}#review-viewer #review-transport{padding-top:0}#review-viewer #seek{height:22px;min-height:22px!important}#review-viewer #feedback-toolbar{padding:2px}#review-viewer #review-instruction{padding:0}}

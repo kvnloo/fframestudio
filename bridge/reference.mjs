@@ -67,7 +67,7 @@ export function referenceAPI({ root, safePath, send }) {
   const directory = id => { if(!/^[a-f0-9]{64}$/.test(id))throw Error('Invalid reference ID'); const p=safePath('references/'+id,true); if(!p)throw Error('Unsafe reference directory'); return p; };
   const sttBackend = () => {
     if(stt)return stt;
-    if(spawnSync('python3',['-c','import importlib.util; raise SystemExit(0 if importlib.util.find_spec("faster_whisper") else 1)'],{timeout:3000,stdio:'ignore'}).status===0)return stt={engine:'faster-whisper',available:true,model:null};
+    if(spawnSync('python3',['-c','import importlib.util; raise SystemExit(0 if importlib.util.find_spec("faster_whisper") else 1)'],{timeout:3000,stdio:'ignore'}).status===0)return stt={engine:'faster-whisper',available:true,model:process.env.FFS_WHISPER_MODEL || null};
     const model=process.env.FFS_WHISPER_MODEL;
     for(const engine of ['whisper','whisper-cli','whisper.cpp']) {
       if(spawnSync('sh',['-c','command -v "$1"','sh',engine],{timeout:1000,stdio:'ignore'}).status===0)return stt={engine,available:!!model&&fs.existsSync(model),model};
@@ -77,7 +77,7 @@ export function referenceAPI({ root, safePath, send }) {
   return async (req,res,u) => {
     if(!u.pathname.startsWith('/reference/'))return false;
     try {
-      if(u.pathname === '/reference/capabilities' && req.method === 'GET') { send(res,200,{file:true,url:true,analysis:true,stt:sttBackend().available,sttEngine:sttBackend().engine,sttNote:'faster-whisper needs a cached tiny model. Whisper CLIs need FFS_WHISPER_MODEL pointing to installed weights. No weights are downloaded.',maxBytes:MAX_REFERENCE_BYTES}); return true; }
+      if(u.pathname === '/reference/capabilities' && req.method === 'GET') { send(res,200,{file:true,url:true,analysis:true,stt:sttBackend().available,reviewStt:sttBackend().available,reviewMaxSeconds:120,reviewMaxBytes:4_000_000,sttEngine:sttBackend().engine,sttNote:'faster-whisper needs a cached tiny model. Whisper CLIs need FFS_WHISPER_MODEL pointing to installed weights. No weights are downloaded.',maxBytes:MAX_REFERENCE_BYTES}); return true; }
       if(u.pathname === '/reference/import' && req.method === 'POST') {
         const inputURL = u.searchParams.get('url');
         const bytes = inputURL ? await downloadDirect(inputURL,AbortSignal.timeout(45000)) : await readBody(req);
@@ -122,7 +122,7 @@ export function referenceAPI({ root, safePath, send }) {
         const file=safePath(`references/${id}/${name}`,false);if(!file)throw Error('Unsafe evidence path');
         const st=fs.statSync(file);res.writeHead(200,{'Content-Type':name.endsWith('.jpg')?'image/jpeg':'video/mp4','Content-Length':st.size});fs.createReadStream(file).pipe(res);return true;
       }
-      if(u.pathname === '/reference/transcribe' && req.method === 'POST') {
+      if((u.pathname === '/reference/transcribe' || u.pathname === '/reference/review-transcribe') && req.method === 'POST') {
         const backend=sttBackend();
         if(!backend.available)throw Error('No configured local Whisper backend. Use typed direction or consent to browser speech.');
         if(transcribing)throw Error('Local transcription is busy. Type your direction or try again.');
@@ -130,7 +130,8 @@ export function referenceAPI({ root, safePath, send }) {
         try {
           const bytes=await readBody(req,4_000_000);folder=safePath('references/stt-'+randomUUID(),true);if(!folder)throw Error('Unsafe transcription directory');fs.mkdirSync(folder,{recursive:true});
           const file=path.join(folder,'recording.webm');fs.writeFileSync(file,bytes,{flag:'wx'});
-          const args=[file,'--transcribe','--engine',backend.engine];if(backend.model)args.push('--model',backend.model);
+          const maxSeconds=u.pathname === '/reference/review-transcribe' ? 120 : 30;
+          const args=[file,'--transcribe','--engine',backend.engine,'--max-seconds',String(maxSeconds)];if(backend.model)args.push('--model',backend.model);
           send(res,200,await python(args,null,AbortSignal.timeout(120000)));
         } finally {transcribing=false;if(folder)fs.rmSync(folder,{recursive:true,force:true});}return true;
       }

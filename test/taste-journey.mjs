@@ -1,7 +1,12 @@
 import path from 'node:path';
 export async function verifyTaste({page,root,out,assert,prefix='taste'}) {
   const fixture=path.join(root,'test/fixtures/taste/synthetic.json');
-  const ready=()=>page.waitForFunction(()=>window.ffs?.interactiveAt&&!window.ffs.loading);
+  const ready=async()=>{
+    await page.waitForFunction(()=>window.ffs?.interactiveAt&&!window.ffs.loading);
+    if (page.viewportSize().width < 768 && await page.evaluate(() => !!window.ffs.feedback?.active)) {
+      await page.click('#review-viewer [data-feedback="exit"]');
+    }
+  };
   await ready();
   await page.click('[data-action="palette"]');
   await page.locator('#command-search').fill('apply-taste');

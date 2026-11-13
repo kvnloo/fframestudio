@@ -32,6 +32,10 @@ export async function verifyLayout({ browser, context, base, out, assert }) {
     for (const project of ['demo','layout-48']) {
       await page.goto(base + '/#/p/' + project);
       await page.waitForFunction(id => window.ffs?.doc.id === id && !window.ffs.loading, project);
+      if (page.viewportSize().width < 768) {
+        await page.waitForFunction(() => window.ffs.feedback?.active);
+        await page.click('#review-viewer [data-feedback="exit"]');
+      }
       await page.waitForFunction(() => window.ffs.studio.peaks?.some(n=>n>0));
       for (const [width,height] of sizes) {
         await page.setViewportSize({width,height});
