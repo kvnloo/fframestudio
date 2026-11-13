@@ -250,10 +250,15 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
    No backdrop-filter (it sits over the live canvas). Text turns ink on the tint (stops are >= 64% light). */
 .sortmenu button { position: relative; overflow: hidden; isolation: isolate; }
 .sortmenu button > * { position: relative; z-index: 1; }
-.sortmenu .fill { position: absolute; z-index: 0; border-radius: 50%; background: var(--fill) no-repeat; opacity: 0; transform: scale(0); pointer-events: none;
-  transition: transform .34s cubic-bezier(.2, .9, .25, 1), opacity .18s var(--ease); }
-.sortmenu button.lit .fill { opacity: 1; transform: none; }
+.sortmenu .fill { position: absolute; inset: 0; z-index: 0; border-radius: inherit; background: var(--fill); opacity: 0; transform-origin: 0 0; pointer-events: none;
+  transition: transform .38s cubic-bezier(.3, .8, .2, 1), opacity .1s linear; }
+.sortmenu button.lit .fill { opacity: 1; }
+.sortmenu button:not(.lit) .fill { transition: opacity .18s var(--ease); }
 .sortmenu button.still .fill { transition: none; }
+/* The bleed: a blurred copy of the subtext's coloured letters that swells and fades as their colour floods the row. */
+.sortmenu .bleed { position: absolute; z-index: 1; font: 10px "IBM Plex Mono", monospace; white-space: nowrap; filter: blur(2.5px); opacity: 0; pointer-events: none; transform-origin: 50% 50%; }
+.sortmenu button.bleeding .bleed { animation: sa-bleed .42s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes sa-bleed { 0% { opacity: .95; transform: scale(1); } 100% { opacity: 0; transform: scale(1.7, 2.6); } }
 .sortmenu button::after { content: ""; position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .25s var(--ease);
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .9) 22%, rgba(255, 255, 255, .9) 70%, transparent) 12px 2px / calc(100% - 24px) 1px no-repeat, /* specular streak, tapered */
     radial-gradient(110% 80% at 24% -28%, rgba(255, 255, 255, .72), rgba(255, 255, 255, 0) 62%),

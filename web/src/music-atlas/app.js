@@ -287,20 +287,24 @@ const sm = { open: false, held: false, hot: null, t: 0, p0: 0, x: 0, y: 0, down:
 function openSort(held) {
   if (!soundReady()) return toast("Listening data is still loading");
   sm.open = true; sm.held = held; sm.hot = null;
-  sortMenu.innerHTML = LENSES.map((L) => `<button role="menuitem" data-lens="${L.id}" class="${L.id === state.lens ? "on" : ""}" style="--fill:${lensInk(L.id)};--glow:${lensGlow(L.id)}"><i class="fill"></i><b>${L.name}</b><small class="lensink" style="--lens:${lensInk(L.id)}">${L.id === "feel" ? "how it makes you feel" : esc(L.legend ?? "")}</small></button>`).join("");
+  sortMenu.innerHTML = LENSES.map((L) => { const sub = L.id === "feel" ? "how it makes you feel" : esc(L.legend ?? ""), ink = lensInk(L.id);
+    return `<button role="menuitem" data-lens="${L.id}" class="${L.id === state.lens ? "on" : ""}" style="--fill:${ink};--glow:${lensGlow(L.id)};--lens:${ink}"><i class="fill"></i><i class="bleed lensink" aria-hidden="true">${sub}</i><b>${L.name}</b><small class="lensink">${sub}</small></button>`; }).join("");
   sortMenu.hidden = false; sortMenu.classList.remove("picking"); const onB = sortMenu.querySelector("button.on"); if (onB) bloom(onB, null, null, true); void sortMenu.offsetWidth; sortMenu.classList.add("on"); sortBtn.classList.add("open"); haptic(held ? "press" : "select");
 }
-// The chosen sort fills its whole row with its colours, as tinted glass. The fill is a disc centred on the finger
-// that scales up to cover the row (transform only); its gradient is pinned to the row, so the colours land where
-// they belong as it grows. The row already chosen when the menu opens sits filled with no motion.
+// The chosen sort's colour bleeds out of its coloured subtext and becomes the row's glass fill. The fill starts as
+// exactly the subtext's box, so its row-wide gradient is squeezed into the same colours the letters wear, then
+// expands to the row (transform only). A pre-blurred copy of the letters swells and fades as the colour leaves
+// them, and the letters turn ink once the tint is under them. The row already chosen when the menu opens sits
+// filled with no motion. (x, y: the finger, unused since the colour comes from the text, kept for callers.)
 function bloom(b, x, y, still = false) {
-  // Layout px, not the rect: the menu is still scaling in when it opens, so the rect is ~14% small.
-  const r = b.getBoundingClientRect(), f = b.querySelector(".fill"), W = b.offsetWidth, H = b.offsetHeight, k = r.width / W || 1; if (!f) return;
-  x = x == null ? W / 2 : (x - r.left) / k; y = y == null ? H / 2 : (y - r.top) / k;
-  const R = Math.ceil(Math.hypot(Math.max(x, W - x), Math.max(y, H - y))) + 2;
-  Object.assign(f.style, { left: `${x - R}px`, top: `${y - R}px`, width: `${2 * R}px`, height: `${2 * R}px`, backgroundSize: `${W}px ${H}px`, backgroundPosition: `${R - x}px ${R - y}px` });
-  clearTimeout(b._ink); b.classList.remove("lit", "inked"); b.classList.toggle("still", still); void f.offsetWidth; b.classList.add("lit");
-  if (still) b.classList.add("inked"); else b._ink = setTimeout(() => b.classList.contains("lit") && b.classList.add("inked"), 110); // text turns ink once the tint is under it
+  // Layout px (offset*), not rects: the menu is still scaling in when it opens, so rects read ~14% small.
+  const f = b.querySelector(".fill"), s = b.querySelector("small"), bl = b.querySelector(".bleed"), W = b.offsetWidth, H = b.offsetHeight; if (!f || !s) return;
+  const sx = s.offsetLeft - 2, sy = s.offsetTop - 1, sw = s.offsetWidth + 4, sh = s.offsetHeight + 2;
+  if (bl) Object.assign(bl.style, { left: `${s.offsetLeft}px`, top: `${s.offsetTop}px` });
+  clearTimeout(b._ink); b.classList.remove("lit", "inked", "bleeding"); b.classList.toggle("still", still);
+  f.style.transform = still ? "" : `translate(${sx}px, ${sy}px) scale(${(sw / W).toFixed(4)}, ${(sh / H).toFixed(4)})`;
+  void f.offsetWidth; f.style.transform = ""; b.classList.add("lit");
+  if (still) b.classList.add("inked"); else { b.classList.add("bleeding"); b._ink = setTimeout(() => b.classList.contains("lit") && b.classList.add("inked"), 150); }
 }
 function lightRow(b, x, y) {
   if (b === sm.hot) return; sm.hot?.classList.remove("hot", "lit", "inked"); sm.hot = b;
