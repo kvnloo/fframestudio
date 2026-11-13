@@ -33,8 +33,8 @@ else
   id=$(boat new --name "$SNAP-build" --type "$TYPE" --ttl 1800 --json | j 'select(.event=="created")|.id' | head -1)
   trap 'boat delete "$id" --yes >/dev/null 2>&1' EXIT
   boat exec "$id" --timeout 30 -- bash -lc 'mkdir -p ~/army' >/dev/null
-  boat scp package.json "$id:/home/user/army/package.json" >/dev/null && boat scp package-lock.json "$id:/home/user/army/package-lock.json" >/dev/null
-  boat exec "$id" --timeout 900 --cwd army -- bash -lc 'npm ci --no-audit --no-fund >/tmp/ci.log 2>&1 && test -x node_modules/.bin/e2e' >/dev/null || { echo "npm ci failed on $id"; exit 1; }
+  boat scp package.json "$id:/tmp/army-package.json" >/dev/null && boat scp package-lock.json "$id:/tmp/army-package-lock.json" >/dev/null
+  boat exec "$id" --timeout 900 --cwd army -- bash -lc 'mv /tmp/army-package.json ~/army/package.json && mv /tmp/army-package-lock.json ~/army/package-lock.json && npm ci --no-audit --no-fund >/tmp/ci.log 2>&1 && test -x node_modules/.bin/e2e' >/dev/null || { echo "npm ci failed on $id"; exit 1; }
   trap - EXIT
   boat snapshot "$id" "$SNAP" >/dev/null; boat delete "$id" --yes >/dev/null
 fi
