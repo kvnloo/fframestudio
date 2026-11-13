@@ -24,3 +24,9 @@ login, so you use the subscription you already have and no API key goes through 
 To add an agent or change one, edit `~/.config/fframestudio/agents.json`.
 
 The bridge only accepts connections from this machine, and it needs the token in that link.
+
+## Hermes factory plugin
+
+The backend in `hermes-plugin` exposes `/factory` status and AODL-gated actions.
+See the [factory integration reference](hermes-plugin/README.md) for the wire contract,
+store paths, dependency setup, tests, and current canonical proposal and review blockers.

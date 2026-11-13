@@ -1,0 +1,13 @@
+name: factory
+label: Content factory
+version: 0.1.0
+manifest_version: 2
+kind: standalone
+description: "fframestudio content factory in chat: ComfyUI status, renders with their verdicts, studied reference scenes. /factory json <verb> feeds card frontends."
+author: "Kevin Rajan"
+license: MIT
+homepage: https://github.com/kvnloo/fframestudio
+tags: [video, comfyui, generation]
+requires_hermes: ">=0.22.2"
+provides_tools: []
+provides_hooks: []
