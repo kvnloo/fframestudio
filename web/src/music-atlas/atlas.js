@@ -3,7 +3,7 @@
 // pinch and fly at 60 fps on a phone. Tracks sit in the outer band of their style's wedge, slow on
 // the inside, fast on the outside, so BPM reads as distance from the centre.
 import { FEELS, FAMILIES, FAMILY_TINT, feelById, shade } from "./taxonomy.js";
-import { pose, seedOf, tuft, zoomDamp } from "./dance.js";
+import { pose, seedOf, tuft, tuftOf, zoomDamp } from "./dance.js";
 
 const ROWS = 7, SPACING = 15, GAP_FEEL = 5, GAP_STYLE = 1.4, DOT = 4.4;
 const TAU = Math.PI * 2;
@@ -60,6 +60,7 @@ export function layout(tracks, org = null) {
       const leaf = { id: t.id, level: 4, name: t.title, t, parent: st, children: [], feel: st.feel, tint: st.tint, a, r, x: Math.cos(a) * r, y: Math.sin(a) * r };
       byId.set(t.id, leaf); st.children.push(leaf); leaves.push(leaf);
     });
+    st.rm = R4 + 14 + (Math.ceil(st.tracks.length / st.cols) - 1) * SPACING * 0.46; // the tuft's middle row: it spreads about this
     slot += st.cols;
   }
   const angle = (n) => (n.level === 4 ? n.a : n.level === 3 ? (n.a0 + n.a1) / 2 : (angle(n.children[0]) + angle(n.children[n.children.length - 1])) / 2);
@@ -72,22 +73,25 @@ export function layout(tracks, org = null) {
 // no per-dot JS. QN85B traces: ~1.8k 2D-canvas paths took ~9 ms a frame to flush, and per-dot JS ~9 ms more.
 // Returns null when the shaders don't build (callers keep the 2D path).
 const GROUPS = 16;
+// A track's radial offset from its tuft's middle row, at its current (bloomed) radius: the tuft spreads about it.
+const rowOff = (n) => (n.parent?.rm && n.r ? (n.r - n.parent.rm) * ((n.pr ?? Math.hypot(n.px ?? n.x, n.py ?? n.y)) / n.r) : 0);
 function glDance(gl) {
   const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
   const pr = gl.createProgram();
   gl.attachShader(pr, sh(gl.VERTEX_SHADER, `precision highp float;
-attribute vec4 p; attribute vec4 c; attribute vec3 q; // q: undanced parent x, y; group index
+attribute vec4 p; attribute vec4 c; attribute vec4 q; // q: undanced parent x, y; group index; offset from the tuft's middle row
 uniform vec4 m; uniform vec2 u; uniform vec4 A[${GROUPS}]; uniform vec4 B[${GROUPS}]; uniform vec4 C[${GROUPS}]; uniform float dpos;
 varying float r; varying vec4 col;
 const float TAU = 6.2831853;
 float rnd(float s, float n) { return fract(sin(s * 9301.17 + n * 49.297) * 43758.5453); }
+float wrp(float d) { return d - TAU * floor(d / TAU + 0.5); }
 void main() {
   int i = int(q.z); vec4 P = A[i], Q = B[i], T = C[i]; // P: k, da, spread, ac; Q: hop, jit, tw, step; T: the tuft's k, da, stretch
-  float a = atan(p.y, p.x), rr = length(p.xy) * T.x, d = a - P.w;
-  a += T.y + (d - TAU * floor(d / TAU + 0.5)) * P.z;
-  rr += Q.x * (p.w < 0.5 ? 1.0 : -0.6);
+  // dance.js tufts: rows spread about the tuft's middle row, columns about the stalk's angle (as atlas.js place())
+  float a0 = atan(p.y, p.x), ap = atan(q.y, q.x), st = T.z * (0.8 + 0.4 * p.w);
+  float a = ap + wrp(a0 - ap) * (1.0 + 0.35 * st) + T.y + wrp(a0 - P.w) * P.z;
+  float rr = (length(p.xy) - q.w) * T.x + q.w * (1.0 + st) + Q.x * (p.w < 0.5 ? 1.0 : -0.6);
   vec2 w = vec2(cos(a), sin(a)) * rr + (vec2(rnd(p.w, Q.w), rnd(p.w + 0.37, Q.w)) - 0.5) * 2.0 * Q.y;
-  w = q.xy + (w - q.xy) * (1.0 + T.z * (0.8 + 0.4 * p.w));
   vec2 v = w * m.xy + m.zw;
   gl_Position = vec4(v.x / u.x * 2.0 - 1.0, 1.0 - v.y / u.y * 2.0, 0.0, 1.0);
   r = p.z * (1.0 + 0.6 * Q.z * (0.5 + 0.5 * sin(TAU * (dpos / 4.0 + p.w)))) * m.x;
@@ -101,7 +105,7 @@ void main() {
   const aP = gl.getAttribLocation(pr, "p"), aC = gl.getAttribLocation(pr, "c"), aQ = gl.getAttribLocation(pr, "q");
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   for (const k of [aP, aC, aQ]) gl.enableVertexAttribArray(k);
-  gl.vertexAttribPointer(aP, 4, gl.FLOAT, false, 44, 0); gl.vertexAttribPointer(aC, 4, gl.FLOAT, false, 44, 16); gl.vertexAttribPointer(aQ, 3, gl.FLOAT, false, 44, 32);
+  gl.vertexAttribPointer(aP, 4, gl.FLOAT, false, 48, 0); gl.vertexAttribPointer(aC, 4, gl.FLOAT, false, 48, 16); gl.vertexAttribPointer(aQ, 4, gl.FLOAT, false, 48, 32);
   gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.clearColor(0, 0, 0, 0);
   const rgb = new Map(), probe = document.createElement("canvas").getContext("2d");
   const parse = (c) => { // any CSS colour -> [r, g, b, a] in 0..1, via the 2D canvas's own normalisation
@@ -118,22 +122,22 @@ void main() {
     // set: { b: Map("colour|alpha" -> nodes) } with each node's undanced px, py and base radius br; parents hold still.
     load(set, seedOf) {
       src = set; groups = []; let n = 0; for (const ns of set.b.values()) n += ns.length;
-      const f = new Float32Array(n * 11); let o = 0;
+      const f = new Float32Array(n * 12); let o = 0;
       for (const [k, ns] of set.b) {
         const i = k.lastIndexOf("|"), al = +k.slice(i + 1); if (al < 0.02) continue; const c = parse(k.slice(0, i)), a = al * c[3];
         for (const d of ns) {
           let gi = groups.indexOf(d.feel); if (gi < 0) { gi = groups.length; groups.push(d.feel); }
-          f.set([d.px, d.py, d.br, (d.seed ??= seedOf(d.id)), c[0] * a, c[1] * a, c[2] * a, a, d.parent?.vx ?? 0, d.parent?.vy ?? 0, Math.min(gi, GROUPS - 1)], o); o += 11;
+          f.set([d.px, d.py, d.br, (d.seed ??= seedOf(d.id)), c[0] * a, c[1] * a, c[2] * a, a, d.parent?.vx ?? 0, d.parent?.vy ?? 0, Math.min(gi, GROUPS - 1), rowOff(d)], o); o += 12;
         }
       }
-      count = o / 11; gl.bufferData(gl.ARRAY_BUFFER, f.subarray(0, o), gl.STATIC_DRAW);
+      count = o / 12; gl.bufferData(gl.ARRAY_BUFFER, f.subarray(0, o), gl.STATIC_DRAW);
     },
     dance(t, w, h, poses, dpos) {
       pa.fill(0); pb.fill(0); pc.fill(0);
       for (let i = 0; i < groups.length && i < GROUPS; i++) {
         const P = poses?.get(groups[i]); if (!P) { pc[i * 4] = 1; continue; }
         const T = P.T; // a tuft spring, when the dance has one; else the arm's own pose
-        pa.set([P.k, P.da, P.spread, P.ac], i * 4); pb.set([P.hop, P.jit, P.tw, P.step], i * 4); pc.set(T ? [T.y, T.a, T.spread || 0] : [P.k, P.da, 0], i * 4);
+        pa.set([P.k, P.da, P.spread, P.ac], i * 4); pb.set([P.hop, P.jit, P.tw, P.step], i * 4); pc.set(T ? [T.y, T.a, (T.spread || 0) + (P.open || 0)] : [P.k, P.da, 0], i * 4);
       }
       gl.viewport(0, 0, w, h); gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniform4f(uM, t.a, t.d, t.e, t.f); gl.uniform2f(uU, w, h); gl.uniform4fv(uA, pa); gl.uniform4fv(uB, pb); gl.uniform4fv(uC, pc); gl.uniform1f(uD, dpos);
@@ -173,7 +177,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
   // Dance: while a track plays, every ring-1 group moves to its beat in the current sort's vocabulary
   // (dance.js). `dk` fades the dance in on play and out on pause; `poses` is this frame's per-group pose.
   // `motion` is the owner's toggle; `lblK` fades canvas labels out while the map is actually dancing.
-  let dk = 0, poses = null, tufts = new Map(), dpos = 0, motion = true, lblK = 1;
+  let dk = 0, poses = null, tufts = new Map(), dpos = 0, motion = true, lblK = 1, danceK = 0;
   // Formation: the leaves fly onto a QR code's dark modules (the TV's pairing code, drawn with the map's own
   // dots on a light plate so phone cameras read it), the rest of the map fades out. `fe` is the eased mix.
   let form = null, fe = 0;
@@ -427,6 +431,7 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     const dm = (1 - fe) * dk * zoomDamp(cam.s, Math.min(W, H) * 0.95 / (2 * (g.outer + 30))); // vs the whole-map scale: zoomed in, settle and stop forcing redraws
     lblK = lite ? 1 - fe : (1 - clamp(dm * 4, 0, 1)) * (1 - fe); // dancing: labels step aside; paused, motion off or zoomed in: back (a TV's skeleton holds still, so its labels stay)
     const settled = !busy; // nothing but the dance moves this frame
+    danceK = clamp(dm * 4, 0, 1);
     if (dm < 0.003) { poses = null; tufts.clear(); } else { poses = dancePoses(dm, dt / 1000); busy = true; }
     // ...and it steps every other frame: the tracks' JS is ~11 ms a frame on the QN85B's CPU, so stepping every frame
     // dropped every other one anyway (24 ms frames); stepping on alternate frames holds the screen at 60 fps (16.8 ms).
@@ -443,10 +448,12 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
     dpos = b.i + b.ph;
     const out = new Map();
     for (const f of g.root.children) {
-      const p = pose(lensId, f.feel, org?.byId?.[f.feel]?.i ?? 0, dpos, tune), m = dm * (pn && pn.feel === f.feel ? 1.3 : 1);
-      const k = 1 + (p.k - 1) * m, da = p.da * m, T = tufts.get(f.feel) ?? tufts.set(f.feel, tuft(null, k, da)).get(f.feel);
-      tuft(T, k, da, dts);
-      out.set(f.feel, { k, da, spread: p.spread * m, hop: p.hop * m, jit: p.jit * m, tw: p.tw * m, ac: f.a, step: Math.floor(dpos * 4), T });
+      // The playing track's group leads at full size; the rest are its chorus at 0.4, so the eye finds the lead.
+      const gi = org?.byId?.[f.feel]?.i ?? 0, p = pose(lensId, f.feel, gi, dpos, tune), m = dm * (!pn || pn.feel === f.feel ? 1 : 0.4);
+      const k = 1 + (p.k - 1) * m, da = p.da * m, T = tufts.get(f.feel) ?? tufts.set(f.feel, tuft(null, k, da)).get(f.feel), sp = tuftOf(lensId, f.feel, gi, tune.bpm);
+      tuft(T, k, da, dts, sp.hz, sp.zeta);
+      // hop and jit are screen px in dance.js: in world px they'd vanish at the whole-map scale (~0.1)
+      out.set(f.feel, { k, da, spread: p.spread * m, hop: (p.hop * m) / cam.s, jit: (p.jit * m) / cam.s, tw: p.tw * m, open: p.open * m, ac: f.a, step: Math.floor(dpos * 4), T });
     }
     return out;
   }
@@ -465,10 +472,14 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       if (lean && n.level === 4 && n.t.src !== "web" && n.id !== playing?.id && n.id !== focusId) continue;
       const x = n.dx * gl[n.level], y = n.dy * gl[n.level], P = poses && (lite ? n.level === 4 : n.level > 0) ? poses.get(n.feel) : null;
       if (!P) { n.vx = x; n.vy = y; n.va = n.a; n.vr = 1; continue; }
-      if (n.px !== x || n.py !== y) { n.px = x; n.py = y; n.pr = Math.hypot(x, y); n.pa = Math.atan2(y, x); }
+      if (n.px !== x || n.py !== y) { n.px = x; n.py = y; n.pr = Math.hypot(x, y); n.pa = Math.atan2(y, x); if (n.level === 4) { n.ap = Math.atan2(n.parent.dy, n.parent.dx); n.ro = rowOff(n); } }
       const T = n.level === 4 ? P.T : null; // tracks swing on their tuft's spring, not rigidly with the arm
-      let r = n.pr * (T ? T.y : P.k), a = n.pa;
-      a += (T ? T.a : P.da) + wrap(a - P.ac) * P.spread;
+      let r = n.pr * P.k, a = n.pa + P.da + wrap(n.pa - P.ac) * P.spread;
+      if (T) { // the tuft: rows spread about its middle row, columns fan about the stalk (glDance mirrors this)
+        const st = ((T.spread || 0) + (P.open || 0)) * (0.8 + 0.4 * (n.seed ??= seedOf(n.id)));
+        r = (n.pr - n.ro) * T.y + n.ro * (1 + st);
+        a = n.ap + wrap(n.pa - n.ap) * (1 + 0.35 * st) + T.a + wrap(n.pa - P.ac) * P.spread;
+      }
       n.va = n.a == null ? a : n.a + P.da + wrap(n.a - P.ac) * P.spread; n.vr = 1;
       let jx = 0, jy = 0;
       if (n.level === 4) {
@@ -478,7 +489,6 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
         if (P.tw) n.vr = 1 + 0.6 * P.tw * (0.5 + 0.5 * Math.sin(TAU * (dpos / 4 + s)));
       }
       n.vx = Math.cos(a) * r + jx; n.vy = Math.sin(a) * r + jy;
-      if (T?.spread) { const p = n.parent, e = 1 + T.spread * (0.8 + 0.4 * n.seed); n.vx = p.vx + (n.vx - p.vx) * e; n.vy = p.vy + (n.vy - p.vy) * e; } // stalks stretch from the tip: every gap in the tuft grows alike
     }
     if (!fe) return;
     const F = formGeom();
@@ -552,10 +562,11 @@ export function createAtlas({ canvas, region, onTap, onCamera, onHold, onDetent,
       const x0 = X(ln), y0 = Y(ln);
       for (const { id, w } of links.list) {
         const m = g.byId.get(id); if (!m) continue;
-        const x1 = X(m), y1 = Y(m), bx = (x0 + x1) * 0.22, by = (y0 + y1) * 0.22; // control point pulled to the hub
+        // Far ends hold at rest while the map dances (two dancing endpoints made the arcs the loudest motion on screen).
+        const x1 = poses && m.px != null ? m.px : X(m), y1 = poses && m.py != null ? m.py : Y(m), bx = (x0 + x1) * 0.22, by = (y0 + y1) * 0.22; // control point pulled to the hub
         // de Casteljau split at linkK draws the arc in from the source.
         const k = linkK, ax = x0 + (bx - x0) * k, ay = y0 + (by - y0) * k, cx2 = bx + (x1 - bx) * k, cy2 = by + (y1 - by) * k;
-        ctx.globalAlpha = (0.25 + 0.6 * w) * fo; ctx.strokeStyle = (lens && lens(m.t)) || colN(m); ctx.lineWidth = (1 + 1.6 * w) / Math.max(s, 0.35);
+        ctx.globalAlpha = (0.25 + 0.6 * w) * fo * (1 - 0.6 * danceK); ctx.strokeStyle = (lens && lens(m.t)) || colN(m); ctx.lineWidth = (1 + 1.6 * w) / Math.max(s, 0.35);
         ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(ax, ay, ax + (cx2 - ax) * k, ay + (cy2 - ay) * k); ctx.stroke();
       }
     }

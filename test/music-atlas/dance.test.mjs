@@ -7,7 +7,8 @@ import { FEELS } from "../../web/src/music-atlas/taxonomy.js";
 const bar = (lens, gid, gi, tune, start = 0) => {
   const xs = Array.from({ length: 64 }, (_, j) => pose(lens, gid, gi, start + j / 16, tune));
   const k = xs.map((p) => p.k - 1);
-  let onsets = 0; for (let j = 0; j < k.length; j++) if (k[j] - k[(j + 63) % 64] > 0.004) onsets++;
+  const up = (j) => k[(j + 64) % 64] - k[(j + 63) % 64] > 0.004; // a rise that starts here (an eased attack spans samples)
+  let onsets = 0; for (let j = 0; j < k.length; j++) if (up(j) && !up(j - 1)) onsets++;
   return { xs, onsets, peak: Math.max(...xs.map((p) => Math.abs(p.k - 1) + Math.abs(p.da) + Math.abs(p.spread))) };
 };
 const sig = (xs) => xs.map((p) => [p.k, p.da, p.spread, p.hop, p.jit, p.tw].map((v) => v.toFixed(3)).join()).join("|");
@@ -39,11 +40,12 @@ test("tempo bands pulse at their own speed, the tune's band on the beat", () => 
   assert.equal(tempoPerBar("up", 128), 4);
   assert.ok(tempoPerBar("slow", 128) < tempoPerBar("mid", 128));
   assert.ok(tempoPerBar("mid", 128) < tempoPerBar("rush", 128));
+  assert.deepEqual(["slow", "mid", "up", "fast", "rush"].map((g) => tempoPerBar(g, 128)), [1, 2, 4, 8, 16], "half-time, on the beat, 8ths, 16ths");
   assert.equal(bar("tempo", "up", 2, { bpm: 128 }).onsets, 4);
   assert.equal(bar("tempo", "slow", 0, { bpm: 128 }).onsets, tempoPerBar("slow", 128));
   for (const bpm of [70, 96, 128, 150, 175]) for (const g of ["slow", "mid", "up", "fast", "rush"]) {
     const own = tempoPerBar(g, bpm) === 4;
-    assert.equal(own, bar("tempo", g, 0, { bpm }).xs.length && pose("tempo", g, 0, 0, { bpm }).k > 1.04, `${g}@${bpm}: only the tune's band rides the beat`);
+    assert.equal(own, pose("tempo", g, 0, 0, { bpm }).k > 1.05, `${g}@${bpm}: the tune's band pulses hardest`);
   }
 });
 
