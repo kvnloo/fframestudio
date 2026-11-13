@@ -3,6 +3,7 @@
 import { familyById, styleName } from "./taxonomy.js";
 
 export const MODES = [["feel", "Feels"], ["artists", "Artists"], ["albums", "Albums"], ["genres", "Genres"], ["recent", "Recent"]];
+const songs = (n) => `${n} song${n === 1 ? "" : "s"}`;
 export const keyOf = (s) => String(s ?? "").trim().toLowerCase().replace(/^the\s+/, "");
 const fold = keyOf;
 const byName = (a, b) => fold(a.name).localeCompare(fold(b.name));
@@ -51,10 +52,10 @@ export function detail(open, tracks) {
     const e = artists(tracks).find((x) => x.key === k); if (!e) return null;
     const al = albums(e.tracks), loose = e.tracks.filter((t) => !t.album);
     const groups = [...al.map((a) => ({ name: a.name, open: "al:" + a.key, sub: a.year, tracks: a.tracks })), ...(loose.length ? [{ name: al.length ? "Singles & more" : "Songs", tracks: loose }] : [])];
-    return { kind, name: e.name, sub: `${e.tracks.length} song${e.tracks.length === 1 ? "" : "s"}${al.length ? ` · ${al.length} album${al.length === 1 ? "" : "s"}` : ""}`, tracks: groups.flatMap((g) => g.tracks), groups };
+    return { kind, name: e.name, sub: `${songs(e.tracks.length)}${al.length ? ` · ${al.length} album${al.length === 1 ? "" : "s"}` : ""}`, tracks: groups.flatMap((g) => g.tracks), groups };
   }
-  if (kind === "al") { const a = albums(tracks).find((x) => x.key === k); return a && { kind, name: a.name, sub: [a.artist, a.year, `${a.tracks.length} songs`].filter(Boolean).join(" · "), artist: a.artist, art: a.art, tracks: a.tracks }; }
-  if (kind === "g") { const g = genres(tracks).flatMap((f) => f.styles).find((x) => x.key === k); return g && { kind, name: g.name, sub: `${g.familyName} · ${g.tracks.length} songs`, tracks: g.tracks }; }
+  if (kind === "al") { const a = albums(tracks).find((x) => x.key === k); return a && { kind, name: a.name, sub: [a.artist, a.year, songs(a.tracks.length)].filter(Boolean).join(" · "), artist: a.artist, art: a.art, tracks: a.tracks }; }
+  if (kind === "g") { const g = genres(tracks).flatMap((f) => f.styles).find((x) => x.key === k); return g && { kind, name: g.name, sub: `${g.familyName} · ${songs(g.tracks.length)}`, tracks: g.tracks }; }
   return null;
 }
 

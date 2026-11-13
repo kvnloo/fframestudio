@@ -14,6 +14,14 @@ const hayOf = (t) => ({
   desc: (t.desc || "").toLowerCase(),
 });
 const feelName = (id) => FEELS.find((f) => f.id === id)?.name ?? "";
+// How well word w occurs in text: 1 where a word starts with it ("rain" in "quiet rain", "rainbows"), 0.25 inside
+// a word ("brain dance": still found, ranked after), 0 absent.
+const isWordCh = (c) => /[\p{L}\p{N}]/u.test(c);
+function at(text, w) {
+  let i = text.indexOf(w), inner = 0;
+  while (i >= 0) { if (i === 0 || !isWordCh(text[i - 1])) return 1; inner = 0.25; i = text.indexOf(w, i + 1); }
+  return inner;
+}
 export function prep(t) { t.title = String(t.title ?? "Untitled"); t.author = String(t.author ?? "Unknown"); t.band = bpmBand(t.bpm); t.hay = hayOf(t); return t; }
 
 export async function loadCatalog(base = "./") {
@@ -27,24 +35,43 @@ export async function loadCatalog(base = "./") {
 }
 
 // --- semantic model (lazy: ~23 MB, cached by the browser after the first load) ------------------
+// The model runs in embed-worker.js; `embedder` maps texts to the flat Float32 mean-pooled vectors either way.
 let embedder = null, loading = null;
+function inWorker() {
+  const w = new Worker(new URL("./embed-worker.js", import.meta.url), { type: "module" }), wait = new Map();
+  let n = 0;
+  const call = (msg, tr) => new Promise((res, rej) => { const id = ++n; wait.set(id, { res, rej }); w.postMessage({ id, ...msg }, tr || []); });
+  w.onmessage = ({ data }) => { const p = wait.get(data.id); wait.delete(data.id); data.err ? p?.rej(new Error(data.err)) : p?.res(data.data); };
+  w.onerror = (e) => { for (const p of wait.values()) p.rej(new Error(e.message || "embed worker failed")); wait.clear(); };
+  return call({ op: "load", tf: TF, model: MODEL }).then(() => (texts) => call({ op: "embed", texts }));
+}
+async function onPage() {
+  const { pipeline, env } = await import(/* @vite-ignore */ TF);
+  env.allowLocalModels = false;
+  const p = await pipeline("feature-extraction", MODEL, { dtype: "q8" });
+  return async (texts) => (await p(texts, { pooling: "mean", normalize: true })).data;
+}
 export function loadModel(onState) {
   if (embedder) return Promise.resolve(embedder);
   loading ??= (async () => {
     onState?.("loading");
-    const { pipeline, env } = await import(/* @vite-ignore */ TF);
-    env.allowLocalModels = false;
-    embedder = await pipeline("feature-extraction", MODEL, { dtype: "q8" });
+    embedder = await (typeof Worker === "function" ? inWorker().catch((e) => (console.warn("embed worker unusable, using the page", e), onPage())) : onPage());
     onState?.("ready");
     return embedder;
   })().catch((e) => { loading = null; onState?.("off", e); throw e; });
   return loading;
 }
 export const modelReady = () => !!embedder;
+const qcache = new Map(); // a query typed, then backspaced to, is embedded once
 export async function embed(texts) {
   if (!embedder) return null;
-  const out = await embedder(texts, { pooling: "mean", normalize: true });
-  return texts.map((_, k) => { const v = new Int8Array(DIM); for (let j = 0; j < DIM; j++) v[j] = Math.max(-127, Math.min(127, Math.round(out.data[k * DIM + j] * 127))); return v; });
+  const one = texts.length === 1 ? texts[0] : null;
+  if (one != null && qcache.has(one)) return [qcache.get(one)];
+  const data = await embedder(texts).catch((e) => (console.warn("embed failed; lexical ranking only", e), null)); // a crashed worker must not break search
+  if (!data) return null;
+  const vs = texts.map((_, k) => { const v = new Int8Array(DIM); for (let j = 0; j < DIM; j++) v[j] = Math.max(-127, Math.min(127, Math.round(data[k * DIM + j] * 127))); return v; });
+  if (one != null) { if (qcache.size > 200) qcache.delete(qcache.keys().next().value); qcache.set(one, vs[0]); }
+  return vs;
 }
 const dot = (a, b) => { let d = 0; for (let j = 0; j < DIM; j++) d += a[j] * b[j]; return d / 16129; };
 
@@ -65,9 +92,10 @@ export function search(tracks, opts) {
   const lexOf = (t) => {
     if (!toks.length) return 0;
     let s = 0;
-    for (const w of toks) { const h = t.hay; s += h.title.includes(w) ? 3 : 0; s += h.author.includes(w) ? 2 : 0; s += h.meta.includes(w) ? 1.6 : 0; s += h.desc.includes(w) ? 0.8 : 0; }
+    for (const w of toks) { const h = t.hay; s += 3 * at(h.title, w) + 2 * at(h.author, w) + 1.6 * at(h.meta, w) + 0.8 * at(h.desc, w); }
     // Exact phrase in title or author wins outright (people search by name).
-    if (q.length > 3 && (t.hay.title.includes(q.toLowerCase()) || t.hay.author.includes(q.toLowerCase()))) s += 8;
+    const ql = q.toLowerCase();
+    if (q.length > 3 && (at(t.hay.title, ql) === 1 || at(t.hay.author, ql) === 1)) s += 8;
     return s;
   };
   const rows = pool.map((t) => ({ t, lex: lexOf(t), sim: qv && t.v ? dot(qv, t.v) : null }));
@@ -114,7 +142,7 @@ export async function webSearch(q, known) {
       bpm: null, dur: Math.round(r.duration / 1000), tags, desc: "", ...classify(text), _text: text,
     }));
   }
-  if (out.length && modelReady()) (await embed(out.map((t) => t._text))).forEach((v, i) => (out[i].v = v));
+  if (out.length && modelReady()) (await embed(out.map((t) => t._text)))?.forEach((v, i) => (out[i].v = v));
   return out;
 }
 

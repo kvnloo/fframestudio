@@ -41,6 +41,7 @@ const state = { view: "library", queue: "library", lens: "feel", q: "", feels: n
 // Radio and playlists are queues too: state.radio = "ear" | "crowd" (endless), state.plist = a community playlist.
 const playedIds = new Set();
 let org = null, lensFn = null, atlasIds = "", sim = [], simSeed = null;
+let bestIds = new Set(); // the rows renderBody's "Best matches" already shows; the feel groups below skip them
 let all = [], byId = new Map(), why = new Map(), nbrs = [], result = { hits: [], ranked: false }, qv = null, like = null, share = null, webBusy = false;
 
 // --- elements ---------------------------------------------------------------------------------
@@ -94,8 +95,7 @@ function sheetStep(now) {
   const goal = snaps()[sh.target];
   if (reduced) { sh.y = goal; sh.v = 0; }
   else { const k = 520, c = 2 * Math.sqrt(k) * 0.92; const a = -k * (sh.y - goal) - c * sh.v; sh.v += a * dt; sh.y += sh.v * dt; } // slightly under-damped spring
-  setSheetY(sh.y);
-  sheet.style.setProperty("--open", Math.max(0, Math.min(1, (snaps().peek - sh.y) / (snaps().peek - snaps().full))).toFixed(3));
+  setSheetY(sh.y); // transform only: an inherited custom property written here restyled every row each frame
   if (Math.abs(sh.y - goal) > 0.4 || Math.abs(sh.v) > 4) sh.raf = requestAnimationFrame(sheetStep); else { sh.y = goal; setSheetY(goal); shLast = 0; }
 }
 function sheetPointer() {
@@ -489,16 +489,19 @@ const ICON = {
   pause: `<svg viewBox="0 0 20 20"><rect x="5" y="4.5" width="3.4" height="11" rx="1" fill="currentColor"/><rect x="11.6" y="4.5" width="3.4" height="11" rx="1" fill="currentColor"/></svg>`,
   heart: `<svg viewBox="0 0 20 20"><path d="M10 16.5s-6-3.7-6-8.2A3.3 3.3 0 0 1 10 6a3.3 3.3 0 0 1 6 2.3c0 4.5-6 8.2-6 8.2z" fill="currentColor"/></svg>`,
 };
+// Only the first screenful of a paint (14 rows, counted across every group) rises in; the rest are below the
+// fold, and animating them too (each feel group restarted at 0: ~170 rows) cost ~2 s of style a search on a phone.
+let rowN = 0;
 const rowHTML = (t, i, reason) => {
-  const playing = state.sel === t.id && !audio.paused;
-  return `<button class="trk ${state.sel === t.id ? "sel" : ""} ${playing ? "playing" : ""} ${i < 14 && animateRows ? "" : "q"}" data-id="${esc(t.id)}" style="--c:${tone(t)};--i:${i};--beat:${(60 / (t.bpm || 100)).toFixed(3)}s">
+  const playing = state.sel === t.id && !audio.paused, n = rowN++;
+  return `<button class="trk ${state.sel === t.id ? "sel" : ""} ${playing ? "playing" : ""} ${n < 14 && animateRows ? "" : "q"}" data-id="${esc(t.id)}" style="--c:${tone(t)};--i:${n};--beat:${(60 / (t.bpm || 100)).toFixed(3)}s">
     <span class="pl">${playing ? `<span class="eq"><i></i><i></i><i></i></span>` : ICON.play}</span>
     <span class="tt"><b>${esc(t.title)}</b><small>${t.f ? `${bpmOf(t)} bpm · ${t.f.camelot} · ` : t.bpm ? `${t.bpm} bpm · ` : ""}${esc(styleName(t.family, t.style))} · ${esc(t.author)}${t.src === "web" ? ` · ${esc(t.provider)}` : ""}</small>${(reason ?? why.get(t.id)) ? `<em class="why">${esc(reason ?? why.get(t.id))}</em>` : ""}</span>
     <span class="du">${mmss(t.dur)}${social.room.streams[t.id] ? `<small title="streams">▶ ${social.compact(social.room.streams[t.id])}</small>` : ""}</span><span class="hv ${state.picks.has(t.id) ? "on" : ""}" data-heart="${esc(t.id)}" role="button" aria-label="Like">${ICON.heart}${social.room.likes[t.id] ? `<small>${social.compact(social.room.likes[t.id])}</small>` : ""}</span></button>`;
 };
 let animateRows = true;
 function renderBody(scroll = true) {
-  animateRows = scroll; // a scroll-to-top render is a new result set; in-place re-renders (pick, select) stay still
+  animateRows = scroll; rowN = 0; // a scroll-to-top render is a new result set; in-place re-renders (pick, select) stay still
   const hits = result.hits;
   const sel = state.sel && byId.get(state.sel);
   if (state.view === "track" && sel) return paint(cardHTML(sel), scroll);
@@ -513,8 +516,14 @@ function renderBody(scroll = true) {
   // Group by feel (the atlas's first ring); ranked searches keep their order inside each group and
   // order groups by their best hit, so the strongest vibe comes first.
   if (!state.q && !like) html += mineHTML();
+  // A typed query leads with its best few in true rank order: grouped alone, the top hit's feel filled up with weak
+  // matches (a tag or description mentioning "rain") ahead of strong hits filed under other feels (#83).
+  const best = state.q && result.ranked && !like ? hits.slice(0, 6) : [];
+  bestIds = new Set(best.map((h) => h.t.id));
+  if (best.length > 1 && hits.length > best.length) html += `<section class="grp"><h3><i></i>Best matches</h3>${best.map((h, i) => rowHTML(h.t, i)).join("")}</section>`;
+  else bestIds.clear();
   const groups = new Map();
-  hits.forEach((h, i) => { const f = grpOf(h.t); if (!groups.has(f)) groups.set(f, { f, best: i, rows: [] }); groups.get(f).rows.push(h.t); });
+  hits.forEach((h, i) => { if (bestIds.has(h.t.id)) return; const f = grpOf(h.t); if (!groups.has(f)) groups.set(f, { f, best: i, rows: [] }); groups.get(f).rows.push(h.t); });
   const rank = (id) => (org ? grp(id).i : FEELS.findIndex((F) => F.id === id));
   const order = [...groups.values()].sort((a, b) => (result.ranked ? a.best - b.best : rank(a.f) - rank(b.f)));
   const LIM = result.ranked ? 40 : 30;
@@ -813,7 +822,7 @@ body.addEventListener("click", async (e) => {
   const sc = e.target.closest("[data-scope]"); if (sc) { e.stopPropagation(); buzz(4); const n = A.graph.byId.get(sc.dataset.scope) ?? A.graph.root; A.focus(n.id); return showNode(n); }
   const h = e.target.closest("[data-focus]"); if (h) { buzz(4); return A.focus(h.dataset.focus); }
   const desc = e.target.closest(".desc"); if (desc) return desc.classList.toggle("open");
-  const more = e.target.closest("[data-more]"); if (more) { more.outerHTML = (result.hits.filter((x) => grpOf(x.t) === more.dataset.more).slice(result.ranked ? 40 : 30).map((x, i) => rowHTML(x.t, i)).join("")); return; }
+  const more = e.target.closest("[data-more]"); if (more) { rowN = 0; more.outerHTML = (result.hits.filter((x) => grpOf(x.t) === more.dataset.more && !bestIds.has(x.t.id)).slice(result.ranked ? 40 : 30).map((x, i) => rowHTML(x.t, i)).join("")); return; }
   if (e.target.closest("#web")) return searchWeb();
   const mn = e.target.closest("[data-mine]"); if (mn) { buzz(5); return mn.dataset.mine === "regrant" ? mineDo("your folder", (B, p) => B.regrantFolder(p).then((r) => ((mine.regrant = false), r))) : mineMenu(); }
   const mp = e.target.closest("[data-mpl]"); if (mp) { buzz(5); return playMine(mp.dataset.mpl); }
@@ -977,7 +986,7 @@ const radioTrail = [];
 function stepList(d) { const list = state.queue === "similar" && simSeed ? [simSeed, ...sim.map((n) => n.t.id)] : result.hits.map((h) => h.t.id), i = list.indexOf(state.sel); const n = list[(i + d + list.length) % list.length]; if (n) select(n, { play: true, fly: true, keepScroll: true }); }
 function renderPlayer() {
   const t = state.sel && byId.get(state.sel), p = $("#player");
-  p.style.setProperty("--c", t ? tone(t) : "#5fd3dc"); $("#views").style.setProperty("--c", t ? tone(t) : "#5fd3dc");
+  const c = t ? tone(t) : "#5fd3dc"; if (c !== renderPlayer.c) { renderPlayer.c = c; p.style.setProperty("--c", c); $("#views").style.setProperty("--c", c); } // inherited: an unchanged rewrite still restyled every row
   const pt = $("#pt"), fresh = (t?.id ?? null) !== renderPlayer.id; renderPlayer.id = t?.id ?? null;
   if (fresh) nowPlaying(t);
   if (fresh && !reduced && !pt.classList.contains("sw-l") && !pt.classList.contains("sw-r")) { pt.classList.remove("in"); void pt.offsetWidth; pt.classList.add("in"); }
@@ -985,7 +994,7 @@ function renderPlayer() {
   // The comfortable player's detail line (hidden at peek): what kind of song this is and whether you may use it.
   const F = t && feelById[t.feel], sty = t && styleName(t.family, t.style);
   $("#pm").innerHTML = t ? [F && `<span class="f"><i></i>${esc(F.name)}</span>`, sty && `<span>${esc(sty)}</span>`, t.dur && `<span>${mmss(t.dur)}</span>`, t.license && `<span class="cc">${esc(t.license)}</span>`].filter(Boolean).join("") : `<span>Drag the map to wander · search a vibe</span>`;
-  $("#pp").innerHTML = audio.paused ? ICON.play : ICON.pause;
+  const pp = $("#pp"); pp.innerHTML = audio.paused ? ICON.play : ICON.pause; pp.setAttribute("aria-label", audio.paused ? "Play" : "Pause"); // screen readers hear what a tap will do (#83)
   $("#ph").classList.toggle("on", !!t && state.picks.has(t.id));
   const lk = t && social.room.likes[t.id]; $("#ph").dataset.n = lk ? social.compact(lk) : "";
   const here = t && social.room.now.find(([id]) => id === t.id)?.[1]; // people (you included) on this track right now
@@ -1026,7 +1035,15 @@ audio.addEventListener("pause", () => social.pulse());
 audio.addEventListener("play", syncPlay); audio.addEventListener("pause", syncPlay); audio.addEventListener("loadedmetadata", tick);
 audio.addEventListener("ended", () => { metered(); meter.reset(); partyEnded(() => step(1)); }); // a replay counts as a new stream; in a room, whoever set the song picks the next
 for (const k of ["play", "pause", "seeked", "loadstart"]) audio.addEventListener(k, () => heard(k)); // what you do leads the room
-audio.addEventListener("error", () => { wait = false; landAt = 0; if (!audio.getAttribute("src") || !state.sel) return; haptic("error"); toast("This one won't stream here; open its source ↗", 4000); syncPlay(); });
+// Radio and playlists keep going past a song whose host won't stream (#83: radio stalled on a dead track); a song you
+// tapped stays put so you can open its source. Capped, so a whole dead host can't spin through the catalogue.
+let deadRun = 0;
+audio.addEventListener("error", () => {
+  wait = false; landAt = 0; if (!audio.getAttribute("src") || !state.sel) return; haptic("error");
+  if ((state.radio || state.plist) && ++deadRun <= 5) { toast("Skipped one that won't stream here", 2500); return step(1); }
+  toast("This one won't stream here; open its source ↗", 4000); syncPlay();
+});
+audio.addEventListener("playing", () => { deadRun = 0; });
 // Between asking and hearing, the song is loading, not playing: the dot's ring draws in, the row and button wait.
 let wait = false;
 audio.addEventListener("play", () => { wait = audio.readyState < 3; if (wait) syncPlay(); });
@@ -1143,7 +1160,7 @@ function readHash() {
   if (browse.MODES.some(([id]) => id === h.get("br"))) state.browse = h.get("br");
   if (/^(a|al|g):/.test(h.get("bo") ?? "")) state.open = h.get("bo");
   const shared = (h.get("p") ?? "").split(",").filter((id) => byId.has(id));
-  if (shared.length) { shared.forEach((id) => state.picks.add(id)); toast(`${shared.length} shared picks · tap ♥ Liked to see them`); } // the full atlas still loads
+  if (shared.length) { shared.forEach((id) => state.picks.add(id)); toast(`${shared.length} shared pick${shared.length === 1 ? "" : "s"} · tap ♥ Liked to see them`); } // the full atlas still loads
   pendingPlist = h.get("pl"); pendingRoom = h.get("room");
   const p = readPath(location.pathname); // a pretty link names the song, room or playlist in its path
   if (p?.kind === "room") pendingRoom = p.k;
@@ -1276,16 +1293,21 @@ if (!cast.isTV && matchMedia("(pointer: coarse)").matches && !matchMedia("(displ
 }
 
 // --- casting: phone -> TV (cast.js) ---------------------------------------------------------------
+const castNote = () => ({ ready: "Picks a Cast screen", none: "Cast isn't available in this browser" })[cast.castSDKState()] ?? (window.chrome ? "Loading Cast…" : "Needs Chrome");
 function castMenu() {
   if (cast.send.on) return cast.stop();
   const m = document.createElement("div"); m.className = "castmenu"; const tv = cast.savedTV();
   m.innerHTML = `<div class="cm"><b>Play on a TV</b>
     <button data-c="samsung"><i>▣</i><span>${esc(tv?.name ?? "Samsung TV")}<small>${tv ? "Smart View · paired" : "Smart View · pair once"}</small></span></button>
-    <button data-c="google" ${cast.castSDKReady() ? "" : "disabled"}><i>⌁</i><span>Chromecast · Google TV<small>${cast.castSDKReady() ? "Picks a Cast screen" : window.chrome ? "Loading Cast…" : "Needs Chrome"}</small></span></button>
+    <button data-c="google" ${cast.castSDKReady() ? "" : "disabled"}><i>⌁</i><span>Chromecast · Google TV<small>${castNote()}</small></span></button>
     ${airplay.can ? `<button data-c="airplay" ${airplay.avail ? "" : "disabled"}><i>◭</i><span>Apple TV · AirPlay<small>${airplay.on ? "Playing over AirPlay · pick again to switch" : airplay.avail ? "Picks an AirPlay TV or speaker" : "No AirPlay screen found"}</small></span></button>` : ""}
     ${tv ? `<button data-c="forget" class="ghost">Forget ${esc(tv.name ?? "this TV")}</button>` : ""}</div>`;
   document.body.append(m); requestAnimationFrame(() => m.classList.add("on"));
-  const close = () => { m.classList.remove("on"); setTimeout(() => m.remove(), 250); };
+  const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); } }; // Escape closes the menu, not the map too (#83)
+  const close = () => { removeEventListener("keydown", onKey, true); m.classList.remove("on"); setTimeout(() => m.remove(), 250); };
+  addEventListener("keydown", onKey, true);
+  // Still loading: settle the Chromecast row in place when the SDK answers, so it never reads "Loading…" forever (#83).
+  if (window.chrome && !cast.castSDKReady()) cast.loadCastSDK().then(() => { const g = m.isConnected && m.querySelector('[data-c="google"]'); if (!g) return; g.disabled = !cast.castSDKReady(); g.querySelector("small").textContent = castNote(); });
   m.onclick = (e) => {
     const b = e.target.closest("button"); if (!b && e.target !== m) return; close(); if (!b) return; buzz(5);
     if (b.dataset.c === "samsung") cast.castSamsung(); // Smart View: the Sound Atlas TV app

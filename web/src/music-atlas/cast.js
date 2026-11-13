@@ -165,8 +165,9 @@ export async function castSamsung() {
 export const forgetTV = () => localStorage.removeItem("sa-tv");
 
 // Google Cast via DashCast (a public receiver that opens a URL), so no receiver registration is needed.
-let sdk = null;
+let sdk = null, sdkState = "idle"; // idle → loading → ready | none (no Cast in this browser: Chromium, Brave, headless)
 export function loadCastSDK() {
+  if (!sdk) sdkState = "loading";
   return (sdk ??= new Promise((ok) => {
     window.__onGCastApiAvailable = (a) => {
       if (a) cast.framework.CastContext.getInstance().setOptions({ receiverApplicationId: DASHCAST, autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED });
@@ -174,9 +175,10 @@ export function loadCastSDK() {
     };
     const s = Object.assign(document.createElement("script"), { src: "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1", onerror: () => ok(false) });
     document.head.append(s);
-  }));
+  }).then((a) => ((sdkState = a ? "ready" : "none"), a)));
 }
 export const castSDKReady = () => !!window.cast?.framework;
+export const castSDKState = () => (castSDKReady() ? "ready" : sdkState);
 export async function castGoogle() {
   const ctx = cast.framework.CastContext.getInstance();
   try { await ctx.requestSession(); } catch (e) { if (e !== "cancel") hooks.toast("No Cast screen picked"); return; } // opens the system picker; must run inside the tap
