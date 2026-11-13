@@ -13,7 +13,9 @@ cp "$here"/web/fonts/{ArchivoBlack-Regular,InstrumentSans-Regular,InstrumentSans
 sed -e 's#\.\./src/#./src/#g' -e 's#\.\./fonts/#./fonts/#g' -e 's#<head>#<head>\n<base href="/" />#' "$here/web/labs/sound-atlas.html" > "$out/index.html"
 cp "$here/web/labs/sound-atlas.vercel.json" "$out/vercel.json" # rewrites the pretty paths to /api/page (link previews)
 cp "$here"/web/labs/sound-atlas.webmanifest "$here"/web/labs/sound-atlas-icon.svg "$here"/web/labs/sound-atlas-icon.png "$out/" # installable, launches fullscreen
-cp "$cat_dir/catalog.json" "$cat_dir/vectors.bin" "$out/"
+# Bundling in place (catalog-dir = out-dir, the deploy recipe) must not stop here: cp of a file onto itself
+# fails, and set -e used to end the script before the tracks step, so the shortlist songs never shipped (404 on prod).
+[ "$cat_dir" -ef "$out" ] || cp "$cat_dir/catalog.json" "$cat_dir/vectors.bin" "$out/"
 # Optional listening layer from tools/music-features.py (feat.json + feat.json.clap.bin next to the catalogue).
 [ -f "$cat_dir/feat.json" ] && cp "$cat_dir/feat.json" "$out/sound.json"
 [ -f "$cat_dir/feat.json.clap.bin" ] && cp "$cat_dir/feat.json.clap.bin" "$out/sound.bin"
