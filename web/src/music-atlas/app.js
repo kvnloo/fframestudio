@@ -4,7 +4,7 @@
 import { createAtlas } from "./atlas.js";
 import { FEELS, BPM_BANDS, LEVELS, FAMILY_TINT, feelById, familyById, styleName, shade } from "./taxonomy.js";
 import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine, prep } from "./search.js";
-import { loadSound, soundReady, neighbours, tuneMatch, profileHTML, meterColor, ord, LENSES, bpmOf, organise, beatAt } from "./sound.js";
+import { loadSound, soundReady, neighbours, tuneMatch, profileHTML, meterColor, ord, LENSES, lensBar, bpmOf, organise, beatAt } from "./sound.js";
 import { haptic, pressable, pressRing, HOLD, SLOP, FORCE } from "./gestures.js";
 import * as social from "./social.js";
 import * as cast from "./cast.js";
@@ -264,7 +264,7 @@ function setLens(id, save = true) {
   lensFn = L.color ?? null; org = organise(L.id, FEELS, familyById); if (org) org.id = L.id; tintCache.clear();
   A.setLens(lensFn);
   renderPlayer(); // the player, its glow and the queue dot take the playing track's colour under the new sort
-  $("#sortname").textContent = L.name; sortBtn.classList.toggle("dim", !soundReady());
+  $("#sortname").textContent = L.name; sortBtn.style.setProperty("--lens", lensBar(L.id, FEELS, false)); sortBtn.classList.toggle("dim", !soundReady());
   renderChips(); $("#rail .filt").scrollLeft = 0;
   if (save) saveHash();
   if (changed) { atlasIds = ""; run({ fly: false, scroll: true }).then(() => (state.sel ? focusSel(700) : A.fitAll(700))); }
@@ -275,7 +275,7 @@ const sm = { open: false, held: false, hot: null, t: 0, p0: 0, x: 0, y: 0, down:
 function openSort(held) {
   if (!soundReady()) return toast("Listening data is still loading");
   sm.open = true; sm.held = held; sm.hot = null;
-  sortMenu.innerHTML = LENSES.map((L) => `<button role="menuitem" data-lens="${L.id}" class="${L.id === state.lens ? "on" : ""}"><b>${L.name}</b><small>${L.id === "feel" ? "how it makes you feel" : esc(L.legend ?? "")}</small></button>`).join("");
+  sortMenu.innerHTML = LENSES.map((L) => `<button role="menuitem" data-lens="${L.id}" class="${L.id === state.lens ? "on" : ""}"><b>${L.name}</b><small>${L.id === "feel" ? "how it makes you feel" : esc(L.legend ?? "")}</small><i class="lensbar" style="--lens:${lensBar(L.id, FEELS)}"></i></button>`).join("");
   sortMenu.hidden = false; void sortMenu.offsetWidth; sortMenu.classList.add("on"); sortBtn.classList.add("open"); haptic(held ? "press" : "select");
 }
 function closeSort() { sm.open = false; sm.hot = null; sortMenu.classList.remove("on"); sortBtn.classList.remove("open"); setTimeout(() => { if (!sm.open) sortMenu.hidden = true; }, 180); }

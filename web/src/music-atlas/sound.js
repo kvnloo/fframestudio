@@ -172,6 +172,15 @@ const RAMPS = { tempo: COOL_WARM, bright: DARK_LIGHT, busy: QUIET_LOUD, width: C
 // A meter that is also a Sort lens wears that lens's ramp, so its colours mean what the Sort chips mean.
 export const meterColor = (k, x) => (RAMPS[k] ? ramp(RAMPS[k], x) : null);
 const meterStyle = (k, x) => (RAMPS[k] ? ` style="--g:linear-gradient(90deg,${RAMPS[k].map((s) => `rgb(${s})`).join(",")});--k:${ramp(RAMPS[k], x)}"` : "");
+// A lens's colour key as a CSS gradient, so a label that says "Emotions" or "Tempo" also SHOWS its colours.
+// Categories (emotions, Camelot keys) get hard-edged equal bands; measured lenses get their smooth ramp,
+// so the swatch's shape says "pick one of these" vs "a continuum". night = the dark-theme tones.
+export function lensBar(id, feels, night = true) {
+  const bands = (cs) => `linear-gradient(90deg,${cs.map((c, i) => `${c} ${((i * 100) / cs.length).toFixed(2)}% ${(((i + 1) * 100) / cs.length).toFixed(2)}%`).join(",")})`;
+  if (!id || id === "feel") return bands(feels.map((F) => (night ? F.night : F.color)));
+  if (id === "key") return bands(Array.from({ length: 12 }, (_, i) => `hsl(${i * 30},${night ? "62%,60%" : "55%,46%"})`));
+  return RAMPS[id] ? `linear-gradient(90deg,${RAMPS[id].map((s) => `rgb(${s})`).join(",")})` : "none";
+}
 const TEMPO = [["slow", "Slow", 0, 90], ["mid", "Mid", 90, 115], ["up", "Up", 115, 135], ["fast", "Fast", 135, 160], ["rush", "Rush", 160, 999]];
 const FEEL_LIGHT = { drive: 12, lift: 9, play: 6, groove: 2, calm: -3, wonder: -7, sad: -14, shadow: -10 };
 const UNMEASURED = { id: "none", name: "Unmeasured", color: "#8a857a", night: "#8f8a80", ask: "no listening profile" };
