@@ -6,6 +6,15 @@ import { expect } from 'e2e';
 
 const ready = () => !!(window as any).__sa && (window as any).__sa.all.length > 1000;
 const sa = <T,>(b: any, fn: string) => b.evaluate(`(() => { const s = window.__sa; return (${fn}); })()`) as Promise<T>;
+// Phone sheet: at peek only search + player show; Track/Similar/Library, Radio, Share and Cast appear at half.
+// Raise it the way a person does (tap the grab handle) and wait for the spring to settle before measuring.
+const settled = (b: any) => wait(b, `(() => { const r = document.querySelector('#sheet').getBoundingClientRect().top; const o = window.__lastTop === r; window.__lastTop = r; return o; })()`, 5000);
+async function raise(b: any) {
+  if (await b.evaluate(() => matchMedia('(min-width: 900px)').matches || document.querySelector('#sheet')!.getAttribute('data-snap') !== 'peek')) return;
+  await b.locator('.grab').click();
+  await wait(b, `document.querySelector('#sheet').dataset.snap !== 'peek'`, 5000);
+  await settled(b);
+}
 const wait = async (b: any, fn: string, ms = 20000) => {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) { if (await sa<boolean>(b, fn)) return true; await new Promise((r) => setTimeout(r, 250)); }
@@ -144,6 +153,7 @@ describe('sound atlas', { tags: ['journey'] }, () => {
     await wait(browser, `(${ready})()`, 60000);
     await browser.locator('#pp').click();
     await wait(browser, `!!s.state.sel`, 20000);
+    await raise(browser);
     for (const v of ['Track', 'Similar', 'Community', 'Library']) {
       await browser.locator(`#views button:has-text("${v}") >> nth=0`).click();
       await new Promise((r) => setTimeout(r, 600));
@@ -159,6 +169,7 @@ describe('sound atlas', { tags: ['journey'] }, () => {
     await browser.locator('#pp').click();
     await wait(browser, `!!s.state.sel`, 20000);
     await browser.locator('#ph').click();
+    await raise(browser);
     await browser.locator('#ps').click();
     await wait(browser, `!!document.querySelector('svg') && [...document.querySelectorAll('svg')].some(e => e.innerHTML.length > 2000)`, 5000);
   });
@@ -166,6 +177,7 @@ describe('sound atlas', { tags: ['journey'] }, () => {
   test('Radio starts a stream of new songs', async ({ app, browser }) => {
     await app.open('/');
     await wait(browser, `(${ready})()`, 60000);
+    await raise(browser);
     await browser.locator('#pr').click();
     await wait(browser, `!!s.state.sel && !s.audio.paused && s.audio.currentTime > 0.3`, 30000);
   });
@@ -180,6 +192,7 @@ describe('sound atlas', { tags: ['journey'] }, () => {
   test('Play on a TV offers a way to cast or explains why not', async ({ app, browser }) => {
     await app.open('/');
     await wait(browser, `(${ready})()`, 60000);
+    await raise(browser);
     await browser.locator('#pc').click();
     await wait(browser, `!!document.querySelector('.castmenu.on')`, 3000);
     const menu: string = await browser.evaluate(() => (document.querySelector('.castmenu.on') as HTMLElement).innerText);
@@ -195,6 +208,7 @@ describe('sound atlas', { tags: ['journey'] }, () => {
   test('Bring your own music opens its panel', async ({ app, browser }) => {
     await app.open('/');
     await wait(browser, `(${ready})()`, 60000);
+    await raise(browser);
     await browser.locator('#body button:has-text("Bring your own music") >> nth=0').click();
     await new Promise((r) => setTimeout(r, 800));
     const text: string = await browser.evaluate(() => document.body.innerText);
@@ -205,6 +219,7 @@ describe('sound atlas', { tags: ['journey'] }, () => {
   test('nothing overflows sideways and the player stays on screen', async ({ app, browser }) => {
     await app.open('/');
     await wait(browser, `(${ready})()`, 60000);
+    await settled(browser);
     const g = await browser.evaluate(() => {
       const r = document.querySelector('#player')!.getBoundingClientRect();
       return { over: document.documentElement.scrollWidth - innerWidth, bottom: r.bottom, h: innerHeight, w: r.width };
@@ -228,6 +243,7 @@ describe('sound atlas', { tags: ['journey'] }, () => {
   test('Radio skips a song that will not stream instead of stalling', async ({ app, browser }) => {
     await app.open('/');
     await wait(browser, `(${ready})()`, 60000);
+    await raise(browser);
     await browser.locator('#pr').click();
     // whatever it picked first, within 20 s something must be audibly playing
     await wait(browser, `!s.audio.paused && s.audio.currentTime > 1 && !s.audio.error`, 20000);
@@ -236,17 +252,31 @@ describe('sound atlas', { tags: ['journey'] }, () => {
   test('every catalogue source host actually serves audio', async ({ app, browser }) => {
     await app.open('/');
     await wait(browser, `(${ready})()`, 60000);
+    // Play one song per host through the real player: a raw fetch of the catalogue URL is not what a listener
+    // gets (ccMixter refuses hotlinks and the app streams it through /api/ccm with ccMixter's Referer).
     const byHost: Record<string, string[]> = await browser.evaluate(() => {
       const m: Record<string, string[]> = {};
-      for (const t of (window as any).__sa.all) { const u = new URL(t.audio, location.href); (m[u.host] ??= []).push(u.href); }
+      for (const t of (window as any).__sa.all) { if (t.src === 'web' || t.src === 'mine') continue; (m[new URL(t.audio, location.href).host] ??= []).push(t.id); }
       return m;
     });
     const dead: string[] = [];
-    for (const [host, urls] of Object.entries(byHost)) {
-      const sample = urls.filter((_, i) => i % Math.max(1, Math.floor(urls.length / 4)) === 0).slice(0, 4);
-      let ok = 0;
-      for (const u of sample) { const r = await fetch(u, { headers: { Range: 'bytes=0-1023' } }).catch(() => null); if (r && (r.status === 200 || r.status === 206)) ok++; }
-      if (ok === 0) dead.push(`${host} (${urls.length} tracks, 0/${sample.length} answered)`);
+    for (const [host, ids] of Object.entries(byHost)) {
+      const sample = [ids[0], ids[Math.floor(ids.length / 2)]];
+      let ok = false;
+      if (host === 'ccmixter.org' && !(await browser.evaluate(() => location.protocol === 'https:'))) {
+        // Local origins don't route through the proxy (app.js `proxied`); check the endpoint deploys stream from.
+        const p = (await sa<string>(browser, `s.all.find(t => t.id === ${JSON.stringify(sample[0])}).audio`)).replace('https://ccmixter.org/content/', '');
+        const st = await browser.evaluate(async (q: string) => (await fetch('/api/ccm?p=' + encodeURIComponent(q), { headers: { Range: 'bytes=0-1023' } })).status, p);
+        if (st !== 206) dead.push(`${host} via /api/ccm answered ${st}`);
+        continue;
+      }
+      for (const id of sample) {
+        await browser.evaluate((i: string) => { (window as any).__sa.select(i); return null; }, id);
+        if (await sa<boolean>(browser, 's.audio.paused')) await browser.locator('#pp').click();
+        ok = await wait(browser, `s.state.sel === ${JSON.stringify(id)} && !s.audio.paused && s.audio.currentTime > 0.3`, 20000).catch(() => false);
+        if (ok) break;
+      }
+      if (!ok) dead.push(`${host} (${ids.length} tracks, 0/${sample.length} played)`);
     }
     expect(dead, 'tracks whose host refuses to stream').toEqual([]);
   });
