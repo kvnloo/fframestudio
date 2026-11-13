@@ -222,12 +222,12 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .sortbtn:active, .sortbtn.arming { transform: scale(.94); }
 .sortbtn.open svg { transform: rotate(180deg); }
 .sortbtn.dim { opacity: .55; }
-/* The lens's colour key under its name: bands = categories (emotions, keys), a smooth ramp = a measurement.
-   The label stays dark ink on cream; the key is a thin strip with a dark rim so pale stops still read. */
-.sortbtn { position: relative; }
-.sortbtn .lensbar { position: absolute; left: 9px; right: 9px; bottom: 3px; height: 3px; border-radius: 2px; background: var(--lens, none); box-shadow: 0 0 0 .5px rgba(13, 17, 18, .55); }
-.sortmenu button { flex-wrap: wrap; row-gap: 5px; }
-.sortmenu .lensbar { flex: 0 0 100%; height: 4px; border-radius: 2px; background: var(--lens); opacity: .9; }
+/* Lens names and legends wear the lens's colours (gradient text). The Sort pill is dark so those colours
+   read: on the old cream pill the yellows and pale ramp stops vanished. The cream rim keeps it the control. */
+.sortbtn { background: rgba(22, 28, 29, .96); border-color: rgba(236, 232, 223, .55); color: var(--ink); }
+.sortbtn .sk { color: var(--mute); opacity: 1; }
+.lensink { background: var(--lens); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+.sortmenu button.hot small.lensink, .sortmenu button:active small.lensink { background: none; -webkit-text-fill-color: #0d1112; color: #0d1112; }
 .rail .chip { height: 28px; padding: 0 8px; gap: 5px; font-size: 12px; border-radius: 9px; background: rgba(22, 28, 29, .94); box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
 .rail .chip small { font-size: 9px; }
 .rail .chip.feel i { width: 7px; height: 7px; }

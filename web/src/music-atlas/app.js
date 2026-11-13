@@ -4,7 +4,7 @@
 import { createAtlas } from "./atlas.js";
 import { FEELS, BPM_BANDS, LEVELS, FAMILY_TINT, feelById, familyById, styleName, shade } from "./taxonomy.js";
 import { loadCatalog, loadModel, modelReady, embed, search, webSearch, creditLine, prep } from "./search.js";
-import { loadSound, soundReady, neighbours, tuneMatch, profileHTML, meterColor, ord, LENSES, lensBar, bpmOf, organise, beatAt } from "./sound.js";
+import { loadSound, soundReady, neighbours, tuneMatch, profileHTML, meterColor, ord, LENSES, lensStops, bpmOf, organise, beatAt } from "./sound.js";
 import { haptic, pressable, pressRing, HOLD, SLOP, FORCE } from "./gestures.js";
 import * as social from "./social.js";
 import * as cast from "./cast.js";
@@ -261,13 +261,21 @@ function keepFn() {
 }
 const otherFilters = () => (state.lens === "feel" ? 0 : state.feels.size) + state.bands.size + [...state.gs].reduce((n, [k, v]) => n + (k === state.lens ? 0 : v.size), 0);
 const sortBtn = $("#sortbtn"), sortMenu = $("#sortmenu");
+// Lens names wear their lens's colours. Text colours are lifted to >= 64% lightness so the darkest stops
+// (deep blue, brown, slate) still read on the dark rail. "Emotions" has 8 letters, one per emotion, in ring order.
+const inkC = (c) => shade(c).replace(/(\d+)%\)$/, (_, l) => `${Math.max(64, +l)}%)`);
+const lensInk = (id) => `linear-gradient(90deg,${lensStops(id, FEELS).map(inkC).join(",")})`;
+function paintLensName(el, L) {
+  if (L.id === "feel") { el.classList.remove("lensink"); el.innerHTML = [...L.name].map((ch, i) => `<span style="color:${inkC(FEELS[i % FEELS.length].night)}">${esc(ch)}</span>`).join(""); return; }
+  el.textContent = L.name; el.classList.add("lensink"); el.style.setProperty("--lens", lensInk(L.id));
+}
 function setLens(id, save = true) {
   const L = LENSES.find((x) => x.id === id) ?? LENSES[0]; state.lens = L.id;
   const changed = save && (org?.id ?? "feel") !== L.id;
   lensFn = L.color ?? null; org = organise(L.id, FEELS, familyById); if (org) org.id = L.id; tintCache.clear();
   A.setLens(lensFn);
   renderPlayer(); // the player, its glow and the queue dot take the playing track's colour under the new sort
-  $("#sortname").textContent = L.name; sortBtn.style.setProperty("--lens", lensBar(L.id, FEELS, false)); sortBtn.classList.toggle("dim", !soundReady());
+  paintLensName($("#sortname"), L); sortBtn.classList.toggle("dim", !soundReady());
   renderChips(); $("#rail .filt").scrollLeft = 0;
   if (save) saveHash();
   if (changed) { atlasIds = ""; run({ fly: false, scroll: true }).then(() => (state.sel ? focusSel(700) : A.fitAll(700))); }
@@ -278,7 +286,7 @@ const sm = { open: false, held: false, hot: null, t: 0, p0: 0, x: 0, y: 0, down:
 function openSort(held) {
   if (!soundReady()) return toast("Listening data is still loading");
   sm.open = true; sm.held = held; sm.hot = null;
-  sortMenu.innerHTML = LENSES.map((L) => `<button role="menuitem" data-lens="${L.id}" class="${L.id === state.lens ? "on" : ""}"><b>${L.name}</b><small>${L.id === "feel" ? "how it makes you feel" : esc(L.legend ?? "")}</small><i class="lensbar" style="--lens:${lensBar(L.id, FEELS)}"></i></button>`).join("");
+  sortMenu.innerHTML = LENSES.map((L) => `<button role="menuitem" data-lens="${L.id}" class="${L.id === state.lens ? "on" : ""}"><b>${L.name}</b><small class="lensink" style="--lens:${lensInk(L.id)}">${L.id === "feel" ? "how it makes you feel" : esc(L.legend ?? "")}</small></button>`).join("");
   sortMenu.hidden = false; void sortMenu.offsetWidth; sortMenu.classList.add("on"); sortBtn.classList.add("open"); haptic(held ? "press" : "select");
 }
 function closeSort() { sm.open = false; sm.hot = null; sortMenu.classList.remove("on"); sortBtn.classList.remove("open"); setTimeout(() => { if (!sm.open) sortMenu.hidden = true; }, 180); }
