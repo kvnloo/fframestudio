@@ -19,6 +19,7 @@ cp "$here"/web/labs/sound-atlas.webmanifest "$here"/web/labs/sound-atlas-icon.sv
 # Optional listening layer from tools/music-features.py (feat.json + feat.json.clap.bin next to the catalogue).
 [ -f "$cat_dir/feat.json" ] && cp "$cat_dir/feat.json" "$out/sound.json"
 [ -f "$cat_dir/feat.json.clap.bin" ] && cp "$cat_dir/feat.json.clap.bin" "$out/sound.bin"
+[ -d "$cat_dir/beats" ] && { mkdir -p "$out/beats"; cp -u "$cat_dir"/beats/*.bin "$cat_dir/beats/index.json" "$out/beats/"; } # measured beats + energy (tools/music-beats.py); optional
 mkdir -p "$out/api" && cp -L "$here"/tools/sound-atlas-api/*.js "$out/api/" # same-origin stream proxy (ccMixter needs its Referer)
 [ -f "$out/share.json" ] || echo '{}' > "$out/share.json" # deploy step may write {"base": "<entry link>"}; never commit it
 if [ -n "$tracks" ]; then mkdir -p "$out/tracks"; cp -u "$tracks"/*.mp3 "$out/tracks/"; fi

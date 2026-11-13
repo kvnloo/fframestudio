@@ -26,6 +26,8 @@ let sorted = {}, clapNorm = null, ready = false;
 const pct = (k, v) => { const a = sorted[k]; if (!a?.length || v == null) return null; let lo = 0, hi = a.length; while (lo < hi) { const m = (lo + hi) >> 1; a[m] < v ? (lo = m + 1) : (hi = m); } return lo / a.length; };
 
 export async function loadSound(base, tracks) {
+  beatBase = base; // which tracks have measured beats: optional, so a deploy without them keeps the grid
+  fetch(base + "beats/index.json").then((r) => (r.ok ? r.json() : null)).then((j) => { if (j?.ids) beatIds = new Set(j.ids); }).catch(() => {});
   const [js, buf] = await Promise.all([
     fetch(base + "sound.json").then((r) => (r.ok ? r.json() : null)).catch((e) => (console.warn("sound.json unusable", e), null)),
     fetch(base + "sound.bin").then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null),
@@ -62,10 +64,64 @@ export const summary = (t) => (t.f ? words(t).slice(2, 7).join(" · ") : "");
 // Where playback sits in the music: phase inside the beat (0 at the hit) and a metric accent that
 // ranks the hit like a composer would (phrase start > bar downbeat > beat 3 > beats 2 and 4), from
 // the downbeat music-features.py measured. Unmeasured tracks fall back to the BPM from t=0.
+// Tracks with a beats/<id>.bin (tools/music-beats.py, Beat This!) follow every measured beat and bar
+// instead: tempo drift, fills and odd bars stay locked, and `e` carries the music's loudness (0-1).
 export function beatAt(t, track) {
+  const B = track?.bt;
+  if (B) return beatOn(B, t);
+  if (B === undefined) wantBeats(track);
   const b = track?.f?.beat, len = 60 / (b?.bpm || bpmOf(track) || 100);
   const n = (t - (b?.down ?? 0)) / len, i = Math.floor(n), pos = ((i % 16) + 16) % 16;
   return { ph: n - i, i, len, acc: pos === 0 ? 1 : pos % 4 === 0 ? 0.7 : pos % 2 === 0 ? 0.45 : 0.28 };
+}
+
+// Layout in tools/music-beats.py: "SAB1", u16 beats, u16 frames, u8 fps, u8 channels, u16 0, then
+// beats x u32 (ms, bit 31 = downbeat), beats x u8 confidence, frames x channels u8 (loudness, low/mid/high onsets).
+export function parseBeats(ab) {
+  const v = new DataView(ab);
+  if (ab.byteLength < 12 || v.getUint32(0, true) !== 0x31424153) return null;
+  const nb = v.getUint16(4, true), nf = v.getUint16(6, true), fps = v.getUint8(8), ch = v.getUint8(9);
+  if (ab.byteLength < 12 + 5 * nb + nf * ch) return null;
+  const at = new Float64Array(nb), down = new Uint8Array(nb);
+  for (let i = 0; i < nb; i++) { const w = v.getUint32(12 + 4 * i, true); at[i] = (w & 0x7fffffff) / 1000; down[i] = w >>> 31; }
+  // Too few beats, or slower than ~40 bpm (ambient, rubato): the dance has no pulse to lock to.
+  if (nb < 8 || (at[nb - 1] - at[0]) / (nb - 1) > 1.5) return null;
+  // Accent per beat, as the grid ranks them: a phrase (every 4th bar) > bar downbeat > beat 3 > the rest.
+  const acc = new Float64Array(nb), d0 = down.indexOf(1);
+  for (let i = 0, bar = -1, last = d0; i < nb; i++) {
+    if (down[i]) { bar++; last = i; }
+    const pos = d0 < 0 ? i % 4 : i < d0 ? (((i - d0) % 4) + 4) % 4 : i - last;
+    acc[i] = pos === 0 && d0 >= 0 ? (i >= d0 && bar % 4 === 0 ? 1 : 0.7) : pos === 2 ? 0.45 : 0.28;
+  }
+  return { at, acc, fps, ch, nf, cv: new Uint8Array(ab, 12 + 5 * nb, nf * ch), k: 0 };
+}
+
+function beatOn(B, t) {
+  const a = B.at, n = a.length;
+  let i = B.k; // playback walks forward, so the last hit is almost always the answer
+  if (!(a[i] <= t && (i === n - 1 || t < a[i + 1]))) {
+    let lo = 0, hi = n - 1;
+    while (lo < hi) { const m = (lo + hi + 1) >> 1; a[m] <= t ? (lo = m) : (hi = m - 1); }
+    i = B.k = lo;
+  }
+  const f = Math.min(B.nf - 1, Math.max(0, Math.round(t * B.fps))), e = B.nf ? B.cv[f * B.ch] / 255 : 1;
+  if (t < a[0]) { const len = a[1] - a[0], x = (t - a[0]) / len, k = Math.floor(x); return { ph: x - k, i: k, len, acc: 0.28, e }; }
+  const len = i < n - 1 ? a[i + 1] - a[i] : a[n - 1] - a[n - 2];
+  if (i === n - 1) { const x = (t - a[i]) / len, k = Math.floor(x); return { ph: x - k, i: i + k, len, acc: k ? 0.28 : B.acc[i], e }; }
+  return { ph: (t - a[i]) / len, i, len, acc: B.acc[i], e };
+}
+
+// Loudness or one band's onset strength (0-1) at time t, for motion that follows the music's energy.
+export const curveAt = (track, t, ch = 0) => { const B = track?.bt; if (!B?.nf) return null; const f = Math.min(B.nf - 1, Math.max(0, Math.round(t * B.fps))); return B.cv[f * B.ch + ch] / 255; };
+
+let beatBase = null, beatIds = null;
+function wantBeats(track) {
+  if (!beatIds || !track?.id) return;
+  if (!beatIds.has(track.id)) { track.bt = null; return; }
+  track.bt = null; // in flight: grid until it lands
+  fetch(beatBase + "beats/" + encodeURIComponent(track.id) + ".bin").then((r) => (r.ok ? r.arrayBuffer() : null))
+    .then((ab) => { track.bt = (ab && parseBeats(ab)) || null; })
+    .catch((e) => console.warn("beats unusable", track.id, e));
 }
 
 // --- harmony ------------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { keyRelation, mixesWith, bpmOf, neighbours, loadSound, LENSES, profileHTML, organise, beatAt } from "../../web/src/music-atlas/sound.js";
+import { keyRelation, mixesWith, bpmOf, neighbours, loadSound, LENSES, profileHTML, organise, beatAt, parseBeats, curveAt } from "../../web/src/music-atlas/sound.js";
 
 test("Camelot relations follow the DJ mixing rule", () => {
   assert.equal(keyRelation("8A", "8A"), "same key");
@@ -70,4 +70,45 @@ test("beat phase locks to the measured downbeat and ranks accents like a metre",
   assert.ok(Math.abs(at(0.5).ph - 0.5) < 1e-9);
   assert.equal(at(0.0).acc, 0.28);                               // before the first downbeat wraps to beat 16
   assert.equal(beatAt(1, { bpm: 60 }).ph, 0);                    // unmeasured: BPM from t=0
+});
+
+// The same bytes tools/music-beats.py writes: "SAB1", u16 beats, u16 frames, u8 fps, u8 channels, u16 0, beats, conf, curve.
+function sab(beats, downs, frames = [], fps = 20) {
+  const nb = beats.length, ch = 4, buf = new ArrayBuffer(12 + 5 * nb + frames.length * ch), v = new DataView(buf);
+  [0x53, 0x41, 0x42, 0x31].forEach((c, i) => v.setUint8(i, c));
+  v.setUint16(4, nb, true); v.setUint16(6, frames.length, true); v.setUint8(8, fps); v.setUint8(9, ch);
+  beats.forEach((t, i) => v.setUint32(12 + 4 * i, (Math.round(t * 1000) | (downs.includes(t) ? 0x80000000 : 0)) >>> 0, true));
+  beats.forEach((_, i) => v.setUint8(12 + 4 * nb + i, 200));
+  frames.forEach((f, i) => f.forEach((x, c) => v.setUint8(12 + 5 * nb + i * ch + c, x)));
+  return buf;
+}
+
+test("measured beats (Beat This!) follow tempo changes and real bars instead of one grid", () => {
+  // 4 beats at 0.5 s, then the music speeds up to 0.4 s beats; bars start at 0.5 and 2.4.
+  const beats = [0.5, 1.0, 1.5, 2.0, 2.4, 2.8, 3.2, 3.6, 4.0, 4.4, 4.8, 5.2, 5.6, 6.0, 6.4, 6.8, 7.2, 7.6, 8.0];
+  const downs = [0.5, 2.4, 4.0, 5.6, 7.2];
+  const tr = { bpm: 120, f: { beat: { bpm: 120, down: 0 } }, bt: parseBeats(sab(beats, downs, [[0, 0, 0, 0], [255, 10, 20, 30]])) };
+  const at = (t) => beatAt(t, tr);
+  assert.ok(Math.abs(at(1.25).ph - 0.5) < 1e-9); assert.ok(Math.abs(at(1.25).len - 0.5) < 1e-9);
+  assert.ok(Math.abs(at(2.6).ph - 0.5) < 1e-9); assert.ok(Math.abs(at(2.6).len - 0.4) < 1e-9); // the grid would sit at ph 0.2
+  assert.equal(at(0.5).acc, 1);    // first bar: phrase start
+  assert.equal(at(2.4).acc, 0.7);  // a bar downbeat
+  assert.equal(at(1.5).acc, 0.45); // beat 3
+  assert.equal(at(1.0).acc, 0.28);
+  assert.equal(at(5.6).acc, 0.7);  // bars 0-3 start at 0.5, 2.4, 4.0, 5.6; 7.2 is bar 4, the next phrase
+  assert.equal(at(7.2).acc, 1);
+  assert.ok(at(3.0).i > at(2.9).i - 1 && at(3.0).i >= at(2.0).i); // index only moves forward with time
+  assert.equal(at(1.0).i, 1); assert.equal(at(0.25).i, -1); assert.ok(Math.abs(at(0.25).ph - 0.5) < 1e-9); // before the first beat
+  assert.equal(at(0.0).e, 0); assert.equal(at(0.05).e, 1); // loudness curve at 20 Hz
+  assert.equal(curveAt(tr, 0.05, 3), 30 / 255);
+  assert.ok(Math.abs(at(9.0).ph - 0.5) < 1e-9); assert.equal(at(9.0).i, 20); // after the last beat: keeps the last tempo
+  assert.equal(beatAt(0.9, tr).i, 0); // random access (a seek back) still finds the right beat
+});
+
+test("too few or too slow measured beats fall back to the grid", () => {
+  assert.equal(parseBeats(sab([1, 2, 3], [1])), null);
+  assert.equal(parseBeats(sab([0, 2, 4, 6, 8, 10, 12, 14, 16], [0])), null); // 30 bpm: no pulse to dance to
+  assert.equal(parseBeats(new ArrayBuffer(4)), null);
+  const tr = { bpm: 60, bt: null };
+  assert.equal(beatAt(1, tr).ph, 0); // grid
 });
