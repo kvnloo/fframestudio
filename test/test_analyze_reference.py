@@ -137,6 +137,27 @@ class AnalyzeReferenceTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "Reference limit"):
                     self._probe(self._probe_data(rate=rate, duration=duration))
 
+    def test_probe_limit_boundaries(self):
+        # Exactly ten minutes at exactly 120 fps is the largest accepted reference.
+        info = self._probe(self._probe_data(rate="120/1", duration="600"))
+        self.assertEqual(info["fps"], {"num": 120, "den": 1})
+        self.assertEqual(info["frames"], 72000)
+        # Just past either limit, or with ffprobe omitting rate/duration, is rejected.
+        missing_rate = self._probe_data()
+        del missing_rate["streams"][0]["avg_frame_rate"]
+        missing_duration = self._probe_data()
+        del missing_duration["format"]["duration"]
+        cases = {
+            "121/1": self._probe_data(rate="121/1"),
+            "600.01s": self._probe_data(duration="600.01"),
+            "no avg_frame_rate": missing_rate,
+            "no duration": missing_duration,
+        }
+        for name, data in cases.items():
+            with self.subTest(name):
+                with self.assertRaisesRegex(ValueError, "Reference limit"):
+                    self._probe(data)
+
     def test_run_raises_on_failure(self):
         with self.assertRaises(ValueError) as failure:
             analyze_reference.run(
