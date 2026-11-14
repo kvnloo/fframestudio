@@ -154,6 +154,9 @@ const CPU = new URLSearchParams(location.search).get("c")?.split(",").includes("
 // c=cssbg: the ground and its vignette glow are the canvas element's CSS background (rewritten only when the camera
 // moves), so a dancing frame clears instead of filling ~3.5M device px twice before the first dot.
 const CSSBG = new URLSearchParams(location.search).get("c")?.split(",").includes("cssbg");
+// ?ab=bands,edges,dots,nodes,labels: DIAGNOSTIC ablation for the perf climb (drops a pass to price it on a weak GPU).
+// Changes pixels by design, so it can never be a candidate; it only says where the frame goes.
+const AB = new Set((new URLSearchParams(location.search).get("ab") || "").split(","));
 export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, onDetent, onFeel, onLayer, lite = false, gpu = false }) {
   // `split`: the still map plus GPU-danced tracks on an overlay. A TV always splits; `gpu` (?gpu=1, perf A/B) splits anywhere.
   const split = lite || gpu;
@@ -617,7 +620,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
     // Style bands: a tinted annular sector under each style's tracks.
     const inner = g.R4 + 6, outer = g.outer + 2;
     for (const st of g.styles) {
-      const a = (st.al ?? 1) * gr4(3) * fo; if (a < 0.02) continue;
+      const a = (st.al ?? 1) * gr4(3) * fo; if (a < 0.02 || AB.has("bands")) continue;
       ctx.globalAlpha = a * (st.id === focusId || st.id === hoverId ? 0.22 : 0.09);
       ctx.fillStyle = colN(st);
       const b0 = angOf(st.feel, st.a0 - g.step * 0.6), b1 = angOf(st.feel, st.a1 + g.step * 0.6), bk = kOf(st.feel) * gr4(4);
@@ -626,7 +629,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
     // Edges.
     ctx.lineCap = "round";
     for (const n of g.byId.values()) {
-      if (n.level === 0 || n.level === 4) continue;
+      if (n.level === 0 || n.level === 4 || AB.has("edges")) continue;
       const p = n.parent, a = Math.min(n.al ?? 1, p.al ?? 1) * fo; if (a < 0.02) continue;
       ctx.globalAlpha = a * (p.level === 0 ? 0.28 : 0.6); ctx.strokeStyle = colN(n); ctx.lineWidth = (a > 0.5 && lit ? 2 : 1.2) / Math.max(s, 0.35);
       ctx.beginPath();
@@ -680,7 +683,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
     const tiny = 2.5 / (s * dpr);
     if (onGpu) { if (gp.src !== dots) gp.load(dots, seedOf); gp.dance(ctx.getTransform(), glc.width, glc.height, poses, dpos); }
     else for (const [k, b] of buckets) {
-      const [c, a] = k.split("|"); if (+a < 0.02) continue; ctx.beginPath();
+      const [c, a] = k.split("|"); if (+a < 0.02 || AB.has("dots")) continue; ctx.beginPath();
       for (let i = 0; i < b.length; i += 3) {
         const r = b[i + 2];
         if (r < tiny) { const h = r * 0.886; ctx.rect(b[i] - h, b[i + 1] - h, h * 2, h * 2); } // same area as the disc
@@ -695,7 +698,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
     if (part !== "dots") {
     // Structural nodes.
     for (const n of g.byId.values()) {
-      if (n.level === 4) continue;
+      if (n.level === 4 || AB.has("nodes")) continue;
       const a = (n.al ?? 1) * clamp(gr4(n.level), 0, 1) * fo; if (a < 0.02) continue;
       const x = X(n), y = Y(n), c = colN(n), k = Math.max(s, 0.45), sel = n.id === focusId || n.id === hoverId;
       ctx.globalAlpha = a;
@@ -714,7 +717,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
     ctx.lineJoin = "round"; ctx.textBaseline = "middle";
     let font = null; const setFont = (f) => { if (!CPU || f !== font) ctx.font = font = f; }; // text() never sets a font
     for (const n of g.byId.values()) {
-      if (n.level === 0 || n.level === 4) continue;
+      if (n.level === 0 || n.level === 4 || AB.has("labels")) continue;
       const a = (n.al ?? 1) * clamp(gr4(n.level) * 1.2 - 0.2, 0, 1) * fo;
       const minS = [0, 0, 0.42, 0.95][n.level], fade = clamp((s - minS) / (minS * 0.35 + 0.05), 0, 1);
       // feel names are the legend (M3): they hold through the dance and, off-screen, pin to the nearest edge as a compass tag
