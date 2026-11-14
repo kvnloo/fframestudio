@@ -146,6 +146,10 @@ void main() {
   };
 }
 
+// The ground and its vignette glow are the canvas element's CSS background (rewritten only when the camera moves), so a
+// dancing frame clears instead of filling ~3.5M device px twice before the first dot. Perf climb round 2 (Boat UHD 620,
+// 8 reps): dance 1% low 66.7 -> 33.4 ms, 0.1% low 83.3 -> 50 ms, 35 -> 56 fps, same pixels. ?c=nocssbg restores the fills.
+const CSSBG = !new URLSearchParams(location.search).get("c")?.split(",").includes("nocssbg");
 export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, onDetent, onFeel, onLayer, lite = false }) {
   // Two layers: `layer` caches the static atlas (bands, edges, dots, nodes, labels) and is only
   // redrawn when the camera, data or an animation changes it; playback then costs one blit plus
@@ -567,7 +571,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
     if (busy) { ctx = screen; drawStatic(bt); layerKey = ""; }
     else {
       if (key !== layerKey) { ctx = lctx; drawStatic(bt); ctx = screen; layerKey = key; }
-      screen.setTransform(1, 0, 0, 1, 0, 0); screen.globalAlpha = 1; if (backdrop) screen.clearRect(0, 0, canvas.width, canvas.height); screen.drawImage(layer, 0, 0);
+      screen.setTransform(1, 0, 0, 1, 0, 0); screen.globalAlpha = 1; if (backdrop || CSSBG) screen.clearRect(0, 0, canvas.width, canvas.height); screen.drawImage(layer, 0, 0);
     }
     if (fe < 0.05) drawOverlay(bt); // the beat ring and pills would sit on the code
     drawLoupe();
@@ -578,13 +582,20 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
     const P = pal(), { cx, cy } = centre(), s = cam.s;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1;
     if (part !== "dots") {
+    const gx = cx - cam.x * s, gy = cy - cam.y * s, gr = Math.max(60, g.outer * s * 1.05), glowC = theme === "dark" ? "rgba(95,211,220,.06)" : "rgba(47,111,214,.05)";
+    if (CSSBG && !backdrop) {
+      ctx.clearRect(0, 0, W, H);
+      const bgCss = `radial-gradient(circle ${gr.toFixed(1)}px at ${gx.toFixed(1)}px ${gy.toFixed(1)}px, ${glowC}, rgba(0,0,0,0)) ${P.bg}`;
+      if (bgCss !== canvas._bg) canvas.style.background = canvas._bg = bgCss;
+    } else {
+    if (CSSBG && canvas._bg) canvas.style.background = canvas._bg = "";
     if (backdrop) { ctx.clearRect(0, 0, W, H); ctx.globalAlpha = 0.62; } // a video plays under the map (M8): veil it, don't hide it
     ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
     // Soft vignette glow behind the ring.
-    const gx = cx - cam.x * s, gy = cy - cam.y * s, gr = Math.max(60, g.outer * s * 1.05);
     const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
-    grad.addColorStop(0, theme === "dark" ? "rgba(95,211,220,.06)" : "rgba(47,111,214,.05)"); grad.addColorStop(1, "rgba(0,0,0,0)");
+    grad.addColorStop(0, glowC); grad.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    }
     }
     const F = fe ? formGeom() : null, fo = 1 - fe; // fo: everything that isn't the code fades out
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (cx - cam.x * s), dpr * (cy - cam.y * s));
