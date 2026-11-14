@@ -146,6 +146,8 @@ void main() {
   };
 }
 
+// ?dpr=N caps the canvas backing store (perf A/B).
+const DPR_CAP = +(new URLSearchParams(location.search).get("dpr") || 3);
 export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, onDetent, onFeel, onLayer, lite = false, gpu = false }) {
   // `split`: the still map plus GPU-danced tracks on an overlay. A TV always splits; `gpu` (?gpu=1, perf A/B) splits anywhere.
   const split = lite || gpu;
@@ -192,7 +194,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
 
   function resize() {
     const r = canvas.getBoundingClientRect();
-    dpr = Math.min(devicePixelRatio || 1, 3); W = r.width; H = r.height;
+    dpr = Math.min(devicePixelRatio || 1, DPR_CAP); W = r.width; H = r.height;
     canvas.width = layer.width = Math.round(W * dpr); canvas.height = layer.height = Math.round(H * dpr);
     if (fly) { fly.width = canvas.width; fly.height = canvas.height; flyOn = false; layerKey = ""; }
     if (gp) { glc.width = canvas.width; glc.height = canvas.height; }

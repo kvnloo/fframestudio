@@ -1011,7 +1011,10 @@ const playState = () => { const t = state.sel && byId.get(state.sel); return t ?
 // swell on accented beats; the row's three bars read kick, off-beat and bar accent. Only the
 // `scale` property is written (compositor-only, and it composes with CSS transform animations).
 let pulse = null;
-const restPulse = () => { if (pulse) for (const el of pulse.all) el.style.scale = ""; pulse?.eq[0]?.parentNode.classList.remove("live"); pulse = null; };
+const restPulse = () => { if (pulse) for (const el of pulse.all) { if (el) { el.style.scale = ""; el._scale = ""; } } pulse?.eq[0]?.parentNode.classList.remove("live"); pulse = null; };
+// Each write below restyles its element, so write only what visibly changed (~0.5 device px). `?lean=0` writes every frame (perf A/B).
+const LEAN = !/[?&]lean=0\b/.test(location.search);
+const setS = (el, p, v) => { if (!el) return; if (LEAN && el["_" + p] === v) return; el["_" + p] = v; el.style[p] = v; };
 function beatFrame() {
   const t = state.sel && byId.get(state.sel); if (!t || reduced) return;
   if (!pulse) {
@@ -1020,14 +1023,15 @@ function beatFrame() {
     eq[0]?.parentNode.classList.add("live");
   }
   const b = beatAt(audio.currentTime, t), e = Math.exp(-b.ph * 5) * b.acc, off = Math.exp(-((b.ph + 0.5) % 1) * 7);
-  pulse.pp.style.scale = (1 + 0.06 * e).toFixed(3);
-  pulse.dot.style.scale = (1 + 0.4 * e).toFixed(3);
-  for (const d of pulse.dots) d.style.scale = (1 + 0.7 * e).toFixed(3);
-  const [k, h, a] = pulse.eq; if (a) { k.style.scale = `1 ${(0.2 + 0.8 * Math.exp(-b.ph * 5)).toFixed(3)}`; h.style.scale = `1 ${(0.2 + 0.55 * off).toFixed(3)}`; a.style.scale = `1 ${(0.2 + 0.8 * e).toFixed(3)}`; }
+  const q = (x) => (LEAN ? x.toFixed(2) : x.toFixed(3));
+  setS(pulse.pp, "scale", q(1 + 0.06 * e));
+  setS(pulse.dot, "scale", q(1 + 0.4 * e));
+  for (const d of pulse.dots) setS(d, "scale", q(1 + 0.7 * e));
+  const [k, h, a] = pulse.eq; if (a) { setS(k, "scale", `1 ${q(0.2 + 0.8 * Math.exp(-b.ph * 5))}`); setS(h, "scale", `1 ${q(0.2 + 0.55 * off)}`); setS(a, "scale", `1 ${q(0.2 + 0.8 * e)}`); }
 }
 function tick() {
   const d = audio.duration, c = scrubK != null && d ? scrubK * d : audio.currentTime;
-  const k = d ? c / d : 0; bar.style.transform = `scaleX(${k})`; thumb.style.transform = `translate3d(${(k * 100).toFixed(2)}%, 0, 0)`; // compositor-only
+  const k0 = d ? c / d : 0, k = LEAN ? Math.round(k0 * 2400) / 2400 : k0; setS(bar, "transform", `scaleX(${k})`); setS(thumb, "transform", `translate3d(${(k * 100).toFixed(2)}%, 0, 0)`); // compositor-only
   const label = `${mmss(c)} / ${mmss(d)}`; if (label !== tc.textContent) tc.textContent = label; // text changes re-layout: once a second, not per frame
   if (!audio.paused) { if (!wait) beatFrame(); requestAnimationFrame(tick); }
 }
