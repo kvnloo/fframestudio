@@ -794,11 +794,17 @@ body.addEventListener("input", (e) => {
 // group; the root clears the scope. The map and the list always name the same place.
 let scope = null;
 const scopeTracks = (n) => (n.level === 3 ? n.tracks : n.children.flatMap((c) => c.tracks ?? []));
+// Perf-climb candidates (`?c=a,b`, off by default until the referee keeps them): see e2e/sound-atlas/score-climb.mjs.
+const CL = new Set((new URLSearchParams(location.search).get("c") || "").split(","));
+// c=defer: a tap's sheet list renders after the frame that shows the map's answer (the fly, the ring), not before it.
+// The latest request wins, so a burst of taps renders the list once; rows read state when they render, so it is current.
+let soonFn = null;
+const soon = (f) => { if (!CL.has("defer")) return f(); const first = !soonFn; soonFn = f; if (first) requestAnimationFrame(() => setTimeout(() => { const g = soonFn; soonFn = null; g?.(); }, 0)); };
 function showNode(n) {
   const was = scope; scope = n && n.level >= 2 ? n.id : null;
-  if (scope) { if (!wide() && sh.target === "peek") sheetTo("half"); state.view = "library"; state.browse = "feel"; state.open = null; renderViews(); renderBody(true);
-    const hd = body.querySelector(".bhead.scope"); if (hd) body.scrollTop = hd.offsetTop - 10; return; } // open on its heading, the mode bar just above
-  if (was) { if (state.view === "library") renderBody(true); }
+  if (scope) { if (!wide() && sh.target === "peek") sheetTo("half"); state.view = "library"; state.browse = "feel"; state.open = null; renderViews();
+    soon(() => { renderBody(true); const hd = body.querySelector(".bhead.scope"); if (hd) body.scrollTop = hd.offsetTop - 10; }); return; } // open on its heading, the mode bar just above
+  if (was) { if (state.view === "library") soon(() => renderBody(true)); }
   if (n?.level === 1) scrollToGroup(n.feel);
 }
 function scopeHTML(n, hits) {
@@ -971,7 +977,7 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   }
   if (fly) focusSel();
   A.setPlaying(playState());
-  renderViews(); if (tuned && tuning) { tunePaint = true; paintTune(); } else { const st = body.scrollTop; renderBody(false); if (keepScroll) body.scrollTop = st; else body.scrollTop = 0; }
+  renderViews(); if (tuned && tuning) { tunePaint = true; paintTune(); } else { const st = body.scrollTop; soon(() => { renderBody(false); if (keepScroll) body.scrollTop = st; else body.scrollTop = 0; }); }
   renderPlayer(); saveHash();
   if (!wide() && sh.target === "peek" && !play) sheetTo("half");
 }

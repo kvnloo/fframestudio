@@ -148,6 +148,9 @@ void main() {
 
 // ?dpr=N caps the canvas backing store (perf A/B).
 const DPR_CAP = +(new URLSearchParams(location.search).get("dpr") || 3);
+// Perf-climb candidates (`?c=a,b`, off until e2e/sound-atlas/score-climb.mjs keeps them). c=cpu: same pixels, less JS a
+// frame -- the morph pass runs only while something is morphing, and each label sets its font only when it changes.
+const CPU = new URLSearchParams(location.search).get("c")?.split(",").includes("cpu");
 export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, onDetent, onFeel, onLayer, lite = false, gpu = false }) {
   // `split`: the still map plus GPU-danced tracks on an overlay. A TV always splits; `gpu` (?gpu=1, perf A/B) splits anywhere.
   const split = lite || gpu;
@@ -171,6 +174,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
   const cam = { x: 0, y: 0, s: 0.3 };
   let lens = null, links = null, linkK = 1;
   const wedge = { id: null, g: null, a0: 0, a1: 0 };
+  let settle = true; // c=cpu: some node is still fading or gliding to its target (setTracks, applyLit set it)
   let tween = null, vel = null, lit = null, focusId = "root", featured = [], playing = null, bloom0 = performance.now(), raf = 0, last = performance.now();
   const pal = () => (theme === "dark"
     ? { bg: "#0d1112", ink: "#ece8df", mute: "#8f8a80", dim: "#39403f", line: "#2a3033", panel: "rgba(16,21,22,.86)" }
@@ -216,12 +220,13 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
       n.dx = from.dx ?? from.x ?? 0; n.dy = from.dy ?? from.y ?? 0; n.al = o ? o.al : 0;
     }
     if (form && !assignForm()) form = null;
-    gen++; applyLit(); kick();
+    gen++; settle = true; applyLit(); kick();
   }
   function applyLit() {
     const on = lit ? new Set() : null;
     if (lit) for (const id of lit) { for (let n = g.byId.get(id); n; n = n.parent) on.add(n.id); }
     for (const n of g.byId.values()) n.target = !on || on.has(n.id) ? 1 : n.level === 4 ? 0.1 : 0.22;
+    settle = true;
   }
   function setLit(ids) { lit = ids ? new Set(ids) : null; applyLit(); kick(); }
   let backdrop = false;
@@ -467,10 +472,13 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
     // same frame, about the free region's centre, by the side that limits a fit (the width on a phone at rest).
     { const r = R(), fit = Math.min(r.w, r.h); if (lastFit && Math.abs(fit - lastFit) > 0.5 && !tween && !pinch) { cam.s = clamp(cam.s * fit / lastFit, 0.015, 12); /* below the pinch floor: a 140 px map still holds the whole map */ busy = true; onCamera?.(); } lastFit = fit; }
     const kA = 1 - Math.exp(-dt / 110), kP = 1 - Math.exp(-dt / 150);
-    for (const n of g.byId.values()) {
-      const t = n.target ?? 1;
-      if (Math.abs((n.al ?? 0) - t) > 0.004) { n.al = (n.al ?? 0) + (t - (n.al ?? 0)) * kA; busy = true; } else n.al = t;
-      if (Math.abs(n.dx - n.x) + Math.abs(n.dy - n.y) > 0.05) { n.dx += (n.x - n.dx) * kP; n.dy += (n.y - n.dy) * kP; busy = true; } else { n.dx = n.x; n.dy = n.y; }
+    if (!CPU || settle) { let moving = false;
+      for (const n of g.byId.values()) {
+        const t = n.target ?? 1;
+        if (Math.abs((n.al ?? 0) - t) > 0.004) { n.al = (n.al ?? 0) + (t - (n.al ?? 0)) * kA; moving = true; } else n.al = t;
+        if (Math.abs(n.dx - n.x) + Math.abs(n.dy - n.y) > 0.05) { n.dx += (n.x - n.dx) * kP; n.dy += (n.y - n.dy) * kP; moving = true; } else { n.dx = n.x; n.dy = n.y; }
+      }
+      if (moving) busy = true; settle = moving;
     }
     const bt = reduced ? 1 : (now - bloom0) / 1000;
     if (bt < 1.4) busy = true;
@@ -694,6 +702,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1;
     const sx = (n) => cx + (X(n) - cam.x) * s, sy = (n) => cy + (Y(n) - cam.y) * s;
     ctx.lineJoin = "round"; ctx.textBaseline = "middle";
+    let font = null; const setFont = (f) => { if (!CPU || f !== font) ctx.font = font = f; }; // text() never sets a font
     for (const n of g.byId.values()) {
       if (n.level === 0 || n.level === 4) continue;
       const a = (n.al ?? 1) * clamp(gr4(n.level) * 1.2 - 0.2, 0, 1) * fo;
@@ -705,9 +714,9 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
       if (x < -120 || x > W + 120 || y < -40 || y > H + 40) { if (n.level === 1 && s >= 1.2) away.push(n); continue; }
       ctx.globalAlpha = a * fade * k;
       const ux = Math.cos(n.va), uy = Math.sin(n.va);
-      if (n.level === 1) { ctx.font = "13px 'Archivo Black', sans-serif"; text(n.name.toUpperCase(), x + ux * 38 * Math.min(1, 0.55 + s), y + uy * 30 * Math.min(1, 0.55 + s), ux, col(n.feel), P.bg, n); }
-      else if (n.level === 2) { ctx.font = "600 12px 'Instrument Sans', sans-serif"; text(n.name, x + ux * 18, y + uy * 18, ux, P.ink, P.bg); }
-      else { ctx.font = "11px 'IBM Plex Mono', monospace"; text(n.name, x + ux * 14, y + uy * 14, ux, P.mute, P.bg); }
+      if (n.level === 1) { setFont("13px 'Archivo Black', sans-serif"); text(CPU ? (n.NAME ??= n.name.toUpperCase()) : n.name.toUpperCase(), x + ux * 38 * Math.min(1, 0.55 + s), y + uy * 30 * Math.min(1, 0.55 + s), ux, col(n.feel), P.bg, n); }
+      else if (n.level === 2) { setFont("600 12px 'Instrument Sans', sans-serif"); text(n.name, x + ux * 18, y + uy * 18, ux, P.ink, P.bg); }
+      else { setFont("11px 'IBM Plex Mono', monospace"); text(n.name, x + ux * 14, y + uy * 14, ux, P.mute, P.bg); }
     }
     // Compass: a feel with no song on screen points the way to its nearest song, from the edge of the free map.
     // Hubs all sit near the centre, so aim at songs, not hubs; a tag that would overlap a nearer one is dropped.
