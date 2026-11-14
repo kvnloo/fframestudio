@@ -50,7 +50,7 @@ owner.
 
 | Round | Incumbent | Candidate | Objective [90% CI] | Gates | Verdict | Run |
 |---|---|---|---|---|---|---|
-| 1 (v1 run, v2 score) | c0937df | 5bb097d `?c=cssbg` | 0.703 [0.48, 0.848] | pass | **KEEP (pending zoomed-view gate)** | boat-perf/20261114-123924 |
+| 1 (v1 run, v2 score) | c0937df | 5bb097d `?c=cssbg` | 0.703 [0.48, 0.848] | pass | KEEP pending a fresh v3 run | boat-perf/20261114-123924 |
 | 1 | c0937df | 5bb097d lean writes (no flag) | 1.03 [0.909, 1.184] | pass | DROP: no sure gain | same |
 | 1 | c0937df | 5bb097d `?c=defer` | 1.192 [0.901, 1.462] | pass | DROP: no sure gain | same |
 | 1 | c0937df | 5bb097d `?c=cpu` | 1.152 [0.908, 1.433] | pass | DROP: no sure gain | same |
@@ -71,3 +71,14 @@ Referee checks, run locally with 3 reps each (they confirm the gates fire; local
 
 The zoomed `?gpu=1` frames looked like the current build's to a reviewer, and the zoomed gates passed. The rejection rests on
 whole-map motion energy alone.
+
+| Round | Incumbent | Candidate | Objective [90% CI] | Gates | Verdict | Run |
+|---|---|---|---|---|---|---|
+| 2 (v3, 8 reps) | c0937df | c683153 `?c=cssbg` | **0.719 [0.64, 0.816]** | all 7 pass | **KEEP**, now the default in 207c19e | boat-perf/20261114-134438 |
+| 2 | c0937df | c0937df (A/A) | 0.982 [0.854, 1.137] | all pass | (noise floor) | same |
+
+Round 2: dance fps 35 -> 56 (per rep: 38 34 38 38 35 35 41 30 -> 60 48 58 56 54 60 59 50). Dance 1% low 66.7 -> 33.4 ms,
+0.1% low 83.3 -> 50 ms, mean 27.7 -> 18 ms, drag latency p95 165 -> 126 ms, tap p75 248 -> 208 ms.
+The `?ab=` ablation run (boat-perf/20261114-133258) ran on a box that held about 60 fps, so every arm hit vsync and it
+showed nothing. Boxes vary (37-56 vs 57-60 fps on the same UHD 620), so compare only within one run.
+Round 3 incumbent: 207c19e (`perf/climb`).
