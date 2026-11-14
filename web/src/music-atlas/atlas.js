@@ -151,9 +151,10 @@ const DPR_CAP = +(new URLSearchParams(location.search).get("dpr") || 3);
 // Perf-climb candidates (`?c=a,b`, off until e2e/sound-atlas/score-climb.mjs keeps them). c=cpu: same pixels, less JS a
 // frame -- the morph pass runs only while something is morphing, and each label sets its font only when it changes.
 const CPU = new URLSearchParams(location.search).get("c")?.split(",").includes("cpu");
-// c=cssbg: the ground and its vignette glow are the canvas element's CSS background (rewritten only when the camera
-// moves), so a dancing frame clears instead of filling ~3.5M device px twice before the first dot.
-const CSSBG = new URLSearchParams(location.search).get("c")?.split(",").includes("cssbg");
+// The ground and its vignette glow are the canvas element's CSS background (rewritten only when the camera moves), so a
+// dancing frame clears instead of filling ~3.5M device px twice before the first dot. Perf climb round 2 (Boat UHD 620,
+// 8 reps): dance 1% low 66.7 -> 33.4 ms, 0.1% low 83.3 -> 50 ms, 35 -> 56 fps, same pixels. ?c=nocssbg restores the fills.
+const CSSBG = !new URLSearchParams(location.search).get("c")?.split(",").includes("nocssbg");
 // ?ab=bands,edges,dots,nodes,labels: DIAGNOSTIC ablation for the perf climb (drops a pass to price it on a weak GPU).
 // Changes pixels by design, so it can never be a candidate; it only says where the frame goes.
 const AB = new Set((new URLSearchParams(location.search).get("ab") || "").split(","));
