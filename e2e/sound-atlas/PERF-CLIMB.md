@@ -98,3 +98,5 @@ Round 3 incumbent: 207c19e (`perf/climb`).
 Shipped: the cssbg-only change on the product branch is `f30562b` on `feat/music-finder` (browse-e2e passes on it and on
 c0937df; screenshot diffs sit only on labels and chips caught mid-animation). The production deploy waits for the owner's OK.
 | 3b (v5, post hoc) | 207c19e | `?c=cpu` / `?c=defer` | cpu 0.407 [0.284, 0.957] KEEP; defer 0.553 [0.449, 1.017] | A/A 0.939 [0.87, 1.232] | v5 was written after this data: confirm on a fresh box | boat-perf/20261114-154701 |
+| 3c (v5, fresh box) | 207c19e | `?c=cpu` / `?c=defer` | cpu 1.293 [1.14, 1.67] DROP, fails where and zoomMotion (74%); defer 1.96 [1.44, 2.61] DROP | A/A 1.34 [0.945, 1.52], VOID by width | cpu's 3b KEEP did not confirm: **cpu and defer retired** | boat-perf/20261114-164424 |
+| 4 | 207c19e | `?c=fit` (fitSubs: one measure pass, same swatches hidden; local 15.2 -> 4.8 ms per list render at 4x) | running | | | |
