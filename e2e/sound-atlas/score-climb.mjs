@@ -1,4 +1,4 @@
-// Frozen referee for the Sound Atlas perf climb (rubric perf-climb-v3; v3 adds zoomed-on-track gates, v2 per-rep motion medians). Reads perf-climb.mjs runs named
+// Frozen referee for the Sound Atlas perf climb (rubric perf-climb-v4; v4 voids a run whose A/A arm is noisy, v3 adds zoomed-on-track gates, v2 per-rep motion medians). Reads perf-climb.mjs runs named
 // <variant>-<rep>.json, scores every variant against the incumbent and prints KEEP / DROP with the reason.
 //   node score-climb.mjs <runs-dir> [incumbent=base]          -> also writes <runs-dir>/score.json
 // Lower is better for every metric. Ratios are candidate / incumbent with a 90% bootstrap CI over reps.
@@ -56,6 +56,10 @@ function gates(R, B) {
 const B = runs[INC]; if (!B) { console.error('no incumbent runs:', INC, Object.keys(runs)); process.exit(2); }
 const out = { incumbent: INC, reps: Object.fromEntries(Object.entries(runs).map(([k, v]) => [k, v.length])), gl: B[0].gl, variants: {} };
 const row = (k, v) => console.log(k.padEnd(28), v);
+// v4 noise guard: an A/A arm (the incumbent again, named `aa`) is required, and a box whose A/A objective CI is wider
+// than 0.45 (a contended shared iGPU: 7-60 fps on one build in round 3) voids every verdict in the run.
+const AA = Object.keys(runs).find((k) => k === 'aa');
+let voidWhy = AA ? null : 'no A/A arm (name one variant aa)';
 for (const [name, R] of [[INC, B], ...Object.entries(runs).filter(([k]) => k !== INC)]) { // incumbent first: ratios need its abs
   const abs = Object.fromEntries(Object.entries(METRICS).map(([k, f]) => [k, +f(R).toFixed(1)]));
   out.variants[name] = { abs, loads: R.map((r) => r.host.load) };
@@ -69,9 +73,11 @@ for (const [name, R] of [[INC, B], ...Object.entries(runs).filter(([k]) => k !==
   const G = gates(R, B), failed = Object.entries(G.g).filter(([, v]) => v !== true);
   const worse = Object.entries(ratios).filter(([, v]) => v.ci[0] > 1.03).map(([k]) => k);
   const verdict = failed.length ? 'DROP (quality gate)' : worse.length ? 'DROP (regresses ' + worse.join(', ') + ')' : obj.ci[1] < 1 ? 'KEEP' : 'DROP (no sure gain)';
+  if (name === AA && obj.ci[1] - obj.ci[0] > 0.45) voidWhy = `noisy box: A/A objective CI [${obj.ci.join(', ')}]`;
   Object.assign(out.variants[name], { ratios, objective: obj, gates: G, verdict });
   console.log(`\n== ${name} vs ${INC}: ${verdict}   objective ${obj.r} [${obj.ci.join(', ')}]   n=${R.length}/${B.length}`);
   for (const k of Object.keys(METRICS)) row(k, `${String(abs[k]).padStart(7)} vs ${String(out.variants[INC].abs[k]).padStart(7)}  x${ratios[k].r} [${ratios[k].ci.join(', ')}]`);
   for (const [k, v] of Object.entries(G.g)) row('gate ' + k, v === true ? 'pass' : 'FAIL ' + v);
 }
+if (voidWhy) { out.void = voidWhy; for (const v of Object.values(out.variants)) if (v.verdict) v.verdict = 'VOID (' + voidWhy + ')'; console.log(`\nRUN VOID: ${voidWhy}. Re-run on another box; no verdict above counts.`); }
 fs.writeFileSync(path.join(dir, 'score.json'), JSON.stringify(out, null, 1));

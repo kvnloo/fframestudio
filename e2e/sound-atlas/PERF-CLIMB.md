@@ -1,4 +1,4 @@
-# Sound Atlas perf climb (rubric perf-climb-v3)
+# Sound Atlas perf climb (rubric perf-climb-v4)
 
 Goal: lower input latency and the frame-time tail (1% and 0.1% lows) without losing any animation quality or UX.
 Every round changes one thing and either keeps it or resets it. The referee is frozen; changing it starts a new epoch
@@ -25,6 +25,11 @@ Frames are pooled across reps, since 0.1% of one 12 s dance is under one frame.
   5 points of the incumbent's own A/A share. This catches a frozen part, such as `?gpu=1` stilling the arms.
 - `zoomWhere` and `zoomMotion` (v3): the same two checks, taken zoomed onto the playing track.
 - `still`: the paused, whole-map frame differs from the incumbent's by no more than max(0.6/255, 1.5 x A/A).
+
+## Noise guard (v4)
+
+Every run carries an A/A arm named `aa` (the incumbent again). If the A/A objective CI is wider than 0.45, the run is
+VOID and no verdict counts. Shared-iGPU Boat boxes are sometimes contended: round 3's first box ran one build at 7-60 fps.
 
 ## Keep rule
 
@@ -82,3 +87,7 @@ Round 2: dance fps 35 -> 56 (per rep: 38 34 38 38 35 35 41 30 -> 60 48 58 56 54 
 The `?ab=` ablation run (boat-perf/20261114-133258) ran on a box that held about 60 fps, so every arm hit vsync and it
 showed nothing. Boxes vary (37-56 vs 57-60 fps on the same UHD 620), so compare only within one run.
 Round 3 incumbent: 207c19e (`perf/climb`).
+| 3a (v4) | 207c19e | `?c=cpu`, `?c=defer`, both | - | - | **VOID**: noisy box, A/A objective 1.48 [0.73, 2.79] | boat-perf/20261114-142733 |
+
+Shipped: the cssbg-only change on the product branch is `f30562b` on `feat/music-finder` (browse-e2e passes on it and on
+c0937df; screenshot diffs sit only on labels and chips caught mid-animation). The production deploy waits for the owner's OK.
