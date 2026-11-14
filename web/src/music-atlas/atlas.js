@@ -146,7 +146,9 @@ void main() {
   };
 }
 
-export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, onDetent, onFeel, onLayer, lite = false }) {
+export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, onDetent, onFeel, onLayer, lite = false, gpu = false }) {
+  // `split`: the still map plus GPU-danced tracks on an overlay. A TV always splits; `gpu` (?gpu=1, perf A/B) splits anywhere.
+  const split = lite || gpu;
   // Two layers: `layer` caches the static atlas (bands, edges, dots, nodes, labels) and is only
   // redrawn when the camera, data or an animation changes it; playback then costs one blit plus
   // the beat ring and pills per frame.
@@ -154,7 +156,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
   let ctx = screen, layerKey = "", gen = 0;
   // A TV dancing: the map holds still on this canvas and only the tracks redraw, on a clear canvas laid over it, so the
   // compositor never re-rasters the full-screen map (QN85B probe: 16.9 ms frames split vs 23.2 ms blitting one canvas).
-  const fly = lite ? document.createElement("canvas") : null, fctx = fly?.getContext("2d");
+  const fly = split ? document.createElement("canvas") : null, fctx = fly?.getContext("2d");
   if (fly) { fly.className = "atlas-fly"; fly.setAttribute("aria-hidden", "true"); canvas.after(fly); }
   // The dancing dots themselves go to WebGL points under that overlay: as ~1.8k 2D-canvas paths the QN85B spent ~9 ms a
   // frame flushing them plus a GPU finish (play2 trace: 193 frames drawn in 5 s). 2D stays the fallback.
@@ -483,7 +485,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
     dk += ((live ? 1 : 0) - dk) * (1 - Math.exp(-dt / 260));
     if (!live && dk < 0.003) dk = 0;
     const dm = (1 - fe) * dk * zoomDamp(cam.s, Math.min(W, H) * 0.95 / (2 * (g.outer + 30))); // vs the whole-map scale: zoomed in, settle and stop forcing redraws
-    lblK = lite ? 1 - fe : (1 - clamp(dm * 4, 0, 1)) * (1 - fe); // dancing: labels step aside; paused, motion off or zoomed in: back (a TV's skeleton holds still, so its labels stay)
+    lblK = split ? 1 - fe : (1 - clamp(dm * 4, 0, 1)) * (1 - fe); // dancing: labels step aside; paused, motion off or zoomed in: back (a TV's skeleton holds still, so its labels stay)
     const settled = !busy; // nothing but the dance moves this frame
     danceK = clamp(dm * 4, 0, 1);
     if (dm < 0.003) { poses = null; tufts.clear(); } else { poses = dancePoses(dm, dt / 1000); busy = true; }
@@ -524,7 +526,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
     const lean = gp && dots && gp.src === dots && flyOn && poses;
     for (const n of g.byId.values()) {
       if (lean && n.level === 4 && n.t.src !== "web" && n.id !== playing?.id && n.id !== focusId) continue;
-      const x = n.dx * gl[n.level], y = n.dy * gl[n.level], P = poses && (lite ? n.level === 4 : n.level > 0) ? poses.get(n.feel) : null;
+      const x = n.dx * gl[n.level], y = n.dy * gl[n.level], P = poses && (split ? n.level === 4 : n.level > 0) ? poses.get(n.feel) : null;
       if (!P) { n.vx = x; n.vy = y; n.va = n.a; n.vr = 1; continue; }
       if (n.px !== x || n.py !== y) { n.px = x; n.py = y; n.pr = Math.hypot(x, y); n.pa = Math.atan2(y, x); if (n.level === 4) { n.ap = Math.atan2(n.parent.dy, n.parent.dx); n.ro = rowOff(n); } }
       const T = n.level === 4 ? P.T : null; // tracks swing on their tuft's spring, not rigidly with the arm

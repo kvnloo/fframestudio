@@ -156,7 +156,7 @@ function sheetPointer() {
 
 // --- atlas --------------------------------------------------------------------------------------
 const A = createAtlas({
-  canvas, lite: cast.isTV,
+  canvas, lite: cast.isTV, gpu: /[?&]gpu=1\b/.test(location.search),
   region: () => {
     const top = geo.top;
     if (wide()) return { x: 0, y: top, w: geo.left, h: geo.H - top };
