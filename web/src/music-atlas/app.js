@@ -563,6 +563,12 @@ function paint(html, scroll) {
 // A feel heading shows as many of its styles as fit beside its name, whole, and drops the rest (they are
 // a tap away on the feel's page): a swatch cut in half, or slid under the name, can't be read or tapped.
 function fitSubs() {
+  if (CL.has("fit")) { // c=fit: measure every heading once, then hide by arithmetic (one layout, not one per swatch per heading)
+    const ems = [...body.querySelectorAll(".grp h3 em.subs")]; for (const em of ems) for (const s of em.children) s.hidden = false;
+    const M = ems.map((em) => ({ em, w: em.getBoundingClientRect().width, gap: parseFloat(getComputedStyle(em).columnGap) || 0, ws: [...em.children].map((s) => s.getBoundingClientRect().width) }));
+    for (const { em, w, gap, ws } of M) { let k = ws.length, tot = ws.reduce((a, x) => a + x, 0) + gap * (k - 1); while (k > 1 && tot > w + 0.5) { k--; tot -= ws[k] + gap; em.children[k].hidden = true; } }
+    return;
+  }
   for (const em of body.querySelectorAll(".grp h3 em.subs")) {
     const ss = [...em.children]; ss.forEach((s) => { s.hidden = false; });
     // Right-aligned, so overflow runs out the left edge (scrollWidth can't see it): compare the first one's edge.
