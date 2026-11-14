@@ -1,4 +1,4 @@
-# Sound Atlas perf climb (rubric perf-climb-v2)
+# Sound Atlas perf climb (rubric perf-climb-v3)
 
 Goal: lower input latency and the frame-time tail (1% and 0.1% lows) without losing any animation quality or UX.
 Every round changes one thing and either keeps it or resets it. The referee is frozen; changing it starts a new epoch
@@ -23,6 +23,7 @@ Frames are pooled across reps, since 0.1% of one 12 s dance is under one frame.
 - `motion`: the median of per-rep median dance motion is at least 75% of the incumbent's (v2; v1 pooled frames, and one loud rep moved the bar).
 - `where`: the dance moves in the same places. The candidate must cover the incumbent's moving 4 px cells within
   5 points of the incumbent's own A/A share. This catches a frozen part, such as `?gpu=1` stilling the arms.
+- `zoomWhere` and `zoomMotion` (v3): the same two checks, taken zoomed onto the playing track.
 - `still`: the paused, whole-map frame differs from the incumbent's by no more than max(0.6/255, 1.5 x A/A).
 
 ## Keep rule
@@ -59,3 +60,14 @@ reps resolve only about 30% changes. `cssbg` raised dance fps on every rep (37-5
 The `defer` "regresses drag.lat.p95" verdict is noise, because defer does not touch drag. The v1 motion gate failed
 `cssbg` at 74% only because one loud base rep (0.78 against 0.21-0.37) inflated the pooled median. v2 fixes that.
 The gate was changed after seeing this data, so `cssbg` must re-pass a fresh v2 run before it becomes the default.
+
+Referee checks, run locally with 3 reps each (they confirm the gates fire; local speed numbers are not used):
+
+| Arm | v3 verdict | Gate result |
+|---|---|---|
+| current build vs itself (A/A) | all gates pass | none failed |
+| `?dpr=2` (v2) | DROP | `density`, `where` and `still` failed |
+| `?gpu=1` (v3) | DROP | `motion` failed at 67% of the current build |
+
+The zoomed `?gpu=1` frames looked like the current build's to a reviewer, and the zoomed gates passed. The rejection rests on
+whole-map motion energy alone.

@@ -49,15 +49,22 @@ await play();
 const dance = await window_(() => p.waitForTimeout(DANCE_MS));
 // Motion energy: mean per-pixel change between frames 180 ms apart while dancing (a frozen arm or a dot pass that stops moving drops it).
 // Unthrottled while shooting: decoding a screenshot at 4x throttle took longer than the dance it samples.
-await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-const shots = []; for (let i = 0; i < 10; i++) { shots.push(await grid()); await p.waitForTimeout(150); }
-const motion = shots.slice(1).map((s, i) => +diff(shots[i], s).toFixed(3)); // % of map pixels
 // Where it moves: 4x4 px cells that changed between any two consecutive shots. Total motion can hold while a part of
 // the dance freezes (?gpu=1 kept the dots dancing but stilled the arms and bands); the score compares these masks.
-const C = 4, cw = Math.ceil(shots[0].w / C), ch = Math.ceil(shots[0].h / C), mask = new Uint8Array(cw * ch);
-for (let k = 1; k < shots.length; k++) { const a = shots[k - 1].px, b = shots[k].px;
-  for (let i = 0, j = 0; i < a.length; i += 3, j++) if (Math.abs(a[i] - b[i]) > 16 || Math.abs(a[i + 1] - b[i + 1]) > 16 || Math.abs(a[i + 2] - b[i + 2]) > 16) { const x = j % shots[0].w, y = (j / shots[0].w) | 0; mask[((y / C) | 0) * cw + ((x / C) | 0)] = 1; } }
-await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+const shoot = async () => { await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+  const shots = []; for (let i = 0; i < 10; i++) { shots.push(await grid()); await p.waitForTimeout(150); }
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  const motion = shots.slice(1).map((s, i) => +diff(shots[i], s).toFixed(3)); // % of map pixels
+  const C = 4, cw = Math.ceil(shots[0].w / C), ch = Math.ceil(shots[0].h / C), mask = new Uint8Array(cw * ch);
+  for (let k = 1; k < shots.length; k++) { const a = shots[k - 1].px, b = shots[k].px;
+    for (let i = 0, j = 0; i < a.length; i += 3, j++) if (Math.abs(a[i] - b[i]) > 16 || Math.abs(a[i + 1] - b[i + 1]) > 16 || Math.abs(a[i + 2] - b[i + 2]) > 16) { const x = j % shots[0].w, y = (j / shots[0].w) | 0; mask[((y / C) | 0) * cw + ((x / C) | 0)] = 1; } }
+  return { motion, mask: { w: cw, h: ch, b: Buffer.from(mask).toString('base64') } }; };
+const { motion, mask } = await shoot();
+// v3: the same evidence zoomed onto the playing track. At the whole-map phone view only ~1.5% of cells move, so a
+// frozen skeleton (?gpu=1 poses only level-4 nodes) hid inside A/A noise; here the arms around the track fill the frame.
+await p.evaluate(() => __sa.A.focus(__sa.state.sel, 600)); await p.waitForTimeout(1800);
+const zoom = await shoot();
+await p.evaluate(() => __sa.A.fitAll(600)); await p.waitForTimeout(1200);
 const drag = await window_(async () => { for (let k = 0; k < 4; k++) { const [x0, y0] = at(0.3, 0.6); await touch('touchStart', x0, y0); for (let i = 1; i <= 24; i++) { await touch('touchMove', x0 + i * 6, y0 - i * 5); await p.waitForTimeout(16); } await touch('touchEnd'); await p.waitForTimeout(400); } });
 // The still frame: whole map framed, paused, the dance settled.
 await p.evaluate(() => { __sa.A.fitAll(); __sa.audio.pause(); }); await p.waitForTimeout(2500);
@@ -66,7 +73,7 @@ await p.evaluate(() => __sa.audio.play()); await p.waitForTimeout(1500);
 const taps = await window_(async () => { for (const [fx, fy] of [[0.5, 0.5], [0.35, 0.4], [0.65, 0.6], [0.5, 0.3], [0.4, 0.7], [0.6, 0.45]]) { const [x, y] = at(fx, fy); await touch('touchStart', x, y); await p.waitForTimeout(60); await touch('touchEnd'); await p.waitForTimeout(700); } });
 const inter = {}; for (const [id, , d] of taps.ev) inter[id] = Math.max(inter[id] || 0, d);
 const out = { url: URL, gl, host: { load: os.loadavg()[0], cpus: os.cpus().length }, errs,
-  dance: { ft: dance.ft }, drag: { ft: drag.ft, lat: drag.lat }, tap: { dur: Object.values(inter) }, vis: { dens, motion, mask: { w: cw, h: ch, b: Buffer.from(mask).toString('base64') }, still: { w: still.w, h: still.h, px: Buffer.from(still.px).toString('base64') } } };
+  dance: { ft: dance.ft }, drag: { ft: drag.ft, lat: drag.lat }, tap: { dur: Object.values(inter) }, vis: { dens, motion, mask, zoom, still: { w: still.w, h: still.h, px: Buffer.from(still.px).toString('base64') } } };
 fs.mkdirSync(OUT.replace(/[^/]*$/, '') || '.', { recursive: true }); fs.writeFileSync(OUT, JSON.stringify(out));
 const q = (a, k) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.min(s.length - 1, Math.floor(s.length * k))] : NaN; };
 console.log(JSON.stringify({ gl, errs: errs.length, danceN: dance.ft.length, danceP99: q(dance.ft, 0.99), dragLatP95: q(drag.lat, 0.95), taps: Object.values(inter), dens, motion }));

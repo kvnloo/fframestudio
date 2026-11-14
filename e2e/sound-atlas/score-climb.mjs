@@ -1,4 +1,4 @@
-// Frozen referee for the Sound Atlas perf climb (rubric perf-climb-v2; v1 pooled motion across reps). Reads perf-climb.mjs runs named
+// Frozen referee for the Sound Atlas perf climb (rubric perf-climb-v3; v3 adds zoomed-on-track gates, v2 per-rep motion medians). Reads perf-climb.mjs runs named
 // <variant>-<rep>.json, scores every variant against the incumbent and prints KEEP / DROP with the reason.
 //   node score-climb.mjs <runs-dir> [incumbent=base]          -> also writes <runs-dir>/score.json
 // Lower is better for every metric. Ratios are candidate / incumbent with a 90% bootstrap CI over reps.
@@ -39,6 +39,14 @@ function gates(R, B) {
   const mk = (r) => Buffer.from(r.vis.mask.b, 'base64'), cover = (a, b) => { let n = 0, d = 0; for (let i = 0; i < b.length; i++) if (b[i]) { d++; if (a[i]) n++; } return d ? n / d : 1; };
   const covAA = B.length > 1 ? med(B.slice(1).map((r) => cover(mk(r), mk(B[0])))) : 1, cov = med(R.map((r) => cover(mk(r), mk(B[0]))));
   g.where = cov >= covAA - 0.05 || `moves in ${(cov * 100).toFixed(0)}% of the incumbent's moving cells (A/A ${(covAA * 100).toFixed(0)}%)`;
+  // v3: the same two checks zoomed onto the playing track (runs without vis.zoom fail: a v3 score needs v3 evidence)
+  const zk = (r) => r.vis.zoom && Buffer.from(r.vis.zoom.mask.b, 'base64');
+  if (B.every(zk) && R.every(zk)) {
+    const zAA = B.length > 1 ? med(B.slice(1).map((r) => cover(zk(r), zk(B[0])))) : 1, zc = med(R.map((r) => cover(zk(r), zk(B[0]))));
+    g.zoomWhere = zc >= zAA - 0.05 || `zoomed: moves in ${(zc * 100).toFixed(0)}% of the incumbent's moving cells (A/A ${(zAA * 100).toFixed(0)}%)`;
+    const zm = med(R.map((r) => med(r.vis.zoom.motion))) / med(B.map((r) => med(r.vis.zoom.motion)));
+    g.zoomMotion = zm >= 0.75 || `zoomed dance motion ${(zm * 100).toFixed(0)}% of incumbent`;
+  } else g.zoom = 'no zoomed evidence (pre-v3 run)';
   // still frame vs the incumbent's, against the incumbent's own spread across reps (A/A)
   const aa = B.length > 1 ? Math.max(...B.slice(1).map((r) => sdiff(stillOf(r), stillOf(B[0])))) : 0;
   const d = med(R.map((r) => sdiff(stillOf(r), stillOf(B[0]))));
