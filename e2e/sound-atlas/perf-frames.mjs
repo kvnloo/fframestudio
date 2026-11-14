@@ -49,7 +49,13 @@ function summarize(label, events) {
 const SCENARIOS = {
   idle: (p) => p.waitForTimeout(4000),
   'type-search': async (p) => { await p.tap('#q'); for (const ch of 'rainy night piano') { await p.keyboard.type(ch); await p.waitForTimeout(90); } await p.waitForTimeout(800); await p.fill('#q', ''); await p.waitForTimeout(800); },
-  'play-dance': async (p) => { await p.evaluate(() => __sa.audio.paused && document.querySelector('#pp')?.click()); await p.waitForTimeout(6000); },
+  // With nothing selected #pp plays nothing, and the scenario timed an idle map. Pick a bundled track (PLAY=<id> to
+  // override), frame the whole map (the dance damps when zoomed in), then play; fail if audio isn't running.
+  'play-dance': async (p) => {
+    await p.evaluate((id) => { if (!__sa.state.sel) __sa.select(id || __sa.all.find((t) => t.audio && !/^https?:/.test(t.audio))?.id); __sa.A.fitAll(); }, process.env.PLAY);
+    await p.waitForTimeout(1200); await p.evaluate(() => __sa.audio.paused && document.querySelector('#pp')?.click());
+    await p.waitForFunction(() => !__sa.audio.paused && __sa.audio.currentTime > 0.3, null, { timeout: 15000 }); await p.waitForTimeout(6000);
+  },
   'pan-playing': async (p) => { for (let i = 0; i < 4; i++) { await p.mouse.move(120, 420); await p.mouse.down(); for (let k = 0; k < 20; k++) await p.mouse.move(120 + k * 8, 420 - k * 6); await p.mouse.up(); await p.waitForTimeout(150); } },
   'paused-idle': async (p) => { await p.evaluate(() => __sa.audio.pause()); await p.waitForTimeout(4000); },
 };
