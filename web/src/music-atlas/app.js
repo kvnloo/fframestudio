@@ -13,6 +13,7 @@ import { party, join as joinParty, leave as leaveParty, heard, onEnded as partyE
 import { renderSVG, encode as qrEncode } from "./uqr.js";
 import * as browse from "./browse.js";
 import { loadLayers, layersOf, layerCount, STEMS, laneColor, createMixer, stemUrl, lenders } from "./layers.js";
+import { loadScores, scoreOf, fetchScore, laneOf, lanesIn, windowOf, toABC, toMidi, loadABCJS } from "./score.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -238,9 +239,91 @@ function layersHTML(t) {
     ${lanes.map((l) => `<div class="lane${l.on ? "" : " out"}${mixer.id === t.id && mixer.solo === l.k ? " solo" : ""}" style="--l:${l.color}"><i></i><b>${esc(l.name)}${l.from ? `<em>from ${esc(l.from.title)}</em>` : ""}</b>${envSVG(l.env)}<small>${Math.round(l.share * 100)}%</small><button data-lmix="mute" data-k="${l.k}" aria-label="Mute ${esc(l.name)}">M</button><button data-lmix="solo" data-k="${l.k}" aria-label="Solo ${esc(l.name)}">S</button><button data-lmix="swap" data-k="${l.k}" class="${l.from ? "on" : ""}" aria-label="Swap ${esc(l.name)} for a similar song's" title="Borrow this layer from a similar song">⇄</button></div>`).join("")}
   </section>`;
 }
+// --- score: the layers as notes ------------------------------------------------------------------
+// Under Layers, the same lanes read as music: a piano roll that scrolls with the song (tap = seek,
+// muted layers fade, soloing a layer here solos its stem) and, flipped over, sheet music for one
+// layer with the bar you're hearing lit. MIDI / ABC leave for a DAW or notation app.
+const score = { id: null, s: null, view: "roll", k: null, raf: 0, abc: null, tc: null, lit: [] };
+const meterOf = (t) => (/waltz|3\/4|minuet|mazurka/i.test([t.title, ...(t.tags ?? [])].join(" ")) ? [3, 4] : [4, 4]);
+const gridOf = (t) => { const b = beatOf(t), beat = 60 / (b.bpm || 120); return { beat, origin: ((b.down % beat) + beat) % beat, meter: meterOf(t) }; };
+function scoreHTML(t) {
+  if (!scoreOf(t.id)) return "";
+  return `<section class="score" data-sid="${esc(t.id)}"><h4>Score<small>${scoreOf(t.id).n.toLocaleString()} notes · transcribed</small>
+    <span class="seg"><button data-score="roll" class="${score.view === "roll" ? "on" : ""}">Roll</button><button data-score="sheet" class="${score.view === "sheet" ? "on" : ""}">Sheet</button></span>
+    <button data-score="midi" aria-label="Download MIDI">MIDI ↓</button></h4>
+    <div class="slanes"></div><canvas class="roll" data-score="seek" aria-label="Notes; tap to jump there"${score.view === "roll" ? "" : " hidden"}></canvas><div class="abc"${score.view === "sheet" ? "" : " hidden"}></div></section>`;
+}
+async function mountScore() {
+  const el = body.querySelector(".score"); cancelAnimationFrame(score.raf); score.raf = 0;
+  if (!el) return; const id = el.dataset.sid, t = byId.get(id);
+  const s = await fetchScore(id); if (!s || !el.isConnected) return;
+  if (score.id !== id) Object.assign(score, { id, s, k: null, abc: null, tc: null, lo: undefined, hi: undefined });
+  const lanes = lanesIn(s, Object.keys(STEMS)), L = layersOf(id);
+  score.k ??= (lanes.find((l) => l.k !== "drums") ?? lanes[0])?.k;
+  el.querySelector(".slanes").innerHTML = lanes.map((l) => `<button data-score="lane" data-k="${l.k}" class="${score.k === l.k ? "on" : ""}${L && mixer.id === id && !mixer.audible(l.k) ? " out" : ""}" style="--l:${laneColor(tone(t), l.k)}"><i></i>${esc(STEMS[l.k]?.name ?? l.k)}<small>${l.n}</small></button>`).join("") + (s.abc ? `<button data-score="lead" class="${score.k === "lead" ? "on" : ""}">Lead sheet</button>` : "");
+  if (score.view === "roll") rollLoop(); else drawSheet(el.querySelector(".abc"), t);
+}
+function rollLoop() {
+  const c = body.querySelector(".score canvas.roll"), t = byId.get(score.id); if (!c || !t || c.hidden) return;
+  const r = c.getBoundingClientRect(), dpr = devicePixelRatio || 1; if (c.width !== Math.round(r.width * dpr)) { c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr); }
+  const g = c.getContext("2d"), W = c.width, H = c.height, span = 8, now = state.sel === t.id ? audio.currentTime : 0, t0 = now - span / 4;
+  const ns = score.s.n, lo = score.lo ??= Math.min(...ns.map((x) => x[2])) - 1, hi = score.hi ??= Math.max(...ns.map((x) => x[2])) + 1, ph = H / (hi - lo);
+  g.clearRect(0, 0, W, H);
+  const { beat, origin, meter } = gridOf(t); // bar lines
+  g.fillStyle = "rgba(255,255,255,.07)"; for (let b = Math.ceil((t0 - origin) / (beat * meter[0])); origin + b * beat * meter[0] < t0 + span; b++) g.fillRect(((origin + b * beat * meter[0] - t0) / span) * W, 0, dpr, H);
+  const solo = mixer.id === t.id;
+  for (const [on, d, p, i] of windowOf(ns, t0, t0 + span)) {
+    const k = laneOf(score.s.inst[i]), live = on <= now && now < on + d, x = ((on - t0) / span) * W;
+    g.globalAlpha = solo && !mixer.audible(k) ? 0.12 : score.k && score.k !== "lead" && score.k !== k ? 0.45 : 1;
+    g.fillStyle = laneColor(tone(t), k); g.fillRect(x, H - (p - lo + 1) * ph, Math.max(2 * dpr, (d / span) * W - dpr), Math.max(2 * dpr, ph - dpr));
+    if (live) { g.fillStyle = "#fff"; g.globalAlpha = 0.8; g.fillRect(x, H - (p - lo + 1) * ph, 2 * dpr, Math.max(2 * dpr, ph - dpr)); }
+  }
+  g.globalAlpha = 1; g.fillStyle = "rgba(255,255,255,.85)"; g.fillRect(W / 4, 0, dpr, H);
+  if (!audio.paused && state.sel === t.id) score.raf = requestAnimationFrame(rollLoop);
+}
+async function drawSheet(box, t) {
+  const g = gridOf(t), abc = score.k === "lead" ? score.s.abc : toABC(score.s, score.k, { ...g, title: STEMS[score.k]?.name ?? "" });
+  if (score.abc === abc && box.firstChild) return sheetLoop();
+  box.textContent = "Engraving…";
+  let ABCJS; try { ABCJS = await loadABCJS(); } catch { box.textContent = "Couldn't load the engraver (offline?)"; return; }
+  score.abc = abc; box.textContent = "";
+  const lead = score.k === "lead";
+  const [vo] = ABCJS.renderAbc(box, abc, { responsive: "resize", add_classes: true, paddingtop: 4, paddingbottom: 4, paddingleft: 2, paddingright: 2,
+    clickListener: (el) => { const ms = el.currentTrackMilliseconds; if (lead || ms == null || state.sel !== t.id) return; audio.currentTime = g.origin + (Array.isArray(ms) ? ms[0] : ms) / 1000; if (audio.paused) audio.play().catch(() => {}); } });
+  score.tc = lead ? null : new ABCJS.TimingCallbacks(vo, { qpm: Math.round(60 / g.beat) }).noteTimings.filter((e) => e.type === "event" && e.elements);
+  sheetLoop();
+}
+function sheetLoop() { // light the note you're hearing and keep its line in view
+  const box = body.querySelector(".score .abc"), t = byId.get(score.id); if (!box || box.hidden || !score.tc || !t) return;
+  const ms = (audio.currentTime - gridOf(t).origin) * 1000, ev = score.tc; let lo = 0, hi = ev.length - 1;
+  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (ev[m].milliseconds <= ms) lo = m; else hi = m - 1; }
+  const els = (ev[lo]?.elements ?? []).flat();
+  if (els[0] !== score.lit[0]) {
+    for (const e of score.lit) e.classList.remove("now"); score.lit = els; for (const e of els) e.classList.add("now");
+    const y = els[0]?.getBoundingClientRect?.(), br = box.getBoundingClientRect();
+    if (y && (y.top < br.top || y.bottom > br.bottom)) box.scrollTop += y.top - br.top - br.height / 3;
+  }
+  if (!audio.paused && state.sel === t.id) score.raf = requestAnimationFrame(sheetLoop);
+}
+function scoreAct(b, e) {
+  const op = b.dataset.score, t = byId.get(score.id); if (!t || !score.s) return;
+  if (op === "seek") { if (state.sel !== t.id) return; const r = b.getBoundingClientRect(); audio.currentTime = Math.max(0, audio.currentTime - 2 + ((e.clientX - r.left) / r.width) * 8); if (audio.paused) audio.play().catch(() => {}); return; }
+  if (op === "roll" || op === "sheet") { score.view = op; const el = body.querySelector(".score"); el.querySelectorAll(".seg button").forEach((x) => x.classList.toggle("on", x.dataset.score === op)); el.querySelector("canvas.roll").hidden = op !== "roll"; el.querySelector(".abc").hidden = op !== "sheet"; return mountScore(); }
+  if (op === "lane" || op === "lead") { // a lane chip picks the part to read; tapped again, it solos that layer's stem
+    const k = op === "lead" ? "lead" : b.dataset.k;
+    if (k === score.k && k !== "lead" && layersOf(t.id)) mixAct("solo", k); else score.k = k;
+    return mountScore();
+  }
+  if (op === "midi") {
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([toMidi(score.s, Math.round(60 / gridOf(t).beat))], { type: "audio/midi" })); a.download = `${t.title.replace(/[^\w -]+/g, "")}.mid`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4e3);
+    toast(`MIDI · ${score.s.n.length.toLocaleString()} notes, ${score.s.inst.length} parts`);
+  }
+}
+const scoreTick = () => { if (!score.raf && body.querySelector(".score")) (score.view === "roll" ? rollLoop : sheetLoop)(); };
+for (const ev of ["play", "seeked", "pause"]) audio.addEventListener(ev, () => { cancelAnimationFrame(score.raf); score.raf = 0; scoreTick(); });
 // Envelope sparkline, stretched to the lane's own range so a steady drum part still shows its shape.
 const envSVG = (env) => { const N = 96, st = env.length / N, xs = [...env].map(Number), lo = Math.min(...xs), hi = Math.max(lo + 1, ...xs); let d = "M0 10"; for (let j = 0; j < N; j++) { let v = 0; for (let q = Math.floor(j * st); q < Math.max(Math.floor(j * st) + 1, Math.floor((j + 1) * st)); q++) v = Math.max(v, xs[q] ?? 0); const y = (10 - 0.6 - 9.4 * (v - lo) / (hi - lo)).toFixed(1); d += `L${j} ${y}L${j + 1} ${y}`; } return `<svg class="env" viewBox="0 0 ${N} 10" preserveAspectRatio="none" aria-hidden="true"><path d="${d}L${N} 10Z"/></svg>`; };
-function paintLayers() { const el = body.querySelector(".layers"), t = state.sel && byId.get(state.sel); if (el && t) { el.outerHTML = layersHTML(t); watchLayers(); } }
+function paintLayers() { const el = body.querySelector(".layers"), t = state.sel && byId.get(state.sel); if (el && t) { el.outerHTML = layersHTML(t); watchLayers(); if (score.s) mountScore(); } }
 let layerIO = null, layerHome = null, layerAuto = 0;
 function watchLayers() {
   layerIO?.disconnect(); const el = body.querySelector(".layers:not(.none)"); if (!el || cast.isTV) return; // a TV pane never scrolls: Layers would always count as in view and zoom the map onto one song
@@ -558,7 +641,7 @@ function paint(html, scroll) {
   body.innerHTML = html; body.dataset.v = state.view; body.classList.toggle("calm", same || seen);
   if (was) GLIDE.forEach((s, g) => { const els = [...body.querySelectorAll(s)]; if (els.length !== was[g].length) return;
     const now = els.map((el) => el.style.cssText); els.forEach((el, i) => { el.style.cssText = was[g][i]; }); body.offsetWidth; els.forEach((el, i) => { el.style.cssText = now[i]; }); });
-  restPulse(); if (scroll) body.scrollTop = 0; watchLayers(); fitSubs();
+  restPulse(); if (scroll) body.scrollTop = 0; watchLayers(); fitSubs(); mountScore();
 }
 // A feel heading shows as many of its styles as fit beside its name, whole, and drops the rest (they are
 // a tap away on the feel's page): a swatch cut in half, or slid under the name, can't be read or tapped.
@@ -714,6 +797,7 @@ function cardHTML(t) {
     ${profileHTML(t, tune ? tune.p : null)}
     ${tuneHTML(t)}
     ${layersHTML(t)}
+    ${scoreHTML(t)}
     ${nbrs.length ? `<button class="tease" data-act="similar"><b>Sounds like</b><span>${nbrs.slice(0, 3).map((n) => `<em style="--c:${tone(n.t)}">${esc(n.t.title)}</em>`).join("")}</span><small>see ${Math.max(nbrs.length, sim.length)}+ →</small></button>` : ""}
     ${t.tags?.length ? `<div class="tags">${t.tags.slice(0, 8).map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : ""}
     ${t.desc ? `<p class="desc">${esc(t.desc)}</p>` : ""}
@@ -835,6 +919,7 @@ body.addEventListener("click", async (e) => {
   const px = e.target.closest("[data-plx]"); if (px) { buzz(5); await social.unpublish(px.dataset.plx).catch(() => {}); return toast("Playlist unpublished"); }
   const rb = e.target.closest("[data-radio]"); if (rb) return startRadio(rb.dataset.radio);
   const lm = e.target.closest("[data-lmix]"); if (lm) { buzz(5); return mixAct(lm.dataset.lmix, lm.dataset.k); }
+  const so = e.target.closest("[data-score]"); if (so) { buzz(5); return scoreAct(so, e); }
   const act = e.target.closest("[data-act]")?.dataset.act, t = state.sel && byId.get(state.sel);
   if (!act || !t) return;
   if (act === "pick") pick(t.id);
@@ -1397,6 +1482,7 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
   all = cat.tracks; byId = new Map(all.map((t) => [t.id, t])); slugs = slugIndex(all);
   await loadSound(base, all); // optional: measured tempo/key/texture + CLAP neighbours
   loadLayers(base).then(() => { if (state.view === "track" && state.sel) renderBody(false); A.kick(); }); // optional: stems
+  loadScores(base).then(() => { if (state.view === "track" && state.sel && scoreOf(state.sel)) renderBody(false); }); // optional: transcriptions
   $("#count").textContent = all.length.toLocaleString();
   await document.fonts?.ready;
   A.setTracks(all); A.fitAll(1);
