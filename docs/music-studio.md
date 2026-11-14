@@ -69,18 +69,29 @@ the Taste audio-hardware bookmarks: detented knobs with haptic ticks, toggles th
 
 ## Kits and data (licence-checked)
 
+Shipped as `voice` plugins (`web/src/music-atlas/voices.js`). Each one is a data-only manifest: a smplr
+factory and preset, the lanes it fits, and its licence. Licences were checked against each sample set's
+own README on 2026-11-14; the smplr library is MIT.
+
+| kit (id) | samples | licence | lanes |
+|---|---|---|---|
+| Grand piano (`kit.splendid-grand`) | Splendid Grand Piano (sfzinstruments) | public domain | piano, other, guitar, vocals |
+| TR-808 (`kit.tr808`) | Michael Fischer / Technopolis 808 set, 1994 | "absolutely free" (no formal licence) | drums (GM → 808 map) |
+| Upright bass (`kit.upright-bass`) | D. Smolken double bass, pizzicato | CC0 | bass |
+| Marimba (`kit.marimba`) | FluidR3 GM via midi-js-soundfonts | CC BY 3.0 | any pitched lane |
+
+Next candidates, with the same check before adding:
+
 | kit | format | licence | use |
 |---|---|---|---|
-| Big Rusty Drums (Karoryfer) | sfz/flac | CC0 | acoustic kit |
-| Virtuosity Drums (Versilian, Karoryfer) | sfz/flac | CC0 | GM-mapped jazz kit |
+| VCSL (Versilian) | sfz | CC0 (verified) | orchestral and world instruments; smplr `Versilian` |
+| J. Learman Rhodes, Old Piano (FreePats) | ogg | CC0 (verified) | electric piano, honky-tonk piano |
+| Big Rusty Drums, Virtuosity Drums (Karoryfer) | sfz/flac | CC0 | acoustic and jazz kits |
 | Naked Drums (Wilkinson Audio) | sfz/flac | CC BY 4.0 | multi-mic kit |
-| FreePats banks | sfz/sf2 | CC0–CC BY/GPL per bank | GM coverage |
-| smplr (danigb) | JS + hosted samples | MIT library; check each sample set | ready-made web voices (piano, 808, soundfont GM) |
 | Freesound API | per sound | filter CC0 / CC BY | one-shots on demand |
 | earshot forge | code-synthesised | MIT | procedural SFX kit, nothing to license |
 
-To verify before shipping: Salamander Grand (CC BY 3.0?) and VSCO 2 CE (CC0?). Avoid AVL/Sonor
-(ShareAlike binds derivatives).
+Avoid ShareAlike banks (AVL/Sonor, the FluidR3 SA variants): ShareAlike binds derivatives.
 
 ## Models
 
@@ -107,11 +118,18 @@ transcriber.
 - **earshot:** the studio's ears. An agent generates, then runs `earshot match`/`critique`, then refines. That closes the
   "AI can't hear what it made" loop for music. `forge` is a free kit source.
 
+## Status
+
+Done and covered by `npm run test:music-studio` (a headless phone browser against a bundle):
+- `studio.js`: the lane document and the plugin registry. There are five kinds, and the action manifest is data only. `run` validates parameters before `apply`, and a proposal stops at the first failing command.
+- Voices: tap ♪ on a lane, or have an agent run `kit.<id>/voice {lane}`. The lane's stem goes quiet, and the kit plays its notes against the `<audio>` clock, using a 200 ms lookahead and re-syncing on seek and pause. `voice.original/voice` gives the recording back.
+- The paper skin (`skin.paper/apply`, or Paper in the top bar) applies to the whole app. The map uses its day palette, chips and the sheet use cream and ink, and the roll draws as a grand staff with G/F clefs, a drum line, a pencil playhead and ledger lines. Tapping a note plays it through that lane's voice.
+- The agent entry is `window.__sa.studio` (`actionManifest`, `run`, `apply`).
+
 ## Next steps
 
-1. Lane document + plugin manifest/registry (pure module and tests), with the current stems and score as the first
-   `analyze` plugins.
-2. Paper skin over the Track pane; replace the abcjs box.
-3. First `voice`: smplr piano + CC0 drum kit, playing lane notes in sync with the master clock.
-4. Magenta RT2 `voice` behind a local bridge (audio.cpp), then ACE-Step `generate`.
-5. earshot `analyze` plugin; fframes soundtrack export.
+1. Magenta RT2 `voice` behind a local bridge (audio.cpp), then ACE-Step `generate`.
+2. earshot `analyze` plugin; fframes soundtrack export.
+3. Expose the studio manifest over ACP, the same way fframestudio's actions are exposed, so that Hermes or DeepSeek proposals show up as a reviewable diff on paper.
+4. Note editing on paper (drag = pitch), and loading third-party plugins from a `plugin.json` URL in a sandboxed worker.
+5. Publish `scores.json` for more tracks (`tools/sound-atlas-score.py --push`).

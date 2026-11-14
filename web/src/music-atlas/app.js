@@ -14,6 +14,8 @@ import { renderSVG, encode as qrEncode } from "./uqr.js";
 import * as browse from "./browse.js";
 import { loadLayers, layersOf, layerCount, STEMS, laneColor, createMixer, stemUrl, lenders } from "./layers.js";
 import { loadScores, scoreOf, fetchScore, laneOf, lanesIn, windowOf, toABC, toMidi, loadABCJS } from "./score.js";
+import { createStudio } from "./studio.js";
+import { KITS, kitsFor, laneNotes, createVoicer, smplrLoader } from "./voices.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -223,10 +225,58 @@ function swapLane(t, k) {
   toast(next ? `${STEMS[k]?.name} from “${u.title}” · ${Math.round(b.bpm)}→${Math.round(beatOf(t).bpm)} bpm` : `${STEMS[k]?.name} back from the original`);
 }
 A.setLayers((id) => { const lanes = lanesOf(id); return lanes && { lanes }; });
+
+// --- studio: the song as an open document, and the plugins that read and write it -------------
+// docs/music-studio.md. Every lane has three faces — sound (its stem), notes (the transcription)
+// and voice (a kit that renders those notes). Kits, skins and exports are plugins in one registry;
+// its action manifest is what agents (Hermes, DeepSeek over ACP) and the palette both call.
+let actx = null; const ctxOf = () => (actx ??= new AudioContext({ latencyHint: "interactive" }));
+const voicer = createVoicer(audio, ctxOf, smplrLoader(ctxOf));
+audio.addEventListener("emptied", () => voicer.clear());
+async function voiceLane(k, kit) {
+  const id = state.sel, t = byId.get(id), L = layersOf(id); if (!t) return { error: "no track" };
+  const s = await fetchScore(id); if (!s) return { error: "no notes for this track yet" };
+  const notes = laneNotes(s, k, laneOf), name = STEMS[k]?.name ?? k;
+  if (kit && !notes.length) { toast(`No ${name.toLowerCase()} notes to play`); return { error: "lane has no notes" }; }
+  if (L) { if (mixer.id !== id) mixer.load(id, L); mixer.voice(k, !!kit); }
+  if (kit) toast(`Loading ${kit.title}…`);
+  try { await voicer.set(k, kit, notes); } catch { mixer.voice(k, false); toast(`Couldn't load ${kit.title} (offline?)`); return { error: "load failed" }; }
+  if (audio.paused) audio.play().catch(() => {});
+  toast(kit ? `${name} played by ${kit.title} · ${notes.length.toLocaleString()} notes · ${kit.license}` : `${name} back to the recording`);
+  paintLayers(); A.kick();
+  return { lane: k, voice: kit?.id ?? null, notes: notes.length };
+}
+function cycleVoice(k) { const opts = [null, ...kitsFor(k)], cur = voicer.voiceOf(k), i = opts.findIndex((x) => x?.id === (cur?.id ?? undefined)); return voiceLane(k, opts[(Math.max(0, i) + 1) % opts.length]); }
+// Skins restyle the whole app. Paper turns the dark atlas into a sheet: the day palette the map
+// already has, lanes drawn as staves, a pencil playhead (rollLoop).
+const SKINS = { atlas: { title: "Atlas", theme: "dark", meta: "#0d1112" }, paper: { title: "Paper", theme: "light", meta: "#f4f0e6" } };
+let skin = SKINS[localStorage.getItem("sa-skin")] ? localStorage.getItem("sa-skin") : "atlas";
+for (const F of FEELS) F.ink ??= F.night;
+function setSkin(id, quiet) {
+  if (!SKINS[id]) return { error: `no skin ${id}` };
+  skin = id; localStorage.setItem("sa-skin", id); document.documentElement.dataset.skin = id;
+  for (const F of FEELS) F.night = id === "paper" ? F.color : F.ink; // every surface reads .night
+  tintCache.clear(); A.setTheme(SKINS[id].theme); $('meta[name="theme-color"]')?.setAttribute("content", SKINS[id].meta);
+  $("#skin")?.setAttribute("aria-pressed", String(id === "paper"));
+  if (!quiet) { renderChips(); renderBody(false); renderPlayer(); toast(id === "paper" ? "Paper: lanes as staves, tap a note to hear it" : "Atlas"); }
+  return { skin: id };
+}
+const studio = createStudio();
+studio.register({ id: "source.catalog", kind: "source", title: "Sound Atlas catalogue", license: "Per track (CC0 / CC BY)" });
+studio.register({ id: "analyze.stems", kind: "analyze", title: "Stem split (offline, published to HF)", license: "Code MIT; per-track audio licence" });
+studio.register({ id: "analyze.muscriptor", kind: "analyze", title: "MuScriptor transcription (offline, audio.cpp)", license: "CC-BY-NC-4.0 weights" });
+studio.register({ id: "voice.original", kind: "voice", title: "Original recording", license: "Per track",
+  actions: [{ id: "voice", title: "Give a lane its recording back", synonyms: ["original", "real"], schema: { lane: { type: "lane" } }, apply: (_, p) => voiceLane(p.lane, null) }] });
+if (skin !== "atlas") setSkin(skin, true);
+for (const kit of KITS) studio.register({ ...kit, actions: [{ id: "voice", title: `Play a lane with ${kit.title}`, synonyms: [kit.title.toLowerCase()], schema: { lane: { type: "lane", enum: kit.lanes } }, apply: (_, p) => voiceLane(p.lane, kit) }] });
+for (const [id, S] of Object.entries(SKINS)) studio.register({ id: `skin.${id}`, kind: "skin", title: S.title, license: "MIT", actions: [{ id: "apply", title: `Switch to the ${S.title} skin`, apply: () => setSkin(id) }] });
+studio.register({ id: "export.midi", kind: "export", title: "MIDI file", license: "MIT", actions: [{ id: "download", title: "Download the notes as MIDI", apply: () => { const sb = body.querySelector('[data-score="midi"]'); if (!sb) return { error: "open a transcribed track first" }; sb.click(); return { ok: true }; } }] });
+{ const mb = $("#motion"); if (mb && !cast.isTV) { const b = document.createElement("button"); b.id = "skin"; b.className = "motion"; b.setAttribute("aria-label", "Paper skin: read the music as sheet"); b.innerHTML = `<svg viewBox="0 0 20 20"><path d="M2 6h16M2 9h16M2 12h16M2 15h16" fill="none" stroke="currentColor" stroke-width="1.4"/><ellipse cx="12" cy="10.5" rx="2.6" ry="1.8" fill="currentColor" transform="rotate(-20 12 10.5)"/></svg><span>Paper</span>`; b.onclick = () => { buzz(5); setSkin(skin === "paper" ? "atlas" : "paper"); }; mb.after(b); } }
 function mixAct(op, k) {
   const id = state.sel, L = id && layersOf(id); if (!L) return;
   if (mixer.id !== id) mixer.load(id, L);
-  if (op === "swap") swapLane(byId.get(id), k); else if (op === "solo") mixer.toggleSolo(k); else if (op === "mute") mixer.toggleMute(k); else mixer.reset();
+  if (op === "voice") return cycleVoice(k);
+  if (op === "swap") swapLane(byId.get(id), k); else if (op === "solo") mixer.toggleSolo(k); else if (op === "mute") mixer.toggleMute(k); else { mixer.reset(); voicer.clear(); }
   if (audio.paused && op !== "reset") audio.play().catch(() => {});
   const lane = STEMS[k]?.name ?? "";
   if (op !== "swap") toast(op === "reset" || !mixer.changed ? "Full mix" : mixer.solo ? `Only ${lane.toLowerCase()}` : `${lane} ${mixer.muted(k) ? "muted" : "back in"}`);
@@ -236,7 +286,7 @@ function layersHTML(t) {
   const lanes = lanesOf(t.id);
   if (!lanes) return layerCount() ? `<section class="layers none"><h4>Layers</h4><p>Not split yet. Layers appear here and on the map as the splitter works through the catalogue (${layerCount()} so far).</p></section>` : "";
   return `<section class="layers"><h4>Layers<small>${lanes.length} · ⇄ borrow from a neighbour</small><button data-lmix="reset" class="${mixer.id === t.id && mixer.changed ? "" : "off"}">Full mix</button></h4>
-    ${lanes.map((l) => `<div class="lane${l.on ? "" : " out"}${mixer.id === t.id && mixer.solo === l.k ? " solo" : ""}" style="--l:${l.color}"><i></i><b>${esc(l.name)}${l.from ? `<em>from ${esc(l.from.title)}</em>` : ""}</b>${envSVG(l.env)}<small>${Math.round(l.share * 100)}%</small><button data-lmix="mute" data-k="${l.k}" aria-label="Mute ${esc(l.name)}">M</button><button data-lmix="solo" data-k="${l.k}" aria-label="Solo ${esc(l.name)}">S</button><button data-lmix="swap" data-k="${l.k}" class="${l.from ? "on" : ""}" aria-label="Swap ${esc(l.name)} for a similar song's" title="Borrow this layer from a similar song">⇄</button></div>`).join("")}
+    ${lanes.map((l) => `<div class="lane${l.on ? "" : " out"}${mixer.id === t.id && mixer.solo === l.k ? " solo" : ""}" style="--l:${l.color}"><i></i><b>${esc(l.name)}${voicer.voiceOf(l.k) && mixer.id === t.id ? `<em>played by ${esc(voicer.voiceOf(l.k).title)}</em>` : l.from ? `<em>from ${esc(l.from.title)}</em>` : ""}</b>${envSVG(l.env)}<small>${Math.round(l.share * 100)}%</small><button data-lmix="mute" data-k="${l.k}" aria-label="Mute ${esc(l.name)}">M</button><button data-lmix="solo" data-k="${l.k}" aria-label="Solo ${esc(l.name)}">S</button><button data-lmix="swap" data-k="${l.k}" class="${l.from ? "on" : ""}" aria-label="Swap ${esc(l.name)} for a similar song's" title="Borrow this layer from a similar song">⇄</button>${scoreOf(t.id) ? `<button data-lmix="voice" data-k="${l.k}" class="${voicer.voiceOf(l.k) && mixer.id === t.id ? "on" : ""}" aria-label="Play ${esc(l.name)} with a kit from its notes" title="Re-voice this layer from its notes">♪</button>` : ""}</div>`).join("")}
   </section>`;
 }
 // --- score: the layers as notes ------------------------------------------------------------------
@@ -263,23 +313,53 @@ async function mountScore() {
   el.querySelector(".slanes").innerHTML = lanes.map((l) => `<button data-score="lane" data-k="${l.k}" class="${score.k === l.k ? "on" : ""}${L && mixer.id === id && !mixer.audible(l.k) ? " out" : ""}" style="--l:${laneColor(tone(t), l.k)}"><i></i>${esc(STEMS[l.k]?.name ?? l.k)}<small>${l.n}</small></button>`).join("") + (s.abc ? `<button data-score="lead" class="${score.k === "lead" ? "on" : ""}">Lead sheet</button>` : "");
   if (score.view === "roll") rollLoop(); else drawSheet(el.querySelector(".abc"), t);
 }
+// Diatonic step of a MIDI pitch (middle C = 35) and whether it needs a sharp: the paper skin's y axis.
+const DIA = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6], dia = (p) => Math.floor(p / 12) * 7 + DIA[p % 12], sharp = (p) => [1, 3, 6, 8, 10].includes(p % 12);
 function rollLoop() {
   const c = body.querySelector(".score canvas.roll"), t = byId.get(score.id); if (!c || !t || c.hidden) return;
-  const r = c.getBoundingClientRect(), dpr = devicePixelRatio || 1; if (c.width !== Math.round(r.width * dpr)) { c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr); }
+  const r = c.getBoundingClientRect(), dpr = devicePixelRatio || 1; if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) { c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr); }
   const g = c.getContext("2d"), W = c.width, H = c.height, span = 8, now = state.sel === t.id ? audio.currentTime : 0, t0 = now - span / 4;
   const ns = score.s.n, lo = score.lo ??= Math.min(...ns.map((x) => x[2])) - 1, hi = score.hi ??= Math.max(...ns.map((x) => x[2])) + 1, ph = H / (hi - lo);
+  const paper = skin === "paper", { beat, origin, meter } = gridOf(t), solo = mixer.id === t.id, xOf = (s) => ((s - t0) / span) * W;
   g.clearRect(0, 0, W, H);
-  const { beat, origin, meter } = gridOf(t); // bar lines
-  g.fillStyle = "rgba(255,255,255,.07)"; for (let b = Math.ceil((t0 - origin) / (beat * meter[0])); origin + b * beat * meter[0] < t0 + span; b++) g.fillRect(((origin + b * beat * meter[0] - t0) / span) * W, 0, dpr, H);
-  const solo = mixer.id === t.id;
+  // Paper: a grand staff (middle C on the centre ledger), drums on a one-line staff above it.
+  const step = H / 36, mid = H * 0.58, yP = (p) => Math.max(step * 4.5, Math.min(H - step, mid - (dia(p) - 35) * step)), yD = step * 2;
+  const yOf = (p, k) => (paper ? (k === "drums" ? yD : yP(p)) : H - (p - lo + 0.5) * ph);
+  score.geo = { t0, span, W, H, yOf, dpr };
+  if (paper) {
+    g.strokeStyle = "rgba(40,36,30,.42)"; g.lineWidth = dpr;
+    for (const p of [64, 67, 71, 74, 77, 43, 47, 50, 53, 57]) { const y = Math.round(yP(p)) + 0.5; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+    g.beginPath(); g.moveTo(0, yD); g.lineTo(W, yD); g.stroke();
+    g.fillStyle = "rgba(40,36,30,.55)"; g.font = `italic ${Math.round(step * 2.6)}px "Instrument Serif", serif`; g.textBaseline = "middle"; // clefs as the letters they stand for
+    g.fillText("G", 4 * dpr, yP(67)); g.fillText("F", 4 * dpr, yP(53)); g.font = `${Math.round(step * 1.6)}px "IBM Plex Mono", monospace`; g.fillText("drums", 4 * dpr, yD - step * 1.2); g.textBaseline = "alphabetic";
+    g.strokeStyle = "rgba(40,36,30,.55)"; for (let b = Math.ceil((t0 - origin) / (beat * meter[0])); origin + b * beat * meter[0] < t0 + span; b++) { const x = Math.round(xOf(origin + b * beat * meter[0])) + 0.5; g.beginPath(); g.moveTo(x, yP(77)); g.lineTo(x, yP(43)); g.stroke(); }
+  } else { g.fillStyle = "rgba(255,255,255,.07)"; for (let b = Math.ceil((t0 - origin) / (beat * meter[0])); origin + b * beat * meter[0] < t0 + span; b++) g.fillRect(xOf(origin + b * beat * meter[0]), 0, dpr, H); }
   for (const [on, d, p, i] of windowOf(ns, t0, t0 + span)) {
-    const k = laneOf(score.s.inst[i]), live = on <= now && now < on + d, x = ((on - t0) / span) * W;
-    g.globalAlpha = solo && !mixer.audible(k) ? 0.12 : score.k && score.k !== "lead" && score.k !== k ? 0.45 : 1;
-    g.fillStyle = laneColor(tone(t), k); g.fillRect(x, H - (p - lo + 1) * ph, Math.max(2 * dpr, (d / span) * W - dpr), Math.max(2 * dpr, ph - dpr));
-    if (live) { g.fillStyle = "#fff"; g.globalAlpha = 0.8; g.fillRect(x, H - (p - lo + 1) * ph, 2 * dpr, Math.max(2 * dpr, ph - dpr)); }
+    const k = laneOf(score.s.inst[i]), live = on <= now && now < on + d, x = xOf(on), y = yOf(p, k), col = laneColor(tone(t), k);
+    g.globalAlpha = solo && !mixer.audible(k) && !voicer.voiceOf(k) ? 0.12 : score.k && score.k !== "lead" && score.k !== k ? 0.4 : 1;
+    if (!paper) { g.fillStyle = col; g.fillRect(x, y - ph / 2, Math.max(2 * dpr, (d / span) * W - dpr), Math.max(2 * dpr, ph - dpr)); if (live) { g.fillStyle = "#fff"; g.globalAlpha = 0.8; g.fillRect(x, y - ph / 2, 2 * dpr, Math.max(2 * dpr, ph - dpr)); } continue; }
+    const rx = step * 0.72, ry = step * 0.52;
+    if (k === "drums") { g.strokeStyle = "rgba(30,27,22,.8)"; g.lineWidth = 1.6 * dpr; g.beginPath(); g.moveTo(x - rx * 0.7, y - ry); g.lineTo(x + rx * 0.7, y + ry); g.moveTo(x + rx * 0.7, y - ry); g.lineTo(x - rx * 0.7, y + ry); g.stroke(); continue; }
+    if (d > beat * 0.9) { g.fillStyle = col; g.globalAlpha *= 0.22; g.fillRect(x, y - ry * 0.35, (d / span) * W, ry * 0.7); g.globalAlpha /= 0.22; } // held: a faint tie to its end
+    g.fillStyle = col; g.beginPath(); g.ellipse(x + rx, y, rx, ry, -0.35, 0, 7); g.fill(); // lane colour, inked rim so day-pale hues still read on paper
+    g.strokeStyle = live ? "rgba(30,27,22,.95)" : "rgba(30,27,22,.5)"; g.lineWidth = (live ? 1.8 : 1) * dpr; g.stroke();
+    if (sharp(p)) { g.font = `${Math.round(step * 1.5)}px serif`; g.fillText("♯", x - step * 1.1, y + step * 0.5); }
+    const dp = dia(p), led = []; if (dp === 35) led.push(35); for (let q = 47; q <= dp; q += 2) led.push(q); for (let q = 23; q >= dp; q -= 2) led.push(q); // ledger lines
+    if (led.length) { g.strokeStyle = "rgba(40,36,30,.42)"; g.lineWidth = dpr; for (const q of led) { const yy = mid - (q - 35) * step; g.beginPath(); g.moveTo(x - rx * 0.3, yy); g.lineTo(x + rx * 2.3, yy); g.stroke(); } }
   }
-  g.globalAlpha = 1; g.fillStyle = "rgba(255,255,255,.85)"; g.fillRect(W / 4, 0, dpr, H);
+  g.globalAlpha = 1;
+  if (paper) { // pencil: graphite with a little grain
+    g.fillStyle = "rgba(48,44,40,.78)"; g.fillRect(W / 4, 0, 1.6 * dpr, H);
+    g.fillStyle = "rgba(48,44,40,.25)"; for (let y = 0; y < H; y += 3 * dpr) if ((y * 7919) % 5 < 2) g.fillRect(W / 4 - dpr, y, dpr, 2 * dpr);
+  } else { g.fillStyle = "rgba(255,255,255,.85)"; g.fillRect(W / 4, 0, dpr, H); }
   if (!audio.paused && state.sel === t.id) score.raf = requestAnimationFrame(rollLoop);
+}
+// The note under a tap on the roll (nearest within a thumb's reach), or null.
+function noteAt(cx, cy) {
+  const G = score.geo; if (!G || !score.s) return null;
+  let best = null, bd = 30 * G.dpr;
+  for (const n of windowOf(score.s.n, G.t0, G.t0 + G.span)) { const k = laneOf(score.s.inst[n[3]]), dx = ((n[0] - G.t0) / G.span) * G.W - cx, dy = G.yOf(n[2], k) - cy, dd = Math.hypot(Math.max(0, Math.abs(dx + 6 * G.dpr) - 6 * G.dpr), dy); if (dd < bd) { bd = dd; best = { n, k }; } }
+  return best;
 }
 async function drawSheet(box, t) {
   const g = gridOf(t), abc = score.k === "lead" ? score.s.abc : toABC(score.s, score.k, { ...g, title: STEMS[score.k]?.name ?? "" });
@@ -307,7 +387,10 @@ function sheetLoop() { // light the note you're hearing and keep its line in vie
 }
 function scoreAct(b, e) {
   const op = b.dataset.score, t = byId.get(score.id); if (!t || !score.s) return;
-  if (op === "seek") { if (state.sel !== t.id) return; const r = b.getBoundingClientRect(); audio.currentTime = Math.max(0, audio.currentTime - 2 + ((e.clientX - r.left) / r.width) * 8); if (audio.paused) audio.play().catch(() => {}); return; }
+  if (op === "seek") {
+    const r = b.getBoundingClientRect(), dpr = devicePixelRatio || 1;
+    if (skin === "paper") { const hit = noteAt((e.clientX - r.left) * dpr, (e.clientY - r.top) * dpr); if (hit) { const kit = voicer.voiceOf(hit.k) ?? kitsFor(hit.k)[0]; if (kit) voicer.play(kit, hit.n[2], Math.min(hit.n[1], 1.5)).catch(() => toast("Couldn't load the kit (offline?)")); toast(`${STEMS[hit.k]?.name ?? hit.k} · ${["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"][hit.n[2] % 12]}${Math.floor(hit.n[2] / 12) - 1}${kit ? ` · ${kit.title}` : ""}`); return; } }
+    if (state.sel !== t.id) return; audio.currentTime = Math.max(0, audio.currentTime - 2 + ((e.clientX - r.left) / r.width) * 8); if (audio.paused) audio.play().catch(() => {}); return; }
   if (op === "roll" || op === "sheet") { score.view = op; const el = body.querySelector(".score"); el.querySelectorAll(".seg button").forEach((x) => x.classList.toggle("on", x.dataset.score === op)); el.querySelector("canvas.roll").hidden = op !== "roll"; el.querySelector(".abc").hidden = op !== "sheet"; return mountScore(); }
   if (op === "lane" || op === "lead") { // a lane chip picks the part to read; tapped again, it solos that layer's stem
     const k = op === "lead" ? "lead" : b.dataset.k;
@@ -1505,5 +1588,5 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
     const s = await B.sources(); if (!(s.dir || s.files || s.plex || s.spotify)) return;
     const r = await B.restore(); mine.regrant = r.needsFolder; addMine(r, mine.spotifyNew ? "Spotify" : null); r.errors.forEach((m) => toast(m));
   }).catch((e) => toast("Your music: " + e.message));
-  window.__sa = { party, mine, addMine, slugs: () => slugs, social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
+  window.__sa = { studio, voicer, setSkin, score, party, mine, addMine, slugs: () => slugs, social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
 })();

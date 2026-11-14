@@ -41,7 +41,7 @@ export const laneColor = (base, k) => shade(base, STEMS[k]?.tint ?? [0, 0]);
 // song's tempo and lined up on its downbeat (pitch is kept; the browser stretches, not resamples).
 export function createMixer(master, urlOf) {
   let id = null, els = [], on = false, timer = 0;
-  const mute = new Set(), lent = new Map(); let solo = null; // lent: k -> { el, from, rate, at }
+  const mute = new Set(), voiced = new Set(), lent = new Map(); let solo = null; // voiced: lanes a voice plugin re-renders from notes // lent: k -> { el, from, rate, at }
   const audible = (k) => (solo ? solo === k : !mute.has(k));
   function load(trackId, L) {
     if (id === trackId) return;
@@ -49,7 +49,7 @@ export function createMixer(master, urlOf) {
     els = L.stems.map((s) => { const a = new Audio(); a.preload = "auto"; a.src = urlOf(s.f); a.dataset.k = s.k; a.map = (t) => t; a.rate = 1; return a; });
   }
   const kill = (a) => { a.pause(); a.removeAttribute("src"); a.load(); };
-  function drop() { disengage(); for (const a of els) kill(a); for (const b of lent.values()) kill(b.el); els = []; lent.clear(); id = null; mute.clear(); solo = null; }
+  function drop() { disengage(); for (const a of els) kill(a); for (const b of lent.values()) kill(b.el); els = []; lent.clear(); id = null; mute.clear(); voiced.clear(); solo = null; }
   const all = () => [...els, ...[...lent.values()].map((b) => b.el)];
   function sync(hard = false) {
     const t = master.currentTime;
@@ -62,13 +62,13 @@ export function createMixer(master, urlOf) {
       if (!master.paused && a.paused) a.play().catch(() => {});
     }
   }
-  const changed = () => !!solo || mute.size > 0 || lent.size > 0;
+  const changed = () => !!solo || mute.size > 0 || lent.size > 0 || voiced.size > 0;
   function engage() { if (on || !els.length) return; on = true; master.muted = true; sync(true); timer = setInterval(sync, 500); }
   function disengage() { if (!on) return; on = false; master.muted = false; clearInterval(timer); for (const a of all()) a.pause(); }
   function apply() {
     if (!changed()) disengage(); else engage();
-    for (const a of els) a.muted = !audible(a.dataset.k) || lent.has(a.dataset.k);
-    for (const [k, b] of lent) b.el.muted = !audible(k);
+    for (const a of els) a.muted = !audible(a.dataset.k) || lent.has(a.dataset.k) || voiced.has(a.dataset.k);
+    for (const [k, b] of lent) b.el.muted = !audible(k) || voiced.has(k);
     if (on) sync(true);
   }
   master.addEventListener("play", () => on && sync(true));
@@ -87,7 +87,9 @@ export function createMixer(master, urlOf) {
       if (from) { const a = new Audio(); a.preload = "auto"; a.src = urlOf(from.f); a.dataset.k = k; a.map = from.at; a.rate = from.rate; a.preservesPitch = true; lent.set(k, { ...from, el: a }); }
       apply();
     },
-    reset() { solo = null; mute.clear(); for (const b of lent.values()) kill(b.el); lent.clear(); apply(); },
+    // The lane's stem goes quiet while a voice plays its notes instead.
+    voice(k, on) { on ? voiced.add(k) : voiced.delete(k); apply(); }, voiced: (k) => voiced.has(k),
+    reset() { solo = null; mute.clear(); voiced.clear(); for (const b of lent.values()) kill(b.el); lent.clear(); apply(); },
   };
 }
 
