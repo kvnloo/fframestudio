@@ -1,4 +1,4 @@
-# Sound Atlas perf climb (rubric perf-climb-v4)
+# Sound Atlas perf climb (rubric perf-climb-v5)
 
 Goal: lower input latency and the frame-time tail (1% and 0.1% lows) without losing any animation quality or UX.
 Every round changes one thing and either keeps it or resets it. The referee is frozen; changing it starts a new epoch
@@ -30,6 +30,12 @@ Frames are pooled across reps, since 0.1% of one 12 s dance is under one frame.
 
 Every run carries an A/A arm named `aa` (the incumbent again). If the A/A objective CI is wider than 0.45, the run is
 VOID and no verdict counts. Shared-iGPU Boat boxes are sometimes contended: round 3's first box ran one build at 7-60 fps.
+
+## Paired reps (v5)
+
+perf.sh interleaves arms inside each rep, so rep i of every arm ran in the same minute of the box. The bootstrap resamples
+the same rep indices for candidate and incumbent, which cancels the box's drift. Round 3b's A/A CI went from [0.39, 2.42]
+(unpaired) to [0.87, 1.23].
 
 ## Keep rule
 
@@ -91,3 +97,4 @@ Round 3 incumbent: 207c19e (`perf/climb`).
 
 Shipped: the cssbg-only change on the product branch is `f30562b` on `feat/music-finder` (browse-e2e passes on it and on
 c0937df; screenshot diffs sit only on labels and chips caught mid-animation). The production deploy waits for the owner's OK.
+| 3b (v5, post hoc) | 207c19e | `?c=cpu` / `?c=defer` | cpu 0.407 [0.284, 0.957] KEEP; defer 0.553 [0.449, 1.017] | A/A 0.939 [0.87, 1.232] | v5 was written after this data: confirm on a fresh box | boat-perf/20261114-154701 |

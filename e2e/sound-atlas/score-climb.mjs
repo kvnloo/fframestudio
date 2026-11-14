@@ -1,4 +1,4 @@
-// Frozen referee for the Sound Atlas perf climb (rubric perf-climb-v4; v4 voids a run whose A/A arm is noisy, v3 adds zoomed-on-track gates, v2 per-rep motion medians). Reads perf-climb.mjs runs named
+// Frozen referee for the Sound Atlas perf climb (rubric perf-climb-v5; v5 pairs reps in the bootstrap, v4 voids a run whose A/A arm is noisy, v3 adds zoomed-on-track gates, v2 per-rep motion medians). Reads perf-climb.mjs runs named
 // <variant>-<rep>.json, scores every variant against the incumbent and prints KEEP / DROP with the reason.
 //   node score-climb.mjs <runs-dir> [incumbent=base]          -> also writes <runs-dir>/score.json
 // Lower is better for every metric. Ratios are candidate / incumbent with a 90% bootstrap CI over reps.
@@ -6,7 +6,8 @@
 // (3) no metric regresses for sure (CI low > 1.03). Quality never trades: a gate failure is DROP whatever the speed.
 import fs from 'node:fs'; import path from 'node:path';
 const dir = process.argv[2], INC = process.argv[3] || 'base';
-const runs = {}; for (const f of fs.readdirSync(dir).filter((f) => /-\d+\.json$/.test(f))) { const v = f.replace(/-\d+\.json$/, ''); (runs[v] ??= []).push(JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'))); }
+const runs = {}; for (const f of fs.readdirSync(dir).filter((f) => /-\d+\.json$/.test(f)).sort((a, b) => +a.match(/(\d+)\.json$/)[1] - +b.match(/(\d+)\.json$/)[1])) { // rep order: v5 pairs rep i with rep i
+ const v = f.replace(/-\d+\.json$/, ''); (runs[v] ??= []).push(JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'))); }
 const q = (a, k) => { if (!a.length) return NaN; const s = Float64Array.from(a).sort(); return s[Math.min(s.length - 1, Math.floor(s.length * k))]; };
 const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length, med = (a) => q(a, 0.5);
 // Metrics pool frames across reps: 0.1% of a 12 s dance at 30 fps is under one frame per rep.
@@ -23,6 +24,10 @@ const METRICS = {
 const OBJ = ['dance.ft.p99 (1% low)', 'dance.ft.p99.9 (0.1% low)', 'drag.ft.p99', 'drag.lat.p95', 'tap.p75'];
 let seed = 7; const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
 const boot = (R) => R.map(() => R[Math.floor(rnd() * R.length)]);
+// v5 paired bootstrap: perf.sh interleaves arms inside each rep, so rep i of every arm ran in the same minute of the box.
+// Resampling the same rep indices for candidate and incumbent cancels the box's drift (shared-iGPU load) instead of
+// counting it as noise. Falls back to independent resampling when rep counts differ.
+const bootPair = (R, B) => { if (R.length !== B.length) return [boot(R), boot(B)]; const ix = R.map(() => Math.floor(rnd() * R.length)); return [ix.map((i) => R[i]), ix.map((i) => B[i])]; };
 const stillOf = (r) => Buffer.from(r.vis.still.px, 'base64');
 const sdiff = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += Math.abs(a[i] - b[i]); return s / a.length; };
 function gates(R, B) {
@@ -65,7 +70,7 @@ for (const [name, R] of [[INC, B], ...Object.entries(runs).filter(([k]) => k !==
   out.variants[name] = { abs, loads: R.map((r) => r.host.load) };
   if (name === INC) continue;
   const ratios = {}, bs = Object.fromEntries(Object.keys(METRICS).map((k) => [k, []])), objB = [];
-  for (let i = 0; i < 1000; i++) { const r = boot(R), b = boot(B); let lg = 0;
+  for (let i = 0; i < 1000; i++) { const [r, b] = bootPair(R, B); let lg = 0;
     for (const [k, f] of Object.entries(METRICS)) { const x = f(r) / f(b); bs[k].push(x); if (OBJ.includes(k)) lg += Math.log(x); }
     objB.push(Math.exp(lg / OBJ.length)); }
   for (const k of Object.keys(METRICS)) ratios[k] = { r: +(abs[k] / out.variants[INC].abs[k]).toFixed(3), ci: [+q(bs[k], 0.05).toFixed(3), +q(bs[k], 0.95).toFixed(3)] };
