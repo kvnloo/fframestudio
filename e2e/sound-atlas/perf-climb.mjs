@@ -6,6 +6,8 @@
 import { chromium } from 'playwright-core'; import fs from 'node:fs'; import os from 'node:os';
 const URL = process.env.URL || 'http://127.0.0.1:18967/', OUT = process.env.OUT || 'runs/climb/run.json', DANCE_MS = +(process.env.DANCE_MS || 12000);
 
+// THROTTLE: CPU slowdown for timing (default 4). A box already at vsync can't price a change; raise it so the incumbent runs below the refresh rate.
+const THR = +(process.env.THROTTLE || 4);
 const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome-stable',
   args: ['--enable-gpu', '--ignore-gpu-blocklist', '--enable-gpu-rasterization', '--use-angle=vulkan', '--enable-features=Vulkan', '--autoplay-policy=no-user-gesture-required', '--mute-audio'] });
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
@@ -26,7 +28,7 @@ const p = await ctx.newPage(), cdp = await ctx.newCDPSession(p), errs = [];
 p.on('pageerror', (e) => errs.push(e.message));
 await p.goto(URL); await p.waitForFunction(() => window.__sa?.all.length > 0, null, { timeout: 60000 }); await p.waitForTimeout(4000);
 const gl = await p.evaluate(() => { const c = document.createElement('canvas').getContext('webgl'), d = c?.getExtension('WEBGL_debug_renderer_info'); return d ? c.getParameter(d.UNMASKED_RENDERER_WEBGL) : 'none'; });
-await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+await cdp.send('Emulation.setCPUThrottlingRate', { rate: THR });
 const window_ = async (fn) => { await p.evaluate(() => { const M = __m; M.ft = []; M.lat = []; M.pend = []; M.ev = []; M.on = true; }); await fn(); return p.evaluate(() => { const M = __m; M.on = false; return { ft: M.ft.map((x) => +x.toFixed(2)), lat: M.lat.map((x) => +x.toFixed(2)), ev: M.ev }; }); };
 const play = async () => {
   await p.evaluate((id) => { if (!__sa.state.sel) __sa.select(id || __sa.all.find((t) => t.audio && !/^https?:/.test(t.audio))?.id); __sa.A.fitAll(); }, process.env.PLAY);
@@ -53,7 +55,7 @@ const dance = await window_(() => p.waitForTimeout(DANCE_MS));
 // the dance freezes (?gpu=1 kept the dots dancing but stilled the arms and bands); the score compares these masks.
 const shoot = async () => { await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
   const shots = []; for (let i = 0; i < 10; i++) { shots.push(await grid()); await p.waitForTimeout(150); }
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: THR });
   const motion = shots.slice(1).map((s, i) => +diff(shots[i], s).toFixed(3)); // % of map pixels
   const C = 4, cw = Math.ceil(shots[0].w / C), ch = Math.ceil(shots[0].h / C), mask = new Uint8Array(cw * ch);
   for (let k = 1; k < shots.length; k++) { const a = shots[k - 1].px, b = shots[k].px;
@@ -68,7 +70,7 @@ await p.evaluate(() => __sa.A.fitAll(600)); await p.waitForTimeout(1200);
 const drag = await window_(async () => { for (let k = 0; k < 4; k++) { const [x0, y0] = at(0.3, 0.6); await touch('touchStart', x0, y0); for (let i = 1; i <= 24; i++) { await touch('touchMove', x0 + i * 6, y0 - i * 5); await p.waitForTimeout(16); } await touch('touchEnd'); await p.waitForTimeout(400); } });
 // The still frame: whole map framed, paused, the dance settled.
 await p.evaluate(() => { __sa.A.fitAll(); __sa.audio.pause(); }); await p.waitForTimeout(2500);
-await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 }); const still = await grid(); await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 }); const dens = await p.evaluate(() => [...document.querySelectorAll('canvas')].filter((c) => c.clientWidth > 100).map((c) => +(c.width / c.clientWidth).toFixed(3)));
+await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 }); const still = await grid(); await cdp.send('Emulation.setCPUThrottlingRate', { rate: THR }); const dens = await p.evaluate(() => [...document.querySelectorAll('canvas')].filter((c) => c.clientWidth > 100).map((c) => +(c.width / c.clientWidth).toFixed(3)));
 await p.evaluate(() => __sa.audio.play()); await p.waitForTimeout(1500);
 const taps = await window_(async () => { for (const [fx, fy] of [[0.5, 0.5], [0.35, 0.4], [0.65, 0.6], [0.5, 0.3], [0.4, 0.7], [0.6, 0.45]]) { const [x, y] = at(fx, fy); await touch('touchStart', x, y); await p.waitForTimeout(60); await touch('touchEnd'); await p.waitForTimeout(700); } });
 const inter = {}; for (const [id, , d] of taps.ev) inter[id] = Math.max(inter[id] || 0, d);

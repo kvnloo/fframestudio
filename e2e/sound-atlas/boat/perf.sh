@@ -5,7 +5,7 @@
 #
 #   bash boat/perf.sh <site-dir> 'base=?lean=0 lean= gpu=?gpu=1'                # one bundle, variants by URL query
 #   bash boat/perf.sh 'inc=<dir>,cand=<dir>' 'base=inc cand=cand cand2=cand?x=1'  # several bundles (code changes)
-#   env: HARNESS=perf-frames|perf-climb (default perf-frames)  REPS=4  ONLY=play-dance,pan-playing  BOX=<reuse id>
+#   env: HARNESS=perf-frames|perf-climb (default perf-frames)  REPS=4  ONLY=play-dance,pan-playing  BOX=<reuse id>  THROTTLE=4 (perf-climb CPU slowdown)
 #
 # Each bundle gets its own port (bundles use <base href="/">). Boat `large` boxes render on an Intel UHD 620 iGPU,
 # roughly a weak phone: compare variants with each other, never with groot numbers.
@@ -24,7 +24,7 @@ for s in ${SITES//,/ }; do k=${s%%=*}; cp -r "${s#*=}" "$B/pkg/sites/$k"; PORT[$
   echo 'sleep 2; cd h && mkdir -p runs && : > runs/log'
   for r in $(seq "$REPS"); do for v in $VARIANTS; do n=${v%%=*} rest=${v#*=}; k=${rest%%\?*}; q=${rest#"$k"}; k=${k:-$first}
     [ -n "${PORT[$k]:-}" ] || { echo "unknown site '$k' in $v" >&2; exit 1; }
-    echo "URL='http://127.0.0.1:${PORT[$k]}/$q' OUT=runs/$n-$r.json REPS=1 ONLY=$ONLY CHROME=/usr/bin/google-chrome-stable node $HARNESS.mjs >>runs/log 2>&1 || echo 'fail $n $r' >>runs/log"
+    echo "THROTTLE=${THROTTLE:-4} URL='http://127.0.0.1:${PORT[$k]}/$q' OUT=runs/$n-$r.json REPS=1 ONLY=$ONLY CHROME=/usr/bin/google-chrome-stable node $HARNESS.mjs >>runs/log 2>&1 || echo 'fail $n $r' >>runs/log"
   done; done; echo 'echo ALLDONE >> runs/log'; } > "$B/run.sh" || exit 1
 cp "$HARNESS.mjs" "$B/pkg/h/"; tar -czf "$B/pkg.tgz" -C "$B" pkg
 ex() { boat exec "$id" --timeout "${T:-120}" -- bash -lc "$1" | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d.get("stdout",""),end="")'; }

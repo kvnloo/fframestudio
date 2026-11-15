@@ -100,3 +100,13 @@ c0937df; screenshot diffs sit only on labels and chips caught mid-animation). Th
 | 3b (v5, post hoc) | 207c19e | `?c=cpu` / `?c=defer` | cpu 0.407 [0.284, 0.957] KEEP; defer 0.553 [0.449, 1.017] | A/A 0.939 [0.87, 1.232] | v5 was written after this data: confirm on a fresh box | boat-perf/20261114-154701 |
 | 3c (v5, fresh box) | 207c19e | `?c=cpu` / `?c=defer` | cpu 1.293 [1.14, 1.67] DROP, fails where and zoomMotion (74%); defer 1.96 [1.44, 2.61] DROP | A/A 1.34 [0.945, 1.52], VOID by width | cpu's 3b KEEP did not confirm: **cpu and defer retired** | boat-perf/20261114-164424 |
 | 4 | 207c19e | `?c=fit` (fitSubs: one measure pass, same swatches hidden; local 15.2 -> 4.8 ms per list render at 4x) | fit 1.358 [0.944, 1.607] DROP (no sure gain); tap p75 200 vs 208 ms [0.857, 1.0] | A/A 1.113 [0.881, 1.148] valid | **Referee saturated**: every arm 54-60 fps, the lows quantize to vsync (A/A 1% low x1.98). More resolution needs a harder workload or the real device | boat-perf/20261114-174428 |
+
+Boat tap profile on the incumbent (boat-perf/20261114-183523, 2 reps): map frames dominate (frame 1411 inclusive: drawStatic
+750, setFont 136 self) and the tap's list render is small (renderBody 154). The next candidates are in the map's draw pass.
+
+## Workload epoch: THROTTLE=6 (from round 5)
+
+At 4x every arm sits at vsync after cssbg, so the lows quantize (round 4). From round 5 on, timing runs at 6x CPU slowdown
+(`THROTTLE=6`, set before seeing any round-5 data). Screenshots stay unthrottled. Ratios from different throttles never mix.
+
+| 5 (v5, 6x) | 207c19e | `?c=font` (ctx.font set only on change, cached upper-case feel names: the pixel-neutral half of c=cpu) | running | | | |
