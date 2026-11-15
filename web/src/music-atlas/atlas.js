@@ -151,6 +151,7 @@ const DPR_CAP = +(new URLSearchParams(location.search).get("dpr") || 3);
 // Perf-climb candidates (`?c=a,b`, off until e2e/sound-atlas/score-climb.mjs keeps them). c=cpu: same pixels, less JS a
 // frame -- the morph pass runs only while something is morphing, and each label sets its font only when it changes.
 const CPU = new URLSearchParams(location.search).get("c")?.split(",").includes("cpu");
+const FONT = CPU || new URLSearchParams(location.search).get("c")?.split(",").includes("font"); // c=font: the label pass sets ctx.font only when it changes (same pixels, no re-parse per label)
 // The ground and its vignette glow are the canvas element's CSS background (rewritten only when the camera moves), so a
 // dancing frame clears instead of filling ~3.5M device px twice before the first dot. Perf climb round 2 (Boat UHD 620,
 // 8 reps): dance 1% low 66.7 -> 33.4 ms, 0.1% low 83.3 -> 50 ms, 35 -> 56 fps, same pixels. ?c=nocssbg restores the fills.
@@ -716,7 +717,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1;
     const sx = (n) => cx + (X(n) - cam.x) * s, sy = (n) => cy + (Y(n) - cam.y) * s;
     ctx.lineJoin = "round"; ctx.textBaseline = "middle";
-    let font = null; const setFont = (f) => { if (!CPU || f !== font) ctx.font = font = f; }; // text() never sets a font
+    let font = null; const setFont = (f) => { if (!FONT || f !== font) ctx.font = font = f; }; // text() never sets a font
     for (const n of g.byId.values()) {
       if (n.level === 0 || n.level === 4 || AB.has("labels")) continue;
       const a = (n.al ?? 1) * clamp(gr4(n.level) * 1.2 - 0.2, 0, 1) * fo;
@@ -728,7 +729,7 @@ export function createAtlas({ canvas, region, onTap, onDown, onCamera, onHold, o
       if (x < -120 || x > W + 120 || y < -40 || y > H + 40) { if (n.level === 1 && s >= 1.2) away.push(n); continue; }
       ctx.globalAlpha = a * fade * k;
       const ux = Math.cos(n.va), uy = Math.sin(n.va);
-      if (n.level === 1) { setFont("13px 'Archivo Black', sans-serif"); text(CPU ? (n.NAME ??= n.name.toUpperCase()) : n.name.toUpperCase(), x + ux * 38 * Math.min(1, 0.55 + s), y + uy * 30 * Math.min(1, 0.55 + s), ux, col(n.feel), P.bg, n); }
+      if (n.level === 1) { setFont("13px 'Archivo Black', sans-serif"); text(FONT ? (n.NAME ??= n.name.toUpperCase()) : n.name.toUpperCase(), x + ux * 38 * Math.min(1, 0.55 + s), y + uy * 30 * Math.min(1, 0.55 + s), ux, col(n.feel), P.bg, n); }
       else if (n.level === 2) { setFont("600 12px 'Instrument Sans', sans-serif"); text(n.name, x + ux * 18, y + uy * 18, ux, P.ink, P.bg); }
       else { setFont("11px 'IBM Plex Mono', monospace"); text(n.name, x + ux * 14, y + uy * 14, ux, P.mute, P.bg); }
     }
