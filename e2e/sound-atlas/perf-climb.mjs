@@ -8,11 +8,15 @@ const URL = process.env.URL || 'http://127.0.0.1:18967/', OUT = process.env.OUT 
 
 // THROTTLE: CPU slowdown for timing (default 4). A box already at vsync can't price a change; raise it so the incumbent runs below the refresh rate.
 const THR = +(process.env.THROTTLE || 4);
-const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome-stable',
+// CDP_URL: attach to a real device's Chrome (adb forward tcp:9222 localabstract:chrome_devtools_remote) instead of
+// launching one: no CPU throttle, no viewport emulation; the harness opens its own tab and closes only that tab.
+const DEV = process.env.CDP_URL;
+const b = DEV ? await chromium.connectOverCDP(DEV) : await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome-stable',
   args: ['--enable-gpu', '--ignore-gpu-blocklist', '--enable-gpu-rasterization', '--use-angle=vulkan', '--enable-features=Vulkan', '--autoplay-policy=no-user-gesture-required', '--mute-audio'] });
-const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+const ctx = DEV ? b.contexts()[0] : await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
 await ctx.addInitScript(() => {
-  try { localStorage.setItem('sa-fs', 'no'); localStorage.setItem('sa-motion', '1'); } catch {}
+  if (!/^(127\.0\.0\.1|localhost)$/.test(location.hostname) && !location.search.includes('harness')) return; // attached to the owner's Chrome: touch only test tabs
+  try { HTMLMediaElement.prototype.play = ((f) => function () { this.muted = true; return f.call(this); })(HTMLMediaElement.prototype.play); localStorage.setItem('sa-fs', 'no'); localStorage.setItem('sa-motion', '1'); } catch {}
   // Frame clock: every rAF timestamp while `on`. Drag latency: a move's event time to the end of the first frame
   // after it (rAF callbacks done -> the next task), i.e. when that move's result is committed for display.
   const M = (window.__m = { on: false, ft: [], lat: [], pend: [], ev: [] });
@@ -28,7 +32,7 @@ const p = await ctx.newPage(), cdp = await ctx.newCDPSession(p), errs = [];
 p.on('pageerror', (e) => errs.push(e.message));
 await p.goto(URL); await p.waitForFunction(() => window.__sa?.all.length > 0, null, { timeout: 60000 }); await p.waitForTimeout(4000);
 const gl = await p.evaluate(() => { const c = document.createElement('canvas').getContext('webgl'), d = c?.getExtension('WEBGL_debug_renderer_info'); return d ? c.getParameter(d.UNMASKED_RENDERER_WEBGL) : 'none'; });
-await cdp.send('Emulation.setCPUThrottlingRate', { rate: THR });
+if (!DEV) await cdp.send('Emulation.setCPUThrottlingRate', { rate: THR });
 const window_ = async (fn) => { await p.evaluate(() => { const M = __m; M.ft = []; M.lat = []; M.pend = []; M.ev = []; M.on = true; }); await fn(); return p.evaluate(() => { const M = __m; M.on = false; return { ft: M.ft.map((x) => +x.toFixed(2)), lat: M.lat.map((x) => +x.toFixed(2)), ev: M.ev }; }); };
 const play = async () => {
   await p.evaluate((id) => { if (!__sa.state.sel) __sa.select(id || __sa.all.find((t) => t.audio && !/^https?:/.test(t.audio))?.id); __sa.A.fitAll(); }, process.env.PLAY);
@@ -79,4 +83,4 @@ const out = { url: URL, gl, host: { load: os.loadavg()[0], cpus: os.cpus().lengt
 fs.mkdirSync(OUT.replace(/[^/]*$/, '') || '.', { recursive: true }); fs.writeFileSync(OUT, JSON.stringify(out));
 const q = (a, k) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.min(s.length - 1, Math.floor(s.length * k))] : NaN; };
 console.log(JSON.stringify({ gl, errs: errs.length, danceN: dance.ft.length, danceP99: q(dance.ft, 0.99), dragLatP95: q(drag.lat, 0.95), taps: Object.values(inter), dens, motion }));
-await b.close();
+if (DEV) { await p.close(); await b.close().catch(() => {}); } else await b.close();
