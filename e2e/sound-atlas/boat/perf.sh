@@ -22,7 +22,10 @@ for s in ${SITES//,/ }; do k=${s%%=*}; cp -r "${s#*=}" "$B/pkg/sites/$k"; PORT[$
 { echo 'cd ~/pkg'
   for k in "${!PORT[@]}"; do echo "(setsid python3 -m http.server ${PORT[$k]} -d sites/$k --bind 127.0.0.1 >/tmp/site-$k.log 2>&1 </dev/null &)"; done
   echo 'sleep 2; cd h && mkdir -p runs && : > runs/log'
-  for r in $(seq "$REPS"); do for v in $VARIANTS; do n=${v%%=*} rest=${v#*=}; k=${rest%%\?*}; q=${rest#"$k"}; k=${k:-$first}
+  VA=($VARIANTS); NV=${#VA[@]}
+  # Rotate the arm order every rep (rep r starts at arm r mod N): a fixed order hands the later arms a slower box
+  # (round 5: the A/A arm, always second of three, scored x1.27 slower than base on identical code).
+  for r in $(seq "$REPS"); do for j in $(seq 0 $((NV - 1))); do v=${VA[$(( (j + r - 1) % NV ))]}; n=${v%%=*} rest=${v#*=}; k=${rest%%\?*}; q=${rest#"$k"}; k=${k:-$first}
     [ -n "${PORT[$k]:-}" ] || { echo "unknown site '$k' in $v" >&2; exit 1; }
     echo "THROTTLE=${THROTTLE:-4} URL='http://127.0.0.1:${PORT[$k]}/$q' OUT=runs/$n-$r.json REPS=1 ONLY=$ONLY CHROME=/usr/bin/google-chrome-stable node $HARNESS.mjs >>runs/log 2>&1 || echo 'fail $n $r' >>runs/log"
   done; done; echo 'echo ALLDONE >> runs/log'; } > "$B/run.sh" || exit 1

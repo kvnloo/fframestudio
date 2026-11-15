@@ -1,4 +1,4 @@
-// Frozen referee for the Sound Atlas perf climb (rubric perf-climb-v5; v5 pairs reps in the bootstrap, v4 voids a run whose A/A arm is noisy, v3 adds zoomed-on-track gates, v2 per-rep motion medians). Reads perf-climb.mjs runs named
+// Frozen referee for the Sound Atlas perf climb (rubric perf-climb-v6; v6 voids a run whose A/A CI excludes 1 (perf.sh now rotates arm order), v5 pairs reps in the bootstrap, v4 voids a run whose A/A arm is noisy, v3 adds zoomed-on-track gates, v2 per-rep motion medians). Reads perf-climb.mjs runs named
 // <variant>-<rep>.json, scores every variant against the incumbent and prints KEEP / DROP with the reason.
 //   node score-climb.mjs <runs-dir> [incumbent=base]          -> also writes <runs-dir>/score.json
 // Lower is better for every metric. Ratios are candidate / incumbent with a 90% bootstrap CI over reps.
@@ -79,6 +79,8 @@ for (const [name, R] of [[INC, B], ...Object.entries(runs).filter(([k]) => k !==
   const worse = Object.entries(ratios).filter(([, v]) => v.ci[0] > 1.03).map(([k]) => k);
   const verdict = failed.length ? 'DROP (quality gate)' : worse.length ? 'DROP (regresses ' + worse.join(', ') + ')' : obj.ci[1] < 1 ? 'KEEP' : 'DROP (no sure gain)';
   if (name === AA && obj.ci[1] - obj.ci[0] > 0.45) voidWhy = `noisy box: A/A objective CI [${obj.ci.join(', ')}]`;
+  // v6: identical code must not show a sure difference either way; one that does means run-order or box bias.
+  else if (name === AA && (obj.ci[0] > 1 || obj.ci[1] < 1)) voidWhy = `biased box or arm order: A/A objective CI [${obj.ci.join(', ')}] excludes 1`;
   Object.assign(out.variants[name], { ratios, objective: obj, gates: G, verdict });
   console.log(`\n== ${name} vs ${INC}: ${verdict}   objective ${obj.r} [${obj.ci.join(', ')}]   n=${R.length}/${B.length}`);
   for (const k of Object.keys(METRICS)) row(k, `${String(abs[k]).padStart(7)} vs ${String(out.variants[INC].abs[k]).padStart(7)}  x${ratios[k].r} [${ratios[k].ci.join(', ')}]`);

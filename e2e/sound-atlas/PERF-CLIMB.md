@@ -37,6 +37,11 @@ perf.sh interleaves arms inside each rep, so rep i of every arm ran in the same 
 the same rep indices for candidate and incumbent, which cancels the box's drift. Round 3b's A/A CI went from [0.39, 2.42]
 (unpaired) to [0.87, 1.23].
 
+## Arm order (v6)
+
+perf.sh rotates the arm order every rep (rep r starts at arm r mod N), so use a multiple of N reps. A run whose A/A
+objective CI excludes 1 in either direction is VOID: identical code showing a sure difference means order or box bias.
+
 ## Keep rule
 
 All gates pass. The objective must have a 90% bootstrap CI high below 1. The objective is the geometric mean of the
@@ -109,4 +114,5 @@ Boat tap profile on the incumbent (boat-perf/20261114-183523, 2 reps): map frame
 At 4x every arm sits at vsync after cssbg, so the lows quantize (round 4). From round 5 on, timing runs at 6x CPU slowdown
 (`THROTTLE=6`, set before seeing any round-5 data). Screenshots stay unthrottled. Ratios from different throttles never mix.
 
-| 5 (v5, 6x) | 207c19e | `?c=font` (ctx.font set only on change, cached upper-case feel names: the pixel-neutral half of c=cpu) | running | | | |
+| 5a (v6, 6x) | 207c19e | `?c=font` (ctx.font set only on change, cached upper-case feel names: the pixel-neutral half of c=cpu) | font 1.177 [1.006, 1.355], confounded: it always ran last | A/A 1.268 [1.073, 1.52] excludes 1 | **VOID (order bias)**: a fixed arm order handed later arms a slower box. perf.sh now rotates the order per rep; v6 voids any run whose A/A CI excludes 1 | boat-perf/20261114-184006 |
+| 5b (v6, 6x) | 207c19e | `?c=font`, rotated order, 9 reps | running | | | |
