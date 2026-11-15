@@ -53,6 +53,10 @@ class StudioMusicTest(unittest.TestCase):
         self.assertEqual(self.source.read_bytes(), b"hi")
         self.assertEqual(music, {"id": "t1", "title": "X"})
         self.assertIsNot(result, music)
+        self.assertEqual(
+            [path.relative_to(self.project) for path in self.project.rglob("*")],
+            [Path("media"), Path("media/soundtrack.mp3")],
+        )
 
     def test_root_level_studio_missing_file(self):
         music = {"id": "t1"}
@@ -89,6 +93,23 @@ class StudioMusicTest(unittest.TestCase):
             before,
         )
 
+    def test_destination_symlinks_do_not_overwrite_outside_files(self):
+        for link_directory in (False, True):
+            with self.subTest(link_directory=link_directory), tempfile.TemporaryDirectory(dir=self.root) as tmp:
+                project = Path(tmp)
+                outside_dir = self.root / "external"
+                outside_dir.mkdir(exist_ok=True)
+                sentinel = outside_dir / "soundtrack.mp3"
+                sentinel.write_bytes(b"keep outside audio")
+                if link_directory:
+                    (project / "media").symlink_to(outside_dir, target_is_directory=True)
+                else:
+                    (project / "media").mkdir()
+                    (project / "media" / "soundtrack.mp3").symlink_to(sentinel)
+                result = resolve_music(self.base, {"id": "t1"}, project, "sub/page.html")
+                self.assertEqual(sentinel.read_bytes(), b"keep outside audio")
+                self.assertEqual(result, {"id": "t1"})
+
     def test_unknown_id_and_none(self):
         music = {"id": "zz"}
         result = resolve_music(self.base, music, self.project, "sub/page.html")
@@ -98,6 +119,19 @@ class StudioMusicTest(unittest.TestCase):
             resolve_music(self.base, None, self.project, "sub/page.html"), {}
         )
         self.assertEqual(list(self.project.iterdir()), [])
+
+    def test_missing_id_never_selects_an_unnamed_track(self):
+        tracks = [{"full": "a/T.MP3", "beats": [0.5]}]
+        for catalogue_id in (None, "", 0):
+            with self.subTest(catalogue_id=catalogue_id):
+                tracks[0]["id"] = catalogue_id
+                self.catalogue.write_text(json.dumps(tracks), encoding="utf-8")
+                for music in (None, {}, {"id": catalogue_id}):
+                    with self.subTest(music=music), tempfile.TemporaryDirectory(dir=self.root) as target:
+                        project = Path(target)
+                        result = resolve_music(self.base, music, project, "sub/page.html")
+                        self.assertEqual(result, dict(music or {}))
+                        self.assertEqual(list(project.iterdir()), [])
 
     def test_no_catalogue(self):
         self.catalogue.unlink()
