@@ -115,4 +115,5 @@ At 4x every arm sits at vsync after cssbg, so the lows quantize (round 4). From 
 (`THROTTLE=6`, set before seeing any round-5 data). Screenshots stay unthrottled. Ratios from different throttles never mix.
 
 | 5a (v6, 6x) | 207c19e | `?c=font` (ctx.font set only on change, cached upper-case feel names: the pixel-neutral half of c=cpu) | font 1.177 [1.006, 1.355], confounded: it always ran last | A/A 1.268 [1.073, 1.52] excludes 1 | **VOID (order bias)**: a fixed arm order handed later arms a slower box. perf.sh now rotates the order per rep; v6 voids any run whose A/A CI excludes 1 | boat-perf/20261114-184006 |
-| 5b (v6, 6x) | 207c19e | `?c=font`, rotated order, 9 reps | running | | | |
+| 5b (v7 post hoc, 6x) | 207c19e | `?c=font`, rotated order (run killed at 26/27; aa rep 9 lost) | reps 1-6: font 0.913 [0.841, 0.998] KEEP; all 9: 0.906 [0.834, 0.977] but zoomMotion 72% | A/A 0.997 [0.907, 1.097]; aa itself failed v6 zoomWhere (80% vs bar 82%) | v7 calibrates motion/where gates on the aa arm; written after this data, so confirm on 5c | boat-perf/20261114-194310 |
+| 5c (v7, 6x) | 207c19e | `?c=font`, fresh box, 9 reps | running | | | |

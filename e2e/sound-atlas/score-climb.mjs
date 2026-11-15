@@ -1,4 +1,4 @@
-// Frozen referee for the Sound Atlas perf climb (rubric perf-climb-v6; v6 voids a run whose A/A CI excludes 1 (perf.sh now rotates arm order), v5 pairs reps in the bootstrap, v4 voids a run whose A/A arm is noisy, v3 adds zoomed-on-track gates, v2 per-rep motion medians). Reads perf-climb.mjs runs named
+// Frozen referee for the Sound Atlas perf climb (rubric perf-climb-v7; v7 calibrates the motion/where gates on the A/A arm, v6 voids a run whose A/A CI excludes 1 (perf.sh now rotates arm order), v5 pairs reps in the bootstrap, v4 voids a run whose A/A arm is noisy, v3 adds zoomed-on-track gates, v2 per-rep motion medians). Reads perf-climb.mjs runs named
 // <variant>-<rep>.json, scores every variant against the incumbent and prints KEEP / DROP with the reason.
 //   node score-climb.mjs <runs-dir> [incumbent=base]          -> also writes <runs-dir>/score.json
 // Lower is better for every metric. Ratios are candidate / incumbent with a 90% bootstrap CI over reps.
@@ -30,7 +30,10 @@ const boot = (R) => R.map(() => R[Math.floor(rnd() * R.length)]);
 const bootPair = (R, B) => { if (R.length !== B.length) return [boot(R), boot(B)]; const ix = R.map(() => Math.floor(rnd() * R.length)); return [ix.map((i) => R[i]), ix.map((i) => B[i])]; };
 const stillOf = (r) => Buffer.from(r.vis.still.px, 'base64');
 const sdiff = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += Math.abs(a[i] - b[i]); return s / a.length; };
-function gates(R, B) {
+function gates(R, B, N) {
+  // v7: N = the A/A arm's runs (identical code, run as its own arm). When present it is the null for the motion and
+  // where gates: a candidate must move as much, and where, identical code does. The base-internal null (base reps vs
+  // base rep 1) was tighter than a real repeat and failed identical code (round 5b: aa zoomWhere 80% vs bar 82%).
   const g = {};
   g.errors = R.every((r) => !r.errs.length) || R.flatMap((r) => r.errs).slice(0, 2).join(' | ');
   // every canvas at the incumbent's sharpest backing-store ratio (a split into more canvases is fine; a lower DPR is not)
@@ -38,19 +41,21 @@ function gates(R, B) {
   g.density = R.every((r) => r.vis.dens.length && r.vis.dens.every((d) => d >= top)) || `canvas px/css ${JSON.stringify(R[0].vis.dens)} vs ${JSON.stringify(B[0].vis.dens)}`;
   // v2: median of per-rep medians. Pooling let one loud rep (a chorus) move the bar; on Boat A/A reps span 0.22-0.78.
   const mo = med(R.map((r) => med(r.vis.motion))) / med(B.map((r) => med(r.vis.motion)));
-  g.motion = mo >= 0.75 || `dance motion energy ${(mo * 100).toFixed(0)}% of incumbent`;
+  const moN = N ? med(N.map((r) => med(r.vis.motion))) / med(B.map((r) => med(r.vis.motion))) : 1;
+  g.motion = mo >= 0.75 * Math.min(1, moN) || `dance motion energy ${(mo * 100).toFixed(0)}% of incumbent`;
   // Where it moves: the share of the incumbent's moving cells that also move in the candidate, against the incumbent's
   // own rep-to-rep share (A/A). A part of the dance that stops (arms, bands) drops it even when total motion holds.
   const mk = (r) => Buffer.from(r.vis.mask.b, 'base64'), cover = (a, b) => { let n = 0, d = 0; for (let i = 0; i < b.length; i++) if (b[i]) { d++; if (a[i]) n++; } return d ? n / d : 1; };
-  const covAA = B.length > 1 ? med(B.slice(1).map((r) => cover(mk(r), mk(B[0])))) : 1, cov = med(R.map((r) => cover(mk(r), mk(B[0]))));
+  const covAA = N ? med(N.map((r) => cover(mk(r), mk(B[0])))) : B.length > 1 ? med(B.slice(1).map((r) => cover(mk(r), mk(B[0])))) : 1, cov = med(R.map((r) => cover(mk(r), mk(B[0]))));
   g.where = cov >= covAA - 0.05 || `moves in ${(cov * 100).toFixed(0)}% of the incumbent's moving cells (A/A ${(covAA * 100).toFixed(0)}%)`;
   // v3: the same two checks zoomed onto the playing track (runs without vis.zoom fail: a v3 score needs v3 evidence)
   const zk = (r) => r.vis.zoom && Buffer.from(r.vis.zoom.mask.b, 'base64');
   if (B.every(zk) && R.every(zk)) {
-    const zAA = B.length > 1 ? med(B.slice(1).map((r) => cover(zk(r), zk(B[0])))) : 1, zc = med(R.map((r) => cover(zk(r), zk(B[0]))));
+    const zAA = N ? med(N.map((r) => cover(zk(r), zk(B[0])))) : B.length > 1 ? med(B.slice(1).map((r) => cover(zk(r), zk(B[0])))) : 1, zc = med(R.map((r) => cover(zk(r), zk(B[0]))));
     g.zoomWhere = zc >= zAA - 0.05 || `zoomed: moves in ${(zc * 100).toFixed(0)}% of the incumbent's moving cells (A/A ${(zAA * 100).toFixed(0)}%)`;
     const zm = med(R.map((r) => med(r.vis.zoom.motion))) / med(B.map((r) => med(r.vis.zoom.motion)));
-    g.zoomMotion = zm >= 0.75 || `zoomed dance motion ${(zm * 100).toFixed(0)}% of incumbent`;
+    const zmN = N ? med(N.map((r) => med(r.vis.zoom.motion))) / med(B.map((r) => med(r.vis.zoom.motion))) : 1;
+    g.zoomMotion = zm >= 0.75 * Math.min(1, zmN) || `zoomed dance motion ${(zm * 100).toFixed(0)}% of incumbent`;
   } else g.zoom = 'no zoomed evidence (pre-v3 run)';
   // still frame vs the incumbent's, against the incumbent's own spread across reps (A/A)
   const aa = B.length > 1 ? Math.max(...B.slice(1).map((r) => sdiff(stillOf(r), stillOf(B[0])))) : 0;
@@ -75,7 +80,7 @@ for (const [name, R] of [[INC, B], ...Object.entries(runs).filter(([k]) => k !==
     objB.push(Math.exp(lg / OBJ.length)); }
   for (const k of Object.keys(METRICS)) ratios[k] = { r: +(abs[k] / out.variants[INC].abs[k]).toFixed(3), ci: [+q(bs[k], 0.05).toFixed(3), +q(bs[k], 0.95).toFixed(3)] };
   const obj = { r: +Math.exp(mean(OBJ.map((k) => Math.log(ratios[k].r)))).toFixed(3), ci: [+q(objB, 0.05).toFixed(3), +q(objB, 0.95).toFixed(3)] };
-  const G = gates(R, B), failed = Object.entries(G.g).filter(([, v]) => v !== true);
+  const G = gates(R, B, name !== AA && name !== INC && AA ? runs[AA] : null), failed = Object.entries(G.g).filter(([, v]) => v !== true);
   const worse = Object.entries(ratios).filter(([, v]) => v.ci[0] > 1.03).map(([k]) => k);
   const verdict = failed.length ? 'DROP (quality gate)' : worse.length ? 'DROP (regresses ' + worse.join(', ') + ')' : obj.ci[1] < 1 ? 'KEEP' : 'DROP (no sure gain)';
   if (name === AA && obj.ci[1] - obj.ci[0] > 0.45) voidWhy = `noisy box: A/A objective CI [${obj.ci.join(', ')}]`;
