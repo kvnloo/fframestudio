@@ -30,6 +30,8 @@ def resolve_music(base, music, project_dir, studio=None):
     if not source.is_relative_to(base.resolve()) or not source.is_file():
         return result
     target = project_dir / "media" / ("soundtrack" + source.suffix.lower())
+    if not target.resolve().is_relative_to(project_dir.resolve()):
+        return result
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, target)
     result["file"] = target.relative_to(project_dir).as_posix()
