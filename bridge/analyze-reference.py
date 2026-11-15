@@ -33,6 +33,8 @@ def probe(file):
     if not den or num / den <= 0 or num / den > 120 or not 0 < duration <= 600:
         raise ValueError('Reference limit: ten minutes, at most 120 fps, constant frame rate recommended.')
     total = round(duration * num / den)
+    if total < 1:
+        raise ValueError('Reference limit: video must contain at least one frame.')
     return {'fps': {'num':num, 'den':den}, 'duration':duration, 'frames':total,
             'width':video['width'], 'height':video['height'], 'audio':any(s['codec_type'] == 'audio' for s in data['streams'])}
 

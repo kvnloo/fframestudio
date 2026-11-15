@@ -158,6 +158,18 @@ class AnalyzeReferenceTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "Reference limit"):
                     self._probe(data)
 
+    def test_probe_rejects_zero_frame_reference(self):
+        # A positive duration can still round to zero timeline frames. Such a
+        # reference cannot produce a non-empty shot or editable source clip.
+        for duration in ("0.001", "0.016666666666666666"):
+            with self.subTest(duration=duration):
+                with self.assertRaisesRegex(ValueError, "at least one frame"):
+                    self._probe(self._probe_data(rate="30/1", duration=duration))
+        self.assertEqual(
+            self._probe(self._probe_data(rate="30/1", duration="0.03333333333333333"))["frames"],
+            1,
+        )
+
     def test_run_raises_on_failure(self):
         with self.assertRaises(ValueError) as failure:
             analyze_reference.run(
