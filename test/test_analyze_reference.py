@@ -137,6 +137,57 @@ class AnalyzeReferenceTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "Reference limit"):
                     self._probe(self._probe_data(rate=rate, duration=duration))
 
+    def test_probe_limit_boundaries(self):
+        # Exactly ten minutes at exactly 120 fps is the largest accepted reference.
+        info = self._probe(self._probe_data(rate="120/1", duration="600"))
+        self.assertEqual(info["fps"], {"num": 120, "den": 1})
+        self.assertEqual(info["frames"], 72000)
+        # Just past either limit, or with ffprobe omitting rate/duration, is rejected.
+        missing_rate = self._probe_data()
+        del missing_rate["streams"][0]["avg_frame_rate"]
+        missing_duration = self._probe_data()
+        del missing_duration["format"]["duration"]
+        cases = {
+            "121/1": self._probe_data(rate="121/1"),
+            "600.01s": self._probe_data(duration="600.01"),
+            "no avg_frame_rate": missing_rate,
+            "no duration": missing_duration,
+        }
+        for name, data in cases.items():
+            with self.subTest(name):
+                with self.assertRaisesRegex(ValueError, "Reference limit"):
+                    self._probe(data)
+
+    def test_probe_rejects_zero_frame_reference(self):
+        # A positive duration can still round to zero timeline frames. Such a
+        # reference cannot produce a non-empty shot or editable source clip.
+        for duration in ("0.001", "0.016666666666666666"):
+            with self.subTest(duration=duration):
+                with self.assertRaisesRegex(ValueError, "at least one frame"):
+                    self._probe(self._probe_data(rate="30/1", duration=duration))
+        self.assertEqual(
+            self._probe(self._probe_data(rate="30/1", duration="0.03333333333333333"))["frames"],
+            1,
+        )
+
+    def test_invalid_probe_stops_analysis_before_output_or_decode(self):
+        # Rejection must happen before creating artifacts or starting ffmpeg.
+        for rate, duration in (("-30/1", "2.5"), ("30/-1", "2.5"),
+                               ("30/1", "-1"), ("30/1", "NaN"),
+                               ("30/1", "Infinity"), ("30/1", "-Infinity")):
+            with self.subTest(rate=rate, duration=duration):
+                data = self._probe_data(rate=rate, duration=duration)
+                out = self.reference.parent / "analysis"
+                with patch.object(analyze_reference, "run", return_value=SimpleNamespace(
+                    stdout=json.dumps(data).encode()
+                )) as probe_run, patch.object(analyze_reference, "ffmpeg") as decode:
+                    with self.assertRaisesRegex(ValueError, "Reference limit"):
+                        analyze_reference.analyze(self.reference, out)
+                    probe_run.assert_called_once()
+                    self.assertEqual(probe_run.call_args.args[0][0], "ffprobe")
+                    decode.assert_not_called()
+                self.assertFalse(out.exists(), "rejected reference must leave no output directory")
+
     def test_run_raises_on_failure(self):
         with self.assertRaises(ValueError) as failure:
             analyze_reference.run(
