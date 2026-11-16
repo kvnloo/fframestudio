@@ -170,6 +170,24 @@ class AnalyzeReferenceTests(unittest.TestCase):
             1,
         )
 
+    def test_invalid_probe_stops_analysis_before_output_or_decode(self):
+        # Rejection must happen before creating artifacts or starting ffmpeg.
+        for rate, duration in (("-30/1", "2.5"), ("30/-1", "2.5"),
+                               ("30/1", "-1"), ("30/1", "NaN"),
+                               ("30/1", "Infinity"), ("30/1", "-Infinity")):
+            with self.subTest(rate=rate, duration=duration):
+                data = self._probe_data(rate=rate, duration=duration)
+                out = self.reference.parent / "analysis"
+                with patch.object(analyze_reference, "run", return_value=SimpleNamespace(
+                    stdout=json.dumps(data).encode()
+                )) as probe_run, patch.object(analyze_reference, "ffmpeg") as decode:
+                    with self.assertRaisesRegex(ValueError, "Reference limit"):
+                        analyze_reference.analyze(self.reference, out)
+                    probe_run.assert_called_once()
+                    self.assertEqual(probe_run.call_args.args[0][0], "ffprobe")
+                    decode.assert_not_called()
+                self.assertFalse(out.exists(), "rejected reference must leave no output directory")
+
     def test_run_raises_on_failure(self):
         with self.assertRaises(ValueError) as failure:
             analyze_reference.run(
