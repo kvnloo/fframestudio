@@ -56,7 +56,11 @@ test('editorURL encodes the token and project route and rejects unsafe IDs', () 
     'http://127.0.0.1:4100/open?token=abc-123&to=%23%2Fp%2Fproj',
   );
   assert.equal(editorURL(ok), 'http://127.0.0.1:4100/open?token=abc-123&to=');
+  assert.equal(editorURL(ok, null), editorURL(ok));
   assert.throws(() => editorURL(ok, '../x'), /Invalid project id/);
+  for (const id of [0, false, '']) {
+    assert.throws(() => editorURL(ok, id), /Invalid project id/);
+  }
 });
 
 test('requestJSON rejects invalid routes without invoking fetch', async () => {

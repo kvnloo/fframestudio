@@ -38,6 +38,6 @@ export function editorURL(info, id) {
   validateBridge(info);
   const url = new URL('/open', info.url);
   url.searchParams.set('token', info.token);
-  url.searchParams.set('to', id ? `#/p/${projectID(id)}` : '');
+  url.searchParams.set('to', id == null ? '' : `#/p/${projectID(id)}`);
   return url.href;
 }
