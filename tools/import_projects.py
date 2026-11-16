@@ -40,7 +40,11 @@ def frame(src, t, out, w=640):
 def cuts(src, dur, thr=0.32):
     r = sh("ffmpeg", "-i", str(src), "-vf", f"scale=320:-2,select='gt(scene,{thr})',showinfo", "-an", "-f", "null", "-")
     ts = [float(m) for m in re.findall(r"pts_time:([\d.]+)", r.stderr)]
-    ts = [t for i, t in enumerate(ts) if t > 0.25 and (i == 0 or t - ts[i - 1] > 0.25)]
+    retained = []
+    for t in ts:
+        if t - (retained[-1] if retained else 0.0) > 0.25:
+            retained.append(t)
+    ts = retained
     if len(ts) < 3 and dur > 15 and thr > 0.15: return cuts(src, dur, thr - 0.12)
     edges = [0.0] + ts + [dur]
     return [{"id": f"s{i + 1:02d}", "name": f"Shot {i + 1}", "t0": round(a, 3), "t1": round(b, 3), "origin": f"cut detection (scene>{thr:.2f})"} for i, (a, b) in enumerate(zip(edges, edges[1:])) if b - a > 0.05]

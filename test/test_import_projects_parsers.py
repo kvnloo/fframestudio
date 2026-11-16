@@ -119,6 +119,17 @@ class ImportProjectsParsersTest(unittest.TestCase):
         self.assertIs(self.import_projects.FORCE, False)
         self.assertEqual(self.import_projects.args, [])
 
+    def test_cuts_spacing_uses_last_retained_boundary(self):
+        # A rejected near-duplicate must not suppress a later well-spaced cut.
+        fake = SimpleNamespace(stderr="pts_time:0.125 pts_time:0.375 pts_time:0.5 "
+                               "pts_time:0.625 pts_time:0.75 pts_time:1.0")
+        with patch.object(self.import_projects, "sh", return_value=fake) as fake_sh:
+            shots = self.import_projects.cuts("synthetic", 2.0)
+        self.assertEqual([(s["t0"], s["t1"]) for s in shots],
+                         [(0.0, 0.375), (0.375, 0.75), (0.75, 2.0)])
+        self.assertEqual([s["id"] for s in shots], ["s01", "s02", "s03"])
+        fake_sh.assert_called_once()
+
     def test_cuts_with_fake_ffmpeg(self):
         fake = SimpleNamespace(
             stderr="pts_time:0.1 pts_time:2.0 pts_time:2.1 pts_time:5.0"
