@@ -45,7 +45,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .chips::-webkit-scrollbar { display: none; }
 .chip { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line2); background: var(--panel); font: 600 13px "Instrument Sans", sans-serif; color: #cfcac0; scroll-snap-align: start;
   transition: transform .35s var(--spring), background .25s var(--ease), border-color .25s var(--ease), color .25s; }
-.chip:active { transform: scale(.93); }
+.chip:active { transform: scale(.97); }
+/* the rail is controls, not text: a held chip (glow) or Sort must never start a text selection or callout */
+#rail, #rail * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .chip small { font: 10px "IBM Plex Mono", monospace; color: var(--mute); }
 .chip.feel i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 0 var(--c); transition: box-shadow .3s; }
 .chip.on { background: var(--ink); color: #0d1112; border-color: var(--ink); }
@@ -405,8 +407,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .castmenu button.ghost { min-height: 40px; justify-content: center; border-color: transparent; color: var(--mute); font: 12px "IBM Plex Mono", monospace; }
 
 /* --- TV view: what a cast lands on. 10-foot: big type, no touch chrome, the map is the wallpaper ---- */
-html.tv .dock, html.tv .grab, html.tv #ps, html.tv #pc, html.tv .party { display: none !important; } /* the desktop layout minus typing and phone-only buttons */
-html.tv .rail { right: 448px; } html.tv .tvcode { bottom: 72px; } /* the Sort + feel rail sits under the map, clear of the panel, as on desktop */
+html.tv .dock, html.tv .views, html.tv .grab, html.tv #ps, html.tv #pc, html.tv #ph, html.tv #pr, html.tv .rail, html.tv .motion, html.tv .live, html.tv .party { display: none !important; }
 html.tv .brand .dot { animation: none; } /* the logo spin keeps the TV compositor busy every frame while idle */
 .atlas-fly { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; } /* a TV's dancing tracks, over the still map */
 html.tv #atlas { top: 0; left: 0; right: 0; bottom: 0; cursor: none; } /* longhands: Tizen 6.5 (Chromium 85) has no `inset` */

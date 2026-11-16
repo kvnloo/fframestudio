@@ -1,0 +1,12 @@
+{
+  "id": "com.kvnloo.soundatlas",
+  "version": "1.0.0",
+  "vendor": "Kevin Rajan",
+  "type": "web",
+  "main": "index.html",
+  "title": "Sound Atlas",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": true
+}
