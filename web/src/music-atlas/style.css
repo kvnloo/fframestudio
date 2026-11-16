@@ -326,6 +326,12 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .motion[aria-pressed="true"] svg { animation: wig 1.6s ease-in-out infinite; }
 @keyframes wig { 50% { transform: translateX(1.5px) scaleY(.8); } }
 .motion[hidden] { display: none; }
+.sponsor { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 16px; background: rgba(13, 17, 18, .62); border: 1px solid var(--line); color: var(--mute); transition: color .2s, border-color .2s, transform .25s var(--spring); -webkit-touch-callout: none; user-select: none; } /* support me: GitHub Sponsors */
+.sponsor svg { width: 16px; height: 16px; }
+.sponsor .h { fill: #ff7a9a; transform-origin: 8.25px 5.5px; transition: transform .25s var(--spring); }
+.sponsor:hover, .sponsor:focus-visible { color: var(--ink); border-color: var(--line2); }
+.sponsor:hover .h { transform: scale(1.18); }
+.sponsor:active { transform: scale(.93); }
 @media (max-width: 379px) { .brand small { display: none; } } /* the Library tab carries the count; the header must fit Motion */
 @media (max-width: 419px) { .motion { width: 32px; padding: 0; justify-content: center; } .motion span { display: none; } } /* icon-only on phones: the label pushed it off-screen */
 .live b { color: var(--ink); font-weight: 400; }
