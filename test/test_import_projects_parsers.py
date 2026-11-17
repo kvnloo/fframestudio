@@ -43,18 +43,24 @@ class ImportProjectsParsersTest(unittest.TestCase):
         except BaseException:
             cls.tearDownClass()
             raise
+        finally:
+            cls._restore_process_globals()
 
     @classmethod
-    def tearDownClass(cls):
-        sys.modules.pop("import_projects", None)
-        if cls._old_module is not None:
-            sys.modules["import_projects"] = cls._old_module
+    def _restore_process_globals(cls):
         if cls._old_sources is None:
             os.environ.pop("FFS_SOURCES", None)
         else:
             os.environ["FFS_SOURCES"] = cls._old_sources
         sys.argv = cls._old_argv
         sys.path[:] = cls._old_path
+
+    @classmethod
+    def tearDownClass(cls):
+        sys.modules.pop("import_projects", None)
+        if cls._old_module is not None:
+            sys.modules["import_projects"] = cls._old_module
+        cls._restore_process_globals()
         cls._temp.cleanup()
 
     def test_import_safe(self):
@@ -109,9 +115,37 @@ class ImportProjectsParsersTest(unittest.TestCase):
             },
         ])
 
+    def test_html_film_multiline_arrays_preserve_text(self):
+        for newline in ("\n", "\r\n"):
+            with self.subTest(newline=repr(newline)):
+                js = newline.join(["const SHOTS=[{at: 0, head: [",
+                    "'Hello',", "'World'", "], body: [", "'a',", "'b'", "]}];"])
+                self.assertEqual(self.import_projects.html_film_shots(js), [{
+                    "at": 0.0, "name": "Hello World",
+                    "text": {"head": ["Hello", "World"], "body": ["a", "b"]},
+                }])
+
+    def test_html_film_double_quoted_text(self):
+        js = 'const SHOTS=[{at: 0, head:["Hello", "World"], body:["a", "b"]}, {at: 2, tag:"Intro", head:["X"]}];'
+        self.assertEqual(self.import_projects.html_film_shots(js), [
+            {"at": 0.0, "name": "Hello World", "text": {"head": ["Hello", "World"], "body": ["a", "b"]}},
+            {"at": 2.0, "name": "Intro", "text": {"head": ["X"], "body": []}},
+        ])
+
     def test_flags(self):
         self.assertIs(self.import_projects.FORCE, False)
         self.assertEqual(self.import_projects.args, [])
+
+    def test_cuts_spacing_uses_last_retained_boundary(self):
+        # A rejected near-duplicate must not suppress a later well-spaced cut.
+        fake = SimpleNamespace(stderr="pts_time:0.125 pts_time:0.375 pts_time:0.5 "
+                               "pts_time:0.625 pts_time:0.75 pts_time:1.0")
+        with patch.object(self.import_projects, "sh", return_value=fake) as fake_sh:
+            shots = self.import_projects.cuts("synthetic", 2.0)
+        self.assertEqual([(s["t0"], s["t1"]) for s in shots],
+                         [(0.0, 0.375), (0.375, 0.75), (0.75, 2.0)])
+        self.assertEqual([s["id"] for s in shots], ["s01", "s02", "s03"])
+        fake_sh.assert_called_once()
 
     def test_cuts_with_fake_ffmpeg(self):
         fake = SimpleNamespace(

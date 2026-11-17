@@ -40,7 +40,11 @@ def frame(src, t, out, w=640):
 def cuts(src, dur, thr=0.32):
     r = sh("ffmpeg", "-i", str(src), "-vf", f"scale=320:-2,select='gt(scene,{thr})',showinfo", "-an", "-f", "null", "-")
     ts = [float(m) for m in re.findall(r"pts_time:([\d.]+)", r.stderr)]
-    ts = [t for i, t in enumerate(ts) if t > 0.25 and (i == 0 or t - ts[i - 1] > 0.25)]
+    retained = []
+    for t in ts:
+        if t - (retained[-1] if retained else 0.0) > 0.25:
+            retained.append(t)
+    ts = retained
     if len(ts) < 3 and dur > 15 and thr > 0.15: return cuts(src, dur, thr - 0.12)
     edges = [0.0] + ts + [dur]
     return [{"id": f"s{i + 1:02d}", "name": f"Shot {i + 1}", "t0": round(a, 3), "t1": round(b, 3), "origin": f"cut detection (scene>{thr:.2f})"} for i, (a, b) in enumerate(zip(edges, edges[1:])) if b - a > 0.05]
@@ -72,9 +76,14 @@ def html_film_shots(js):
     out = []
     for m in re.finditer(r"\{\s*at:\s*([\d.]+),(.*?)\}\s*[,\]]", js, re.S):
         body = m.group(2)
-        head = re.findall(r"'([^']*)'", (re.search(r"head:\s*\[(.*?)\]", body) or [None, ""])[1] if re.search(r"head:\s*\[(.*?)\]", body) else "")
-        tag = re.search(r"tag:\s*'([^']*)'", body); bod = re.findall(r"'([^']*)'", (re.search(r"body:\s*\[(.*?)\]", body).group(1) if re.search(r"body:\s*\[(.*?)\]", body) else ""))
-        out.append({"at": float(m.group(1)), "name": (tag.group(1) if tag else "") or " ".join(head), "text": {"head": head, "body": bod}})
+        def strings(text):
+            return [match.group(2) for match in re.finditer(r"""(['"])(.*?)\1""", text, re.S)]
+        head_array = re.search(r"head:\s*\[(.*?)\]", body, re.S)
+        body_array = re.search(r"body:\s*\[(.*?)\]", body, re.S)
+        head = strings(head_array.group(1)) if head_array else []
+        bod = strings(body_array.group(1)) if body_array else []
+        tag = re.search(r"""tag:\s*(['"])(.*?)\1""", body, re.S)
+        out.append({"at": float(m.group(1)), "name": (tag.group(2) if tag else "") or " ".join(head), "text": {"head": head, "body": bod}})
     return out
 
 def spec_from_studio(src):
