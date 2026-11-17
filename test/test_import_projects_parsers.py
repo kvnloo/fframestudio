@@ -125,6 +125,13 @@ class ImportProjectsParsersTest(unittest.TestCase):
                     "text": {"head": ["Hello", "World"], "body": ["a", "b"]},
                 }])
 
+    def test_html_film_double_quoted_text(self):
+        js = 'const SHOTS=[{at: 0, head:["Hello", "World"], body:["a", "b"]}, {at: 2, tag:"Intro", head:["X"]}];'
+        self.assertEqual(self.import_projects.html_film_shots(js), [
+            {"at": 0.0, "name": "Hello World", "text": {"head": ["Hello", "World"], "body": ["a", "b"]}},
+            {"at": 2.0, "name": "Intro", "text": {"head": ["X"], "body": []}},
+        ])
+
     def test_flags(self):
         self.assertIs(self.import_projects.FORCE, False)
         self.assertEqual(self.import_projects.args, [])
