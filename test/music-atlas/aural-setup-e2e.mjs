@@ -18,7 +18,7 @@ const UA = {
 };
 
 async function openPc(kind) {
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, userAgent: UA[kind].ua, permissions: ["clipboard-read", "clipboard-write"] });
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, userAgent: UA[kind].ua, permissions: ["clipboard-read", "clipboard-write", ...(new URL(base).protocol === "https:" ? ["local-network-access"] : [])] });
   await ctx.addInitScript((p) => { Object.defineProperty(navigator, "platform", { get: () => p }); Object.defineProperty(navigator, "userAgentData", { get: () => undefined }); localStorage.removeItem("sa-aural"); }, UA[kind].platform);
   const page = await ctx.newPage(); page.on("pageerror", (e) => errors.push(`${kind}: ${e.message}`));
   await page.goto(base + "#aural"); await page.waitForSelector("aside.aural.open", { timeout: 30000 });
