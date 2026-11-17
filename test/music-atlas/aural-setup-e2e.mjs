@@ -33,7 +33,8 @@ for (const kind of ["mac", "linux"]) {
   const { ctx, page } = await openPc(kind);
   assert.equal(await page.textContent("aside.aural h5"), want[kind], `${kind}: the pane names the detected OS`);
   const cmd = await page.textContent("aside.aural [data-cmd]");
-  assert.equal(cmd, `curl -fsSL ${origin}/aural/install.sh | AURAL_SITE=${origin} bash`, `${kind}: install command points at this site`);
+  const live = origin === "https://glide-music-picker.vercel.app";
+  assert.equal(cmd, `curl -fsSL ${origin}/aural/install.sh | ${live ? "" : `AURAL_SITE=${origin} `}bash`, `${kind}: install command points at this site`);
   await page.click("aside.aural .plan summary");
   const items = await page.$$eval("aside.aural .plan li b", (bs) => bs.map((b) => b.textContent));
   assert.ok(items.length >= 4, `${kind}: plan lists what it installs`);
