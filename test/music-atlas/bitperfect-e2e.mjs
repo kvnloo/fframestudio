@@ -30,7 +30,7 @@ const srv = createServer((req, res) => {
 }).listen(4317, "127.0.0.1");
 
 const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required"] });
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, permissions: new URL(base).protocol === "https:" ? ["local-network-access"] : [] });
 await ctx.addInitScript(() => { if (!sessionStorage.getItem("seeded")) { sessionStorage.setItem("seeded", "1"); localStorage.setItem("sa-aural", JSON.stringify({ server: true })); } });
 const page = await ctx.newPage(); const errors = []; page.on("pageerror", (e) => errors.push(e.message));
 await page.goto(base); await page.waitForFunction(() => window.__sa?.all?.length > 100, null, { timeout: 30000 });
