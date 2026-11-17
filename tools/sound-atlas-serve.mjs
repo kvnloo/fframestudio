@@ -26,6 +26,15 @@ createServer(async (req, res) => {
     }
     let p = normalize(join(dir, decodeURIComponent(u.pathname))); if (!p.startsWith(dir)) throw 0;
     if ((await stat(p)).isDirectory()) p = join(p, "index.html");
-    res.writeHead(200, { "content-type": TYPES[extname(p)] ?? "application/octet-stream" }); res.end(await readFile(p));
+    const data = await readFile(p), type = TYPES[extname(p)] ?? "application/octet-stream";
+    // Range requests, as the deploy serves them: without them a browser can't seek in a song.
+    const rg = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? "");
+    if (rg && (rg[1] || rg[2])) {
+      const start = rg[1] ? +rg[1] : Math.max(0, data.length - +rg[2]), end = rg[1] && rg[2] ? Math.min(+rg[2], data.length - 1) : data.length - 1;
+      if (start >= data.length || start > end) { res.writeHead(416, { "content-range": `bytes */${data.length}` }); return res.end(); }
+      res.writeHead(206, { "content-type": type, "accept-ranges": "bytes", "content-range": `bytes ${start}-${end}/${data.length}`, "content-length": end - start + 1 });
+      return res.end(data.subarray(start, end + 1));
+    }
+    res.writeHead(200, { "content-type": type, "accept-ranges": "bytes", "content-length": data.length }); res.end(data);
   } catch { res.writeHead(404); res.end("not found"); }
 }).listen(port, "127.0.0.1", function () { console.log(`http://127.0.0.1:${this.address().port}/`); });

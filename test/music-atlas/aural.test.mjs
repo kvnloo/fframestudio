@@ -95,3 +95,25 @@ test("aural-local only runs allowlisted verbs and known soundscapes", async () =
   assert.equal((await call("/sink", { ...o, body: { name: "not-a-sink-$(id)" } })).code, 400);
   assert.equal((await call("/brir/7", { origin: o.origin })).code, 404);
 });
+
+// --- bit-perfect: the native player's pure parts (tools/aural-local/native.mjs) ---------------------------------
+import { urlOk, pickSink, parseHwParams, verdict } from "../../tools/aural-local/native.mjs";
+test("native player only fetches songs from the site and the catalogue's hosts", () => {
+  for (const u of ["https://glide-music-picker.vercel.app/tracks/a.mp3", "https://glide-music-picker-abc123-kvnloos-projects.vercel.app/api/ccm?p=x", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/x.mp3", "http://127.0.0.1:8787/tracks/a.mp3", "https://mbp.taila30dc.ts.net:8787/tracks/a.mp3"]) assert.ok(urlOk(u), u);
+  for (const u of ["file:///etc/passwd", "https://evil.example/x.mp3", "https://incompetech.com.evil.example/x.mp3", "https://user:pw@incompetech.com/x.mp3", "ytdl://x", "javascript:alert(1)", "lavfi://sine"]) assert.ok(!urlOk(u), u);
+});
+test("native player plays to the DAC itself, never a DSP sink", () => {
+  const list = [{ name: "effect_input.headphone_dsp" }, { name: "alsa_output.pci-0000_00_1f.3.analog-stereo" }, { name: "alsa_output.usb-Topping_DX5-00.HiFi__Headphones__sink" }];
+  assert.equal(pickSink(list, "effect_input.headphone_dsp").name, "alsa_output.usb-Topping_DX5-00.HiFi__Headphones__sink", "a DSP default resolves to the USB DAC");
+  assert.equal(pickSink(list, "alsa_output.pci-0000_00_1f.3.analog-stereo").name, "alsa_output.pci-0000_00_1f.3.analog-stereo", "a hardware default is respected");
+  assert.equal(pickSink([{ name: "effect_input.x" }], "effect_input.x"), null);
+});
+test("hw_params and the verdict say exactly why playback isn't bit-perfect", () => {
+  assert.deepEqual(parseHwParams("access: MMAP_INTERLEAVED\nformat: S32_LE\nsubformat: STD\nchannels: 2\nrate: 44100 (44100/1)\n"), { format: "S32_LE", rate: 44100, channels: 2 });
+  assert.equal(parseHwParams("closed\n"), null);
+  const ok = { params: { samplerate: 44100 }, out: { samplerate: 44100 }, hw: { rate: 44100 }, volume: 100, mpvVolume: 100, af: "", others: 0 };
+  assert.deepEqual(verdict(ok), []);
+  const bad = verdict({ ...ok, hw: { rate: 48000 }, volume: 70, others: 1, af: "lavfi" });
+  assert.equal(bad.length, 4); assert.match(bad.join(" "), /48000 Hz.*44100 Hz/); assert.match(bad.join(" "), /70%/);
+  assert.deepEqual(verdict({}), ["nothing playing"]);
+});

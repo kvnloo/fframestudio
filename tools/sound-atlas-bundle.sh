@@ -23,7 +23,7 @@ cp "$here"/web/labs/sound-atlas.webmanifest "$here"/web/labs/sound-atlas-icon.sv
 # know which tracks have a file); without it, or bundling in place, skip rather than let set -e drop api/ and tracks/.
 if [ -f "$cat_dir/beats/index.json" ] && ! [ "$cat_dir" -ef "$out" ]; then mkdir -p "$out/beats"; cp -u "$cat_dir"/beats/*.bin "$cat_dir/beats/index.json" "$out/beats/"; fi
 # Aural's one-command setup (the pane's "This computer" tab): the installer, a readable copy, and the server it installs.
-mkdir -p "$out/aural" && cp "$here/tools/aural-local/install.sh" "$here/tools/aural-local/server.mjs" "$out/aural/" && cp "$here/tools/aural-local/install.sh" "$out/aural/install.txt"
+mkdir -p "$out/aural" && cp "$here/tools/aural-local/install.sh" "$here/tools/aural-local/server.mjs" "$here/tools/aural-local/native.mjs" "$out/aural/" && cp "$here/tools/aural-local/install.sh" "$out/aural/install.txt"
 mkdir -p "$out/api" && cp -L "$here"/tools/sound-atlas-api/*.js "$out/api/" # same-origin stream proxy (ccMixter needs its Referer)
 [ -f "$out/share.json" ] || echo '{}' > "$out/share.json" # deploy step may write {"base": "<entry link>"}; never commit it
 if [ -n "$tracks" ]; then mkdir -p "$out/tracks"; cp -u "$tracks"/*.mp3 "$out/tracks/"; fi
