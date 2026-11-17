@@ -59,7 +59,7 @@ fetch_dotfiles() {
     # Only the audio parts: a sparse, blobless clone of kvnloo/.files.
     run mkdir -p "$(dirname "$DOT")"
     run git clone --filter=blob:none --sparse --branch "$DOT_REF" "$DOT_REPO" "$DOT"
-    run git -C "$DOT" sparse-checkout set config/pipewire config/wireplumber config/camilladsp config/autoeq config/brir scripts
+    run git -C "$DOT" sparse-checkout set config/pipewire config/wireplumber config/camilladsp config/autoeq config/brir config/host/etc/security config/host/etc/udev scripts
     ok "cloned $DOT_REPO ($DOT_REF), audio paths only"
   fi
 }
@@ -69,8 +69,9 @@ fetch_server() {
   run mkdir -p "$APP/tools/aural-local" "$APP/web/src/music-atlas"
   # server.mjs imports ../../web/src/music-atlas/aural.js (the soundscape list), so keep that layout.
   run curl -fsSL "$SITE/aural/server.mjs" -o "$APP/tools/aural-local/server.mjs"
+  run curl -fsSL "$SITE/aural/native.mjs" -o "$APP/tools/aural-local/native.mjs"
   run curl -fsSL "$SITE/src/music-atlas/aural.js" -o "$APP/web/src/music-atlas/aural.js"
-  ok "server.mjs + aural.js from $SITE"
+  ok "server.mjs, native.mjs + aural.js from $SITE"
 }
 
 # --------------------------------------------------------------------------------------------- Linux
@@ -78,7 +79,7 @@ linux_packages() {
   say "Packages"
   local pkgs
   if have pacman; then
-    pkgs="pipewire pipewire-pulse wireplumber lsp-plugins-lv2 zam-plugins-lv2 ladspa-bs2b cava nodejs git jq python"
+    pkgs="pipewire pipewire-pulse wireplumber lsp-plugins-lv2 zam-plugins-lv2 ladspa-bs2b cava nodejs git jq python mpv rtkit realtime-privileges"
     local missing="" repo="" aur="" p
     for p in $pkgs; do pacman -Qq "$p" >/dev/null 2>&1 || missing="$missing $p"; done
     if [ -z "$missing" ]; then ok "all present"; return; fi
@@ -99,10 +100,10 @@ linux_packages() {
       fi
     fi
   elif have apt-get; then
-    pkgs="pipewire pipewire-pulse wireplumber lsp-plugins-lv2 zam-plugins bs2b-ladspa cava nodejs git jq python3"
+    pkgs="pipewire pipewire-pulse wireplumber lsp-plugins-lv2 zam-plugins bs2b-ladspa cava nodejs git jq python3 mpv rtkit"
     run sudo apt-get update -qq && run sudo apt-get install -y $pkgs
   elif have dnf; then
-    pkgs="pipewire pipewire-pulseaudio wireplumber lsp-plugins-lv2 zam-plugins ladspa-bs2b-plugins cava nodejs git jq python3"
+    pkgs="pipewire pipewire-pulseaudio wireplumber lsp-plugins-lv2 zam-plugins ladspa-bs2b-plugins cava nodejs git jq python3 mpv rtkit"
     run sudo dnf install -y $pkgs
   else
     warn "unknown package manager: install PipeWire, WirePlumber, LSP + ZAM LV2 plugins, the bs2b LADSPA plugin, cava, Node.js, git and jq yourself"
@@ -117,6 +118,7 @@ linux_setup() {
   [ "$DRY" = 1 ] || linux_packages
   fetch_dotfiles
   local cfg="${XDG_CONFIG_HOME:-$HOME/.config}"
+  linux_bitperfect "$cfg"
   say "PipeWire filter-chain sinks (Clean, Crossfeed, Room, Movie, Aural Evolution)"
   place "$DOT/config/pipewire/pipewire.conf.d/10-headphone-dsp.conf"   "$cfg/pipewire/pipewire.conf.d/10-headphone-dsp.conf"
   place "$DOT/config/pipewire/pipewire.conf.d/11-aural-evolution.conf" "$cfg/pipewire/pipewire.conf.d/11-aural-evolution.conf"
@@ -161,10 +163,41 @@ EOF
   [ -n "$hypr" ] && have hyprctl && [ "$DRY" != 1 ] && hyprctl notify 1 5000 0 "Aural chain installed · open Sound Atlas → Aural → This computer" >/dev/null 2>&1 || true
 }
 
+# The bit-perfect stack, layer by layer, from .files:
+#   PipeWire follows the song's rate (default.clock.allowed-rates 44.1k-768k) with RT scheduling (prio 88, nice -11);
+#   the DX5 WirePlumber rule (S32LE, no channel mixing, never suspends) comes later with the other WirePlumber files;
+#   RT limits for the audio / realtime / pipewire groups, and you in them (takes effect at next login);
+#   USB power management off for the DAC so it never drops out (udev);
+#   mpv for the native player the page hands songs to.
+linux_bitperfect() {
+  local cfg="$1" f g
+  say "Bit-perfect: PipeWire follows each song's rate, with realtime scheduling"
+  place "$DOT/config/pipewire/pipewire.conf" "$cfg/pipewire/pipewire.conf"
+  say "Bit-perfect: realtime limits (/etc/security/limits.d) and groups"
+  for f in 20-audio.conf 99-pipewire.conf 99-realtime-privileges.conf; do
+    [ -f "$DOT/config/host/etc/security/limits.d/$f" ] || continue
+    run sudo install -D -m 644 "$DOT/config/host/etc/security/limits.d/$f" "/etc/security/limits.d/$f"; ok "/etc/security/limits.d/$f"
+  done
+  for g in audio realtime pipewire; do
+    if getent group "$g" >/dev/null 2>&1 && ! id -nG "$USER" | tr ' ' '\n' | grep -qx "$g"; then run sudo usermod -aG "$g" "$USER"; ok "added $USER to $g (log out and back in)"; fi
+  done
+  say "Bit-perfect: USB DAC power management off (udev)"
+  [ -f "$DOT/config/host/etc/udev/rules.d/50-usb-low-latency.rules" ] && { run sudo install -D -m 644 "$DOT/config/host/etc/udev/rules.d/50-usb-low-latency.rules" /etc/udev/rules.d/50-usb-low-latency.rules; ok /etc/udev/rules.d/50-usb-low-latency.rules; }
+  if [ "$DRY" = 1 ]; then printf '  + write /etc/udev/rules.d/90-topping-dx5-no-autosuspend.rules\n'; else
+    printf '%s\n' 'ACTION=="add|change", SUBSYSTEM=="usb", ATTR{manufacturer}=="Topping", TEST=="power/control", ATTR{power/control}="on"' | sudo tee /etc/udev/rules.d/90-topping-dx5-no-autosuspend.rules >/dev/null
+  fi
+  ok /etc/udev/rules.d/90-topping-dx5-no-autosuspend.rules
+  run sudo udevadm control --reload-rules || warn "udev not running here; the rules apply at next boot"
+  run sudo udevadm trigger --subsystem-match=usb --action=change || true
+}
+
 verify_linux() {
   say "Check"
   local n s
-  n=$(pactl list short sinks 2>/dev/null | grep -c -E 'effect_input\.(headphone_dsp|aural_evolution)' || true)
+  n=$(pactl list short sinks 2>/dev/null | grep -c -E 'effect_input\.(headphone_dsp|aural_evolution)' || true); n=${n:-0}
+  local rates; rates="$(pw-metadata -n settings 0 clock.allowed-rates 2>/dev/null | grep -o "value:'[^']*'" | head -1 || true)"
+  [ -n "$rates" ] && ok "PipeWire follows song rates: $rates" || warn "couldn't read clock.allowed-rates (pw-metadata -n settings)"
+  have mpv && ok "native player: $(mpv --version | head -1 | cut -d' ' -f1-2)" || warn "mpv missing: bit-perfect playback needs it"
   [ "$n" -gt 0 ] && ok "$n DSP sinks loaded" || warn "no DSP sinks yet: check \`journalctl --user -u pipewire -n 50\` (missing LV2/LADSPA plugin?)"
   for s in 1 2 3 4 5; do curl -fsS -m 2 http://127.0.0.1:4317/health >/dev/null 2>&1 && break; sleep 1; done
   curl -fsS -m 2 http://127.0.0.1:4317/health >/dev/null 2>&1 && ok "aural-local answering on 127.0.0.1:4317" || warn "aural-local not answering: \`journalctl --user -u aural-local -n 50\`"
@@ -182,9 +215,9 @@ mac_setup() {
   fi
   have brew || [ "$DRY" = 1 ] || die "Homebrew is required"
   say "Packages"
-  run brew install node switchaudio-osx cava python git
+  run brew install node switchaudio-osx cava python git mpv
   if ! brew list --cask blackhole-2ch >/dev/null 2>&1; then run brew install --cask blackhole-2ch; fi
-  ok "node, SwitchAudioSource, cava, python, BlackHole 2ch"
+  ok "node, SwitchAudioSource, cava, python, mpv (bit-perfect player: CoreAudio exclusive mode at each song's rate), BlackHole 2ch"
 
   # The output you hear right now is where CamillaDSP will play (BlackHole becomes the system output).
   local state="$HOME/.config/aural"; run mkdir -p "$state"

@@ -620,6 +620,8 @@ a.aref { color: inherit; text-decoration: underline; text-decoration-color: colo
 .aural a { color: var(--acc); text-decoration: none; } .aural a:hover { text-decoration: underline; }
 .aural .row a { align-self: center; font-size: 12px; }
 .aural a.btn { color: var(--ink); background: var(--panel); border: 1px solid var(--line2); border-radius: 10px; padding: 7px 10px; text-decoration: none; }
+.aural .bpstat { margin: 8px 0 4px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line2); color: var(--mute); font: 12px "IBM Plex Mono", monospace; }
+.aural .bpstat.ok { color: var(--acc); border-color: var(--acc); background: rgba(95, 211, 220, .08); }
 .aural .plan { margin-top: 10px; } .aural .plan summary { cursor: pointer; color: var(--ink); }
 .aural .plan ul { margin: 8px 0 0; padding-left: 16px; color: var(--mute); line-height: 1.5; } .aural .plan li { margin-bottom: 6px; } .aural .plan li b { color: var(--ink); font-weight: 600; margin-right: 4px; }
 .aural .addr input { flex: 1; min-width: 0; padding: 8px 10px; background: var(--panel2); color: inherit; border: 1px solid var(--line); border-radius: 8px; font: 12px "IBM Plex Mono", monospace; }

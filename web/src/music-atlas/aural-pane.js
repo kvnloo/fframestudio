@@ -39,7 +39,7 @@ async function start() {
   window.__aural = { engine, prefs };
 }
 function setOn(v) {
-  prefs.on = v; save();
+  prefs.on = v; save(); nat?.refresh(); // bit-perfect auto steps aside while the in-page chain is on
   if (v) start().then(() => { engine.bypass(false); render(); }, (e) => host.toast("Aural: " + e.message));
   else if (engine) { engine.bypass(true); host.A.setStage(null); }
 }
@@ -154,12 +154,14 @@ export const PLAN = {
     ["Filter-chain sinks", `${df("config/pipewire/pipewire.conf.d/10-headphone-dsp.conf")} (Clean · Crossfeed · Room · Movie) and ${df("config/pipewire/pipewire.conf.d/11-aural-evolution.conf")}, with your ${df("config/autoeq/active_48000Hz.wav", "AutoEQ")} and ${df("config/brir/BRIR_R02_C1_True_Stereo.wav", "BRIR")} files`],
     ["Routing", `${df("config/pipewire/pipewire-pulse.conf.d/30-plex-movie-dsp.conf")}, ${df("config/pipewire/pipewire-pulse.conf.d/20-browser-bypass-brir.conf")} (Chrome to the Movie sink), ${df("config/wireplumber/wireplumber.conf.d/51-topping-dx5.conf")}`],
     ["Commands", `${df("scripts/audio-evolve")}, ${df("scripts/audio-sink")}, ${df("config/pipewire/headphone-switch.sh")} in ~/.local/bin`],
+    ["Bit-perfect", `${df("config/pipewire/pipewire.conf")} (follows each song's rate, 44.1–768 kHz; realtime prio 88), realtime limits ${df("config/host/etc/security/limits.d/99-realtime-privileges.conf", "99-realtime")} · ${df("config/host/etc/security/limits.d/20-audio.conf", "20-audio")} · ${df("config/host/etc/security/limits.d/99-pipewire.conf", "99-pipewire")} and the groups, USB power management off (${df("config/host/etc/udev/rules.d/50-usb-low-latency.rules")}), ${L("https://mpv.io", "mpv")} as the native player`],
     ["Service", `aural-local as a systemd user service (${L("/aural/server.mjs", "server.mjs")}), published to your tailnet`],
   ] },
   mac: { title: "macOS", items: () => [
     ["Packages", `${L("https://brew.sh", "Homebrew")}: Node.js, ${L("https://github.com/deweller/switchaudio-osx", "SwitchAudioSource")}, ${L("https://github.com/karlstav/cava", "cava")}, ${L("https://github.com/ExistentialAudio/BlackHole", "BlackHole 2ch")}`],
     ["DSP engine", `${L("https://github.com/HEnquist/camilladsp/releases/tag/v4.1.3", "CamillaDSP 4.1.3")} + ${L("https://github.com/HEnquist/pycamilladsp", "pycamilladsp")}, playing to the output you use now`],
     ["Profiles", `${df("config/camilladsp/camilladsp.yml")} · ${df("config/camilladsp/camilladsp-crossfeed.yml", "crossfeed")} · ${df("config/camilladsp/camilladsp-room.yml", "room")}, ${df("config/camilladsp/headphone-switch.sh")} and every experience (${df("config/camilladsp/the-vinyl-experience.sh", "vinyl")}, ${df("config/camilladsp/late-night-mode.sh", "late night")}, ${df("config/camilladsp/concert-hall-teleporter.sh", "hall")}…)`],
+    ["Bit-perfect", `${L("https://mpv.io", "mpv")} as the native player: CoreAudio exclusive (hog) mode on your DAC at each song's own rate, around BlackHole and CamillaDSP`],
     ["Services", `CamillaDSP and aural-local as LaunchAgents (${df("config/camilladsp/com.camilladsp.daemon.plist", "your plist")}, with this Mac's paths); system output set to BlackHole`],
   ] },
 };
@@ -188,17 +190,34 @@ function pc() {
   if (!srv.up) return `<p class="hint">${esc(srv.err ?? "Looking for aural-local…")}</p>${setup()}<pre>${esc(cmd)}</pre><div class="row"><button data-server>Try again</button><button data-unserver>Stop using it</button></div>${phoneHint}`;
   const e = srv.evolve;
   return `<p class="desc">Connected${srv.base !== LOCAL ? ` over Tailscale (${esc(new URL(srv.base).hostname.split(".")[0])})` : ""} · dotfiles <code>${esc(srv.caps?.dotfiles ?? "none")}</code> · CamillaDSP ${srv.camilla ? "running" : "not running"}${srv.caps?.cava ? " · cava" : ""}</p>
+    ${bitPerfectBox()}
     <h5>Output</h5><div class="sinks">${(srv.sinks ?? []).map((s) => `<button data-sink="${esc(s.name)}" class="${s.default ? "on" : ""}"><b>${esc(s.desc)}</b><small>${esc([s.format, s.rate && s.rate / 1000 + " kHz", s.channels && s.channels + " ch"].filter(Boolean).join(" · "))}</small></button>`).join("")}</div>
     <h5>System-wide soundscapes</h5><div class="chips">${(srv.scapes ?? []).map((id) => `<button data-sys="${id}" class="${srv.active === id ? "on" : ""}">${esc(scapeById.get(id)?.name ?? id)}</button>`).join("") || `<span class="hint">None available.</span>`}</div>
     ${e ? `<h5>Aural Evolution · ${esc(e.device)} · ${esc(e.mode)} · gen ${e.generation}</h5><div class="chips">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button data-ev="select" data-arg="${n}" class="${e.active === n ? "on" : ""}">${n}</button>`).join("")}<button data-ev="favorite">★ keep</button><button data-ev="mode" data-arg="${e.mode === "room" ? "native" : "room"}">→ ${e.mode === "room" ? "native" : "room"}</button></div>` : ""}
     ${srv.caps?.cava ? `<h5>Map</h5><div class="chips"><button data-spec class="${spectrum ? "on" : ""}">Draw the computer's whole output (cava) on the map</button></div>` : ""}
     <div class="row"><button data-server>Refresh</button><button data-unserver>Disconnect</button></div>${phoneCode()}`;
 }
+// Bit-perfect (native.js): this computer's player straight to the DAC, the page silent and following.
+let nat = null; // the loaded native.js module
+function bitPerfectBox() {
+  if (!srv.caps?.native) return `<h5>Bit-perfect</h5><p class="hint">Needs mpv on this computer: run the setup command again (it installs mpv and the bit-perfect stack).</p>`;
+  const mode = nat?.bp.mode ?? prefs.bitperfect ?? "auto", sum = nat?.summary() ?? { ok: false, text: "Starting…" };
+  return `<h5>Bit-perfect</h5><div class="chips">${[["auto", "Auto"], ["on", "Always"], ["off", "Off"]].map(([k, n]) => `<button data-bp="${k}" class="${mode === k ? "on" : ""}">${n}</button>`).join("")}</div>
+    <p class="bpstat ${sum.ok ? "ok" : ""}" data-bpstat>${esc(sum.text)}</p>
+    <p class="hint">Browsers resample everything to the output's rate. Bit-perfect plays the song with this computer's own player, straight to ${esc(nat?.bp.now?.target ?? "the DAC")} at the song's own rate, with no DSP and no volume change; the page plays along silently. Auto follows your system: on when the output is the DAC itself (<code>audio-sink bitperfect</code>), off on a DSP sink or while the in-page chain (top switch) is on.</p>`;
+}
+export function onNative() { // native.js status changed: update the line in place (a full render would steal focus)
+  const box = el?.querySelector("[data-bpstat]"); if (!box || !nat) return;
+  const s = nat.summary(); box.textContent = s.text; box.classList.toggle("ok", s.ok);
+}
+const loadNative = () => host.bitPerfect?.().then((m) => { nat = m; m.refresh(); return m; });
+
 async function connect() {
   prefs.server = true; save(); srv = { up: false }; render();
   const base = prefs.base ?? LOCAL; // the address the phone was given, else this computer
   try { const h = await local("/health", undefined, { base, timeout: 4000 }), s = await local("/state", undefined, { base, timeout: 4000 });
     srv = { up: true, base, caps: h.caps, tailnet: h.tailnet, ...s }; engine?.useLocalRooms(base);
+    if (h.caps?.native) loadNative();
   } catch (e) {
     const gone = e.name === "AbortError" || /fetch/i.test(e.message);
     srv = { up: false, err: !gone ? e.message : base !== LOCAL ? `Can't reach ${base}. Is Tailscale on here, and aural-local running on the computer?` : "aural-local is not running on this computer (or the browser blocked local access: allow it when asked)." };
@@ -242,8 +261,9 @@ async function onClick(e) {
   if (d.follow) { prefs.follow = d.follow; save(); render(); return fillCommunity(t); }
   if (d.try) { const x = parseCombo(d.try); if (x) { applyP({ ...scapeById.get(x.scape).params, ...x.eq }, x.scape); ev = null; render(); fillCommunity(t); } return; }
   if ("install" in d) { const ok = await navigator.clipboard?.writeText(installCmd()).then(() => true, () => false); if (!ok) getSelection()?.selectAllChildren(el.querySelector("[data-cmd]")); host.toast(ok ? "Copied · paste it in Terminal; this pane connects when it's done" : "Select the command and copy it", 5000); prefs.server = true; save(); return waitForServer(); }
+  if (d.bp) { (nat ? Promise.resolve(nat) : loadNative()).then((m) => { m?.setMode(d.bp); render(); }); prefs.bitperfect = d.bp; save(); return render(); }
   if ("server" in d) return connect();
-  if ("unserver" in d) { prefs.server = false; prefs.base = null; save(); engine?.useLocalRooms(null); spectrum?.close(); spectrum = null; sysBars = null; srv = { up: false }; return render(); }
+  if ("unserver" in d) { prefs.server = false; prefs.base = null; save(); nat?.refresh(); engine?.useLocalRooms(null); spectrum?.close(); spectrum = null; sysBars = null; srv = { up: false }; return render(); }
   if (d.sink) return sys("/sink", { name: d.sink });
   if (d.sys) return sys("/scape", { id: d.sys });
   if (d.ev) return sys("/evolve", { cmd: d.ev, arg: d.arg && /^\d$/.test(d.arg) ? +d.arg : d.arg });

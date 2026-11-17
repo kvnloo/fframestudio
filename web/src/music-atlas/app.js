@@ -953,6 +953,21 @@ const proxied = !/^(localhost|127\.|\[::1\])/.test(location.hostname) && locatio
 const INC = "https://incompetech.com/music/";
 const streamUrl = (t) => ((proxied || auralOn()) && t.audio.startsWith(CCM) ? "/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)) : auralOn() && t.audio.startsWith(INC) ? "/api/ccm?u=" + encodeURIComponent(t.audio) : new URL(t.audio, new URL(base, document.baseURI)).href);
 
+// Several things silence the page while it keeps playing (its map, beat and scrubber still follow): casting
+// with the sound elsewhere, and bit-perfect (this computer's own player has the sound). Any one of them mutes it.
+const mutes = new Set();
+const mute = (k, on) => { if (on) mutes.add(k); else mutes.delete(k); audio.muted = mutes.size > 0; };
+// Bit-perfect (native.js): the URL this computer's player can fetch, or null for songs only this browser has.
+// ccMixter needs its Referer, so it goes through the site's proxy, as an absolute URL.
+const nativeUrl = (t) => {
+  if (!t?.audio || t.src === "mine") return null;
+  const u = t.audio.startsWith(CCM) ? new URL("/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)), location.href) : new URL(t.audio, new URL(base, document.baseURI));
+  return /^https?:$/.test(u.protocol) ? u.href : null;
+};
+let nativeMod = null;
+const bitPerfect = () => (nativeMod ??= import("./native.js").then((m) => { m.attach({ audio, current: () => byId.get(state.sel), url: nativeUrl, mute, toast, onChange: () => auralMod?.onNative?.() }); return m; }));
+const auralServer = () => { try { return !!JSON.parse(localStorage.getItem("sa-aural"))?.server; } catch { return false; } };
+
 // --- Aural (hidden audiophile pane, aural-pane.js) ----------------------------------------------------
 // Type "aural", open #aural, or long-press the logo. Loaded only then, or at boot when it was left on.
 const auralOn = () => { try { return !!JSON.parse(localStorage.getItem("sa-aural"))?.on; } catch { return false; } };
@@ -960,7 +975,7 @@ let auralMod = null;
 const aural = () => import("./aural-pane.js").then((m) => {
   if (!auralMod) {
     auralMod = m;
-    m.attach({ audio, A, toast, track: () => byId.get(state.sel), reroute() {
+    m.attach({ audio, A, toast, bitPerfect, track: () => byId.get(state.sel), reroute() {
       if (audio.crossOrigin === "anonymous") return;
       const t = byId.get(state.sel), at = audio.currentTime, was = !audio.paused;
       audio.crossOrigin = "anonymous";
@@ -1476,7 +1491,8 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
   if (state.q) warmModel(); else if (!cast.isTV && !matchMedia("(pointer: coarse)").matches) setTimeout(warmModel, 2500); // TVs never search: no model on a 2 GB set; // phones load the model on first search focus
   renderPlayer();
   if (cast.isTV) { if (state.view === "library") setView("track", false); cast.receive({ sid: social.sid, audio, current: () => state.sel, apply: tvApply, next: () => step(1), onStatus: tvBadge }); }
-  else { cast.attach({ sid: social.sid, audio, current: () => state.sel, follow: castFollow, toast, haptic, onChange: () => { $("#pc").classList.toggle("on", cast.send.on); $("#pc").title = cast.send.on ? `Casting to ${cast.send.name} · sound ${cast.send.sound === "tv" ? "on the TV" : cast.send.sound === "here" ? "here" : "on another device"}` : "Play on a TV"; } }); if (castJoin) castJoinPrompt(castJoin); }
+  if (!cast.isTV && auralServer()) bitPerfect(); // aural-local set up: follow the system's bit-perfect choice from the start
+  if (!cast.isTV) { cast.attach({ sid: social.sid, audio, mute, current: () => state.sel, follow: castFollow, toast, haptic, onChange: () => { $("#pc").classList.toggle("on", cast.send.on); $("#pc").title = cast.send.on ? `Casting to ${cast.send.name} · sound ${cast.send.sound === "tv" ? "on the TV" : cast.send.sound === "here" ? "here" : "on another device"}` : "Play on a TV"; } }); if (castJoin) castJoinPrompt(castJoin); }
   if (!cast.isTV && pendingRoom && /^[a-z0-9]{6}$/i.test(pendingRoom)) joinPrompt(pendingRoom.toLowerCase()); // a TV's #room= is its cast room, not a Listen together invite
   social.join(() => ({ track: state.sel, playing: !audio.paused })).then(async () => {
     const back = await social.syncLikes(new Set(JSON.parse(localStorage.getItem("sa-picks") || "[]"))); // this browser's hearts, not shared-link picks

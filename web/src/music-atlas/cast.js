@@ -73,7 +73,7 @@ export const send = { on: false, room: null, kind: null, name: "", tv: null, tag
 const SOUNDS = new Set(["tv", "here", "away"]);
 let hooks = null, sentAt = 0, quietUntil = 0, echo = null, sendT = 0, peekT = 0, seen = 0;
 const snapshot = () => ({ t: hooks.current(), pos: Math.round(hooks.audio.currentTime * 10) / 10, playing: !hooks.audio.paused, mute: send.sound !== "tv", here: send.sound === "here", by: hooks.sid });
-const hear = () => { hooks.audio.muted = send.sound !== "here"; };
+const hear = () => { const m = send.on && send.sound !== "here"; if (hooks.mute) hooks.mute("cast", m); else hooks.audio.muted = m; };
 const save = () => localStorage.setItem(CAST_KEY, JSON.stringify({ room: send.room, kind: send.kind, name: send.name, sound: send.sound }));
 // The device holding the sound keeps the room going from a background tab; the others go quiet when hidden.
 const away = () => document.visibilityState === "hidden" && send.sound !== "here";
@@ -153,7 +153,7 @@ export function stop() {
   try { send.session?.endSession(true); } catch {}
   localStorage.removeItem(CAST_KEY);
   clearInterval(peekT); Object.assign(send, { on: false, room: null, kind: null, session: null, tv: null, sound: "tv" });
-  hooks.audio.muted = false; hooks.onChange(); hooks.toast("Stopped casting");
+  hear(); hooks.onChange(); hooks.toast("Stopped casting");
 }
 async function peek(force = false) {
   if (!send.on || (away() && !force)) return;

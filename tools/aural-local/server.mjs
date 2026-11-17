@@ -19,11 +19,12 @@
 // and the Host check stops DNS-rebinding pages that pretend to be 127.0.0.1.
 import { createServer } from "node:http";
 import { execFile, execFileSync, spawn } from "node:child_process";
-import { existsSync, mkdtempSync, writeFileSync, createReadStream } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync, createReadStream, readFileSync } from "node:fs";
 import { connect } from "node:net";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { SOUNDSCAPES } from "../../web/src/music-atlas/aural.js";
+import * as native from "./native.mjs";
 
 const PORT = +(process.env.AURAL_PORT ?? 4317);
 const MAC = process.platform === "darwin";
@@ -66,10 +67,72 @@ async function sinks() {
   const [list, def] = await Promise.all([run("pactl", ["-f", "json", "list", "sinks"]).then(JSON.parse), run("pactl", ["get-default-sink"]).then((s) => s.trim())]);
   return list.map((s) => { const m = /(\S+)\s+(\d+)ch\s+(\d+)Hz/.exec(s.sample_specification ?? "") ?? []; return { name: s.name, desc: s.description, format: m[1] ?? null, channels: +m[2] || null, rate: +m[3] || null, state: s.state, default: s.name === def }; });
 }
+// --- bit-perfect (native.mjs): which hardware output the native player uses, and what it is doing ---------
+async function rawSinks() { return MAC ? [] : JSON.parse(await run("pactl", ["-f", "json", "list", "sinks"])); }
+async function nativeTarget() {
+  if (MAC) {
+    const [all, cur] = await Promise.all([run("SwitchAudioSource", ["-a", "-t", "output", "-f", "json"]), run("SwitchAudioSource", ["-c", "-t", "output"]).then((x) => x.trim())]);
+    const devs = all.split("\n").filter(Boolean).map((l) => JSON.parse(l)), d = native.macDevice(devs, cur);
+    return { device: d?.uid ?? null, name: d?.name ?? null, auto: !!cur && !/BlackHole/i.test(cur), def: cur };
+  }
+  const [list, def] = await Promise.all([rawSinks(), run("pactl", ["get-default-sink"]).then((x) => x.trim())]);
+  const s = native.pickSink(list, def);
+  return { device: s?.name ?? null, name: s?.description ?? null, auto: def.startsWith("alsa_output."), def, sink: s };
+}
+// The page keeps playing silently while the native player has the sound, and that silent browser stream would
+// sit on the DAC's PipeWire graph and pin it to 48 kHz. So while bit-perfect plays, the browser's streams move to
+// a null sink (their own graph) and move back after. The browser is found from the request's own TCP connection.
+const QUIET = "aural_quiet";
+let quietBin = null, quietMod = null; const quietMoved = new Map(); // sink-input id -> original sink name
+async function browserOf(req) {
+  if (MAC) return null;
+  try {
+    const out = await run("ss", ["-Htnp", "state", "established", `( sport = :${req.socket.remotePort} )`]);
+    const m = /users:\(\("([^"]+)"/.exec(out); const bin = m?.[1] ?? null;
+    return bin && !/^(tailscaled|node|curl)$/.test(bin) ? bin : null; // over the tailnet the browser is on another device
+  } catch { return null; }
+}
+async function quiet() {
+  if (MAC || !quietBin) return;
+  const [sinksJ, ins] = await Promise.all([rawSinks(), run("pactl", ["-f", "json", "list", "sink-inputs"]).then(JSON.parse)]);
+  let q = sinksJ.find((x) => x.name === QUIET);
+  const mine = ins.filter((i) => (i.properties?.["application.process.binary"] ?? "") === quietBin && (!q || i.sink !== q.index));
+  if (!mine.length) return;
+  if (!q) { quietMod = (await run("pactl", ["load-module", "module-null-sink", `sink_name=${QUIET}`, "sink_properties=device.description=Aural-quiet"])).trim(); q = (await rawSinks()).find((x) => x.name === QUIET); }
+  const byIdx = new Map(sinksJ.map((x) => [x.index, x.name]));
+  for (const i of mine) { if (!quietMoved.has(i.index)) quietMoved.set(i.index, byIdx.get(i.sink)); await run("pactl", ["move-sink-input", String(i.index), QUIET]).catch(() => {}); }
+}
+async function unquiet() {
+  quietBin = null;
+  if (MAC) return;
+  const names = new Set((await rawSinks().catch(() => [])).map((x) => x.name));
+  for (const [id, sink] of quietMoved) await run("pactl", ["move-sink-input", String(id), names.has(sink) ? sink : "@DEFAULT_SINK@"]).catch(() => {});
+  quietMoved.clear();
+  if (quietMod) { await run("pactl", ["unload-module", quietMod]).catch(() => {}); quietMod = null; }
+}
+
+async function nativeNow() {
+  if (native.running()) await quiet().catch(() => {});
+  const t = await nativeTarget().catch(() => ({}));
+  const extra = { target: t.name ?? null, auto: !!t.auto, system: t.def ?? null };
+  if (!MAC && t.sink && native.running()) {
+    const s = t.sink, p = s.properties ?? {};
+    try { extra.hw = native.parseHwParams(readFileSync(`/proc/asound/card${p["alsa.card"]}/pcm${p["alsa.device"] ?? 0}p/sub0/hw_params`, "utf8")); } catch { extra.hw = null; }
+    const v = Object.values(s.volume ?? {}).map((c) => parseInt(c.value_percent, 10)).filter(Number.isFinite);
+    extra.volume = v.length ? Math.max(...v) : null; extra.muted = !!s.mute;
+    // Other audio on the DAC pins its rate. The filter-chain sinks' own outputs are passive (they don't), nor does mpv.
+    try { const ins = JSON.parse(await run("pactl", ["-f", "json", "list", "sink-inputs"])); extra.others = ins.filter((i) => i.sink === s.index && !/mpv/i.test(i.properties?.["application.name"] ?? "") && !String(i.properties?.["node.name"] ?? "").startsWith("effect_output.") && i.properties?.["node.passive"] !== "true").length; } catch { extra.others = 0; }
+    // Without an ALSA card (or before it opens), the rate PipeWire runs the DAC's graph at, from pw-top
+    // (columns: S ID QUANT RATE WAIT BUSY W/Q B/Q ERR FORMAT CH RATE NAME).
+    if (!extra.hw) try { const line = (await run("pw-top", ["-b", "-n", "2"], 5000)).split("\n").reverse().find((l) => l.trim().endsWith(" " + s.name)); const c = line?.trim().split(/\s+/); if (c && +c[3]) extra.hw = { rate: +c[3], format: c[9] ?? null, channels: +c[10] || null, from: "pipewire" }; } catch {}
+  }
+  return native.now(extra);
+}
+
 async function evolveState() { if (MAC) return null; try { return JSON.parse(await run(EVOLVE, ["json"])); } catch { return null; } }
 async function caps() {
   const has = async (c) => run("sh", ["-c", `command -v ${c}`]).then(() => true, () => false);
-  return { os: process.platform, pipewire: !MAC && (await has("pactl")), switchaudio: MAC && (await has("SwitchAudioSource")), evolve: !MAC && existsSync(EVOLVE), camilla: await camillaUp(), cava: await has("cava"), dotfiles: DOT || null };
+  return { os: process.platform, native: await has(process.env.AURAL_MPV ?? "mpv"), pipewire: !MAC && (await has("pactl")), switchaudio: MAC && (await has("SwitchAudioSource")), evolve: !MAC && existsSync(EVOLVE), camilla: await camillaUp(), cava: await has("cava"), dotfiles: DOT || null };
 }
 async function state() {
   const [s, e, c] = await Promise.all([sinks().catch(() => []), evolveState(), camillaUp()]);
@@ -117,6 +180,7 @@ export function handler(req, res) {
   (async () => {
     if (path === "/health") return send(200, { ok: true, name: "aural-local", version: 1, caps: await caps(), tailnet: tailnetUrl });
     if (path === "/state") return send(200, await state());
+    if (path === "/native/now") return send(200, await nativeNow());
     const ir = /^\/brir\/([01])$/.exec(path); // your ASH true-stereo rooms, for the browser engine; never leaves this machine
     if (ir) { const f = join(DOT, "config/brir", BRIRS[+ir[1]]); if (!DOT || !existsSync(f)) return send(404, { error: "no BRIR" }); res.writeHead(200, { ...h, "content-type": "audio/wav", "cache-control": "max-age=86400" }); return createReadStream(f).pipe(res); }
     if (path === "/spectrum") {
@@ -137,6 +201,15 @@ export function handler(req, res) {
       if (SCRIPTS[id]) { if (!(await camillaUp())) return send(409, { error: "CamillaDSP is not running (needed for this soundscape system-wide)" }); const [sh, arg] = SCRIPTS[id]; await run(join(CAMILLA, sh), [arg], 20000); activeScape = id; return send(200, { ok: true, via: "camilladsp", script: `${sh} ${arg}` }); }
       return send(400, { error: "unknown soundscape" });
     }
+    if (path === "/native/play") {
+      const t = await nativeTarget().catch(() => ({}));
+      if (!t.device && !MAC) return send(409, { error: "no hardware output to play to" });
+      const bin = await browserOf(req); if (bin) quietBin = bin;
+      await quiet().catch(() => {});
+      try { await native.play({ url: b.url, pos: Number.isFinite(+b.pos) ? +b.pos : 0, playing: b.playing !== false, device: t.device }); } catch (e) { return send(e.code ?? 500, { error: e.message }); }
+      return send(200, await nativeNow());
+    }
+    if (path === "/native/stop") { native.stop(); await unquiet(); return send(200, { ok: true }); }
     if (path === "/evolve") {
       const args = evolveArgs(b); if (!args) return send(400, { error: "verb not allowed" });
       const out = await run(EVOLVE, args, 20000); return send(200, { ok: true, out: out.trim().slice(0, 2000), state: await evolveState() });
@@ -156,6 +229,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       console.log(`phones (Tailscale on): ${tailnetUrl}\n  open on the phone: https://glide-music-picker.vercel.app/#aural=${encodeURIComponent(tailnetUrl)}`);
     });
   });
-  const bye = () => { listeners.clear(); stopCava(); if (tailnetUrl) try { execFileSync(TS_BIN, ["serve", `--https=${PORT}`, "off"], { timeout: 5000, stdio: "ignore" }); } catch {} process.exit(0); };
+  const bye = async () => { listeners.clear(); stopCava(); native.stop(); await unquiet().catch(() => {}); if (tailnetUrl) try { execFileSync(TS_BIN, ["serve", `--https=${PORT}`, "off"], { timeout: 5000, stdio: "ignore" }); } catch {} process.exit(0); };
   process.on("SIGINT", bye); process.on("SIGTERM", bye);
 }
