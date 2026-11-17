@@ -76,8 +76,8 @@ def html_film_shots(js):
     out = []
     for m in re.finditer(r"\{\s*at:\s*([\d.]+),(.*?)\}\s*[,\]]", js, re.S):
         body = m.group(2)
-        head = re.findall(r"'([^']*)'", (re.search(r"head:\s*\[(.*?)\]", body) or [None, ""])[1] if re.search(r"head:\s*\[(.*?)\]", body) else "")
-        tag = re.search(r"tag:\s*'([^']*)'", body); bod = re.findall(r"'([^']*)'", (re.search(r"body:\s*\[(.*?)\]", body).group(1) if re.search(r"body:\s*\[(.*?)\]", body) else ""))
+        head = re.findall(r"'([^']*)'", (re.search(r"head:\s*\[(.*?)\]", body, re.S) or [None, ""])[1] if re.search(r"head:\s*\[(.*?)\]", body, re.S) else "")
+        tag = re.search(r"tag:\s*'([^']*)'", body); bod = re.findall(r"'([^']*)'", (re.search(r"body:\s*\[(.*?)\]", body, re.S).group(1) if re.search(r"body:\s*\[(.*?)\]", body, re.S) else ""))
         out.append({"at": float(m.group(1)), "name": (tag.group(1) if tag else "") or " ".join(head), "text": {"head": head, "body": bod}})
     return out
 

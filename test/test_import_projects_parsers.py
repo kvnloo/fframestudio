@@ -115,6 +115,16 @@ class ImportProjectsParsersTest(unittest.TestCase):
             },
         ])
 
+    def test_html_film_multiline_arrays_preserve_text(self):
+        for newline in ("\n", "\r\n"):
+            with self.subTest(newline=repr(newline)):
+                js = newline.join(["const SHOTS=[{at: 0, head: [",
+                    "'Hello',", "'World'", "], body: [", "'a',", "'b'", "]}];"])
+                self.assertEqual(self.import_projects.html_film_shots(js), [{
+                    "at": 0.0, "name": "Hello World",
+                    "text": {"head": ["Hello", "World"], "body": ["a", "b"]},
+                }])
+
     def test_flags(self):
         self.assertIs(self.import_projects.FORCE, False)
         self.assertEqual(self.import_projects.args, [])
