@@ -8,7 +8,10 @@
 //
 // Env: AURAL_PORT (4317), AURAL_ORIGINS (extra allowed origins, comma-separated), AURAL_DOTFILES
 // (dotfiles checkout; default ~/workspace/.files or /workspace/.files), AURAL_EVOLVE (audio-evolve path),
+// AURAL_CAMILLA (CamillaDSP profile dir; macOS default ~/.config/camilladsp, as install.sh lays it out),
 // AURAL_TAILSCALE=0 (don't publish to your tailnet).
+// Linux drives PipeWire (pactl) and audio-evolve; macOS drives CamillaDSP + BlackHole (headphone-switch.sh and
+// the experience scripts) and picks outputs with SwitchAudioSource. tools/aural-local/install.sh sets up either.
 // Phones: when Tailscale is up it also runs `tailscale serve` so your own devices reach it at
 // https://<this-machine>.<tailnet>.ts.net:4317 (tailnet only, never the internet; HTTPS, which the
 // https site needs). It still only listens on 127.0.0.1; Tailscale proxies to it. Stopped on exit.
@@ -23,17 +26,22 @@ import { join } from "node:path";
 import { SOUNDSCAPES } from "../../web/src/music-atlas/aural.js";
 
 const PORT = +(process.env.AURAL_PORT ?? 4317);
+const MAC = process.platform === "darwin";
+// The Mac app's CLI lives inside the bundle unless the user linked it onto PATH.
+const TS_BIN = process.env.AURAL_TAILSCALE_BIN ?? (MAC && existsSync("/Applications/Tailscale.app/Contents/MacOS/Tailscale") ? "/Applications/Tailscale.app/Contents/MacOS/Tailscale" : "tailscale");
 const ORIGINS = new Set(["https://glide-music-picker.vercel.app", ...(process.env.AURAL_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean)]);
 const localOrigin = (o) => /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(o)
   || /^https:\/\/glide-music-picker-[a-z0-9]+-kvnloos-projects\.vercel\.app$/.test(o); // the site's preview deploys
 // This machine's tailnet name ("groot.tail1234.ts.net"), or "" without Tailscale.
 const TAILNET = process.env.AURAL_TAILSCALE === "0" ? "" : (() => {
-  try { return JSON.parse(execFileSync("tailscale", ["status", "--self", "--json"], { encoding: "utf8", timeout: 3000, stdio: ["ignore", "pipe", "ignore"] })).Self?.DNSName?.replace(/\.$/, "") ?? ""; } catch { return ""; }
+  try { return JSON.parse(execFileSync(TS_BIN, ["status", "--self", "--json"], { encoding: "utf8", timeout: 3000, stdio: ["ignore", "pipe", "ignore"] })).Self?.DNSName?.replace(/\.$/, "") ?? ""; } catch { return ""; }
 })();
 const hostOk = (h) => /^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(h) || (!!TAILNET && (h === TAILNET || h === `${TAILNET}:${PORT}`));
 const DOT = process.env.AURAL_DOTFILES ?? [join(homedir(), "workspace/.files"), "/workspace/.files"].find((d) => existsSync(d)) ?? "";
 const EVOLVE = process.env.AURAL_EVOLVE ?? join(DOT, "scripts/audio-evolve");
-const CAMILLA = join(DOT, "config/camilladsp");
+const CAMILLA = process.env.AURAL_CAMILLA ?? (MAC && existsSync(join(homedir(), ".config/camilladsp")) ? join(homedir(), ".config/camilladsp") : join(DOT, "config/camilladsp"));
+// macOS: the PipeWire sinks' counterparts are CamillaDSP profiles, switched live by headphone-switch.sh.
+const PROFILES = { clean: "clean", speakers: "crossfeed", room: "room" };
 const BRIRS = ["BRIR_R02_C1_True_Stereo.wav", "BRIR_R32_C1_True_Stereo.wav"];
 
 // Which soundscapes this computer can run system-wide, and how.
@@ -51,19 +59,23 @@ const run = (cmd, args, timeout = 10000) => new Promise((ok, no) => execFile(cmd
 const camillaUp = () => new Promise((ok) => { const s = connect(1234, "127.0.0.1"); s.once("connect", () => { s.destroy(); ok(true); }); s.once("error", () => ok(false)); s.setTimeout(300, () => { s.destroy(); ok(false); }); });
 
 async function sinks() {
+  if (MAC) { // SwitchAudioSource prints one JSON object per device
+    const [all, cur] = await Promise.all([run("SwitchAudioSource", ["-a", "-t", "output", "-f", "json"]), run("SwitchAudioSource", ["-c", "-t", "output"]).then((x) => x.trim())]);
+    return all.split("\n").filter(Boolean).map((l) => JSON.parse(l)).map((d) => ({ name: d.name, desc: d.name, format: null, channels: null, rate: null, state: null, default: d.name === cur }));
+  }
   const [list, def] = await Promise.all([run("pactl", ["-f", "json", "list", "sinks"]).then(JSON.parse), run("pactl", ["get-default-sink"]).then((s) => s.trim())]);
   return list.map((s) => { const m = /(\S+)\s+(\d+)ch\s+(\d+)Hz/.exec(s.sample_specification ?? "") ?? []; return { name: s.name, desc: s.description, format: m[1] ?? null, channels: +m[2] || null, rate: +m[3] || null, state: s.state, default: s.name === def }; });
 }
-async function evolveState() { try { return JSON.parse(await run(EVOLVE, ["json"])); } catch { return null; } }
+async function evolveState() { if (MAC) return null; try { return JSON.parse(await run(EVOLVE, ["json"])); } catch { return null; } }
 async function caps() {
   const has = async (c) => run("sh", ["-c", `command -v ${c}`]).then(() => true, () => false);
-  return { pipewire: await has("pactl"), evolve: existsSync(EVOLVE), camilla: await camillaUp(), cava: await has("cava"), dotfiles: DOT || null };
+  return { os: process.platform, pipewire: !MAC && (await has("pactl")), switchaudio: MAC && (await has("SwitchAudioSource")), evolve: !MAC && existsSync(EVOLVE), camilla: await camillaUp(), cava: await has("cava"), dotfiles: DOT || null };
 }
 async function state() {
   const [s, e, c] = await Promise.all([sinks().catch(() => []), evolveState(), camillaUp()]);
   const names = new Set(s.map((x) => x.name));
-  const scapes = SOUNDSCAPES.map((x) => x.id).filter((id) => (SINKS[id] && names.has(SINKS[id])) || (SCRIPTS[id] && c));
-  if (names.has(SINKS.movie)) scapes.push("movie");
+  const scapes = SOUNDSCAPES.map((x) => x.id).filter((id) => (MAC ? PROFILES[id] && c : SINKS[id] && names.has(SINKS[id])) || (SCRIPTS[id] && c));
+  if (!MAC && names.has(SINKS.movie) && !scapes.includes("movie")) scapes.push("movie");
   return { sinks: s, evolve: e, camilla: c, scapes, active: activeScape };
 }
 let activeScape = null;
@@ -83,7 +95,7 @@ function startCava() {
   if (cava) return;
   const dir = mkdtempSync(join(tmpdir(), "aural-cava-")), fifo = join(dir, "fifo"), conf = join(dir, "conf");
   try { execFileSync("mkfifo", [fifo]); } catch { return; }
-  writeFileSync(conf, `[general]\nbars = 24\nframerate = 30\nautosens = 1\n[input]\nmethod = pulse\nsource = auto\n[output]\nmethod = raw\nraw_target = ${fifo}\ndata_format = ascii\nascii_max_range = 1000\nchannels = stereo\n`);
+  writeFileSync(conf, `[general]\nbars = 24\nframerate = 30\nautosens = 1\n[input]\n${MAC ? "method = portaudio\nsource = BlackHole 2ch" : "method = pulse\nsource = auto"}\n[output]\nmethod = raw\nraw_target = ${fifo}\ndata_format = ascii\nascii_max_range = 1000\nchannels = stereo\n`);
   const p = spawn("cava", ["-p", conf], { stdio: "ignore" }); cava = p;
   let buf = ""; const rs = createReadStream(fifo, { encoding: "utf8" });
   rs.on("data", (d) => { buf += d; let i; while ((i = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, i); buf = buf.slice(i + 1); const bars = line.split(";").filter(Boolean).map((n) => +n / 1000); for (const l of listeners) l(bars); } });
@@ -115,12 +127,13 @@ export function handler(req, res) {
     if (req.method !== "POST") return send(404, { error: "not found" });
     const b = await body(req);
     if (path === "/sink") {
-      const list = await sinks(); if (!list.some((s) => s.name === b.name)) return send(400, { error: "no such sink" });
-      await run("pactl", ["set-default-sink", b.name]); return send(200, { ok: true, default: b.name });
+      const list = await sinks().catch(() => []); if (!list.some((s) => s.name === b.name)) return send(400, { error: "no such sink" });
+      await run(MAC ? "SwitchAudioSource" : "pactl", MAC ? ["-t", "output", "-s", b.name] : ["set-default-sink", b.name]); return send(200, { ok: true, default: b.name });
     }
     if (path === "/scape") {
       const id = String(b.id ?? "");
-      if (SINKS[id]) { const list = await sinks(); if (!list.some((s) => s.name === SINKS[id])) return send(409, { error: `sink ${SINKS[id]} is not loaded` }); await run("pactl", ["set-default-sink", SINKS[id]]); activeScape = id; return send(200, { ok: true, via: "pipewire", sink: SINKS[id] }); }
+      if (MAC && PROFILES[id]) { if (!(await camillaUp())) return send(409, { error: "CamillaDSP is not running (install.sh starts it as a LaunchAgent)" }); await run(join(CAMILLA, "headphone-switch.sh"), [PROFILES[id]], 20000); activeScape = id; return send(200, { ok: true, via: "camilladsp", profile: PROFILES[id] }); }
+      if (!MAC && SINKS[id]) { const list = await sinks(); if (!list.some((s) => s.name === SINKS[id])) return send(409, { error: `sink ${SINKS[id]} is not loaded` }); await run("pactl", ["set-default-sink", SINKS[id]]); activeScape = id; return send(200, { ok: true, via: "pipewire", sink: SINKS[id] }); }
       if (SCRIPTS[id]) { if (!(await camillaUp())) return send(409, { error: "CamillaDSP is not running (needed for this soundscape system-wide)" }); const [sh, arg] = SCRIPTS[id]; await run(join(CAMILLA, sh), [arg], 20000); activeScape = id; return send(200, { ok: true, via: "camilladsp", script: `${sh} ${arg}` }); }
       return send(400, { error: "unknown soundscape" });
     }
@@ -137,12 +150,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const srv = createServer(handler).listen(PORT, "127.0.0.1", () => {
     console.log(`aural-local on http://127.0.0.1:${srv.address().port} (dotfiles: ${DOT || "none"})`);
     if (!TAILNET) return console.log("phones: Tailscale isn't running here, so only this computer can connect");
-    execFile("tailscale", ["serve", "--bg", `--https=${PORT}`, `http://127.0.0.1:${PORT}`], { timeout: 15000 }, (e) => {
+    execFile(TS_BIN, ["serve", "--bg", `--https=${PORT}`, `http://127.0.0.1:${PORT}`], { timeout: 15000 }, (e) => {
       if (e) return console.log(`phones: \`tailscale serve\` failed (${e.message.split("\n")[0]}); run \`sudo tailscale set --operator=$USER\` once`);
       tailnetUrl = `https://${TAILNET}:${PORT}`;
       console.log(`phones (Tailscale on): ${tailnetUrl}\n  open on the phone: https://glide-music-picker.vercel.app/#aural=${encodeURIComponent(tailnetUrl)}`);
     });
   });
-  const bye = () => { listeners.clear(); stopCava(); if (tailnetUrl) try { execFileSync("tailscale", ["serve", `--https=${PORT}`, "off"], { timeout: 5000, stdio: "ignore" }); } catch {} process.exit(0); };
+  const bye = () => { listeners.clear(); stopCava(); if (tailnetUrl) try { execFileSync(TS_BIN, ["serve", `--https=${PORT}`, "off"], { timeout: 5000, stdio: "ignore" }); } catch {} process.exit(0); };
   process.on("SIGINT", bye); process.on("SIGTERM", bye);
 }

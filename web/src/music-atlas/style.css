@@ -617,6 +617,11 @@ a.aref { color: inherit; text-decoration: underline; text-decoration-color: colo
 .aural .desc em { display: block; margin-top: 4px; font-style: normal; color: #b9b3a7; }
 .aural code, .aural pre { font: 11px "IBM Plex Mono", monospace; color: #b9b3a7; }
 .aural pre { padding: 8px 10px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; white-space: pre-wrap; user-select: all; }
+.aural a { color: var(--acc); text-decoration: none; } .aural a:hover { text-decoration: underline; }
+.aural .row a { align-self: center; font-size: 12px; }
+.aural a.btn { color: var(--ink); background: var(--panel); border: 1px solid var(--line2); border-radius: 10px; padding: 7px 10px; text-decoration: none; }
+.aural .plan { margin-top: 10px; } .aural .plan summary { cursor: pointer; color: var(--ink); }
+.aural .plan ul { margin: 8px 0 0; padding-left: 16px; color: var(--mute); line-height: 1.5; } .aural .plan li { margin-bottom: 6px; } .aural .plan li b { color: var(--ink); font-weight: 600; margin-right: 4px; }
 .aural .addr input { flex: 1; min-width: 0; padding: 8px 10px; background: var(--panel2); color: inherit; border: 1px solid var(--line); border-radius: 8px; font: 12px "IBM Plex Mono", monospace; }
 .aural .pcode { width: 168px; margin: 8px 0; border-radius: 8px; overflow: hidden; }
 .aural .pcode svg { display: block; width: 100%; height: auto; }

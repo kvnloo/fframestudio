@@ -130,10 +130,62 @@ function phoneCode() { // shown on the computer: open the same site on the phone
   const link = `${location.origin}${location.pathname}#aural=${encodeURIComponent(srv.tailnet)}`;
   return `<h5>On your phone</h5><p class="hint">With Tailscale on, scan this (or open the link) to drive this computer from the phone.</p><div class="pcode">${renderSVG(link, { border: 2, pixelSize: 5, whiteColor: "#ece8df", blackColor: "#0d1112" })}</div><pre>${esc(link)}</pre>`;
 }
+// --- one-command setup: the pane knows the OS, the installer (tools/aural-local/install.sh, served at
+// /aural/install.sh) does the rest. Everything it installs is listed with a direct link to the file or package.
+const LIVE = "https://glide-music-picker.vercel.app";
+const DOTS = "https://github.com/kvnloo/.files/blob/dev/";
+export function osKind(nav = navigator) { // "mac" | "linux" | "phone" | "windows" | "other"; Hyprland itself isn't visible to a page
+  const ua = nav.userAgent ?? "", p = nav.userAgentData?.platform ?? nav.platform ?? "";
+  if (/Android|iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(p + ua) && nav.maxTouchPoints > 1)) return "phone";
+  if (/Mac/i.test(p) || /Macintosh|Mac OS X/i.test(ua)) return "mac";
+  if (/Win/i.test(p) || /Windows/i.test(ua)) return "windows";
+  if (/Linux|X11|CrOS/i.test(p + ua)) return "linux";
+  return "other";
+}
+export function installCmd(origin = location.origin) {
+  const url = `${origin}/aural/install.sh`;
+  return origin === LIVE ? `curl -fsSL ${url} | bash` : `curl -fsSL ${url} | AURAL_SITE=${origin} bash`;
+}
+const L = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>`;
+const df = (path, text = path.split("/").pop()) => L(DOTS + path, text);
+export const PLAN = {
+  linux: { title: "Linux · Hyprland or any PipeWire desktop", items: () => [
+    ["Packages", `${L("https://pipewire.org", "PipeWire")} + ${L("https://pipewire.pages.freedesktop.org/wireplumber/", "WirePlumber")}, ${L("https://github.com/lsp-plugins/lsp-plugins", "LSP")} and ${L("https://github.com/zamaudio/zam-plugins", "ZAM")} LV2 plugins, ${L("https://github.com/alexmarsev/libbs2b", "bs2b")} LADSPA, ${L("https://github.com/karlstav/cava", "cava")}, Node.js (pacman, apt or dnf)`],
+    ["Filter-chain sinks", `${df("config/pipewire/pipewire.conf.d/10-headphone-dsp.conf")} (Clean · Crossfeed · Room · Movie) and ${df("config/pipewire/pipewire.conf.d/11-aural-evolution.conf")}, with your ${df("config/autoeq/active_48000Hz.wav", "AutoEQ")} and ${df("config/brir/BRIR_R02_C1_True_Stereo.wav", "BRIR")} files`],
+    ["Routing", `${df("config/pipewire/pipewire-pulse.conf.d/30-plex-movie-dsp.conf")}, ${df("config/pipewire/pipewire-pulse.conf.d/20-browser-bypass-brir.conf")} (Chrome to the Movie sink), ${df("config/wireplumber/wireplumber.conf.d/51-topping-dx5.conf")}`],
+    ["Commands", `${df("scripts/audio-evolve")}, ${df("scripts/audio-sink")}, ${df("config/pipewire/headphone-switch.sh")} in ~/.local/bin`],
+    ["Service", `aural-local as a systemd user service (${L("/aural/server.mjs", "server.mjs")}), published to your tailnet`],
+  ] },
+  mac: { title: "macOS", items: () => [
+    ["Packages", `${L("https://brew.sh", "Homebrew")}: Node.js, ${L("https://github.com/deweller/switchaudio-osx", "SwitchAudioSource")}, ${L("https://github.com/karlstav/cava", "cava")}, ${L("https://github.com/ExistentialAudio/BlackHole", "BlackHole 2ch")}`],
+    ["DSP engine", `${L("https://github.com/HEnquist/camilladsp/releases/tag/v4.1.3", "CamillaDSP 4.1.3")} + ${L("https://github.com/HEnquist/pycamilladsp", "pycamilladsp")}, playing to the output you use now`],
+    ["Profiles", `${df("config/camilladsp/camilladsp.yml")} · ${df("config/camilladsp/camilladsp-crossfeed.yml", "crossfeed")} · ${df("config/camilladsp/camilladsp-room.yml", "room")}, ${df("config/camilladsp/headphone-switch.sh")} and every experience (${df("config/camilladsp/the-vinyl-experience.sh", "vinyl")}, ${df("config/camilladsp/late-night-mode.sh", "late night")}, ${df("config/camilladsp/concert-hall-teleporter.sh", "hall")}…)`],
+    ["Services", `CamillaDSP and aural-local as LaunchAgents (${df("config/camilladsp/com.camilladsp.daemon.plist", "your plist")}, with this Mac's paths); system output set to BlackHole`],
+  ] },
+};
+let poll = 0;
+function waitForServer() { // after the command is copied: connect by itself once the installer has started aural-local
+  clearInterval(poll); let n = 0;
+  poll = setInterval(async () => {
+    if (++n > 200 || !isOpen() || tab !== "pc" || srv.up) return clearInterval(poll);
+    try { await local("/health", undefined, { timeout: 1500 }); clearInterval(poll); connect(); } catch { /* not yet */ }
+  }, 3000);
+}
+function setup(kind = osKind()) {
+  const plan = PLAN[kind];
+  if (!plan) return kind === "phone" ? "" : `<p class="hint">One-command setup covers macOS and Linux with PipeWire${kind === "windows" ? "; on Windows, use the in-page chain (other tabs)" : ""}.</p>`;
+  const cmd = installCmd();
+  return `<h5>Set up this computer · ${esc(plan.title)}</h5>
+    <p class="hint">One command installs the chain from your dotfiles, starts the services, and connects this pane. It asks for your password once (packages${kind === "mac" ? ", BlackHole" : ""}).</p>
+    <pre data-cmd>${esc(cmd)}</pre>
+    <div class="row"><button data-install class="primary">Copy · then paste in Terminal</button><a class="btn" href="/aural/install.sh" download="aural-install.sh">Download installer</a>${L("/aural/install.txt", "Read it first")}</div>
+    <details class="plan"><summary>What it sets up</summary><ul>${plan.items().map(([k, v]) => `<li><b>${esc(k)}</b> ${v}</li>`).join("")}</ul>
+    <p class="hint">Dotfiles: ${L("https://github.com/kvnloo/.files/tree/dev", "kvnloo/.files")} (uses ~/workspace/.files if you have it; otherwise a sparse clone of the audio parts). Re-running updates in place; replaced files are kept as .bak-aural-*.</p></details>`;
+}
 function pc() {
   const cmd = `node tools/aural-local/server.mjs`;
-  if (!prefs.server) return `<p class="hint">Run Aural's backend on this computer to drive the real chain system-wide: PipeWire sinks, your AutoEQ + BRIR filter-chains, CamillaDSP experiences and Aural Evolution. It is a small local server you start yourself; it only listens on 127.0.0.1, and with Tailscale on your own devices can reach it too.</p><pre>${esc(cmd)}</pre><div class="row"><button data-server class="primary">Connect</button></div>${phoneHint}`;
-  if (!srv.up) return `<p class="hint">${esc(srv.err ?? "Looking for aural-local…")}</p><pre>${esc(cmd)}</pre><div class="row"><button data-server>Try again</button><button data-unserver>Stop using it</button></div>${phoneHint}`;
+  if (!prefs.server) return `<p class="hint">Run Aural's backend on this computer to drive the real chain system-wide: PipeWire sinks or CamillaDSP, your AutoEQ + BRIR filters, the experiences and Aural Evolution. It only listens on 127.0.0.1; with Tailscale on, your own devices can reach it too.</p>${setup()}<div class="row"><button data-server>Already running? Connect</button></div>${phoneHint}`;
+  if (!srv.up) return `<p class="hint">${esc(srv.err ?? "Looking for aural-local…")}</p>${setup()}<pre>${esc(cmd)}</pre><div class="row"><button data-server>Try again</button><button data-unserver>Stop using it</button></div>${phoneHint}`;
   const e = srv.evolve;
   return `<p class="desc">Connected${srv.base !== LOCAL ? ` over Tailscale (${esc(new URL(srv.base).hostname.split(".")[0])})` : ""} · dotfiles <code>${esc(srv.caps?.dotfiles ?? "none")}</code> · CamillaDSP ${srv.camilla ? "running" : "not running"}${srv.caps?.cava ? " · cava" : ""}</p>
     <h5>Output</h5><div class="sinks">${(srv.sinks ?? []).map((s) => `<button data-sink="${esc(s.name)}" class="${s.default ? "on" : ""}"><b>${esc(s.desc)}</b><small>${esc([s.format, s.rate && s.rate / 1000 + " kHz", s.channels && s.channels + " ch"].filter(Boolean).join(" · "))}</small></button>`).join("")}</div>
@@ -189,6 +241,7 @@ async function onClick(e) {
   }
   if (d.follow) { prefs.follow = d.follow; save(); render(); return fillCommunity(t); }
   if (d.try) { const x = parseCombo(d.try); if (x) { applyP({ ...scapeById.get(x.scape).params, ...x.eq }, x.scape); ev = null; render(); fillCommunity(t); } return; }
+  if ("install" in d) { const ok = await navigator.clipboard?.writeText(installCmd()).then(() => true, () => false); if (!ok) getSelection()?.selectAllChildren(el.querySelector("[data-cmd]")); host.toast(ok ? "Copied · paste it in Terminal; this pane connects when it's done" : "Select the command and copy it", 5000); prefs.server = true; save(); return waitForServer(); }
   if ("server" in d) return connect();
   if ("unserver" in d) { prefs.server = false; prefs.base = null; save(); engine?.useLocalRooms(null); spectrum?.close(); spectrum = null; sysBars = null; srv = { up: false }; return render(); }
   if (d.sink) return sys("/sink", { name: d.sink });
