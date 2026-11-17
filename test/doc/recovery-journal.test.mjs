@@ -305,6 +305,27 @@ test('aborted second flush batch rejects and restores only versions 5 and 6', as
   assert.deepEqual(storedVersions(fake), [1, 2, 3, 4]);
 });
 
+test('retry after aborted batch persists the restored suffix and subsequent edits', async t => {
+  const fake = installFake(t, { abortReadwriteAt: 2 });
+  const journal = new RecoveryJournal(fake.db, 'k', 'h', 0, noError);
+  append(journal, [1, 2, 3, 4, 5, 6]);
+  await assert.rejects(journal.flush(), /Injected transaction abort/);
+  assert.deepEqual(storedVersions(fake), [1, 2, 3, 4]);
+  append(journal, [7]);
+  await journal.flush();
+  assert.deepEqual(storedVersions(fake), [1, 2, 3, 4, 5, 6, 7]);
+  assert.deepEqual(readwrites(fake).at(-1).puts.filter(call => call.store === 'commands')
+    .map(call => call.value.version), [5, 6, 7]);
+  assert.deepEqual(journal.pending, []);
+  assert.equal(journal.persistedVersion, 7);
+  const count = fake.transactions.length;
+  await journal.flush();
+  assert.equal(fake.transactions.length, count);
+  journal.close();
+  await fake.closed;
+  assert.equal(fake.closeCalls, 1);
+});
+
 test('checkpoint prunes through revision 3, then flushes pending versions 4 and 5', async t => {
   const fake = installFake(t);
   fake.seed('commands', [1, 2, 3].map(command));
@@ -427,4 +448,22 @@ test('close flushes pending commands before closing the database exactly once', 
   assert.deepEqual(journal.pending, []);
   assert.equal(fake.closeCalls, 1);
   assert.deepEqual(fake.events.slice(-2), ['complete:readwrite', 'close']);
+});
+
+test('retrying an older failed flush cannot regress a newer persisted version', async t => {
+  const fake = installFake(t, { abortReadwriteAt: 1 });
+  const journal = new RecoveryJournal(fake.db, 'k', 'h', 0, noError);
+  append(journal, [1, 2, 3, 4]);
+  const failure = assert.rejects(journal.flush(), /Injected transaction abort/);
+  append(journal, [5]);
+  const newer = journal.flush();
+  await failure;
+  await newer;
+  assert.deepEqual(storedVersions(fake), [5]);
+  assert.equal(journal.persistedVersion, 5);
+  assert.deepEqual(versions(journal.pending), [1, 2, 3, 4]);
+  await journal.flush();
+  assert.deepEqual(storedVersions(fake), [1, 2, 3, 4, 5]);
+  assert.deepEqual(journal.pending, []);
+  assert.equal(journal.persistedVersion, 5);
 });

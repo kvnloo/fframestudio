@@ -82,7 +82,7 @@ export class RecoveryJournal {
           for (const entry of batch) tx.objectStore('commands').put(entry);
           const cpuMs = performance.now() - start;
           await done;
-          this.persistedVersion = batch.at(-1).version;
+          this.persistedVersion = Math.max(this.persistedVersion, batch.at(-1).version);
           performance.measure('recovery-write', { start, end: performance.now(), detail: { cpuMs, entries: batch.length } });
         } catch (error) {
           this.pending.unshift(...entries.slice(offset));
