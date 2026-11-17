@@ -449,3 +449,21 @@ test('close flushes pending commands before closing the database exactly once', 
   assert.equal(fake.closeCalls, 1);
   assert.deepEqual(fake.events.slice(-2), ['complete:readwrite', 'close']);
 });
+
+test('retrying an older failed flush cannot regress a newer persisted version', async t => {
+  const fake = installFake(t, { abortReadwriteAt: 1 });
+  const journal = new RecoveryJournal(fake.db, 'k', 'h', 0, noError);
+  append(journal, [1, 2, 3, 4]);
+  const failure = assert.rejects(journal.flush(), /Injected transaction abort/);
+  append(journal, [5]);
+  const newer = journal.flush();
+  await failure;
+  await newer;
+  assert.deepEqual(storedVersions(fake), [5]);
+  assert.equal(journal.persistedVersion, 5);
+  assert.deepEqual(versions(journal.pending), [1, 2, 3, 4]);
+  await journal.flush();
+  assert.deepEqual(storedVersions(fake), [1, 2, 3, 4, 5]);
+  assert.deepEqual(journal.pending, []);
+  assert.equal(journal.persistedVersion, 5);
+});
