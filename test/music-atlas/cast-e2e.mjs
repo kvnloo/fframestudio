@@ -64,7 +64,37 @@ await wait(7000); // past the phone's own-command window
 await tv.evaluate((id) => window.__sa.select(id, { play: true }), a); // the TV moves on by itself (song ended / remote)
 await until(() => ph.evaluate((id) => window.__sa.state.sel === id, a), 12000, "phone follows the TV");
 
-await ph.click("#pc"); // tap while casting = stop
+// Sound output while casting: the TV keeps the picture, the sound plays where it's picked.
+const pick = async (page, sel) => { await page.click("#pc"); await page.waitForSelector(".castmenu.on"); await page.click(`.castmenu button[${sel}]`); };
+await pick(ph, 'data-s="here"');
+await until(() => tv.evaluate(() => window.__sa.audio.muted && !window.__sa.audio.paused), 8000, "sound here: the TV plays on, muted");
+assert.equal(await ph.evaluate(() => window.__sa.audio.muted), false, "sound here: the phone is audible");
+await ph.evaluate(() => { window.__sa.audio.currentTime += 20; }); // the device holding the sound is the clock
+await until(async () => Math.abs((await tv.evaluate(() => window.__sa.audio.currentTime)) - (await ph.evaluate(() => window.__sa.audio.currentTime))) < 1, 10000, "the muted TV follows the phone's seek");
+await pick(ph, 'data-s="away"');
+await ph.waitForSelector(".shm.join.on .lqr svg");
+await ph.click('.shm.join [data-a="no"]');
+const lh = await ph.evaluate(() => JSON.parse(localStorage.getItem("sa-casting")));
+assert.equal(lh.sound, "away");
+assert.equal(await ph.evaluate(() => window.__sa.audio.muted), true, "sound away: the phone mutes");
+const lpCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } }), lp = await lpCtx.newPage();
+lp.on("pageerror", (e) => errs.push("laptop: " + e.message));
+await lp.goto(`${base}#castjoin=${room}~samsung~Samsung%20TV`);
+await lp.waitForSelector('.shm.join.on [data-a="join"]', { timeout: 30000 });
+assert.ok(!(await lp.evaluate(() => location.hash.includes("castjoin"))), "the listen link drops out of the URL");
+await lp.click('.shm.join [data-a="join"]');
+const tvSel = await tv.evaluate(() => window.__sa.state.sel);
+await until(() => lp.evaluate((id) => window.__sa.state.sel === id && !window.__sa.audio.paused && !window.__sa.audio.muted, tvSel), 15000, "the laptop plays the TV's song, audible");
+await until(() => tv.evaluate(() => window.__sa.audio.muted), 5000, "TV stays muted with the laptop holding the sound");
+await lp.evaluate(() => window.__sa.audio.pause());
+await until(() => tv.evaluate(() => window.__sa.audio.paused), 8000, "the laptop's pause reaches the TV");
+await lp.evaluate(() => window.__sa.audio.play());
+await until(() => tv.evaluate(() => !window.__sa.audio.paused), 8000, "the laptop's play reaches the TV");
+await pick(ph, 'data-s="tv"');
+await until(() => tv.evaluate(() => !window.__sa.audio.muted), 8000, "sound back on the TV");
+await until(() => lp.evaluate(() => window.__sa.audio.muted), 10000, "the laptop yields the sound to the TV");
+if (shots) await ph.screenshot({ path: `${shots}/phone-sound.png` });
+await pick(ph, 'data-c="stop"');
 await until(() => tv.evaluate(() => window.__sa.audio.paused), 8000, "stop pauses the TV");
 assert.equal(await ph.evaluate(() => window.__sa.audio.muted), false, "phone unmuted after stop");
 // Scanning a fresh TV's dot QR connects on its own: the phone casts and the TV lets the map go, with no Cast tap.

@@ -407,6 +407,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .castmenu button { display: flex; gap: 12px; align-items: center; text-align: left; min-height: 58px; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--line2); }
 .castmenu button:active { transform: scale(.97); }
 .castmenu button:disabled { opacity: .45; }
+.castmenu button.cur { border-color: var(--acc); background: rgba(95, 211, 220, .08); }
+.lqr { width: 180px; margin: 4px auto 10px; border-radius: 12px; overflow: hidden; }
+.lqr svg { display: block; width: 100%; height: auto; }
 .castmenu button i { font-style: normal; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(95, 211, 220, .14); color: var(--acc); font-size: 18px; flex: none; }
 .castmenu button span { display: flex; flex-direction: column; font: 600 15px "Instrument Sans", sans-serif; }
 .castmenu button small { font: 11px "IBM Plex Mono", monospace; color: var(--mute); font-weight: 400; }

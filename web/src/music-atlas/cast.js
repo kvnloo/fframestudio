@@ -6,6 +6,10 @@
 // - Google Cast (Chromecast, Google TV, Nest Hub): the Cast SDK starts the DashCast receiver,
 //   which loads the TV view with a fresh room.
 // While casting, the phone keeps playing muted so its map, beat and scrubber stay in step.
+// Sound is a separate choice from the screen (send.sound): "tv" plays it on the TV; "here" plays it on
+// this device and mutes the TV, which keeps drawing the map in step (headphones on a laptop, the TV
+// as the picture); "away" hands it to another device that opened the listen link (#castjoin=…).
+// Every command carries mute/here/by, so the TV mutes itself and the other controllers yield.
 // Like Chromecast, the TV plays on when the phone leaves Chrome: a hidden page sends nothing
 // (Android pauses or freezes the muted copy; that is not the listener pausing), catches up with the
 // TV on return, and a reopened or reloaded page takes control of the same TV again.
@@ -65,10 +69,14 @@ export function probe() {
 }
 
 // --- the phone ------------------------------------------------------------------------------------
-export const send = { on: false, room: null, kind: null, name: "", tv: null, tage: 0, session: null };
-let hooks = null, sentAt = 0, quietUntil = 0, echo = null, sendT = 0, peekT = 0;
-const snapshot = () => ({ t: hooks.current(), pos: Math.round(hooks.audio.currentTime * 10) / 10, playing: !hooks.audio.paused });
-const away = () => document.visibilityState === "hidden";
+export const send = { on: false, room: null, kind: null, name: "", tv: null, tage: 0, session: null, sound: "tv" };
+const SOUNDS = new Set(["tv", "here", "away"]);
+let hooks = null, sentAt = 0, quietUntil = 0, echo = null, sendT = 0, peekT = 0, seen = 0;
+const snapshot = () => ({ t: hooks.current(), pos: Math.round(hooks.audio.currentTime * 10) / 10, playing: !hooks.audio.paused, mute: send.sound !== "tv", here: send.sound === "here", by: hooks.sid });
+const hear = () => { hooks.audio.muted = send.sound !== "here"; };
+const save = () => localStorage.setItem(CAST_KEY, JSON.stringify({ room: send.room, kind: send.kind, name: send.name, sound: send.sound }));
+// The device holding the sound keeps the room going from a background tab; the others go quiet when hidden.
+const away = () => document.visibilityState === "hidden" && send.sound !== "here";
 function push() {
   if (!send.on || away()) return;
   const s = snapshot(); // the phone copying the TV fires play/seek events too; only those are skipped
@@ -102,16 +110,39 @@ async function resume() {
   if (!c || !ROOM.test(c.room ?? "")) return;
   const j = await api("castpeek", { sid: hooks.sid, room: c.room }).catch(() => null);
   if (!fresh(j)) return localStorage.removeItem(CAST_KEY);
-  begin(c.room, c.kind, c.name, true); mirror(j.tv, j.tage ?? 0, 2000);
+  seen = j.cseq ?? 0; begin(c.room, c.kind, c.name, true, c.sound); mirror(j.tv, j.tage ?? 0, 2000);
+}
+// A listen link (#castjoin=<room>~<kind>~<name>) opened on another device: it asks first (the tap also
+// unlocks audio), then joins the cast holding the sound, picks up the TV's song and position, and claims
+// the sound so the phone that shared the link stays muted.
+export function pendingJoin() {
+  const hp = new URLSearchParams(location.hash.slice(1)), v = hp.get("castjoin");
+  if (!v) return null;
+  hp.delete("castjoin"); history.replaceState(null, "", location.pathname + location.search + (hp.toString() ? "#" + hp : ""));
+  const [room, kind, name] = v.split("~");
+  return ROOM.test(room ?? "") ? { room, kind: kind || "samsung", name: name || "the TV" } : null;
+}
+export async function join({ room, kind, name }) {
+  hooks.toast(`Joining ${name}…`, 6000);
+  const j = await api("castpeek", { sid: hooks.sid, room }).catch(() => null);
+  if (!fresh(j)) return hooks.toast(`${name} isn't casting right now`, 4000);
+  seen = j.cseq ?? 0; begin(room, kind, name, true, "here"); mirror(j.tv, j.tage ?? 0, 2500);
+  setTimeout(() => { if (send.on && send.sound === "here") { sentAt = Date.now(); api("cast", { sid: hooks.sid, room, cmd: snapshot() }).catch(() => {}); } }, 2500);
+}
+export const joinHash = () => "#castjoin=" + [send.room, send.kind, send.name].map((x) => encodeURIComponent(x ?? "")).join("~");
+export function setSound(s) {
+  if (!send.on || !SOUNDS.has(s) || s === send.sound) return;
+  send.sound = s; save(); hear(); quietUntil = 0;
+  sentAt = Date.now(); clearTimeout(sendT); api("cast", { sid: hooks.sid, room: send.room, cmd: snapshot() }).catch(() => {});
+  hooks.onChange(); hooks.toast(s === "tv" ? `Sound on ${send.name}` : s === "here" ? `Sound here · ${send.name} shows the map` : "Open the listen link on the device you'll hear it on", 3500);
 }
 const loadTV = () => { try { return JSON.parse(localStorage.getItem("sa-tv")); } catch { return null; } };
 const saveTV = (tv) => localStorage.setItem("sa-tv", JSON.stringify(tv));
 export const savedTV = loadTV;
 
-function begin(room, kind, name, back = false) {
-  Object.assign(send, { on: true, room, kind, name });
-  localStorage.setItem(CAST_KEY, JSON.stringify({ room, kind, name }));
-  hooks.audio.muted = true; sentAt = 0; if (!back) push();
+function begin(room, kind, name, back = false, sound = "tv") {
+  Object.assign(send, { on: true, room, kind, name, sound: SOUNDS.has(sound) ? sound : "tv" });
+  save(); hear(); sentAt = 0; if (!back) push();
   clearInterval(peekT); peekT = setInterval(peek, 2500);
   hooks.onChange(); hooks.haptic("keep"); hooks.toast(back ? `Still playing on ${name}` : `Playing on ${name}`);
 }
@@ -121,7 +152,7 @@ export function stop() {
   api("cast", { sid: hooks.sid, room: send.room, cmd: s }).catch(() => {}); // the TV pauses where it was
   try { send.session?.endSession(true); } catch {}
   localStorage.removeItem(CAST_KEY);
-  clearInterval(peekT); Object.assign(send, { on: false, room: null, kind: null, session: null, tv: null });
+  clearInterval(peekT); Object.assign(send, { on: false, room: null, kind: null, session: null, tv: null, sound: "tv" });
   hooks.audio.muted = false; hooks.onChange(); hooks.toast("Stopped casting");
 }
 async function peek(force = false) {
@@ -129,9 +160,23 @@ async function peek(force = false) {
   try {
     const j = await api("castpeek", { sid: hooks.sid, room: send.room });
     send.tv = j.tv; send.tage = j.tage ?? 1e9;
-    if (j.tv && send.tage < 5000 && (force || Date.now() - sentAt > 6000)) mirror(j.tv, send.tage); // the TV moved on by itself (song ended, its remote)
+    const c = j.cmd;
+    if (c?.by && c.by !== hooks.sid && (j.cseq ?? 0) > seen) { // another controller spoke: follow its sound choice
+      seen = j.cseq; const was = send.sound;
+      if (send.sound !== "here") send.sound = c.mute ? "away" : "tv";
+      else if (c.here || c.mute === false) send.sound = c.here ? "away" : "tv"; // someone took the sound, or gave it back to the TV
+      if (send.sound !== was) { save(); hear(); if (was === "here") hooks.toast(send.sound === "tv" ? `Sound back on ${send.name}` : "Sound moved to another device", 3500); }
+    }
+    if (send.sound === "here") { // this device is the clock: nudge the muted TV back in step instead of following it
+      if (j.tv && send.tage < 5000 && Date.now() - sentAt > 3000 && drift(j.tv, send.tage) > 0.6) { sentAt = Date.now(); api("cast", { sid: hooks.sid, room: send.room, cmd: snapshot() }).catch(() => {}); }
+    } else if (j.tv && send.tage < 5000 && (force || Date.now() - sentAt > 6000)) mirror(j.tv, send.tage); // the TV moved on by itself (song ended, its remote)
     hooks.onChange();
   } catch {}
+}
+function drift(tv, tage) {
+  const a = hooks.audio;
+  if (tv.t !== hooks.current() || tv.playing === a.paused) return Infinity;
+  return Math.abs((tv.pos ?? 0) + (tv.playing ? tage / 1000 : 0) - a.currentTime);
 }
 const fresh = (j) => j?.tv && (j.tage ?? 1e9) < 4000;
 async function waitFresh(room, ms) {
