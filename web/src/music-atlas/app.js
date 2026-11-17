@@ -949,7 +949,34 @@ function warm(t) {
 }
 for (const h of ["https://incompetech.com"]) document.head.append(Object.assign(document.createElement("link"), { rel: "preconnect", href: h }));
 const proxied = !/^(localhost|127\.|\[::1\])/.test(location.hostname) && location.protocol === "https:";
-const streamUrl = (t) => (proxied && t.audio.startsWith(CCM) ? "/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)) : new URL(t.audio, new URL(base, document.baseURI)).href);
+// With Aural on, the page's Web Audio graph needs CORS-readable media, so both hosts stream through it.
+const INC = "https://incompetech.com/music/";
+const streamUrl = (t) => ((proxied || auralOn()) && t.audio.startsWith(CCM) ? "/api/ccm?p=" + encodeURIComponent(t.audio.slice(CCM.length)) : auralOn() && t.audio.startsWith(INC) ? "/api/ccm?u=" + encodeURIComponent(t.audio) : new URL(t.audio, new URL(base, document.baseURI)).href);
+
+// --- Aural (hidden audiophile pane, aural-pane.js) ----------------------------------------------------
+// Type "aural", open #aural, or long-press the logo. Loaded only then, or at boot when it was left on.
+const auralOn = () => { try { return !!JSON.parse(localStorage.getItem("sa-aural"))?.on; } catch { return false; } };
+let auralMod = null;
+const aural = () => import("./aural-pane.js").then((m) => {
+  if (!auralMod) {
+    auralMod = m;
+    m.attach({ audio, A, toast, track: () => byId.get(state.sel), reroute() {
+      if (audio.crossOrigin === "anonymous") return;
+      const t = byId.get(state.sel), at = audio.currentTime, was = !audio.paused;
+      audio.crossOrigin = "anonymous";
+      if (t?.audio) { audio.src = streamUrl(t); audio.addEventListener("loadedmetadata", () => { audio.currentTime = at; if (was) audio.play().catch(() => {}); }, { once: true }); audio.load(); }
+    } });
+  }
+  return m;
+});
+if (auralOn()) audio.crossOrigin = "anonymous"; // before the first src: the graph can only read CORS media
+const openAural = () => aural().then((m) => (m.isOpen() ? m.close() : m.open()));
+{ let typed = ""; addEventListener("keydown", (e) => { if (e.target.closest?.("input, textarea") || e.key.length !== 1) return; typed = (typed + e.key.toLowerCase()).slice(-5); if (typed === "aural") { typed = ""; openAural(); } }); }
+{ const brand = $(".brand"); let lp = 0, fired = false;
+  brand?.addEventListener("pointerdown", () => { fired = false; lp = setTimeout(() => { fired = true; haptic("tick"); openAural(); }, 650); });
+  for (const ev of ["pointerup", "pointercancel", "pointerleave"]) brand?.addEventListener(ev, () => clearTimeout(lp));
+  brand?.addEventListener("click", (e) => { if (fired) e.preventDefault(); });
+  brand?.addEventListener("contextmenu", (e) => e.preventDefault()); }
 function select(id, { play = false, fly = false, keepScroll = false, from = null, view = null, tuned = false } = {}) {
   const t = byId.get(id); if (!t) return;
   if (!tuned && tune && id !== state.sel) tune = null; // picking a song by hand ends the tune
@@ -962,6 +989,7 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   if (changed && spotify.on && t.provider !== "spotify") { spotify.on = false; byom().then((B) => B.spotifyPause()); }
   if (changed && t.src === "mine" && cast.send.on) { cast.stop(); toast("Your own music plays on this device; the TV has the shared catalogue"); }
   if (changed) { if (t.audio) { audio.src = streamUrl(t); audio.load(); } else { audio.pause(); audio.removeAttribute("src"); audio.load(); } }
+  if (changed && auralMod) auralMod.onTrack(t);
   if (play && t.provider === "spotify") spotifyGo(t);
   else if (play) { if (t.audio) landAt = performance.now(); audio.play().catch((e) => { if (e.name === "NotAllowedError") toast("Tap ▶ to play"); }); } // a failed stream says so itself (error), don't overwrite it
   if (changed) {
@@ -1274,7 +1302,7 @@ addEventListener("resize", () => { measure(); if (!wide()) { sh.y = snaps()[sh.t
 // (back gesture / swipe) is respected on the spot; the hint comes back with the next touch, so the tap
 // after that restores fullscreen. "Never mind" turns it off on this device. The hint's text lets taps through.
 if (!cast.isTV && matchMedia("(pointer: coarse)").matches && !matchMedia("(display-mode: fullscreen), (display-mode: standalone)").matches && document.documentElement.requestFullscreen) {
-  const off = () => localStorage.getItem("sa-fs") === "no";
+  const off = () => localStorage.getItem("sa-fs") === "no", FSH_MS = 3500;
   const fsHint = (delay, armNow) => {
     if (off() || document.fullscreenElement || $(".fsh")) return;
     const hint = document.createElement("div"); hint.className = "fsh";
@@ -1286,6 +1314,10 @@ if (!cast.isTV && matchMedia("(pointer: coarse)").matches && !matchMedia("(displ
     setTimeout(() => {
       if (!hint.isConnected) return; const a = $(".top").getBoundingClientRect().bottom, z = rail.getBoundingClientRect().top;
       hint.style.top = `${Math.round((a + z) / 2 - hint.offsetHeight / 2)}px`; hint.classList.add("on"); if (!armNow) arm();
+      // It fades by itself: a scroll (pointercancel) or a tap inside the YouTube iframe never reaches us, so
+      // waiting for a tap could leave it up for good. The next tap still goes fullscreen.
+      // Removed (not just faded) so it can come back after leaving fullscreen; the tap listener stays armed.
+      setTimeout(() => { hint.classList.remove("on"); setTimeout(() => hint.remove(), 400); }, FSH_MS);
     }, delay);
     const arm = () => { addEventListener("click", go, true); addEventListener("pointerup", go, true); }; // a drag on the atlas never makes a click
     if (armNow) arm();
@@ -1456,5 +1488,9 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
     const s = await B.sources(); if (!(s.dir || s.files || s.plex || s.spotify)) return;
     const r = await B.restore(); mine.regrant = r.needsFolder; addMine(r, mine.spotifyNew ? "Spotify" : null); r.errors.forEach((m) => toast(m));
   }).catch((e) => toast("Your music: " + e.message));
-  window.__sa = { party, mine, addMine, slugs: () => slugs, social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
+  // #aural opens the pane; #aural=<https://pc.tailnet.ts.net:4317> (the computer's phone code) also points it at that server.
+  const auralHash = () => { const m = /^#aural(?:=(.+))?$/.exec(location.hash); if (!m) return;
+    aural().then((p) => { p.open(); if (m[1]) { p.useServer(decodeURIComponent(m[1])); history.replaceState(null, "", "#aural"); } }); };
+  if (auralOn()) aural(); auralHash(); addEventListener("hashchange", auralHash);
+  window.__sa = { aural, party, mine, addMine, slugs: () => slugs, social, startRadio, playPlaylist, A, state, get all() { return all; }, get result() { return result; }, audio, mixer, modelReady, sheetTo, select, run, setView };
 })();
