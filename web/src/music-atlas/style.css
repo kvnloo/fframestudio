@@ -540,23 +540,23 @@ a.aref { color: inherit; text-decoration: underline; text-decoration-color: colo
    full / side (the desktop panel): a now-playing widget. Title on its own line, a detail line, the scrub, then a
    centred transport with like/radio on the left and cast/share on the right. */
 #pt { grid-area: t; } #pm { grid-area: m; } .player .scrub { grid-area: s; } #ph { grid-area: h; } #pr { grid-area: r; }
-#pv { grid-area: v; } #pp { grid-area: p; } #pn { grid-area: n; } #pc { grid-area: c; } #ps { grid-area: x; }
-.sheet .player { grid-template-columns: auto auto auto 1fr auto auto auto auto; grid-template-rows: none; grid-template-areas: "v p n t h r c x" "s s s s s s s s"; }
+#pv { grid-area: v; } #pp { grid-area: p; } #pn { grid-area: n; } #pc { grid-area: c; } #ps { grid-area: x; } #pk { grid-area: k; }
+.sheet .player { grid-template-columns: auto auto auto 1fr auto auto auto auto auto; grid-template-rows: none; grid-template-areas: "v p n t k h r c x" "s s s s s s s s s"; }
 .sheet:is([data-snap="peek"], [data-snap="half"], [data-snap="find"]) #pm { display: none; }
-.sheet:is([data-snap="full"], [data-snap="side"]) .player { grid-template-columns: auto auto 1fr auto auto auto 1fr auto auto;
-  grid-template-areas: "t t t t t t t t t" "m m m m m m m m m" "s s s s s s s s s" "h r . v p n . c x"; gap: 6px 4px; padding: 2px 16px 12px; }
+.sheet:is([data-snap="full"], [data-snap="side"]) .player { grid-template-columns: auto auto auto 1fr auto auto auto 1fr auto auto;
+  grid-template-areas: "t t t t t t t t t t" "m m m m m m m m m m" "s s s s s s s s s s" "h r k . v p n . c x"; gap: 6px 4px; padding: 2px 16px 12px; }
 .sheet:is([data-snap="full"], [data-snap="side"]) #pp { width: 58px; height: 58px; }
 .sheet:is([data-snap="full"], [data-snap="side"]) :is(#pv, #pn) { width: 46px; height: 46px; }
 .sheet:is([data-snap="full"], [data-snap="side"]) :is(#pv, #pn) svg { width: 22px; height: 22px; }
-.sheet:is([data-snap="full"], [data-snap="side"]) :is(#ph, #pr, #pc, #ps) { width: 42px; height: 42px; }
+.sheet:is([data-snap="full"], [data-snap="side"]) :is(#ph, #pr, #pc, #ps, #pk) { width: 42px; height: 42px; }
 .sheet:is([data-snap="full"], [data-snap="side"]) .pt { padding: 4px 0 0; }
 .sheet:is([data-snap="full"], [data-snap="side"]) .pt b { font-size: 25px; line-height: 1.05; }
 .sheet:is([data-snap="full"], [data-snap="side"]) .pt small { font-size: 12px; margin-top: 3px; }
 .sheet:is([data-snap="full"], [data-snap="side"]) .scrub .track { height: 6px; border-radius: 3px; }
 .sheet:is([data-snap="full"], [data-snap="side"]) .scrub.on .track { height: 10px; }
-@media (max-width: 379px) { .sheet:is([data-snap="full"], [data-snap="side"]) .player { column-gap: 0; padding-inline: 10px; } .sheet[data-snap="full"] :is(#ph, #pr, #pc, #ps) { width: 40px; } }
-.sheet:is([data-snap="peek"], [data-snap="find"]) .player { grid-template-columns: auto auto auto 1fr auto auto auto; grid-template-areas: "v p n t r c h" "s s s s s s s"; column-gap: 0; }
-.sheet:is([data-snap="peek"], [data-snap="find"]) :is(#pp, #pn, #pt, #pr, #pc, #ph) { margin-left: 6px; } /* margins, not gaps: hidden columns cost nothing */
+@media (max-width: 379px) { .sheet:is([data-snap="full"], [data-snap="side"]) .player { column-gap: 0; padding-inline: 10px; } .sheet[data-snap="full"] :is(#ph, #pr, #pc, #ps, #pk) { width: 38px; } }
+.sheet:is([data-snap="peek"], [data-snap="find"]) .player { grid-template-columns: auto auto auto 1fr auto auto auto auto; grid-template-areas: "v p n t r c k h" "s s s s s s s s"; column-gap: 0; }
+.sheet:is([data-snap="peek"], [data-snap="find"]) :is(#pp, #pn, #pt, #pr, #pc, #ph, #pk) { margin-left: 6px; } /* margins, not gaps: hidden columns cost nothing */
 /* Radio and cast stay in the compact row while they're on: then they're state, not options. */
 .sheet:is([data-snap="peek"], [data-snap="find"]) :is(#pr:not(.on), #pc:not(.on), #ps) { display: none; }
 .pm { display: flex; align-items: center; gap: 6px; height: 22px; min-width: 0; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
@@ -585,3 +585,50 @@ a.aref { color: inherit; text-decoration: underline; text-decoration-color: colo
 #pp.wait { animation: ppwait .7s ease-in-out infinite alternate; }
 @keyframes ppwait { to { opacity: .55; } }
 @media (prefers-reduced-motion: reduce) { .trk .pl .ld, #pp.wait { animation: none; } }
+
+/* --- the Stage (stage.js): karaoke + a cappella studio, one full-screen mode grown out of the player's mic ------
+   Top: back, song, save. Then the ribbon (pitch over time, every part's melody running into the now-line, your
+   voice live), the section length, your five voices (each a colour) above the song's layers (which fade to ghosts
+   as you replace them), and one dock: play, the big Sing button in the selected part's colour, click. */
+.stageb svg { width: 19px; height: 19px; }
+.stage { position: fixed; inset: 0; z-index: 11; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); padding: var(--sat) 0 0; font: 14px "Instrument Sans", sans-serif; }
+.st-top { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px; }
+.st-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.st-t b { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-t small { color: var(--mute); font: 11px "IBM Plex Mono", monospace; margin-top: 2px; }
+.stage .ib svg { width: 20px; height: 20px; }
+.st-ribbon { position: relative; height: clamp(150px, 30vh, 280px); margin: 4px 12px; border-radius: 16px; background: linear-gradient(180deg, #111718, #0b0f10); border: 1px solid var(--line); overflow: hidden; }
+.st-ribbon canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.st-note { position: absolute; right: 12px; top: 8px; font: 600 22px "IBM Plex Mono", monospace; color: var(--ink); opacity: .85; }
+.st-count { position: absolute; inset: 0; display: grid; place-items: center; font: 700 64px "Instrument Sans", sans-serif; color: var(--ink); pointer-events: none; text-shadow: 0 0 30px rgba(255, 179, 92, .5); }
+.st-count:empty { display: none; }
+.st-bars { display: flex; align-items: center; gap: 6px; padding: 8px 12px 2px; overflow-x: auto; }
+.st-bars button { flex: none; height: 28px; padding: 0 9px; border-radius: 9px; border: 1px solid var(--line); color: var(--mute); font: 11px "IBM Plex Mono", monospace; }
+.st-bars button[aria-checked="true"] { color: var(--ink); border-color: var(--line2); background: rgba(255, 255, 255, .06); }
+.st-bars span { margin-left: auto; color: var(--mute); font: 11px "IBM Plex Mono", monospace; white-space: nowrap; }
+.st-body { flex: 1; overflow-y: auto; padding: 4px 12px calc(var(--sab) + 96px); }
+.st-body h4 { margin: 14px 2px 6px; font: 600 12px "Instrument Sans", sans-serif; letter-spacing: .04em; text-transform: uppercase; color: var(--mute); }
+.st-body h4 small { text-transform: none; letter-spacing: 0; font-weight: 400; margin-left: 6px; }
+.st-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.st-v, .st-l { display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 6px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel2); transition: border-color .2s, background .2s, opacity .2s; }
+.st-v.sel { border-color: color-mix(in srgb, var(--h) 60%, transparent); background: color-mix(in srgb, var(--h) 9%, var(--panel2)); }
+.st-v.mute, .st-l.mute { opacity: .45; }
+.st-pick { flex: 1; min-width: 0; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; text-align: left; padding: 4px; }
+.st-pick i { grid-row: span 2; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--h); }
+.st-v.has .st-pick i { background: var(--h); box-shadow: 0 0 10px var(--h); }
+.st-v.auto .st-pick i { background: color-mix(in srgb, var(--h) 45%, transparent); box-shadow: none; }
+.st-pick b { font-weight: 600; } .st-pick small, .st-l small { color: var(--mute); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-l b { font-weight: 500; } .st-l { gap: 10px; padding-left: 12px; } .st-l small { flex: 1; min-width: 0; }
+.st-l.ghost b { opacity: .5; } .st-l.fail small { color: #ff8a7a; }
+.st-chip { flex: none; height: 28px; min-width: 28px; padding: 0 9px; border-radius: 9px; border: 1px solid var(--line2); color: var(--ink); font: 12px "Instrument Sans", sans-serif; }
+.st-chip.on, .st-chip[aria-pressed="true"] { border-color: var(--h, var(--acc)); color: var(--h, var(--acc)); }
+.st-hint { color: var(--mute); margin: 18px 4px; }
+.st-dock { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 18px; padding: 14px 16px calc(var(--sab) + 16px); background: linear-gradient(transparent, var(--bg) 40%); }
+.st-rec { --h: #ffb35c; display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 26px 0 20px; border-radius: 28px; background: var(--h); color: #101415; font: 700 16px "Instrument Sans", sans-serif; box-shadow: 0 8px 30px color-mix(in srgb, var(--h) 40%, transparent); transition: transform .15s var(--spring); }
+.st-rec:active { transform: scale(.96); }
+.st-rec i { width: 14px; height: 14px; border-radius: 50%; background: #e2463c; box-shadow: 0 0 0 3px rgba(16, 20, 21, .3); }
+.st-rec.on i { border-radius: 3px; animation: strec 1s ease-in-out infinite alternate; }
+@keyframes strec { to { opacity: .4; } }
+.st-click[aria-pressed="false"] { opacity: .45; }
+@media (min-width: 900px) { .stage { padding-inline: max(12px, calc(50vw - 420px)); } }
+@media (prefers-reduced-motion: reduce) { .st-rec.on i { animation: none; } }

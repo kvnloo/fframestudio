@@ -70,7 +70,7 @@ const snaps = () => { const H = geo.H; return { peek: H - geo.views - geo.sab, h
 // a snap's catchment, not after release, and the re-layout is FLIPped relative to the sheet (which is mid-spring),
 // so each control glides from where it was.
 const DENSITY = { peek: 0, find: 0, half: 1, full: 2, side: 2 };
-const FLIP = ["#pv", "#pp", "#pn", "#pt", "#ph", "#pr", "#pc", "#ps", "#pm", "#player .scrub", "#views", "#body"];
+const FLIP = ["#pv", "#pp", "#pn", "#pt", "#ph", "#pk", "#pr", "#pc", "#ps", "#pm", "#player .scrub", "#views", "#body"];
 const snapFor = (name) => (wide() ? "side" : name === "full" && document.activeElement === q ? "find" : name);
 function setSnap(name) {
   const was = sheet.dataset.snap; if (was === name) return;
@@ -1079,6 +1079,15 @@ $("#pv").onclick = (e) => { e.stopPropagation(); step(-1); };
 $("#ph").onclick = (e) => { e.stopPropagation(); if (state.sel) pick(state.sel); };
 $("#ps").onclick = (e) => { e.stopPropagation(); shareLink(); };
 $("#pr").onclick = (e) => { e.stopPropagation(); startRadio(state.radio ?? "ear"); };
+// The Stage (karaoke + a cappella studio) is one full-screen mode reached from the mic, never another tab: it grows
+// out of the button and Back returns to exactly where Listen was. Loaded on first use.
+$("#pk").onclick = async (e) => {
+  e.stopPropagation(); buzz(); const t = state.sel && byId.get(state.sel), b = t && beatAt(0, t), f = t?.f;
+  if (mixer.id) mixer.reset();
+  const { openStage } = await import("./stage.js");
+  openStage({ track: t?.audio ? t : null, audio, streamUrl, stems: t && layersOf(t.id), stemUrl, bpm: t ? (f?.beat?.bpm || bpmOf(t)) : null, down: f?.beat?.down ?? 0,
+    key: f && (f.keyConf ?? 1) >= 0.35 ? f.key : null, dur: audio.duration || t?.dur, toast, haptic, from: $("#pk").getBoundingClientRect() });
+};
 $("#pc").onclick = (e) => { e.stopPropagation(); buzz(5); castMenu(); };
 $("#live").onclick = () => { buzz(5); setView("community"); };
 // Motion: the map dances to the playing beat (labels step aside while it does). Remembered per device;
