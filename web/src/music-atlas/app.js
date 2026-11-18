@@ -1308,7 +1308,7 @@ if (!cast.isTV && matchMedia("(pointer: coarse)").matches && !matchMedia("(displ
 // --- casting: phone -> TV (cast.js) ---------------------------------------------------------------
 const castNote = () => ({ ready: "Picks a Cast screen", none: "Cast isn't available in this browser" })[cast.castSDKState()] ?? (window.chrome ? "Loading Cast…" : "Needs Chrome");
 function castMenu() {
-  if (cast.send.on) return cast.stop();
+  if (cast.send.on) return soundMenu();
   const m = document.createElement("div"); m.className = "castmenu"; const tv = cast.savedTV();
   m.innerHTML = `<div class="cm"><b>Play on a TV</b>
     <button data-c="samsung"><i>▣</i><span>${esc(tv?.name ?? "Samsung TV")}<small>${tv ? "Smart View · paired" : "Smart View · pair once"}</small></span></button>
@@ -1328,6 +1328,41 @@ function castMenu() {
     if (b.dataset.c === "airplay") airplayPick(); // also inside the tap: Safari only opens its picker on a gesture
     if (b.dataset.c === "forget") { cast.forgetTV(); toast("TV forgotten"); }
   };
+}
+// While casting the Cast button picks where the sound plays; the TV keeps the picture either way.
+function soundMenu() {
+  const s = cast.send.sound, here = matchMedia("(pointer: coarse)").matches ? "this phone" : "this computer";
+  const opt = (k, icon, title, sub) => `<button data-s="${k}" class="${s === k ? "cur" : ""}" aria-pressed="${s === k}"><i>${icon}</i><span>${title}<small>${sub}</small></span></button>`;
+  const m = document.createElement("div"); m.className = "castmenu"; m.innerHTML = `<div class="cm"><b>Casting to ${esc(cast.send.name)}</b>
+    ${opt("tv", "▣", `Sound on ${esc(cast.send.name)}`, "The TV plays the picture and the sound")}
+    ${opt("here", "◖", `Sound on ${here}`, "Headphones or speakers here · the TV shows the map, muted")}
+    ${opt("away", "↗", "Sound on another device", s === "away" ? "Waiting for it · tap to show the link again" : "Open a link there, like a laptop with headphones")}
+    <button data-c="stop" class="ghost">Stop casting</button></div>`;
+  document.body.append(m); requestAnimationFrame(() => m.classList.add("on"));
+  const close = () => { m.classList.remove("on"); setTimeout(() => m.remove(), 250); };
+  m.onclick = (e) => {
+    const b = e.target.closest("button"); if (!b && e.target !== m) return; close(); if (!b) return; buzz(5);
+    if (b.dataset.c === "stop") return cast.stop();
+    if (b.dataset.s === "here" && audio.paused && state.sel) audio.play().catch(() => {}); // inside the tap: unlocks audio here
+    cast.setSound(b.dataset.s);
+    if (b.dataset.s === "away") listenLink();
+  };
+}
+function listenLink() {
+  const url = (share?.base ?? location.origin + location.pathname) + cast.joinHash();
+  const m = sheetUI("join", `
+    <div class="sht">Listen on another device</div>
+    <div class="lqr">${qr(url)}</div>
+    <p class="shs">Open this on the device you'll listen on. It plays the sound and keeps ${esc(cast.send.name)}'s map in step; this phone stays the remote.</p>
+    <div class="sha"><button data-a="send" class="go">Send the link</button><button data-a="no" class="ghost">Done</button></div>`);
+  m.onclick = (e) => { const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return; buzz(5); if (a === "send") sendLink(url, "Listen to Sound Atlas", "Listen link"); else m.close(); };
+}
+function castJoinPrompt(j) {
+  const m = sheetUI("join", `
+    <div class="sht">Listen here</div>
+    <p class="shs">${esc(j.name)} is showing Sound Atlas. Play its sound on this device; the TV keeps the picture, muted, and your phone stays the remote.</p>
+    <div class="sha"><button data-a="join" class="go">Play the sound here</button><button data-a="no" class="ghost">Not now</button></div>`);
+  m.onclick = (e) => { const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return; buzz(5); m.close(); if (a === "join") cast.join(j); };
 }
 // Apple TV (and any AirPlay 2 TV or speaker, the QN85B included): Safari and iOS browsers route this page's
 // audio there with their own picker; Now Playing (Media Session) puts the song and artwork on the TV screen.
@@ -1363,8 +1398,9 @@ function castFollow(tv, tage) { // the TV moved on by itself: the phone (muted) 
   if (tv.playing && audio.paused) audio.play().catch(() => {}); else if (!tv.playing && !audio.paused) audio.pause();
 }
 function tvApply(cmd, cage) { // the phone said play this, here
+  audio.muted = !!cmd.mute; // the sound is on another device: keep playing silently so the map stays on its beat
   if (cmd.t && cmd.t !== state.sel && byId.has(cmd.t)) select(cmd.t, { fly: true, view: "track" });
-  const pos = (cmd.pos ?? 0) + (cmd.playing ? cage / 1000 : 0), go = () => { if (isFinite(pos) && Math.abs(audio.currentTime - pos) > 1.5) audio.currentTime = pos; };
+  const pos = (cmd.pos ?? 0) + (cmd.playing ? cage / 1000 : 0), go = () => { if (isFinite(pos) && Math.abs(audio.currentTime - pos) > (cmd.mute ? 0.3 : 1.5)) audio.currentTime = pos; }; // muted, a seek is inaudible: hold it tight
   if (audio.readyState >= 1) go(); else audio.addEventListener("loadedmetadata", go, { once: true });
   if (cmd.playing) audio.play().catch((e) => { if (e.name !== "AbortError") toast("The TV blocked autoplay · press OK on the remote"); }); else audio.pause();
 }
@@ -1399,6 +1435,7 @@ function tvBadge(st) { // unpaired: say how to cast here; QR = pairing link for 
 if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind);
 
 (async function boot() {
+  const castJoin = cast.isTV ? null : cast.pendingJoin(); // read before saveHash rewrites the hash
   measure(); sheetPointer();
   sh.y = innerHeight; sheetTo("peek");
   const cat = await loadCatalog(base).catch((e) => { body.innerHTML = `<div class="empty">Could not load the catalogue (${esc(e.message)}).</div>`; throw e; });
@@ -1416,7 +1453,7 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
   if (state.q) warmModel(); else if (!cast.isTV && !matchMedia("(pointer: coarse)").matches) setTimeout(warmModel, 2500); // TVs never search: no model on a 2 GB set; // phones load the model on first search focus
   renderPlayer();
   if (cast.isTV) { if (state.view === "library") setView("track", false); cast.receive({ sid: social.sid, audio, current: () => state.sel, apply: tvApply, next: () => step(1), onStatus: tvBadge }); }
-  else cast.attach({ sid: social.sid, audio, current: () => state.sel, follow: castFollow, toast, haptic, onChange: () => { $("#pc").classList.toggle("on", cast.send.on); $("#pc").title = cast.send.on ? `Casting to ${cast.send.name} · tap to stop` : "Play on a TV"; } });
+  else { cast.attach({ sid: social.sid, audio, current: () => state.sel, follow: castFollow, toast, haptic, onChange: () => { $("#pc").classList.toggle("on", cast.send.on); $("#pc").title = cast.send.on ? `Casting to ${cast.send.name} · sound ${cast.send.sound === "tv" ? "on the TV" : cast.send.sound === "here" ? "here" : "on another device"}` : "Play on a TV"; } }); if (castJoin) castJoinPrompt(castJoin); }
   if (!cast.isTV && pendingRoom && /^[a-z0-9]{6}$/i.test(pendingRoom)) joinPrompt(pendingRoom.toLowerCase()); // a TV's #room= is its cast room, not a Listen together invite
   social.join(() => ({ track: state.sel, playing: !audio.paused })).then(async () => {
     const back = await social.syncLikes(new Set(JSON.parse(localStorage.getItem("sa-picks") || "[]"))); // this browser's hearts, not shared-link picks
