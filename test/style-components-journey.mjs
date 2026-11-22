@@ -104,6 +104,62 @@ export async function verifyStyleComponents({context,base,out,root,assert,mode='
     await page.waitForFunction(()=>document.querySelector('#cinetic-status')?.textContent.startsWith('Invalid'));
     assert(await page.locator('#cinetic-list li').count()===0,
       'invalid plan retained earlier technique actions');
+    // The newest selection owns the visible result, not the last I/O completion.
+    await page.evaluate(() => {
+      const original = File.prototype.text;
+      window.__cineticReads = new Map();
+      window.__restoreCineticReads = () => {
+        File.prototype.text = original;
+        delete window.__cineticReads;
+        delete window.__restoreCineticReads;
+      };
+      File.prototype.text = function() {
+        const actual = original.call(this);
+        if (!this.name.startsWith('held-')) return actual;
+        return actual.then(text => new Promise((resolve, reject) => {
+          window.__cineticReads.set(this.name, { resolve: () => resolve(text), reject });
+        }));
+      };
+    });
+    try {
+      const hold = async (name, text) => {
+        await page.locator('#cinetic-file').setInputFiles({
+          name, mimeType:'application/json', buffer:Buffer.from(text),
+        });
+        await page.waitForFunction(name => window.__cineticReads.has(name), name);
+      };
+      const finish = (name, reject=false) => page.evaluate(async ({name, reject}) => {
+        const read = window.__cineticReads.get(name);
+        if (reject) read.reject(new Error('Owned file-read failure'));
+        else read.resolve();
+        // Drain the handler's promise continuation, without depending on error wording.
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }, {name, reject});
+      await hold('held-older.json', JSON.stringify(plan));
+      await hold('held-invalid.json', '{');
+      await finish('held-invalid.json');
+      const rejectedStatus = await page.locator('#cinetic-status').innerText();
+      assert(await page.locator('#cinetic-list li').count()===0,
+        'new invalid selection retained actionable cards');
+      await finish('held-older.json');
+      assert(await page.locator('#cinetic-list li').count()===0,
+        'older read revived cards after a newer invalid selection');
+      assert(await page.locator('#cinetic-status').innerText()===rejectedStatus,
+        'older read replaced the latest rejection status');
+      await hold('held-failure.json', JSON.stringify(plan));
+      await page.locator('#cinetic-file').setInputFiles({
+        name:'latest.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(plan)),
+      });
+      await page.waitForFunction(()=>document.querySelector('#cinetic-list').children.length===3);
+      const acceptedStatus = await page.locator('#cinetic-status').innerText();
+      await finish('held-failure.json', true);
+      assert(await page.locator('[data-cinetic-suggest]').count()===2,
+        'older read failure removed the latest valid actions');
+      assert(await page.locator('#cinetic-status').innerText()===acceptedStatus,
+        'older read failure replaced the latest valid status');
+    } finally {
+      await page.evaluate(() => window.__restoreCineticReads());
+    }
     await page.click('#json-toggle');
     // Keyboard seek and playback must drive the same mounted layers.
     await page.selectOption('#component','headline-reveal');

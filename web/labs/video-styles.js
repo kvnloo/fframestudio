@@ -127,7 +127,9 @@ $('export').onclick = () => {
   $('message').textContent = 'Downloaded editable sidecar JSON — not an MP4.';
 };
 // This file picker is an intentionally *non-executing* creative planning surface.
+let cineticEpoch = 0;
 $('cinetic-file').onchange = async event => {
+  const epoch = ++cineticEpoch;
   const input = event.currentTarget, file = input.files?.[0];
   const status = $('cinetic-status'), list = $('cinetic-list');
   input.value = '';
@@ -136,7 +138,9 @@ $('cinetic-file').onchange = async event => {
   if (file.size > 131072) { status.textContent = 'Plan rejected: limit 128 KiB.'; return; }
   status.textContent = 'Reading plan locally…';
   try {
-    const plan = parseCineticPicks(await file.text());
+    const text = await file.text();
+    if (epoch !== cineticEpoch) return;
+    const plan = parseCineticPicks(text);
     const fragment = document.createDocumentFragment();
     for (const pick of plan.picks) {
       const item = document.createElement('li');
@@ -171,6 +175,7 @@ $('cinetic-file').onchange = async event => {
       ' · ' + (plan.provenance.format || 'selected category') + ' · ' +
       plan.picks.filter(p => p.suggestion).length + ' conceptual previews available. No source code executed.';
   } catch {
+    if (epoch !== cineticEpoch) return;
     status.textContent = 'Invalid cinetic picks file. Export it using cinetic pick.py --json.';
   }
 };
