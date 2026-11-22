@@ -117,14 +117,47 @@ export async function verifyStyleComponents({context,base,out,root,assert,mode='
     await page.locator('#cinetic-file').setInputFiles({name:'big.json',mimeType:'application/json',buffer:Buffer.alloc(131073,32)});
     await page.waitForFunction(()=>document.querySelector('#cinetic-status')?.textContent.includes('128 KiB'));
     assert(await page.locator('#cinetic-list li').count()===0,'oversized plan retained earlier technique actions');
-    await page.evaluate(async json=>{
-      const input=document.querySelector('#cinetic-file'),slow=new File([json],'slow.json',{type:'application/json'}),text=slow.text.bind(slow);
-      slow.text=()=>new Promise(resolve=>setTimeout(()=>resolve(text()),200));
-      for(const file of [slow,new File(['{"x":1}'],'bad.json',{type:'application/json'})]){const t=new DataTransfer();t.items.add(file);input.files=t.files;input.dispatchEvent(new Event('change'));}
-      await new Promise(resolve=>setTimeout(resolve,400));
-    },JSON.stringify(plan));
-    assert((await page.locator('#cinetic-status').innerText()).startsWith('Invalid')&&await page.locator('#cinetic-list li').count()===0,
-      'slow earlier plan replaced a newer invalid selection');
+    const race = await page.evaluate(async json => {
+      const input = document.querySelector('#cinetic-file');
+      const hold = (name, contents) => {
+        const file = new File([contents], name, {type:'application/json'});
+        let resolve, reject;
+        const text = new Promise((yes, no) => { resolve = yes; reject = no; });
+        file.text = () => text;
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        input.files = transfer.files;
+        input.dispatchEvent(new Event('change'));
+        // The change handler subscribed to the read before the test waits for it.
+        return {resolve: () => resolve(contents), reject, done: () => Promise.allSettled([text])};
+      };
+      const status = () => document.querySelector('#cinetic-status').textContent;
+      const older = hold('older.json', json);
+      const invalid = hold('invalid.json', '{');
+      invalid.resolve();
+      await invalid.done();
+      const rejected = status();
+      older.resolve();
+      await older.done();
+      const afterOlderSuccess = {
+        status:status(), cards:document.querySelector('#cinetic-list').children.length,
+      };
+      const failing = hold('failing.json', json);
+      const latest = hold('latest.json', json);
+      latest.resolve();
+      await latest.done();
+      const accepted = status();
+      failing.reject(new Error('Synthetic file-read failure'));
+      await failing.done();
+      const afterOlderFailure = {
+        status:status(), actions:document.querySelectorAll('[data-cinetic-suggest]').length,
+      };
+      return {rejected, afterOlderSuccess, accepted, afterOlderFailure};
+    }, JSON.stringify(plan));
+    assert(race.rejected.startsWith('Invalid') && race.afterOlderSuccess.status===race.rejected &&
+      race.afterOlderSuccess.cards===0, 'slow earlier plan replaced a newer invalid selection');
+    assert(race.accepted.includes('seed 41') && race.afterOlderFailure.status===race.accepted &&
+      race.afterOlderFailure.actions===2, 'slow earlier file-read failure replaced a newer valid selection');
     await page.click('#json-toggle');
     // Keyboard seek and playback must drive the same mounted layers.
     await page.selectOption('#component','headline-reveal');
