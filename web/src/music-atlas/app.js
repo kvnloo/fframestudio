@@ -464,6 +464,9 @@ async function run({ fly = false, scroll = true } = {}) {
   renderChips(); renderViews(); renderBody(scroll); saveHash();
   if (fly) { if (result.ranked || filtered) A.flyToIds(result.hits.slice(0, result.ranked ? 40 : 400).map((h) => h.t.id)); else A.focus("root"); }
 }
+// A Spotify link pasted (or typed) into the search box loads that playlist/album/song instead of searching for it.
+const spotifyLinkIn = (s) => /^\s*(https?:\/\/open\.spotify\.com\/(intl-[\w-]+\/)?(playlist|album|track)\/[A-Za-z0-9]{22}\S*|https?:\/\/(spotify\.link|spotify\.app\.link)\/\w+\S*|spotify:(playlist|album|track):[A-Za-z0-9]{22})\s*$/i.test(s);
+q.addEventListener("input", (e) => { if (spotifyLinkIn(q.value) && !cast.isTV) { e.stopImmediatePropagation(); const v = q.value.trim(); q.value = ""; q.blur(); loadLink(v); } });
 q.addEventListener("input", () => { like = null; state.view = "library"; clearTimeout(debounce); debounce = setTimeout(() => run({ fly: true }), 180); });
 q.addEventListener("focus", () => { warmModel(); if (!wide()) sheetTo("full"); }); // the keyboard takes the bottom; results go above it
 q.addEventListener("blur", () => setSnap(snapFor(sh.target))); // done searching: the full player comes back
@@ -821,6 +824,7 @@ body.addEventListener("click", async (e) => {
   if (e.target.closest("[data-back]")) { buzz(4); state.open = null; renderBody(true); return saveHash(); }
   const bp = e.target.closest("[data-bplay]"); if (bp) { buzz(5); return playPage(null, bp.dataset.bplay === "shuffle"); }
   const row = e.target.closest(".trk");
+  if (row && row.closest("[data-mlist]")) { buzz(5); return row.dataset.id === state.sel ? togglePlay() : select(row.dataset.id, { play: true, fly: true, keepScroll: true }); } // stays in the playlist queue
   if (row && row.closest("[data-blist]")) { buzz(5); return row.dataset.id === state.sel && state.plist?.id?.startsWith("page:") ? togglePlay() : playPage(row.dataset.id); }
   if (row) { buzz(5); const id = row.dataset.id; return id === state.sel ? togglePlay() : select(id, { play: true, fly: true, keepScroll: true, from: state.view, tuned: !!row.closest(".tunes") }); }
   const sc = e.target.closest("[data-scope]"); if (sc) { e.stopPropagation(); buzz(4); const n = A.graph.byId.get(sc.dataset.scope) ?? A.graph.root; A.focus(n.id); return showNode(n); }
@@ -885,9 +889,10 @@ function pickFiles(B, prog) { // phones and browsers without folder handles: a f
   });
 }
 async function mineMenu() {
-  const B = await byom(), s = await B.sources(), any = s.dir || s.files || s.plex || s.spotify;
+  const B = await byom(), s = await B.sources(), any = s.dir || s.files || s.plex || s.spotify || s.links;
   const m = document.createElement("div"); m.className = "castmenu";
   m.innerHTML = `<div class="cm"><b>Bring your own music</b>
+    <button data-m="link"><i>⎘</i><span>Paste a Spotify link<small>Playlist, album or song · plays from YouTube, no sign-in</small></span></button>
     <button data-m="files"><i>▤</i><span>${B.canKeepFolder() ? "A music folder" : "Music files"}<small>${B.canKeepFolder() ? "Your VLC or music folder · playlists come along" : "Pick songs and .m3u / .xspf playlists"}</small></span></button>
     <button data-m="plex"><i>▶</i><span>Plex<small>${s.plex ? "Signed in · tap to reload" : "Sign in with plex.tv · streams from your server"}</small></span></button>
     <button data-m="spotify" ${B.SPOTIFY_ID ? "" : "disabled"}><i>●</i><span>Spotify<small>${!B.SPOTIFY_ID ? "Coming soon" : s.spotify ? "Signed in · tap to reload" : "Liked songs and playlists · plays in Spotify (Premium)"}</small></span></button>
@@ -902,20 +907,55 @@ async function mineMenu() {
     const tab = k === "plex" && !s.plex ? window.open("about:blank", "_blank") : null; // opened inside the tap, or popup blockers eat it
     if (k === "plex") mineDo("Plex", async (B, p) => { if (!s.plex) { toast("Sign in on the Plex tab, then come back"); await B.plexSignIn((u) => (tab ? (tab.location.href = u) : window.open(u, "_blank"))); } return B.plexLibrary((await B.kv.get("plex")).token, p); });
     if (k === "spotify") s.spotify ? mineDo("Spotify", (B, p) => B.spotifyLibrary(p)) : B.spotifySignIn();
+    if (k === "link") linkBox();
     if (k === "forget") forgetMine(B);
   };
 }
+// A pasted Spotify link: its songs land on the map as yours and play from YouTube (byom.js spotifyLink).
+function linkBox(value = "") {
+  const m = document.createElement("div"); m.className = "castmenu linkbox";
+  m.innerHTML = `<form class="cm"><b>Paste a Spotify link</b>
+    <input name="u" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="open.spotify.com/playlist/…" aria-label="Spotify playlist, album or song link" />
+    <div class="lbrow"><button type="button" data-l="paste">Paste</button><button type="submit" class="go">Load &amp; play</button></div>
+    <small>Public playlists, albums and songs. Each song plays from its YouTube match.</small></form>`;
+  document.body.append(m); requestAnimationFrame(() => m.classList.add("on"));
+  const f = m.querySelector("form"), inp = f.u; inp.value = value;
+  const close = () => { m.classList.remove("on"); setTimeout(() => m.remove(), 250); };
+  const go = () => { const v = inp.value.trim(); if (!v) return inp.focus(); close(); loadLink(v); };
+  m.onclick = (e) => { if (e.target === m) close(); };
+  f.onsubmit = (e) => { e.preventDefault(); go(); };
+  inp.addEventListener("paste", () => setTimeout(go, 0)); // paste is the whole gesture
+  f.querySelector("[data-l=paste]").onclick = async () => { try { inp.value = await navigator.clipboard.readText(); go(); } catch { inp.focus(); toast("Long-press the box and choose Paste"); } };
+  if (value) go(); else setTimeout(() => inp.focus(), 60);
+}
+async function loadLink(url) {
+  const B = await byom();
+  if (!B.isSpotifyLink(url)) return toast("That isn't a Spotify playlist, album or song link");
+  let got = null;
+  await mineDo("Spotify link", async (B, p) => (got = await B.spotifyLink(url, p)));
+  const pl = got?.playlists[0]; if (!pl) return;
+  state.view = lastView = "library"; state.browse = "feel"; state.open = null; // the list shows under "Your music", in order
+  playMine(pl.id); // plays song 1; the list is the queue
+  if (!wide() && sh.target === "peek") sheetTo("half");
+}
 async function forgetMine(B) {
-  for (const k of ["files", "plex", "spotify"]) await B.forget(k);
+  for (const k of ["files", "plex", "spotify", "links"]) await B.forget(k);
   if (state.sel && byId.get(state.sel)?.src === "mine") { audio.pause(); state.sel = null; }
   all = all.filter((t) => t.src !== "mine"); byId = new Map(all.map((t) => [t.id, t])); mine.plists = []; mine.regrant = false;
   A.setTracks(all); $("#count").textContent = all.length.toLocaleString(); toast("Your music is gone from this device"); run({ fly: true });
 }
 const mineHTML = () => {
   if (cast.isTV) return "";
-  const n = mineIds().length, sub = mine.busy ? `Loading ${mine.busy}…` : mine.regrant ? "Tap to allow your music folder again" : n ? "Add more: a folder, Plex or Spotify" : "Your files or VLC folder, Plex or Spotify";
+  const n = mineIds().length, sub = mine.busy ? `Loading ${mine.busy}…` : mine.regrant ? "Tap to allow your music folder again" : n ? "Add more: a Spotify link, a folder or Plex" : "Paste a Spotify link, or your files, VLC folder or Plex";
   return `<section class="mine"><button class="pcta minecta ${mine.busy ? "busy" : ""}" data-mine="${mine.regrant ? "regrant" : "menu"}"><i></i><span><b>${n ? `Your music · ${n.toLocaleString()}` : "Bring your own music"}</b><small>${sub}</small></span></button>
-    ${n ? `<div class="mpls"><button data-mpl="all">All yours<small>${n}</small></button>${mine.plists.map((p) => `<button data-mpl="${esc(p.id)}">${esc(p.name)}<small>${p.ids.length}</small></button>`).join("")}</div>` : ""}</section>`;
+    ${n ? `<div class="mpls"><button data-mpl="all">All yours<small>${n}</small></button>${mine.plists.map((p) => `<button data-mpl="${esc(p.id)}" class="${state.plist?.id === "mine:" + p.id ? "on" : ""}">${esc(p.name)}<small>${p.ids.length}</small></button>`).join("")}</div>` : ""}</section>${mineQueueHTML()}`;
+};
+// The playlist of yours that is playing (a pasted Spotify link, say), in its own order: tap a song to play it and
+// the rest of the list stays the queue.
+const mineQueueHTML = () => {
+  const p = state.plist; if (!p?.id.startsWith("mine:")) return "";
+  const ts = p.ids.slice(0, 200).map((id) => byId.get(id)).filter(Boolean);
+  return ts.length ? `<section class="grp mq" data-mlist style="--c:${tone(ts[0])}"><h3><i></i>${esc(p.name)}<small>${p.ids.length} · playing in this order</small></h3>${ts.map((t, i) => rowHTML(t, i)).join("")}</section>` : "";
 };
 function playMine(id) {
   const p = id === "all" ? { id: "all", name: "Your music", ids: mineIds() } : mine.plists.find((x) => x.id === id); if (!p) return;
@@ -1006,6 +1046,7 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   if (changed) { if (t.audio) { audio.src = streamUrl(t); audio.load(); } else { audio.pause(); audio.removeAttribute("src"); audio.load(); } }
   if (changed && auralMod) auralMod.onTrack(t);
   if (play && t.provider === "spotify") spotifyGo(t);
+  else if (t.yt && !t.audio) { if (changed || play) ytGo(t, play); } // a pasted Spotify link's song: find it on YouTube first
   else if (play) { if (t.audio) landAt = performance.now(); audio.play().catch((e) => { if (e.name === "NotAllowedError") toast("Tap ▶ to play"); }); } // a failed stream says so itself (error), don't overwrite it
   if (changed) {
     nbrs = soundReady() ? neighbours(t, all, 8) : [];
@@ -1019,7 +1060,19 @@ function select(id, { play = false, fly = false, keepScroll = false, from = null
   if (!wide() && sh.target === "peek" && !play) sheetTo("half");
 }
 let landAt = 0; // a play you asked for: its pulse waits for the first sound
-function togglePlay() { if (!state.sel) { const first = result.hits[0]?.t; return first && select(first.id, { play: true, fly: true }); } const cur = byId.get(state.sel); if (cur?.provider === "spotify") return spotify.on ? (spotify.on = false, byom().then((B) => B.spotifyPause()), renderPlayer()) : spotifyGo(cur); if (audio.paused) { landAt = performance.now(); audio.play().catch(() => {}); } else audio.pause(); }
+// Songs from a pasted Spotify link: matched on YouTube at first play (byom.js ytAudio), streamed through the bridge.
+// The next song in the queue is matched meanwhile, so it starts at once.
+async function ytGo(t, play) {
+  const B = await byom(); let slow = setTimeout(() => toast(`Finding “${t.title}” on YouTube…`), 400);
+  try { await B.ytAudio(t); } catch (e) { clearTimeout(slow); if (state.sel === t.id) toast(e.message); return; }
+  clearTimeout(slow);
+  if (state.sel !== t.id) return; // skipped meanwhile
+  audio.src = streamUrl(t); audio.load();
+  if (play) { landAt = performance.now(); audio.play().catch((e) => { if (e.name === "NotAllowedError") toast("Tap ▶ to play"); }); }
+  renderPlayer();
+  const L = state.plist?.ids, nx = L && byId.get(L[(L.indexOf(t.id) + 1) % L.length]); if (nx?.yt) B.ytAudio(nx).catch(() => {});
+}
+function togglePlay() { if (!state.sel) { const first = result.hits[0]?.t; return first && select(first.id, { play: true, fly: true }); } const cur = byId.get(state.sel); if (cur?.provider === "spotify") return spotify.on ? (spotify.on = false, byom().then((B) => B.spotifyPause()), renderPlayer()) : spotifyGo(cur); if (cur?.yt && !cur.audio) return ytGo(cur, true); if (audio.paused) { landAt = performance.now(); audio.play().catch(() => {}); } else audio.pause(); }
 function step(d) {
   if (state.radio && d > 0) { // radio only goes forward; back walks what it already played
     const t = social.radioNext({ kind: state.radio, cur: byId.get(state.sel), all: search(all, { feels: state.feels, bands: state.bands, cc0: state.cc0 }).hits.map((h) => h.t), byId, playedIds, neighbours });
@@ -1501,7 +1554,7 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
     if (pendingPlist) { await social.loadPlaylists(); if (social.room.playlists.some((p) => p.id === pendingPlist)) { setView("community"); const p = social.room.playlists.find((x) => x.id === pendingPlist); state.plist = { id: p.id, name: p.name, ids: p.tracks.filter((x) => byId.has(x)) }; toast(`“${p.name}” · tap ▶ to play`); renderBody(false); } }
   });
   if (!cast.isTV) byom().then(async (B) => {
-    const s = await B.sources(); if (!(s.dir || s.files || s.plex || s.spotify)) return;
+    const s = await B.sources(); if (!(s.dir || s.files || s.plex || s.spotify || s.links)) return;
     const r = await B.restore(); mine.regrant = r.needsFolder; addMine(r, mine.spotifyNew ? "Spotify" : null); r.errors.forEach((m) => toast(m));
   }).catch((e) => toast("Your music: " + e.message));
   // #aural opens the pane; #aural=<https://pc.tailnet.ts.net:4317> (the computer's phone code) also points it at that server.

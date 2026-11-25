@@ -414,6 +414,12 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .castmenu button i { font-style: normal; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(95, 211, 220, .14); color: var(--acc); font-size: 18px; flex: none; }
 .castmenu button span { display: flex; flex-direction: column; font: 600 15px "Instrument Sans", sans-serif; }
 .castmenu button small { font: 11px "IBM Plex Mono", monospace; color: var(--mute); font-weight: 400; }
+.linkbox input { width: 100%; min-width: 0; padding: 13px 12px; border-radius: 14px; border: 1px solid var(--line2); background: rgba(255, 255, 255, .04); color: inherit; font: 16px "Instrument Sans", sans-serif; } /* 16px: iOS doesn't zoom on focus */
+.linkbox input:focus { outline: none; border-color: var(--acc); }
+.linkbox .lbrow { display: flex; gap: 8px; }
+.linkbox .lbrow button { flex: 1; min-height: 48px; justify-content: center; font: 600 15px "Instrument Sans", sans-serif; }
+.linkbox .lbrow button.go { background: var(--acc); color: #071012; border-color: transparent; }
+.linkbox small { font: 11px "IBM Plex Mono", monospace; color: var(--mute); padding: 2px 4px; }
 .castmenu button.ghost { min-height: 40px; justify-content: center; border-color: transparent; color: var(--mute); font: 12px "IBM Plex Mono", monospace; }
 
 /* --- TV view: what a cast lands on. 10-foot: big type, no touch chrome, the map is the wallpaper ---- */
