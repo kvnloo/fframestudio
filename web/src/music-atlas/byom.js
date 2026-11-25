@@ -202,12 +202,15 @@ export const spotifyPause = () => sp("/me/player/pause", { method: "PUT" }).catc
 // No sign-in, no Premium: the spotify-yt bridge reads the track list from Spotify's public embed page, matches
 // each song on YouTube (official upload, length closest to Spotify's) and streams its audio, seekable and
 // CORS-open (so the Aural chain can read it). Private playlists can't be read this way.
-// Bridge: ?bridge=<url> (remembered), else the last one used, else the one beside this page (same host, :8811;
+// Bridge: ?bridge=<url> (remembered), else the last one used, else the deploy's share.json "bridge" (written at
+// deploy time, never committed: it names a private host), else the one beside this page (same host, :8811;
 // how the home server runs it: tailscale serve puts the page on :8812 and the bridge on :8811).
 export const BRIDGE_PORT = 8811;
+let deployBridge = null;
+export const setDeployBridge = (u) => { deployBridge = typeof u === "string" && /^https?:\/\//.test(u) ? u : null; };
 export function bridge() {
   const q = new URLSearchParams(location.search).get("bridge"); if (q) localStorage.setItem("sa-yt-bridge", q);
-  return (q || localStorage.getItem("sa-yt-bridge") || `https://${location.hostname}:${BRIDGE_PORT}`).replace(/\/+$/, "");
+  return (q || localStorage.getItem("sa-yt-bridge") || deployBridge || `https://${location.hostname}:${BRIDGE_PORT}`).replace(/\/+$/, "");
 }
 export const isSpotifyLink = (s) => /^\s*(https?:\/\/(open\.spotify\.com|spotify\.link|spotify\.app\.link)\/|spotify:(playlist|album|track):)/i.test(String(s));
 async function bj(path, ms = 60000) {

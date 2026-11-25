@@ -1531,6 +1531,7 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
   sh.y = innerHeight; sheetTo("peek");
   const cat = await loadCatalog(base).catch((e) => { body.innerHTML = `<div class="empty">Could not load the catalogue (${esc(e.message)}).</div>`; throw e; });
   share = await fetch(base + "share.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  if (share?.bridge) byom().then((B) => B.setDeployBridge(share.bridge)); // the deploy's Spotify → YouTube bridge
   all = cat.tracks; byId = new Map(all.map((t) => [t.id, t])); slugs = slugIndex(all);
   await loadSound(base, all); // optional: measured tempo/key/texture + CLAP neighbours
   loadLayers(base).then(() => { if (state.view === "track" && state.sel) renderBody(false); A.kick(); }); // optional: stems
