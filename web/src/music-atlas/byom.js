@@ -198,8 +198,61 @@ export async function spotifyPlay(t, posMs = 0) {
 }
 export const spotifyPause = () => sp("/me/player/pause", { method: "PUT" }).catch(() => null);
 
+// --- a pasted Spotify link, played from YouTube ---------------------------------------------------
+// No sign-in, no Premium: the spotify-yt bridge reads the track list from Spotify's public embed page, matches
+// each song on YouTube (official upload, length closest to Spotify's) and streams its audio, seekable and
+// CORS-open (so the Aural chain can read it). Private playlists can't be read this way.
+// Bridge: ?bridge=<url> (remembered), else the last one used, else the deploy's share.json "bridge" (written at
+// deploy time, never committed: it names a private host), else the one beside this page (same host, :8811;
+// how the home server runs it: tailscale serve puts the page on :8812 and the bridge on :8811).
+export const BRIDGE_PORT = 8811;
+let deployBridge = null;
+export const setDeployBridge = (u) => { deployBridge = typeof u === "string" && /^https?:\/\//.test(u) ? u : null; };
+export function bridge() {
+  const q = new URLSearchParams(location.search).get("bridge"); if (q) localStorage.setItem("sa-yt-bridge", q);
+  return (q || localStorage.getItem("sa-yt-bridge") || deployBridge || `https://${location.hostname}:${BRIDGE_PORT}`).replace(/\/+$/, "");
+}
+export const isSpotifyLink = (s) => /^\s*(https?:\/\/(open\.spotify\.com|spotify\.link|spotify\.app\.link)\/|spotify:(playlist|album|track):)/i.test(String(s));
+async function bj(path, ms = 60000) {
+  const c = new AbortController(), k = setTimeout(() => c.abort(), ms);
+  try {
+    const r = await fetch(bridge() + path, { signal: c.signal }), j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || "Spotify → YouTube bridge " + r.status); return j;
+  } catch (e) { throw e.name === "TypeError" || e.name === "AbortError" ? new Error(`Can't reach the Spotify → YouTube bridge (${new URL(bridge()).host})`) : e; }
+  finally { clearTimeout(k); }
+}
+export async function spotifyLink(url, onProgress, keep = true) {
+  const r = await bj("/api/load?url=" + encodeURIComponent(String(url).trim()));
+  const tracks = r.tracks.map((t) => {
+    const sid = String(t.uri ?? "").split(":").pop();
+    return mineTrack({ id: "yt-" + (sid || hash(t.artist + "|" + t.title)), provider: "youtube", yt: true, title: t.title, author: t.artist, audio: null, dur: t.dur, uri: t.uri,
+      sourceUrl: sid ? "https://open.spotify.com/track/" + sid : String(url).trim(), noEmbed: true }); // Spotify's data: words only, never embedded
+  });
+  onProgress?.(tracks.length, tracks.length);
+  if (keep) { const links = (await kv.get("links")) ?? []; if (!links.includes(url.trim())) await kv.set("links", [...links, url.trim()]); }
+  return { tracks, playlists: [{ id: "pl-sl-" + hash(String(url).trim()), name: r.name, ids: tracks.map((t) => t.id) }] };
+}
+// Aural servers on the tailnet: any bridge lists every online machine running a bridge (:8811) or aural-local
+// (:4317), from its own `tailscale status`. A browser can't list tailnet machines itself, so it asks the current
+// bridge, falling back to the deploy's.
+export async function servers() {
+  const tryAt = async (b) => { const r = await fetch(b.replace(/\/+$/, "") + "/api/peers", { signal: AbortSignal.timeout(12000) }); if (!r.ok) throw new Error("peers " + r.status); return r.json(); };
+  for (const b of [...new Set([bridge(), deployBridge].filter(Boolean))]) { try { return { ...(await tryAt(b)), via: b }; } catch {} }
+  throw new Error(`Can't reach an Aural server (${new URL(bridge()).host}). Is Tailscale on here?`);
+}
+// Pick which machine's bridge finds and streams the songs. Matches already found are kept (same YouTube ids).
+export function useBridge(u) { u = String(u).replace(/\/+$/, ""); localStorage.setItem("sa-yt-bridge", u); return u; }
+export const bridgeOf = (t) => (t?.audio && t.yt ? t.audio.replace(/\/api\/stream\?.*$/, "") : null);
+// The song's YouTube audio, matched on first play (2-5 s), then remembered on the track.
+export async function ytAudio(t) {
+  if (t.audio && bridgeOf(t) === bridge()) return t.audio;
+  if (t.ytId) return (t.audio = bridge() + "/api/stream?id=" + t.ytId); // matched before: only the server changed
+  const m = await bj("/api/resolve?" + new URLSearchParams({ title: t.title, artist: t.author, dur: t.dur || "" }));
+  t.ytId = m.id; t.ytTitle = m.title; return (t.audio = bridge() + "/api/stream?id=" + m.id);
+}
+
 // --- restore on boot -----------------------------------------------------------------------------
-export const sources = async () => ({ dir: await kv.get("dir"), files: ((await kv.get("files")) ?? []).length, plex: !!(await kv.get("plex")), spotify: !!(await kv.get("spotify")) });
+export const sources = async () => ({ dir: await kv.get("dir"), files: ((await kv.get("files")) ?? []).length, plex: !!(await kv.get("plex")), spotify: !!(await kv.get("spotify")), links: ((await kv.get("links")) ?? []).length });
 // Everything kept from earlier visits. A folder whose permission lapsed reports `needsFolder` (re-grant needs a tap).
 export async function restore(onProgress) {
   const out = { tracks: [], playlists: [], needsFolder: false, errors: [] };
@@ -209,6 +262,7 @@ export async function restore(onProgress) {
   const files = (await kv.get("files")) ?? []; if (files.length) add(await filesToTracks(files.map((f) => [f.webkitRelativePath || f.name, () => f]), onProgress));
   const plex = await kv.get("plex"); if (plex) await plexLibrary(plex.token).then(add, (e) => out.errors.push("Plex: " + e.message));
   if (await kv.get("spotify")) await spotifyLibrary().then(add, (e) => out.errors.push("Spotify: " + e.message));
+  for (const u of (await kv.get("links")) ?? []) await spotifyLink(u, null, false).then(add, (e) => out.errors.push("Spotify link: " + e.message));
   return out;
 }
 export async function regrantFolder(onProgress) { const dir = await kv.get("dir"); if ((await dir.requestPermission({ mode: "read" })) !== "granted") throw new Error("Folder access not allowed"); return scanFolder(dir, onProgress); }
