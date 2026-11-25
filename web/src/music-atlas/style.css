@@ -420,6 +420,14 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .linkbox .lbrow button { flex: 1; min-height: 48px; justify-content: center; font: 600 15px "Instrument Sans", sans-serif; }
 .linkbox .lbrow button.go { background: var(--acc); color: #071012; border-color: transparent; }
 .linkbox small { font: 11px "IBM Plex Mono", monospace; color: var(--mute); padding: 2px 4px; }
+.linkbox .srvline { min-height: 40px; justify-content: space-between; font: 13px "Instrument Sans", sans-serif; color: var(--mute); }
+.linkbox .srvline b { color: var(--ink); margin: 0 auto 0 6px; } .linkbox .srvline span { color: var(--acc); font: 600 12px "Instrument Sans", sans-serif; }
+.mpls .srvpill { color: var(--acc); border-color: rgba(95, 211, 220, .35); }
+.srvmenu .srvnote { margin: 0; font: 11px "IBM Plex Mono", monospace; color: var(--mute); padding: 0 4px; }
+.srvmenu .srvlist { display: flex; flex-direction: column; gap: 8px; }
+.srvmenu .srv { display: flex; gap: 6px; align-items: stretch; } .srvmenu .srv > button:first-child { flex: 1; min-width: 0; }
+.srvmenu .srv.on > button:first-child { border-color: var(--acc); } .srvmenu .srv em { font: 11px "IBM Plex Mono", monospace; color: var(--acc); font-style: normal; margin-left: 4px; }
+.srvmenu .srv button:disabled { opacity: .55; } .srvmenu .srvaural { flex: none; font: 600 12px "Instrument Sans", sans-serif; padding: 0 12px; }
 .castmenu button.ghost { min-height: 40px; justify-content: center; border-color: transparent; color: var(--mute); font: 12px "IBM Plex Mono", monospace; }
 
 /* --- TV view: what a cast lands on. 10-foot: big type, no touch chrome, the map is the wallpaper ---- */

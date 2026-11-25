@@ -834,6 +834,7 @@ body.addEventListener("click", async (e) => {
   if (e.target.closest("#web")) return searchWeb();
   const mn = e.target.closest("[data-mine]"); if (mn) { buzz(5); return mn.dataset.mine === "regrant" ? mineDo("your folder", (B, p) => B.regrantFolder(p).then((r) => ((mine.regrant = false), r))) : mineMenu(); }
   const mp = e.target.closest("[data-mpl]"); if (mp) { buzz(5); return playMine(mp.dataset.mpl); }
+  if (e.target.closest("[data-srvs]")) { buzz(5); return serversMenu(); }
   const ph = e.target.closest("[data-plheart]"); if (ph) { e.stopPropagation(); buzz(8); const p = social.room.playlists.find((x) => x.id === ph.dataset.plheart); return p && social.likePlaylist(p.id, !p.liked); }
   const pp = e.target.closest("[data-plplay]"); if (pp) { buzz(5); return playPlaylist(pp.dataset.plplay); }
   const px = e.target.closest("[data-plx]"); if (px) { buzz(5); await social.unpublish(px.dataset.plx).catch(() => {}); return toast("Playlist unpublished"); }
@@ -917,6 +918,7 @@ function linkBox(value = "") {
   m.innerHTML = `<form class="cm"><b>Paste a Spotify link</b>
     <input name="u" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="open.spotify.com/playlist/…" aria-label="Spotify playlist, album or song link" />
     <div class="lbrow"><button type="button" data-l="paste">Paste</button><button type="submit" class="go">Load &amp; play</button></div>
+    <button type="button" class="srvline" data-l="srv">Plays from <b>${esc(mine.server ?? "…")}</b><span>Change</span></button>
     <small>Public playlists, albums and songs. Each song plays from its YouTube match.</small></form>`;
   document.body.append(m); requestAnimationFrame(() => m.classList.add("on"));
   const f = m.querySelector("form"), inp = f.u; inp.value = value;
@@ -925,6 +927,8 @@ function linkBox(value = "") {
   m.onclick = (e) => { if (e.target === m) close(); };
   f.onsubmit = (e) => { e.preventDefault(); go(); };
   inp.addEventListener("paste", () => setTimeout(go, 0)); // paste is the whole gesture
+  f.querySelector("[data-l=srv]").onclick = () => serversMenu();
+  serverName().then((nm) => { const b = f.querySelector("[data-l=srv] b"); if (b) b.textContent = nm ?? "not reachable"; });
   f.querySelector("[data-l=paste]").onclick = async () => { try { inp.value = await navigator.clipboard.readText(); go(); } catch { inp.focus(); toast("Long-press the box and choose Paste"); } };
   if (value) go(); else setTimeout(() => inp.focus(), 60);
 }
@@ -936,7 +940,43 @@ async function loadLink(url) {
   const pl = got?.playlists[0]; if (!pl) return;
   state.view = lastView = "library"; state.browse = "feel"; state.open = null; // the list shows under "Your music", in order
   playMine(pl.id); // plays song 1; the list is the queue
+  serverName().then(() => renderBody(false)); // names the server pill
   if (!wide() && sh.target === "peek") sheetTo("half");
+}
+// --- Aural servers on the tailnet: see every machine running Aural and pick the one that plays -------------
+// The current bridge lists them (a browser can't see the tailnet itself). A bridge finds and streams pasted
+// songs; aural-local (:4317) is the system-wide DSP chain the Aural pane drives.
+async function serverName() {
+  const B = await byom();
+  try { const r = await fetch(B.bridge() + "/api/health", { signal: AbortSignal.timeout(6000) }); const j = await r.json(); mine.server = j.name ?? new URL(B.bridge()).hostname.split(".")[0]; }
+  catch { mine.server = null; }
+  return mine.server;
+}
+async function serversMenu() {
+  const B = await byom(), m = document.createElement("div"); m.className = "castmenu srvmenu";
+  m.innerHTML = `<div class="cm"><b>Aural servers on your tailnet</b><p class="srvnote">Looking…</p><div class="srvlist"></div><button class="ghost" data-x>Close</button></div>`;
+  document.body.append(m); requestAnimationFrame(() => m.classList.add("on"));
+  const close = () => { m.classList.remove("on"); setTimeout(() => m.remove(), 250); };
+  m.onclick = (e) => { if (e.target === m || e.target.closest("[data-x]")) close(); };
+  const list = m.querySelector(".srvlist"), note = m.querySelector(".srvnote");
+  let r; try { r = await B.servers(); } catch (e) { note.textContent = e.message; return; }
+  const cur = B.bridge();
+  note.textContent = r.servers.length ? `${r.servers.length} found · listed by ${r.from}` : "No Aural servers are running on your tailnet right now.";
+  list.innerHTML = r.servers.map((s) => {
+    const b = s.bridge, a = s.aural, on = b && b.url === cur;
+    const tags = [b ? `Spotify → YouTube · ${b.ms} ms` : null, a ? (a.down ? `Aural DSP not running (${a.down})` : `Aural DSP · ${a.ms} ms`) : null].filter(Boolean).join(" · ");
+    return `<div class="srv ${on ? "on" : ""}"><button ${b ? `data-usebridge="${esc(b.url)}"` : "disabled"}><i>${on ? "✓" : s.os === "macOS" ? "▣" : "⌁"}</i><span>${esc(s.name)}${s.self ? " <em>this one</em>" : ""}<small>${esc(s.os ?? "")} · ${esc(tags)}</small></span></button>${a && !a.down ? `<button class="srvaural" data-useaural="${esc(a.url)}">Aural pane</button>` : ""}</div>`;
+  }).join("");
+  list.onclick = async (e) => {
+    const ub = e.target.closest("[data-usebridge]"), ua = e.target.closest("[data-useaural]");
+    if (ua) { buzz(5); close(); return aural().then((p) => { p.open(); p.useServer(ua.dataset.useaural); }); }
+    if (!ub) return; buzz(5); const nb = B.useBridge(ub.dataset.usebridge); close();
+    for (const x of all) if (x.yt && x.ytId) x.audio = nb + "/api/stream?id=" + x.ytId; // matched songs (prefetched next one too) now stream from the new server
+    const nm = await serverName(); toast(`Playing from ${nm ?? new URL(ub.dataset.usebridge).host}`); renderBody(false);
+    const t = byId.get(state.sel); if (!t?.yt) return; // the song playing now moves over, same spot
+    const pos = audio.currentTime || 0, was = !audio.paused; await B.ytAudio(t); audio.src = streamUrl(t); audio.load();
+    audio.addEventListener("loadedmetadata", () => { audio.currentTime = pos; if (was) audio.play().catch(() => {}); }, { once: true });
+  };
 }
 async function forgetMine(B) {
   for (const k of ["files", "plex", "spotify", "links"]) await B.forget(k);
@@ -948,7 +988,7 @@ const mineHTML = () => {
   if (cast.isTV) return "";
   const n = mineIds().length, sub = mine.busy ? `Loading ${mine.busy}…` : mine.regrant ? "Tap to allow your music folder again" : n ? "Add more: a Spotify link, a folder or Plex" : "Paste a Spotify link, or your files, VLC folder or Plex";
   return `<section class="mine"><button class="pcta minecta ${mine.busy ? "busy" : ""}" data-mine="${mine.regrant ? "regrant" : "menu"}"><i></i><span><b>${n ? `Your music · ${n.toLocaleString()}` : "Bring your own music"}</b><small>${sub}</small></span></button>
-    ${n ? `<div class="mpls"><button data-mpl="all">All yours<small>${n}</small></button>${mine.plists.map((p) => `<button data-mpl="${esc(p.id)}" class="${state.plist?.id === "mine:" + p.id ? "on" : ""}">${esc(p.name)}<small>${p.ids.length}</small></button>`).join("")}</div>` : ""}</section>${mineQueueHTML()}`;
+    ${n ? `<div class="mpls">${mineIds().some((id) => byId.get(id)?.yt) ? `<button data-srvs class="srvpill" title="Choose which Aural server plays these">⌁ ${esc(mine.server ?? "Server")}</button>` : ""}<button data-mpl="all">All yours<small>${n}</small></button>${mine.plists.map((p) => `<button data-mpl="${esc(p.id)}" class="${state.plist?.id === "mine:" + p.id ? "on" : ""}">${esc(p.name)}<small>${p.ids.length}</small></button>`).join("")}</div>` : ""}</section>${mineQueueHTML()}`;
 };
 // The playlist of yours that is playing (a pasted Spotify link, say), in its own order: tap a song to play it and
 // the rest of the list stays the queue.
@@ -1557,6 +1597,7 @@ if (cast.isTV) document.documentElement.classList.add("tv", "tv-" + cast.tvKind)
   if (!cast.isTV) byom().then(async (B) => {
     const s = await B.sources(); if (!(s.dir || s.files || s.plex || s.spotify || s.links)) return;
     const r = await B.restore(); mine.regrant = r.needsFolder; addMine(r, mine.spotifyNew ? "Spotify" : null); r.errors.forEach((m) => toast(m));
+    if (s.links) serverName().then(() => renderBody(false)); // names the server pill
   }).catch((e) => toast("Your music: " + e.message));
   // #aural opens the pane; #aural=<https://pc.tailnet.ts.net:4317> (the computer's phone code) also points it at that server.
   const auralHash = () => { const m = /^#aural(?:=(.+))?$/.exec(location.hash); if (!m) return;

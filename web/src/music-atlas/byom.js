@@ -232,9 +232,21 @@ export async function spotifyLink(url, onProgress, keep = true) {
   if (keep) { const links = (await kv.get("links")) ?? []; if (!links.includes(url.trim())) await kv.set("links", [...links, url.trim()]); }
   return { tracks, playlists: [{ id: "pl-sl-" + hash(String(url).trim()), name: r.name, ids: tracks.map((t) => t.id) }] };
 }
+// Aural servers on the tailnet: any bridge lists every online machine running a bridge (:8811) or aural-local
+// (:4317), from its own `tailscale status`. A browser can't list tailnet machines itself, so it asks the current
+// bridge, falling back to the deploy's.
+export async function servers() {
+  const tryAt = async (b) => { const r = await fetch(b.replace(/\/+$/, "") + "/api/peers", { signal: AbortSignal.timeout(12000) }); if (!r.ok) throw new Error("peers " + r.status); return r.json(); };
+  for (const b of [...new Set([bridge(), deployBridge].filter(Boolean))]) { try { return { ...(await tryAt(b)), via: b }; } catch {} }
+  throw new Error(`Can't reach an Aural server (${new URL(bridge()).host}). Is Tailscale on here?`);
+}
+// Pick which machine's bridge finds and streams the songs. Matches already found are kept (same YouTube ids).
+export function useBridge(u) { u = String(u).replace(/\/+$/, ""); localStorage.setItem("sa-yt-bridge", u); return u; }
+export const bridgeOf = (t) => (t?.audio && t.yt ? t.audio.replace(/\/api\/stream\?.*$/, "") : null);
 // The song's YouTube audio, matched on first play (2-5 s), then remembered on the track.
 export async function ytAudio(t) {
-  if (t.audio) return t.audio;
+  if (t.audio && bridgeOf(t) === bridge()) return t.audio;
+  if (t.ytId) return (t.audio = bridge() + "/api/stream?id=" + t.ytId); // matched before: only the server changed
   const m = await bj("/api/resolve?" + new URLSearchParams({ title: t.title, artist: t.author, dur: t.dur || "" }));
   t.ytId = m.id; t.ytTitle = m.title; return (t.audio = bridge() + "/api/stream?id=" + m.id);
 }
